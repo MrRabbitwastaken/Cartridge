@@ -1745,6 +1745,12 @@ function connectDayInfo(dateStr){
   return {played:true, won: status === 'won', label: status === 'won' ? '\u2713' : 'X'};
 }
 
+// Whole-number averages (e.g. a perfect single day) display as "15", not
+// "15.0" — a fractional average still shows one decimal place.
+function formatAvgScore(n){
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+
 function computeGameStats(days){
   const played = days.filter(d=>d.played);
   const won = played.filter(d=>d.won);
@@ -1778,7 +1784,7 @@ function renderGameArchiveRow(days, statsEl, gridEl, opts){
   const stats = computeGameStats(days);
   const streakTier = opts.showTier ? streakTierLabel(stats.currentStreak) : null;
   const fourthStat = opts.scoreTotal
-    ? `<div class="archive-stat"><div class="num">${stats.avgScore != null ? stats.avgScore.toFixed(1) : '\u2014'}/${opts.scoreTotal}</div><div class="lbl">Avg score</div></div>`
+    ? `<div class="archive-stat"><div class="num">${stats.avgScore != null ? formatAvgScore(stats.avgScore) : '\u2014'}/${opts.scoreTotal}</div><div class="lbl">Avg score</div></div>`
     : `<div class="archive-stat"><div class="num">${stats.winPct}%</div><div class="lbl">Win rate</div></div>`;
   statsEl.innerHTML = `
     <div class="archive-stat">
