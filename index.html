@@ -630,14 +630,20 @@
   .grid-solved-bar { border-radius: 8px; padding: 12px; text-align: center; }
   .grid-solved-bar .gsb-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
   .grid-solved-bar .gsb-games { font-family: 'IBM Plex Mono', monospace; font-size: 11px; margin-top: 4px; opacity: 0.85; }
-  .grid-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+  .grid-tiles { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 76px; gap: 8px; margin-bottom: 10px; }
   .grid-tile {
-    aspect-ratio: 3/2; border-radius: 8px; border: 2px solid var(--line); background: var(--panel-2);
-    color: var(--text); font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 12px;
-    display: flex; align-items: center; justify-content: center; text-align: center; padding: 6px;
+    border-radius: 8px; border: 2px solid var(--line); background: var(--panel-2);
+    color: var(--text); font-family: 'Space Grotesk', sans-serif; font-weight: 700; line-height: 1.15;
+    display: flex; align-items: center; justify-content: center; text-align: center; padding: 4px 6px;
     cursor: pointer; transition: transform .1s ease, border-color .15s ease, background .15s ease;
-    min-width: 0; overflow-wrap: break-word;
+    min-width: 0; overflow: hidden; overflow-wrap: break-word;
   }
+  /* Every tile is the same fixed size — long titles shrink their own font instead
+     of growing the box, so the 4x4 grid always lines up evenly. */
+  .grid-tile.tile-len-s { font-size: 13px; }
+  .grid-tile.tile-len-m { font-size: 11.5px; }
+  .grid-tile.tile-len-l { font-size: 10px; }
+  .grid-tile.tile-len-xl { font-size: 8.5px; }
   .grid-tile:hover { border-color: var(--cyan); }
   .grid-tile.selected { background: var(--cyan); color: #06210f; border-color: var(--cyan); }
   .grid-tile.shake { animation: gridShake .4s ease; }
@@ -647,7 +653,11 @@
   }
   .grid-message { min-height: 18px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-dim); margin-bottom: 8px; }
   @media (max-width: 480px) {
-    .grid-tile { font-size: 10.5px; }
+    .grid-tiles { grid-auto-rows: 68px; }
+    .grid-tile.tile-len-s { font-size: 11.5px; }
+    .grid-tile.tile-len-m { font-size: 10px; }
+    .grid-tile.tile-len-l { font-size: 9px; }
+    .grid-tile.tile-len-xl { font-size: 8px; }
   }
 </style>
 </head>
@@ -3531,11 +3541,22 @@ function renderGridSolvedRow(){
     `).join('');
 }
 
+// Picks a font-size tier based on title length so every tile stays the same
+// fixed size — long titles just render smaller rather than growing the box.
+function gridTileLenClass(title){
+  const len = title.length;
+  if(len <= 10) return 'tile-len-s';
+  if(len <= 16) return 'tile-len-m';
+  if(len <= 22) return 'tile-len-l';
+  return 'tile-len-xl';
+}
+
 function renderGridTiles(){
   const remaining = gridPuzzle.tiles.filter(t=>!gridSolvedIds.includes(t.categoryId));
   gridTilesEl.innerHTML = remaining.map(t=>{
     const safeTitle = t.title.replace(/"/g,'&quot;');
-    return `<button class="grid-tile${gridSelected.includes(t.title)?' selected':''}" data-title="${safeTitle}">${t.title}</button>`;
+    const lenClass = gridTileLenClass(t.title);
+    return `<button class="grid-tile ${lenClass}${gridSelected.includes(t.title)?' selected':''}" data-title="${safeTitle}">${t.title}</button>`;
   }).join('');
   gridTilesEl.querySelectorAll('.grid-tile').forEach(btn=>{
     btn.addEventListener('click', ()=> handleGridTileClick(btn.dataset.title));
