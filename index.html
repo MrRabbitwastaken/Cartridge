@@ -82,6 +82,16 @@
   }
   .home-tagline { font-family: 'IBM Plex Mono', monospace; font-size: clamp(9px, 1.6vw, 13px); color: var(--text-dim); line-height: 1.6; }
   .home-tagline b { color: var(--text); font-weight: 600; }
+  .home-nav-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
+    background: none; border: none; padding: 4px 6px; margin: 0; cursor: pointer; line-height: 1;
+    font-family: 'Press Start 2P', monospace; font-size: clamp(16px, 3.2vw, 26px);
+    color: var(--cyan); text-shadow: 0 0 6px currentColor, 0 0 16px currentColor;
+    transition: color .2s ease, filter .15s ease, transform .15s ease;
+  }
+  .home-nav-arrow:hover { filter: brightness(1.35); transform: translateY(-50%) scale(1.12); }
+  .home-nav-arrow-left { left: 3%; }
+  .home-nav-arrow-right { right: 3%; }
   .gamepad-row { display: flex; gap: 24px; justify-content: center; margin-top: 28px; flex-wrap: wrap; }
   .gamepad {
     position: relative; width: 300px; aspect-ratio: 900 / 402; border: none; background: none;
@@ -116,9 +126,10 @@
   .marquee {
     display: inline-block; font-family: 'Press Start 2P', monospace; font-size: clamp(20px, 4.5vw, 34px);
     letter-spacing: 2px; color: var(--cyan);
-    text-shadow: 0 0 6px rgba(0,229,255,0.7), 0 0 22px rgba(0,229,255,0.45), 0 0 2px #fff;
+    text-shadow: 0 0 6px currentColor, 0 0 22px currentColor, 0 0 2px #fff;
     padding: 10px 22px; border: 2px solid var(--line); border-radius: 10px;
     background: linear-gradient(180deg, #171c3d, #0f1330);
+    transition: color .2s ease;
   }
   .tagline { margin-top: 12px; color: var(--text-dim); font-size: 14px; }
   .tagline b{ color: var(--text); font-weight: 600; }
@@ -790,6 +801,7 @@
       <div class="clash-heading" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700;" id="clashFinalMessage">Game over!</div>
       <div class="clash-final-score" id="clashFinalScore">0/15</div>
       <div class="clash-best-score" id="clashBestScore">Best: 0/15</div>
+      <div class="achv-toast-list" id="clashAchvToastList"></div>
       <div class="btn-row">
         <button class="ghost-btn" id="clashFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="clashPlayAgainBtn" style="display:none;">Play again</button>
@@ -819,9 +831,10 @@
       </div>
     </div>
 
-    <div id="gridResultsArea" class="clash-results" style="display:none;">
+    <div id="gridResultsArea" class="clash-results" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid var(--line);">
       <div class="clash-heading" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700;" id="gridFinalMessage">Solved it!</div>
       <div class="grid-solved-row" id="gridRevealList" style="margin-top:12px;"></div>
+      <div class="achv-toast-list" id="gridAchvToastList"></div>
       <div class="btn-row" style="margin-top:16px; justify-content:center;">
         <button class="ghost-btn" id="gridFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="gridPlayAgainBtn" style="display:none;">New puzzle</button>
@@ -907,9 +920,11 @@
   <div class="console-wrap">
     <div class="console-body">
       <div class="console-screen">
-        <div class="marquee home-marquee">CARTRIDGE</div>
+        <button class="home-nav-arrow home-nav-arrow-left" id="homeArrowLeft" aria-label="Previous game">◀</button>
+        <div class="marquee home-marquee" id="homeMarquee">CARTRIDGE</div>
         <div class="home-date" id="homeDate"></div>
-        <div class="home-tagline">Insert a title. Read the board.<br><b>Find the game.</b></div>
+        <div class="home-tagline" id="homeTagline">Insert a title. Read the board.<br><b>Find the game.</b></div>
+        <button class="home-nav-arrow home-nav-arrow-right" id="homeArrowRight" aria-label="Next game">▶</button>
       </div>
     </div>
     <div class="gamepad-row">
@@ -2215,7 +2230,7 @@ function endRound(bannerTitle){
   } else if(appMode === 'archive' && archiveReplayDate){
     recordDailyResult(archiveReplayDate, 'lost', guesses.length);
   }
-  renderAchievementToasts(evaluateAchievements('lose'));
+  renderAchievementToasts([...evaluateAchievements('lose'), ...checkCrossGameAchievements()]);
 }
 
 function submitGuess(){
@@ -2253,7 +2268,7 @@ function submitGuess(){
     } else if(appMode === 'archive' && archiveReplayDate){
       recordDailyResult(archiveReplayDate, 'won', guesses.length);
     }
-    renderAchievementToasts(evaluateAchievements('win'));
+    renderAchievementToasts([...evaluateAchievements('win'), ...checkCrossGameAchievements()]);
   } else {
     maybeUnlockPerspective();
     maybeUnlockClue();
@@ -2413,6 +2428,10 @@ const ACHIEVEMENTS = [
   {id:'explorer',          name:'Explorer',              icon:'🗺️', hint:'Play a round in Free Play mode.'},
   {id:'perfect_ten',       name:'Perfect Ten',           icon:'🎮', hint:'Win 10 rounds total, across any mode.'},
   {id:'cover_blown',       name:'Cover Blown',           icon:'🖼️', hint:'Fully sharpen the cover art before you solve the title.'},
+  {id:'no_contest',        name:'No Contest',            icon:'🥇', hint:'Score a perfect 15/15 in Cartridge Clash.'},
+  {id:'flawless_grid',     name:'Flawless Grid',         icon:'🧩', hint:'Solve Cartridge Connect without losing a single life.'},
+  {id:'full_house',        name:'Full House',            icon:'🏠', hint:'Get a green result in Cartridge, Cartridge Clash, and Cartridge Connect, all on the same day.'},
+  {id:'best_of_the_best',  name:'Best of the Best',      icon:'🌟', hint:'Get a green result in all 3 games, 7 days running.'},
   {id:'cartridge_master',  name:'Cartridge Master',      icon:'🏅', hint:'Unlock every other achievement.'},
 ];
 const ACHIEVEMENTS_BY_ID = Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, a]));
@@ -2534,13 +2553,75 @@ function evaluateAchievements(outcome){ // outcome: 'win' | 'lose'
   return newlyUnlocked;
 }
 
-function renderAchievementToasts(newlyUnlocked){
-  const el = document.getElementById('achvToastList');
+function renderAchievementToasts(newlyUnlocked, targetId){
+  const el = document.getElementById(targetId || 'achvToastList');
   if(!el) return;
   if(!newlyUnlocked.length){ el.innerHTML = ''; return; }
   el.innerHTML = newlyUnlocked.map(a => `
     <div class="achv-toast"><span class="achv-toast-icon">${a.icon}</span> NEW ACHIEVEMENT UNLOCKED: ${a.name}</div>
   `).join('');
+}
+
+// Shared unlock helper for achievements checked outside evaluateAchievements()
+// (Clash/Connect-specific badges, and the cross-game ones below). Only unlocks
+// ids not already earned, and always re-checks the "unlock everything" meta-badge.
+function unlockAchievements(ids){
+  const state = achievementState;
+  const newlyUnlocked = [];
+  ids.forEach(id=>{
+    if(state.unlocked[id]) return;
+    state.unlocked[id] = new Date().toISOString();
+    newlyUnlocked.push(ACHIEVEMENTS_BY_ID[id]);
+  });
+  if(!state.unlocked['cartridge_master'] &&
+     ACHIEVEMENTS.filter(a => a.id !== 'cartridge_master').every(a => state.unlocked[a.id])){
+    state.unlocked['cartridge_master'] = new Date().toISOString();
+    newlyUnlocked.push(ACHIEVEMENTS_BY_ID['cartridge_master']);
+  }
+  saveAchievementState(state);
+  return newlyUnlocked;
+}
+
+// "Green" means: Cartridge solved that day, a perfect 15/15 in Cartridge Clash,
+// or Cartridge Connect fully solved — same bar as each game's own streak tracker.
+function cartridgeGreenOn(dateStr){
+  const hist = loadDailyHistory();
+  return !!(hist[dateStr] && hist[dateStr].status === 'won');
+}
+function clashGreenOn(dateStr){
+  const hist = loadClashHistory();
+  return hist[dateStr] === CLASH_STAGES.length * CLASH_ROUNDS_PER_STAGE;
+}
+function connectGreenOn(dateStr){
+  return loadGridHistory()[dateStr] === 'won';
+}
+function allThreeGreenOn(dateStr){
+  return cartridgeGreenOn(dateStr) && clashGreenOn(dateStr) && connectGreenOn(dateStr);
+}
+
+// Call after any of the 3 games finishes its DAILY round — safe to call from
+// all three, since it only unlocks based on stored history, not local state.
+function checkCrossGameAchievements(){
+  const ids = [];
+  if(allThreeGreenOn(todayKey())) ids.push('full_house');
+  let sevenForSeven = true;
+  for(let offset = 0; offset <= 6; offset++){
+    if(!allThreeGreenOn(dateKeyFromOffset(offset))){ sevenForSeven = false; break; }
+  }
+  if(sevenForSeven) ids.push('best_of_the_best');
+  return unlockAchievements(ids);
+}
+
+function checkClashAchievements(){
+  const ids = [];
+  if(clashScore === CLASH_STAGES.length * CLASH_ROUNDS_PER_STAGE) ids.push('no_contest');
+  return unlockAchievements(ids);
+}
+
+function checkGridAchievements(won){
+  const ids = [];
+  if(won && gridLives === 3) ids.push('flawless_grid');
+  return unlockAchievements(ids);
 }
 
 function renderAchievements(){
@@ -3207,6 +3288,8 @@ function endClashGame(){
   const total = CLASH_STAGES.length * CLASH_ROUNDS_PER_STAGE;
   playSfx(clashScore === total ? 'win' : 'lose');
   showClashResults();
+  const unlocked = checkClashAchievements().concat(clashMode === 'daily' ? checkCrossGameAchievements() : []);
+  renderAchievementToasts(unlocked, 'clashAchvToastList');
 }
 
 // FLIP-style slide: the card that just won (now rendered in the left slot) visually
@@ -3308,6 +3391,10 @@ secretGameTrigger.addEventListener('click', ()=>{
 const homeScreen = document.getElementById('homeScreen');
 const gameScreen = document.getElementById('gameScreen');
 const homeDate = document.getElementById('homeDate');
+const homeMarquee = document.getElementById('homeMarquee');
+const homeTagline = document.getElementById('homeTagline');
+const homeArrowLeft = document.getElementById('homeArrowLeft');
+const homeArrowRight = document.getElementById('homeArrowRight');
 const homePlayBtn = document.getElementById('homePlayBtn');
 const homeFreeplayBtn = document.getElementById('homeFreeplayBtn');
 const gameMarquee = document.getElementById('gameMarquee');
@@ -3323,13 +3410,63 @@ function showGameScreen(){
 
 homeDate.textContent = new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
 
+// The 3 games cyclable from the home screen TV, each with the colour its name
+// is shown in — the arrow that leads to a game is tinted to match it.
+const HOME_GAMES = [
+  { key: 'cartridge', label: 'CARTRIDGE',          color: 'var(--cyan)',  tagline: 'Insert a title. Read the board.<br><b>Find the game.</b>' },
+  { key: 'clash',     label: 'CARTRIDGE CLASH',    color: 'var(--amber)', tagline: 'Pick a side. Trust the numbers.<br><b>Survive the streak.</b>' },
+  { key: 'connect',   label: 'CARTRIDGE CONNECT',  color: 'var(--green)', tagline: 'Sixteen games. Four hidden groups.<br><b>Find the connections.</b>' },
+];
+let homeSelectedIndex = 0;
+
+function renderHomeSelector(){
+  const n = HOME_GAMES.length;
+  const current = HOME_GAMES[homeSelectedIndex];
+  const nextGame = HOME_GAMES[(homeSelectedIndex + 1) % n];
+  const prevGame = HOME_GAMES[(homeSelectedIndex - 1 + n) % n];
+  homeMarquee.textContent = current.label;
+  homeMarquee.style.color = current.color;
+  homeTagline.innerHTML = current.tagline;
+  homeArrowRight.style.color = nextGame.color;
+  homeArrowLeft.style.color = prevGame.color;
+}
+
+homeArrowRight.addEventListener('click', ()=>{
+  homeSelectedIndex = (homeSelectedIndex + 1) % HOME_GAMES.length;
+  renderHomeSelector();
+});
+homeArrowLeft.addEventListener('click', ()=>{
+  homeSelectedIndex = (homeSelectedIndex - 1 + HOME_GAMES.length) % HOME_GAMES.length;
+  renderHomeSelector();
+});
+
+renderHomeSelector();
+
 homePlayBtn.addEventListener('click', ()=>{
-  showGameScreen();
-  enterDailyMode();
+  const key = HOME_GAMES[homeSelectedIndex].key;
+  if(key === 'clash'){
+    clashModal.classList.add('show');
+    startClashDaily();
+  } else if(key === 'connect'){
+    gridModal.classList.add('show');
+    startGridDaily();
+  } else {
+    showGameScreen();
+    enterDailyMode();
+  }
 });
 homeFreeplayBtn.addEventListener('click', ()=>{
-  showGameScreen();
-  enterFreeplayMode();
+  const key = HOME_GAMES[homeSelectedIndex].key;
+  if(key === 'clash'){
+    clashModal.classList.add('show');
+    startClashFreeplay();
+  } else if(key === 'connect'){
+    gridModal.classList.add('show');
+    startGridFreeplay();
+  } else {
+    showGameScreen();
+    enterFreeplayMode();
+  }
 });
 gameMarquee.addEventListener('click', showHomeScreen);
 
@@ -3590,7 +3727,6 @@ function handleGridTileClick(title){
 }
 
 function showGridResults(won){
-  gridPlayArea.style.display = 'none';
   gridResultsArea.style.display = '';
   gridFinalMessage.textContent = won ? 'Solved it! \ud83c\udf89' : 'Out of lives!';
   const unsolved = gridPuzzle.categories.filter(c=>!gridSolvedIds.includes(c.id));
@@ -3606,7 +3742,6 @@ function showGridResults(won){
 
 function hideGridResults(){
   gridResultsArea.style.display = 'none';
-  gridPlayArea.style.display = '';
 }
 
 function startGridDaily(){
@@ -3667,6 +3802,8 @@ gridSubmitBtn.addEventListener('click', ()=>{
         if(gridMode === 'daily') recordGridDailyResult(gridDailyDate, true);
         playSfx('win');
         showGridResults(true);
+        const unlocked = checkGridAchievements(true).concat(gridMode === 'daily' ? checkCrossGameAchievements() : []);
+        renderAchievementToasts(unlocked, 'gridAchvToastList');
       }
     }, 700);
     return;
@@ -3701,6 +3838,8 @@ gridSubmitBtn.addEventListener('click', ()=>{
       if(gridMode === 'daily') recordGridDailyResult(gridDailyDate, false);
       playSfx('lose');
       showGridResults(false);
+      const unlocked = checkGridAchievements(false).concat(gridMode === 'daily' ? checkCrossGameAchievements() : []);
+      renderAchievementToasts(unlocked, 'gridAchvToastList');
       return;
     }
     updateGridSubmitState();
