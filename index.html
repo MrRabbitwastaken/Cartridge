@@ -4,6 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CARTRIDGE — Guess the Game</title>
+<meta name="description" content="Cartridge — a daily video game guessing game. Compare stats, spot the mystery title, and play Cartridge Clash and Cartridge Connect too. New puzzles every day.">
+<link rel="canonical" href="https://gamecartridge.co.uk/">
+
+<meta property="og:title" content="Cartridge — Guess the Game">
+<meta property="og:description" content="A daily video game guessing game, plus Cartridge Clash and Cartridge Connect. New puzzles every day.">
+<meta property="og:url" content="https://gamecartridge.co.uk/">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://gamecartridge.co.uk/preview.png">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cartridge — Guess the Game">
+<meta name="twitter:description" content="A daily video game guessing game, plus Cartridge Clash and Cartridge Connect.">
+<meta name="twitter:image" content="https://gamecartridge.co.uk/preview.png">
+
+<link rel="icon" href="/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -602,7 +617,7 @@
     .clash-card-title .ct-name { font-size: 12px; }
   }
 
-  /* ---------- Cartridge Connect ---------- */
+  /* ---------- Cartridge Connect (Genre Grid) ---------- */
   #gridModal .modal-box { max-width: 640px; }
   .grid-top-row {
     display: flex; justify-content: space-between; align-items: center;
@@ -776,7 +791,7 @@
 <div class="modal-overlay" id="gridModal">
   <div class="modal-box" style="max-width:640px;">
     <button class="modal-close" id="gridModalClose">✕</button>
-    <div class="modal-title">Cartridge Connect</div>
+    <div class="modal-title">CARTRIDGE CONNECT</div>
 
     <div id="gridPlayArea">
       <div class="grid-top-row">
@@ -3307,7 +3322,7 @@ homeFreeplayBtn.addEventListener('click', ()=>{
 });
 gameMarquee.addEventListener('click', showHomeScreen);
 
-// ---------- Cartridge Connect (Connections-style) ----------
+// ---------- Cartridge Connect (Genre Grid / Connections-style) ----------
 function mulberry32(seed){
   let a = seed >>> 0;
   return function(){
