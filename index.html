@@ -307,6 +307,19 @@
     font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-dim); text-align: center; padding: 4px;
   }
   .msg { min-height: 20px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--amber); margin: 6px 2px 18px; text-align: center; }
+
+  /* Mobile only: the search box was too cramped sharing a row with the Guess
+     button and cover art. Reorder (not restructure) the same 3 elements so
+     Guess + cover art form a compact centered row, with the search box given
+     its own full-width row underneath for comfortable typing. Desktop is
+     untouched. */
+  @media (max-width: 640px) {
+    .search-row { justify-content: center; }
+    .search-box { order: 3; flex: 1 1 100%; min-width: 0; }
+    #guessBtn { order: 1; }
+    .cover-panel { order: 2; }
+  }
+
   .board-head, .cart-row {
     display: grid;
     grid-template-columns: 78px 1.2fr 0.6fr 1fr 0.8fr 1.2fr 1.2fr 0.8fr 0.9fr;
@@ -543,6 +556,16 @@
      label, so it reads differently from a field you actually deduced from a guess. */
   .progress-cell.pc-hinted { box-shadow: inset 0 0 0 2px var(--violet); }
   .hint-tag { font-size: 10px; margin-left: 3px; }
+
+  /* Mobile only: the cover art and stat grid used to sit side by side, which
+     squeezed the grid too narrow to fit its own rows and forced horizontal
+     scrolling. Stack them instead so the grid gets the full modal width. */
+  @media (max-width: 560px) {
+    .progress-body { flex-direction: column; align-items: center; }
+    .progress-cover { width: 140px; height: 187px; }
+    .progress-grid { width: 100%; }
+  }
+
 
   .hint-section {
     margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);
@@ -1057,7 +1080,10 @@
       <div class="win-banner-title" id="winBannerTitle">LEVEL CLEARED</div>
       <span class="sm" id="winDetail"></span>
       <div class="achv-toast-list" id="achvToastList"></div>
-      <button class="share-btn" id="shareBtn">📋 Share Results</button>
+      <div class="btn-row">
+        <button class="share-btn" id="shareBtn">📋 Share Results</button>
+        <button class="ghost-btn" id="winBannerNewGameBtn" style="display:none; margin-top:12px;">🔄 New Game</button>
+      </div>
     </div>
   </div>
 
@@ -2096,9 +2122,13 @@ function showResultBanner(kind, titleText, detailText){
   winDetail.textContent = detailText;
   winBanner.classList.add('show');
   setWinBannerCover(target.title);
+  // Free Play only — Daily/Archive rounds shouldn't offer a quick "next round"
+  // button, since there's nothing to jump to.
+  winBannerNewGameBtn.style.display = appMode === 'freeplay' ? '' : 'none';
 }
 const giveUpBtn = document.getElementById('giveUpBtn');
 const newGameBtn = document.getElementById('newGameBtn');
+const winBannerNewGameBtn = document.getElementById('winBannerNewGameBtn');
 const cluePanel = document.getElementById('cluePanel');
 const perspectivePanel = document.getElementById('perspectivePanel');
 const modeDailyBtn = document.getElementById('modeDailyBtn');
@@ -2466,6 +2496,7 @@ document.addEventListener('click', (e)=>{
 guessBtn.addEventListener('click', submitGuess);
 giveUpBtn.addEventListener('click', giveUp);
 newGameBtn.addEventListener('click', ()=>{ if(appMode === 'daily' || appMode === 'archive') return; pickTarget(); });
+winBannerNewGameBtn.addEventListener('click', ()=>{ if(appMode !== 'freeplay') return; pickTarget(); });
 
 function findGameByTitle(str){
   const q = str.trim().toLowerCase();
