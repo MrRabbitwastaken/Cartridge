@@ -1849,13 +1849,13 @@ function renderClashArchive(){
   const days = buildLastNDays(7, clashDayInfo);
   const total = CLASH_STAGES.length * CLASH_ROUNDS_PER_STAGE;
   renderGameArchiveRow(days, document.getElementById('archiveStatsClash'), document.getElementById('archiveGridClash'), {
-    partialClass: ' amber', scoreTotal: total,
+    partialClass: ' amber', scoreTotal: total, playable: true,
     streakLabel: 'Perfect streak', bestStreakLabel: 'Best perfect streak',
   });
 }
 function renderConnectArchive(){
   const days = buildLastNDays(7, connectDayInfo);
-  renderGameArchiveRow(days, document.getElementById('archiveStatsConnect'), document.getElementById('archiveGridConnect'), {});
+  renderGameArchiveRow(days, document.getElementById('archiveStatsConnect'), document.getElementById('archiveGridConnect'), {playable: true});
 }
 
 function openArchivePanel(){
@@ -2236,6 +2236,24 @@ archiveGrid.addEventListener('click', (e)=>{
   const cell = e.target.closest('.archive-cell.playable');
   if(!cell) return;
   playArchivedDay(cell.dataset.date);
+});
+
+document.getElementById('archiveGridClash').addEventListener('click', (e)=>{
+  const cell = e.target.closest('.archive-cell.playable');
+  if(!cell) return;
+  closeArchivePanel();
+  gridModal.classList.remove('show');
+  clashModal.classList.add('show');
+  startClashArchive(cell.dataset.date);
+});
+
+document.getElementById('archiveGridConnect').addEventListener('click', (e)=>{
+  const cell = e.target.closest('.archive-cell.playable');
+  if(!cell) return;
+  closeArchivePanel();
+  clashModal.classList.remove('show');
+  gridModal.classList.add('show');
+  startGridArchive(cell.dataset.date);
 });
 
 function playArchivedDay(dateStr){
@@ -3174,12 +3192,11 @@ function shareHeaderLabel(){
 }
 
 function buildShareText(){
-  // guesses is newest-first (unshift); the share grid reads top-to-bottom in the
-  // order they were actually made, so reverse it back to chronological order.
-  const rows = guesses.slice().reverse().map(guessRowSquares);
-  hintFields.forEach(()=> rows.push('🎲🎲🎲🎲🎲🎲🎲')); // a hint spends a guess without spoiling a field
-  const header = `${shareHeaderLabel()} ${effectiveGuessCount()}/${MAX_GUESSES} 🏆`;
-  return [header, ...rows].join('\n');
+  const count = effectiveGuessCount();
+  const won = winBanner.classList.contains('win');
+  return won
+    ? `${shareHeaderLabel()} cleared in ${count}/${MAX_GUESSES} \ud83c\udfc6\ud83d\udc7e`
+    : `${shareHeaderLabel()} \u2014 didn't crack it (${count}/${MAX_GUESSES}) \ud83d\udc7e`;
 }
 
 // Tries the native OS share sheet first (WhatsApp, Messages, X, etc. all show
@@ -3283,9 +3300,10 @@ const clashPlayAgainBtn = document.getElementById('clashPlayAgainBtn');
 const clashCloseBtn = document.getElementById('clashCloseBtn');
 const secretGameTrigger = document.getElementById('secretGameTrigger');
 
-let clashMode = 'daily'; // 'daily' | 'freeplay'
+let clashMode = 'daily'; // 'daily' | 'freeplay' | 'archive'
 let clashDifficulty = 'hard'; // 'easy' | 'hard' — Free Play only, same idea as Cartridge's own difficulty
 let clashDailyDate = null;
+let clashArchiveDate = null;
 let clashStageIndex = 0;
 let clashRound = 1;
 let clashScore = 0;
@@ -3364,7 +3382,9 @@ function loadClashCardArt(cardEl, game){
 
 function renderClashRound(){
   const stage = CLASH_STAGES[clashStageIndex];
-  clashModeLabel.textContent = clashMode === 'daily' ? `DAILY #${dailyNumberLabel(clashDailyDate)}` : 'FREE PLAY';
+  clashModeLabel.textContent = clashMode === 'daily' ? `DAILY #${dailyNumberLabel(clashDailyDate)}`
+    : clashMode === 'archive' ? `REPLAY #${dailyNumberLabel(clashArchiveDate)} (${formatUKDate(clashArchiveDate)})`
+    : 'FREE PLAY';
   clashDiffRow.classList.toggle('show', clashMode === 'freeplay');
   clashStageLabel.textContent = `Stage ${clashStageIndex + 1}/${CLASH_STAGES.length} — ${stage.label}`;
   clashRoundLabel.textContent = `Round ${clashRound}/${CLASH_ROUNDS_PER_STAGE}`;
@@ -3385,6 +3405,7 @@ function renderClashRound(){
 }
 
 const CLASH_ANNOUNCE_HOLD_MS = 900;
+const CLASH_STAGE_TRANSITION_HOLD_MS = 1900; // stage 2 and 3 hold an extra second so the category change actually registers
 
 // Covers the cards with a "STAGE N" announcement (plus the new prompt) so
 // moving to a new category is never ambiguous — this only fires 3 times a
@@ -3405,7 +3426,9 @@ function hideClashRoundAnnounce(){
 
 function startClashStage(){
   clashRound = 1;
-  clashStageRng = clashMode === 'daily' ? clashRngForStage(clashDailyDate, clashStageIndex) : Math.random;
+  clashStageRng = clashMode === 'daily' ? clashRngForStage(clashDailyDate, clashStageIndex)
+    : clashMode === 'archive' ? clashRngForStage(clashArchiveDate, clashStageIndex)
+    : Math.random;
   clashPlan[clashStageIndex] = [];
   clashLeftGame = clashTitleToGame(clashPlanGetTitle(clashStageIndex, 0));
   clashRightGame = clashTitleToGame(clashPlanGetTitle(clashStageIndex, 1));
@@ -3479,6 +3502,22 @@ function startClashFreeplay(){
   setTimeout(hideClashRoundAnnounce, CLASH_ANNOUNCE_HOLD_MS);
 }
 
+// Replays a past day's Clash run exactly as it happened for everyone — same
+// seeded stages as that date's real Daily, just not tied to today's progress.
+function startClashArchive(dateStr){
+  clashMode = 'archive';
+  clashArchiveDate = dateStr;
+  clashStageIndex = 0;
+  clashScore = 0;
+  clashGameOver = false;
+  clashPlan = [];
+  clashResultsArea.style.display = 'none';
+  clashPlayArea.style.display = '';
+  startClashStage();
+  showClashRoundAnnounce();
+  setTimeout(hideClashRoundAnnounce, CLASH_ANNOUNCE_HOLD_MS);
+}
+
 const CLASH_HISTORY_KEY = 'cartridgeClashHistory_v1';
 function loadClashHistory(){
   try{ const raw = localStorage.getItem(CLASH_HISTORY_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; }
@@ -3489,8 +3528,8 @@ function saveClashHistory(hist){
 // Keeps the best score seen for the day — a day is only ever recorded once per
 // run now that a wrong answer no longer ends the game early, but staying
 // defensive here costs nothing.
-function recordClashDailyResult(score){
-  const date = todayKey();
+function recordClashDailyResult(score, date){
+  date = date || todayKey();
   const hist = loadClashHistory();
   if(typeof hist[date] === 'number' && hist[date] >= score) return;
   hist[date] = score;
@@ -3526,11 +3565,13 @@ function endClashGame(){
   if(clashMode === 'daily'){
     persistClashDaily();
     recordClashDailyResult(clashScore);
+  } else if(clashMode === 'archive'){
+    recordClashDailyResult(clashScore, clashArchiveDate);
   }
   const total = CLASH_STAGES.length * CLASH_ROUNDS_PER_STAGE;
   playSfx(clashScore === total ? 'win' : 'lose');
   showClashResults();
-  const unlocked = checkClashAchievements().concat(clashMode === 'daily' ? checkCrossGameAchievements() : []);
+  const unlocked = checkClashAchievements().concat(clashMode !== 'freeplay' ? checkCrossGameAchievements() : []);
   renderAchievementToasts(unlocked, 'clashAchvToastList');
 }
 
@@ -3568,11 +3609,13 @@ function handleClashPick(side){
       }
       // Only a stage change covers the cards and announces — a plain round
       // advance within the same stage just slides straight to the next matchup.
+      // Moving into stage 2/3 holds a beat longer than the initial stage-1
+      // start, since a category change mid-run is easier to miss.
       showClashRoundAnnounce();
       setTimeout(()=>{
         hideClashRoundAnnounce();
         startClashStage();
-      }, CLASH_ANNOUNCE_HOLD_MS);
+      }, CLASH_STAGE_TRANSITION_HOLD_MS);
       return;
     }
 
@@ -3592,7 +3635,9 @@ wireModal(clashModal, 'clashModalClose');
 
 function buildClashShareText(){
   const total = CLASH_STAGES.length * CLASH_ROUNDS_PER_STAGE;
-  const label = clashMode === 'daily' ? `CARTRIDGE CLASH Daily #${dailyNumberLabel(clashDailyDate)}` : 'CARTRIDGE CLASH — Free Play';
+  const label = clashMode === 'daily' ? `CARTRIDGE CLASH Daily #${dailyNumberLabel(clashDailyDate)}`
+    : clashMode === 'archive' ? `CARTRIDGE CLASH Replay #${dailyNumberLabel(clashArchiveDate)}`
+    : 'CARTRIDGE CLASH — Free Play';
   return `${label}\n${clashScore}/${total} — ${clashResultMessage(clashScore, total)}`;
 }
 clashShareBtn.addEventListener('click', ()=> shareOrCopy(buildClashShareText(), clashShareBtn));
@@ -3720,6 +3765,27 @@ function seededPick(arr, n, rng){
   return seededShuffle(arr, rng).slice(0, n);
 }
 
+// Same idea as seededPick, but refuses to let more than `maxPerSeries` picks
+// share a franchise (via the same seriesKeyOf() heuristic used elsewhere for
+// achievements) — stops a category from being 4 Fallout games or 4 Halo
+// games, which would make it a trivially easy "just look at the names" group
+// instead of a real Connections-style puzzle. Returns null if the pool can't
+// satisfy that limit, so the caller can just try a different category.
+function seededPickLimitSeries(arr, n, rng, maxPerSeries){
+  const shuffled = seededShuffle(arr, rng);
+  const picked = [];
+  const seriesCounts = {};
+  for(const g of shuffled){
+    const key = seriesKeyOf(g.title);
+    const used = seriesCounts[key] || 0;
+    if(used >= maxPerSeries) continue;
+    picked.push(g);
+    seriesCounts[key] = used + 1;
+    if(picked.length === n) break;
+  }
+  return picked.length === n ? picked : null;
+}
+
 const GRID_CRITIC_BRACKETS = [
   {lo:90, hi:101, label:'Critic score 90+'},
   {lo:80, hi:90,  label:'Critic score 80\u201389'},
@@ -3816,10 +3882,12 @@ function buildGenreGridPuzzle(seedStr, pool){
     for(const cand of shuffledCands){
       const available = cand.games.filter(g=>!usedTitles.has(g.title));
       if(available.length >= 4){
-        const picked = seededPick(available, 4, rng);
-        picked.forEach(g=>usedTitles.add(g.title));
-        chosen.push({ type:cand.type, label:cand.label, games: picked.map(g=>g.title) });
-        if(chosen.length === 4) break;
+        const picked = seededPickLimitSeries(available, 4, rng, 2);
+        if(picked){
+          picked.forEach(g=>usedTitles.add(g.title));
+          chosen.push({ type:cand.type, label:cand.label, games: picked.map(g=>g.title) });
+          if(chosen.length === 4) break;
+        }
       }
     }
     if(chosen.length === 4) return finalizeGridPuzzle(chosen, rng);
@@ -3830,7 +3898,7 @@ function buildGenreGridPuzzle(seedStr, pool){
   GRID_CRITIC_BRACKETS.forEach(b=>{
     const games = pool.filter(g=> g.critic >= b.lo && g.critic < b.hi && !usedTitles.has(g.title));
     if(games.length >= 4 && fallback.length < 4){
-      const picked = seededPick(games, 4, rng);
+      const picked = seededPickLimitSeries(games, 4, rng, 2) || seededPick(games, 4, rng);
       picked.forEach(g=>usedTitles.add(g.title));
       fallback.push({ type:'critic', label:b.label, games: picked.map(g=>g.title) });
     }
@@ -3858,7 +3926,7 @@ function recordGridDailyResult(date, won){
   saveGridHistory(hist);
 }
 
-let gridMode = 'daily'; // 'daily' | 'freeplay'
+let gridMode = 'daily'; // 'daily' | 'freeplay' | 'archive'
 let gridDifficulty = 'hard'; // 'easy' | 'hard' — Free Play only
 let gridPuzzle = null;
 let gridSolvedIds = [];
@@ -3867,6 +3935,7 @@ let gridSelected = [];
 let gridLocked = false;
 let gridGameOver = false;
 let gridDailyDate = null;
+let gridArchiveDate = null;
 
 const gridModal = document.getElementById('gridModal');
 const gridPlayArea = document.getElementById('gridPlayArea');
@@ -3939,7 +4008,9 @@ function updateGridSubmitState(){
 }
 
 function renderGridAll(){
-  gridModeLabel.textContent = gridMode === 'daily' ? `DAILY #${dailyNumberLabel(gridDailyDate)}` : 'FREE PLAY';
+  gridModeLabel.textContent = gridMode === 'daily' ? `DAILY #${dailyNumberLabel(gridDailyDate)}`
+    : gridMode === 'archive' ? `REPLAY #${dailyNumberLabel(gridArchiveDate)} (${formatUKDate(gridArchiveDate)})`
+    : 'FREE PLAY';
   gridDiffRow.classList.toggle('show', gridMode === 'freeplay');
   renderGridLives();
   renderGridSolvedRow();
@@ -4012,6 +4083,21 @@ function startGridFreeplay(){
   hideGridResults();
 }
 
+// Replays a past day's Connect puzzle exactly as it was that day — same
+// deterministic seed as that date's real Daily, kept separate from today's progress.
+function startGridArchive(dateStr){
+  gridMode = 'archive';
+  gridArchiveDate = dateStr;
+  gridPuzzle = buildGenreGridPuzzle('grid-' + dateStr);
+  gridSolvedIds = [];
+  gridLives = 3;
+  gridGameOver = false;
+  gridSelected = [];
+  gridLocked = false;
+  renderGridAll();
+  hideGridResults();
+}
+
 gridSubmitBtn.addEventListener('click', ()=>{
   if(gridSelected.length !== 4 || gridLocked || gridGameOver) return;
   gridLocked = true;
@@ -4036,9 +4122,10 @@ gridSubmitBtn.addEventListener('click', ()=>{
         gridGameOver = true;
         persistGridDaily();
         if(gridMode === 'daily') recordGridDailyResult(gridDailyDate, true);
+        else if(gridMode === 'archive') recordGridDailyResult(gridArchiveDate, true);
         playSfx('win');
         showGridResults(true);
-        const unlocked = checkGridAchievements(true).concat(gridMode === 'daily' ? checkCrossGameAchievements() : []);
+        const unlocked = checkGridAchievements(true).concat(gridMode !== 'freeplay' ? checkCrossGameAchievements() : []);
         renderAchievementToasts(unlocked, 'gridAchvToastList');
       }
     }, 700);
@@ -4072,9 +4159,10 @@ gridSubmitBtn.addEventListener('click', ()=>{
       gridGameOver = true;
       persistGridDaily();
       if(gridMode === 'daily') recordGridDailyResult(gridDailyDate, false);
+      else if(gridMode === 'archive') recordGridDailyResult(gridArchiveDate, false);
       playSfx('lose');
       showGridResults(false);
-      const unlocked = checkGridAchievements(false).concat(gridMode === 'daily' ? checkCrossGameAchievements() : []);
+      const unlocked = checkGridAchievements(false).concat(gridMode !== 'freeplay' ? checkCrossGameAchievements() : []);
       renderAchievementToasts(unlocked, 'gridAchvToastList');
       return;
     }
@@ -4103,7 +4191,9 @@ gridCloseBtn.addEventListener('click', ()=> gridModal.classList.remove('show'));
 wireModal(gridModal, 'gridModalClose');
 
 function buildConnectShareText(){
-  const label = gridMode === 'daily' ? `CARTRIDGE CONNECT Daily #${dailyNumberLabel(gridDailyDate)}` : 'CARTRIDGE CONNECT — Free Play';
+  const label = gridMode === 'daily' ? `CARTRIDGE CONNECT Daily #${dailyNumberLabel(gridDailyDate)}`
+    : gridMode === 'archive' ? `CARTRIDGE CONNECT Replay #${dailyNumberLabel(gridArchiveDate)}`
+    : 'CARTRIDGE CONNECT — Free Play';
   const solvedCount = gridSolvedIds.length;
   const outcome = solvedCount === 4 ? 'Solved it! \u{1F389}' : 'Out of lives!';
   const detail = solvedCount === 4 ? '4/4 groups' : `${solvedCount}/4 groups`;
