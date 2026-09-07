@@ -239,9 +239,9 @@
   }
   .achv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); gap: 10px; margin-top: 10px; }
   .achv-badge {
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
     padding: 10px 4px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2);
-    cursor: default; text-align: center;
+    cursor: pointer; text-align: center;
   }
   .achv-badge .achv-icon {
     font-size: 22px; filter: grayscale(1) brightness(0.5); opacity: 0.4; transition: filter .2s ease, opacity .2s ease;
@@ -253,6 +253,18 @@
   .achv-badge.unlocked { border-color: var(--amber); background: rgba(255,193,69,0.08); }
   .achv-badge.unlocked .achv-icon { filter: none; opacity: 1; }
   .achv-badge.unlocked .achv-name { color: var(--text); }
+
+  /* Tap-to-reveal hint — the badge's title="" tooltip only shows on mouse
+     hover, which doesn't work on touchscreens at all, so this is the actual
+     way phone users can read what an achievement is. */
+  .achv-hint-popup {
+    display: none; position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
+    width: max-content; max-width: 200px; background: var(--panel); border: 1px solid var(--amber);
+    border-radius: 8px; padding: 8px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    line-height: 1.4; color: var(--text); text-align: center; box-shadow: 0 10px 24px rgba(0,0,0,0.5);
+    z-index: 15; pointer-events: none;
+  }
+  .achv-badge.show-hint .achv-hint-popup { display: block; }
 
   .achv-toast-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
   .achv-toast {
@@ -638,7 +650,6 @@
     position: relative; aspect-ratio: 3/4; border-radius: 12px; overflow: hidden; cursor: pointer;
     border: 3px solid var(--line); background: var(--panel-2); transition: border-color .2s ease, transform .15s ease;
   }
-  .clash-card:hover { transform: translateY(-2px); border-color: var(--cyan); }
   .clash-card.locked { cursor: default; pointer-events: none; }
   .clash-card.correct { border-color: var(--green); }
   .clash-card.incorrect { border-color: var(--magenta); }
@@ -698,7 +709,6 @@
   .grid-tile.tile-len-m { font-size: 11.5px; }
   .grid-tile.tile-len-l { font-size: 10px; }
   .grid-tile.tile-len-xl { font-size: 8.5px; }
-  .grid-tile:hover { border-color: var(--cyan); }
   .grid-tile.selected { background: var(--cyan); color: #06210f; border-color: var(--cyan); }
   .grid-tile.shake { animation: gridShake .4s ease; }
   @keyframes gridShake {
@@ -712,6 +722,15 @@
     .grid-tile.tile-len-m { font-size: 10px; }
     .grid-tile.tile-len-l { font-size: 9px; }
     .grid-tile.tile-len-xl { font-size: 8px; }
+  }
+
+  /* Only apply these two hover effects on devices with a real pointer that can
+     actually "un-hover" (mouse/trackpad). On touchscreens, tapping a Clash card
+     or Connect tile would otherwise leave it stuck looking highlighted/blue
+     after the tap ends, since touch has no hover-exit event to clear it. */
+  @media (hover: hover) and (pointer: fine) {
+    .clash-card:hover { transform: translateY(-2px); border-color: var(--cyan); }
+    .grid-tile:hover { border-color: var(--cyan); }
   }
 </style>
 </head>
@@ -2926,9 +2945,48 @@ function renderAchievements(){
     return `<div class="achv-badge${unlocked?' unlocked':''}" title="${a.name} — ${a.hint}">
       <div class="achv-icon">${a.icon}</div>
       <div class="achv-name">${a.name}</div>
+      <div class="achv-hint-popup">${a.name} — ${a.hint}</div>
     </div>`;
   }).join('');
 }
+
+// Tap a badge to show its name+hint (the title="" tooltip only works on mouse
+// hover). Tapping the same badge again, a different badge, or anywhere else
+// closes it. Event delegation so this keeps working after renderAchievements()
+// rebuilds the grid.
+function closeAchvHint(badge){
+  badge.classList.remove('show-hint');
+  const popup = badge.querySelector('.achv-hint-popup');
+  if(popup) popup.style.transform = '';
+}
+function openAchvHint(badge){
+  badge.classList.add('show-hint');
+  const popup = badge.querySelector('.achv-hint-popup');
+  if(!popup) return;
+  // Default centered position, then nudge sideways if that pushes it past the
+  // edge of the modal it's in — badges in the leftmost/rightmost column would
+  // otherwise render most of the popup off-screen (or clipped by the modal's
+  // own horizontal overflow) on a phone-width grid.
+  popup.style.transform = 'translateX(-50%)';
+  const container = badge.closest('.modal-box') || document.body;
+  const containerRect = container.getBoundingClientRect();
+  const rect = popup.getBoundingClientRect();
+  const margin = 10;
+  const minX = Math.max(margin, containerRect.left + margin);
+  const maxX = Math.min(window.innerWidth - margin, containerRect.right - margin);
+  let shift = 0;
+  if(rect.left < minX) shift = minX - rect.left;
+  else if(rect.right > maxX) shift = maxX - rect.right;
+  if(shift !== 0) popup.style.transform = `translateX(calc(-50% + ${shift}px))`;
+}
+document.addEventListener('click', (e)=>{
+  const badge = e.target.closest('.achv-badge');
+  document.querySelectorAll('.achv-badge.show-hint').forEach(b=>{ if(b !== badge) closeAchvHint(b); });
+  if(badge){
+    if(badge.classList.contains('show-hint')) closeAchvHint(badge);
+    else openAchvHint(badge);
+  }
+});
 
 
 // Only guesses that were "close" (amber on the board, within 3 years) narrow this
