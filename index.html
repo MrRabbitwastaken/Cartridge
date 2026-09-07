@@ -754,6 +754,24 @@
   }
   .chaos-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .chaos-flash { animation: chaosFlash .35s ease; }
+
+  /* Mobile only — the header, tagline, timer bar and a bigger cover image all
+     stacked up meant the answer choices ran off-screen and needed scrolling.
+     Trim the decorative bits and shrink the cover specifically for Chaos on
+     narrow screens so the whole round fits without scrolling. Desktop keeps
+     the full-size layout. */
+  @media (max-width: 600px) {
+    #chaosModal header { margin-bottom: 8px; }
+    #chaosModal .marquee { font-size: 20px; padding: 6px 14px; }
+    #chaosModal .tagline { display: none; }
+    #chaosModal .grid-top-row { margin-bottom: 6px; }
+    #chaosModal .chaos-timer-track { margin-bottom: 8px; }
+    #chaosModal .chaos-round-label { margin-bottom: 4px; font-size: 10px; }
+    #chaosModal .clash-prompt { margin-bottom: 8px; font-size: 15px; }
+    #chaosModal .chaos-cover { width: 120px; }
+    #chaosModal .chaos-choices { gap: 6px; }
+    #chaosModal .chaos-choice-btn { padding: 8px 10px; font-size: 12px; }
+  }
   @keyframes chaosFlash { 0% { filter: brightness(1.6); } 100% { filter: brightness(1); } }
 
   .chaos-unlock-toast {
@@ -2853,12 +2871,12 @@ const ACHIEVEMENTS = [
   {id:'close_but_no_cigar',name:'Close But No Cigar',    icon:'😅', hint:'Lose a round, but guess a prequel or sequel of the correct game along the way.'},
   {id:'triple_kill',       name:'Triple Kill',           icon:'🔥', hint:'Reach a 3-day Daily win streak.'},
   {id:'killtacular',       name:'Killtacular',           icon:'🚀', hint:'Reach a 5-day Daily win streak.'},
-  {id:'killionaire',       name:'Killionaire',           icon:'💥', hint:'Reach a 10-day Daily win streak.'},
-  {id:'rampage',           name:'Rampage',               icon:'🎖️', hint:'Reach a 15-day Daily win streak.'},
-  {id:'godlike',           name:'Godlike',               icon:'👑', hint:'Reach a 20-day Daily win streak.'},
-  {id:'tactical_nuke',     name:'Tactical Nuke Inbound', icon:'☢️', hint:'Reach a 25-day Daily win streak.'},
-  {id:'cartridge_king',    name:'Cartridge King',        icon:'🏆', hint:'Reach a 30-day Daily win streak.'},
-  {id:'sharp_eye',         name:'Sharp Eye',             icon:'👀', hint:'Land 4 or more exact-match (green) fields in a single guess.'},
+  {id:'killionaire',       name:'Killionaire',           icon:'💥', hint:'Play the Daily 10 days in a row.'},
+  {id:'rampage',           name:'Rampage',               icon:'🎖️', hint:'Play the Daily 15 days in a row.'},
+  {id:'godlike',           name:'Godlike',               icon:'👑', hint:'Play the Daily 20 days in a row.'},
+  {id:'tactical_nuke',     name:'Tactical Nuke Inbound', icon:'☢️', hint:'Play the Daily 25 days in a row.'},
+  {id:'cartridge_king',    name:'Cartridge King',        icon:'🏆', hint:'Play the Daily 30 days in a row.'},
+  {id:'sharp_eye',         name:'Sharp Eye',             icon:'👀', hint:'Land 4 or more exact-match fields on a guess that isn\u2019t your final winning one.'},
   {id:'well_rounded',      name:'Well Rounded',          icon:'🕹️', hint:'Win at least one round in Daily, Free Play, and an Archive replay.'},
   {id:'archivist',         name:'Archivist',             icon:'📼', hint:'Solve 5 different days from the Archive.'},
   {id:'explorer',          name:'Explorer',              icon:'🗺️', hint:'Play a round in Free Play mode.'},
@@ -2911,12 +2929,27 @@ function exactFieldCountForGuess(g){
 }
 
 function currentDailyStreak(){
-  const days = buildLast30Days();
+  const days = buildLastNDays(30, cartridgeDayInfo);
   let streak = 0;
   for(let i=days.length-1;i>=0;i--){
     const d = days[i];
-    if(d.isToday && !d.entry) continue; // today not played yet doesn't break the streak
-    if(d.entry && d.entry.status === 'won'){ streak++; }
+    if(d.isToday && !d.played) continue; // today not played yet doesn't break the streak
+    if(d.played && d.won){ streak++; }
+    else break;
+  }
+  return streak;
+}
+
+// Same lookback, but counts any day the Daily was played — win or lose —
+// rather than only wins. Used for the higher streak-tier badges (10 days and
+// up), which reward showing up every day rather than a perfect run.
+function currentPlayedStreak(){
+  const days = buildLastNDays(30, cartridgeDayInfo);
+  let streak = 0;
+  for(let i=days.length-1;i>=0;i--){
+    const d = days[i];
+    if(d.isToday && !d.played) continue;
+    if(d.played){ streak++; }
     else break;
   }
   return streak;
@@ -2966,20 +2999,29 @@ function evaluateAchievements(outcome){ // outcome: 'win' | 'lose'
       const streak = currentDailyStreak();
       if(streak >= 3) unlock('triple_kill');
       if(streak >= 5) unlock('killtacular');
-      if(streak >= 10) unlock('killionaire');
-      if(streak >= 15) unlock('rampage');
-      if(streak >= 20) unlock('godlike');
-      if(streak >= 25) unlock('tactical_nuke');
-      if(streak >= 30) unlock('cartridge_king');
     }
   } else {
     const targetKey = seriesKeyOf(target.title);
     if(guesses.some(g => g.title !== target.title && seriesKeyOf(g.title) === targetKey)) unlock('close_but_no_cigar');
   }
 
-  // Applies regardless of outcome — a sharp deduction is worth celebrating even in a loss.
-  if(guesses.some(g => exactFieldCountForGuess(g) >= 4)) unlock('sharp_eye');
+  // A win's final guess trivially matches every field (it *is* the target), so
+  // that guess doesn't count as a "sharp" deduction — only an earlier guess
+  // (or, on a loss, any guess at all) that lands 4+ exact fields qualifies.
+  const sharpEyeCandidates = outcome === 'win' ? guesses.slice(1) : guesses;
+  if(sharpEyeCandidates.some(g => exactFieldCountForGuess(g) >= 4)) unlock('sharp_eye');
   if(appMode === 'freeplay') unlock('explorer');
+
+  // These badges reward playing the Daily every day, win or lose — so they're
+  // checked here regardless of outcome, not just after a win.
+  if(appMode === 'daily'){
+    const playedStreak = currentPlayedStreak();
+    if(playedStreak >= 10) unlock('killionaire');
+    if(playedStreak >= 15) unlock('rampage');
+    if(playedStreak >= 20) unlock('godlike');
+    if(playedStreak >= 25) unlock('tactical_nuke');
+    if(playedStreak >= 30) unlock('cartridge_king');
+  }
 
   if(ACHIEVEMENTS.filter(a => a.id !== 'cartridge_master').every(a => state.unlocked[a.id])){
     unlock('cartridge_master');
