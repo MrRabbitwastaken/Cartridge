@@ -142,6 +142,7 @@
   .tagline { margin-top: 12px; color: var(--text-dim); font-size: 14px; }
   .tagline b{ color: var(--text); font-weight: 600; }
   #gameMarquee { cursor: pointer; }
+  #clashPageMarquee, #gridPageMarquee { cursor: pointer; }
   .legend {
     display: flex; flex-wrap: wrap; gap: 10px 18px; justify-content: center;
     margin: 18px 0 26px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-dim);
@@ -159,7 +160,7 @@
     cursor: pointer; transition: all .15s; text-align: center;
   }
   .mode-btn:hover { border-color: var(--cyan); color: var(--text); }
-  .mode-btn.active { background: var(--cyan); border-color: var(--cyan); color: #06210f; box-shadow: 0 0 18px rgba(0,229,255,0.35); }
+  .mode-btn.active { background: var(--mode-accent, var(--cyan)); border-color: var(--mode-accent, var(--cyan)); color: #06210f; box-shadow: 0 0 18px var(--mode-glow, rgba(0,229,255,0.35)); }
   .freeplay-controls { display: none; }
   .freeplay-controls.show { display: block; animation: dropIn .3s ease both; }
   .difficulty-label { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.4px; }
@@ -468,6 +469,16 @@
     font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
   }
   .modal-close:hover { border-color: var(--magenta); color: var(--magenta); }
+
+  /* ---------- "Page mode" — used by Cartridge Clash and Cartridge Connect so
+     they behave as their own full page (like Cartridge itself) instead of a
+     small centered overlay. This is what lets the icon-nav (Help/Stats/
+     Settings) stay reachable, since a fixed full-screen overlay used to sit
+     visually on top of it. ---------- */
+  .modal-overlay.page-mode {
+    position: static; background: none; padding: 0; align-items: stretch; justify-content: flex-start;
+  }
+  .modal-overlay.page-mode.show { display: block; animation: none; }
   .modal-title {
     font-family: 'Press Start 2P', monospace; font-size: 14px; color: var(--cyan); margin: 0 30px 16px 0;
     text-shadow: 0 0 8px rgba(0,229,255,0.5);
@@ -571,7 +582,7 @@
   }
   footer { text-align: center; margin-top: 40px; color: var(--text-dim); font-size: 11px; font-family: 'IBM Plex Mono', monospace; line-height: 1.6; }
   /* ---------- Cartridge Clash (secret higher/lower mini-game) ---------- */
-  #clashModal .modal-box { max-width: 820px; }
+  #clashModal .wrap { max-width: 820px; }
   .clash-progress {
     display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
     font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 14px;
@@ -638,16 +649,11 @@
   }
 
   /* ---------- Cartridge Connect (Genre Grid) ---------- */
-  #gridModal .modal-box { max-width: 640px; }
+  #gridModal .wrap { max-width: 640px; }
   .grid-top-row {
     display: flex; justify-content: space-between; align-items: center;
     font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--text-dim); margin-bottom: 12px;
   }
-  .mini-diff-row {
-    display: none; align-items: center; gap: 10px; margin-bottom: 12px;
-    font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-dim);
-  }
-  .mini-diff-row.show { display: flex; }
   .grid-lives .life-dot { opacity: 0.3; color: var(--magenta); }
   .grid-lives .life-dot.filled { opacity: 1; }
   .grid-solved-row { display: flex; flex-direction: column; gap: 8px; }
@@ -776,21 +782,21 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="clashModal">
-  <div class="modal-box">
-    <button class="modal-close" id="clashModalClose">✕</button>
-    <div class="modal-title">CARTRIDGE CLASH</div>
+<div class="modal-overlay page-mode" id="clashModal">
+  <div class="wrap">
+    <header>
+      <div class="marquee" id="clashPageMarquee" style="color:var(--amber);" title="Back to home">CARTRIDGE CLASH</div>
+      <div class="tagline">Pick a side. Trust the numbers. <b>Survive the streak.</b></div>
+    </header>
+
+    <div class="mode-nav" id="clashModeNav" style="--mode-accent:var(--amber); --mode-glow:rgba(255,193,69,0.35);">
+      <button class="mode-btn active" id="clashModeDailyBtn">🗓️ Daily Challenge</button>
+      <button class="mode-btn" id="clashModeFreeplayBtn">🎮 Free Play</button>
+    </div>
 
     <div id="clashPlayArea">
       <div class="grid-top-row">
         <span id="clashModeLabel">DAILY</span>
-      </div>
-      <div class="mini-diff-row" id="clashDiffRow">
-        <span class="mini-diff-label">Difficulty:</span>
-        <div class="diff-group">
-          <button class="diff-btn" id="clashDiffEasyBtn">Easy</button>
-          <button class="diff-btn active" id="clashDiffHardBtn">Hard</button>
-        </div>
       </div>
       <div class="clash-progress">
         <span id="clashStageLabel">Stage 1/3 — Copies Sold</span>
@@ -833,22 +839,22 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="gridModal">
-  <div class="modal-box" style="max-width:640px;">
-    <button class="modal-close" id="gridModalClose">✕</button>
-    <div class="modal-title">CARTRIDGE CONNECT</div>
+<div class="modal-overlay page-mode" id="gridModal">
+  <div class="wrap">
+    <header>
+      <div class="marquee" id="gridPageMarquee" style="color:var(--green);" title="Back to home">CARTRIDGE CONNECT</div>
+      <div class="tagline">Sixteen games. Four hidden groups. <b>Find the connections.</b></div>
+    </header>
+
+    <div class="mode-nav" id="gridModeNav" style="--mode-accent:var(--green); --mode-glow:rgba(57,255,136,0.35);">
+      <button class="mode-btn active" id="gridModeDailyBtn">🗓️ Daily Challenge</button>
+      <button class="mode-btn" id="gridModeFreeplayBtn">🎮 Free Play</button>
+    </div>
 
     <div id="gridPlayArea">
       <div class="grid-top-row">
         <span id="gridModeLabel">DAILY</span>
         <span class="grid-lives" id="gridLivesLabel">Lives: ● ● ●</span>
-      </div>
-      <div class="mini-diff-row" id="gridDiffRow">
-        <span class="mini-diff-label">Difficulty:</span>
-        <div class="diff-group">
-          <button class="diff-btn" id="gridDiffEasyBtn">Easy</button>
-          <button class="diff-btn active" id="gridDiffHardBtn">Hard</button>
-        </div>
       </div>
       <div class="grid-solved-row" id="gridSolvedRow"></div>
       <div class="grid-tiles" id="gridTilesGrid"></div>
@@ -878,7 +884,7 @@
   <div class="modal-box">
     <button class="modal-close" id="settingsModalClose">✕</button>
     <div class="modal-title">SETTINGS</div>
-    <div class="settings-note" id="settingsDailyNote">Difficulty only applies to Cartridge's Free Play mode.</div>
+    <div class="settings-note" id="settingsDailyNote">Difficulty only applies to Free Play mode.</div>
 
     <div class="difficulty-row">
       <span class="difficulty-label">Sound:</span>
@@ -905,6 +911,26 @@
         <div class="custom-panel-actions">
           <button class="ghost-btn confirm-btn" id="customConfirmBtn">Confirm &amp; start round</button>
           <span class="custom-panel-msg" id="customPanelMsg"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="freeplay-controls" id="clashFreeplayControls">
+      <div class="difficulty-row">
+        <span class="difficulty-label">Clash Difficulty:</span>
+        <div class="diff-group">
+          <button class="diff-btn" id="clashDiffEasyBtn">Easy</button>
+          <button class="diff-btn active" id="clashDiffHardBtn">Hard</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="freeplay-controls" id="gridFreeplayControls">
+      <div class="difficulty-row">
+        <span class="difficulty-label">Connect Difficulty:</span>
+        <div class="diff-group">
+          <button class="diff-btn" id="gridDiffEasyBtn">Easy</button>
+          <button class="diff-btn active" id="gridDiffHardBtn">Hard</button>
         </div>
       </div>
     </div>
@@ -2078,6 +2104,8 @@ const perspectivePanel = document.getElementById('perspectivePanel');
 const modeDailyBtn = document.getElementById('modeDailyBtn');
 const modeFreeplayBtn = document.getElementById('modeFreeplayBtn');
 const freeplayControls = document.getElementById('freeplayControls');
+const clashFreeplayControls = document.getElementById('clashFreeplayControls');
+const gridFreeplayControls = document.getElementById('gridFreeplayControls');
 const diffEasyBtn = document.getElementById('diffEasyBtn');
 const diffHardBtn = document.getElementById('diffHardBtn');
 const diffCustomBtn = document.getElementById('diffCustomBtn');
@@ -2221,9 +2249,22 @@ coverPanel.addEventListener('click', openProgressModal);
 
 helpBtn.addEventListener('click', ()=> helpModal.classList.add('show'));
 settingsBtn.addEventListener('click', ()=>{
-  const inCartridgeFreeplay = gameScreen.style.display !== 'none' && appMode === 'freeplay';
-  settingsDailyNote.classList.toggle('show', gameScreen.style.display !== 'none' && appMode !== 'freeplay');
+  const onCartridge = gameScreen.style.display !== 'none';
+  const onClash = clashModal.classList.contains('show');
+  const onConnect = gridModal.classList.contains('show');
+
+  const inCartridgeFreeplay = onCartridge && appMode === 'freeplay';
+  const inClashFreeplay = onClash && clashMode === 'freeplay';
+  const inConnectFreeplay = onConnect && gridMode === 'freeplay';
+
+  const onAnyGame = onCartridge || onClash || onConnect;
+  const inAnyFreeplay = inCartridgeFreeplay || inClashFreeplay || inConnectFreeplay;
+  settingsDailyNote.classList.toggle('show', onAnyGame && !inAnyFreeplay);
+
   freeplayControls.classList.toggle('show', inCartridgeFreeplay);
+  clashFreeplayControls.classList.toggle('show', inClashFreeplay);
+  gridFreeplayControls.classList.toggle('show', inConnectFreeplay);
+
   settingsModal.classList.add('show');
 });
 statsBtn.addEventListener('click', ()=>{
@@ -2242,8 +2283,7 @@ document.getElementById('archiveGridClash').addEventListener('click', (e)=>{
   const cell = e.target.closest('.archive-cell.playable');
   if(!cell) return;
   closeArchivePanel();
-  gridModal.classList.remove('show');
-  clashModal.classList.add('show');
+  showClashPage();
   startClashArchive(cell.dataset.date);
 });
 
@@ -2251,8 +2291,7 @@ document.getElementById('archiveGridConnect').addEventListener('click', (e)=>{
   const cell = e.target.closest('.archive-cell.playable');
   if(!cell) return;
   closeArchivePanel();
-  clashModal.classList.remove('show');
-  gridModal.classList.add('show');
+  showGridPage();
   startGridArchive(cell.dataset.date);
 });
 
@@ -3277,7 +3316,8 @@ const clashModal = document.getElementById('clashModal');
 const clashPlayArea = document.getElementById('clashPlayArea');
 const clashResultsArea = document.getElementById('clashResultsArea');
 const clashModeLabel = document.getElementById('clashModeLabel');
-const clashDiffRow = document.getElementById('clashDiffRow');
+const clashModeDailyBtn = document.getElementById('clashModeDailyBtn');
+const clashModeFreeplayBtn = document.getElementById('clashModeFreeplayBtn');
 const clashDiffEasyBtn = document.getElementById('clashDiffEasyBtn');
 const clashDiffHardBtn = document.getElementById('clashDiffHardBtn');
 const clashStageLabel = document.getElementById('clashStageLabel');
@@ -3380,12 +3420,19 @@ function loadClashCardArt(cardEl, game){
   });
 }
 
+function updateClashModeTabs(){
+  clashModeDailyBtn.classList.toggle('active', clashMode !== 'freeplay');
+  clashModeFreeplayBtn.classList.toggle('active', clashMode === 'freeplay');
+}
+clashModeDailyBtn.addEventListener('click', ()=>{ if(clashMode !== 'daily') startClashDaily(); });
+clashModeFreeplayBtn.addEventListener('click', ()=>{ if(clashMode !== 'freeplay') startClashFreeplay(); });
+
 function renderClashRound(){
   const stage = CLASH_STAGES[clashStageIndex];
   clashModeLabel.textContent = clashMode === 'daily' ? `DAILY #${dailyNumberLabel(clashDailyDate)}`
     : clashMode === 'archive' ? `REPLAY #${dailyNumberLabel(clashArchiveDate)} (${formatUKDate(clashArchiveDate)})`
     : 'FREE PLAY';
-  clashDiffRow.classList.toggle('show', clashMode === 'freeplay');
+  updateClashModeTabs();
   clashStageLabel.textContent = `Stage ${clashStageIndex + 1}/${CLASH_STAGES.length} — ${stage.label}`;
   clashRoundLabel.textContent = `Round ${clashRound}/${CLASH_ROUNDS_PER_STAGE}`;
   clashScoreValue.textContent = String(clashScore);
@@ -3630,8 +3677,10 @@ clashCardLeft.addEventListener('click', ()=> handleClashPick('left'));
 clashCardRight.addEventListener('click', ()=> handleClashPick('right'));
 clashFreeplayBtn.addEventListener('click', startClashFreeplay);
 clashPlayAgainBtn.addEventListener('click', startClashFreeplay);
-clashCloseBtn.addEventListener('click', ()=> clashModal.classList.remove('show'));
-wireModal(clashModal, 'clashModalClose');
+clashCloseBtn.addEventListener('click', showHomeScreen);
+// Clash is a full page now (not a dismissible dialog) — clicking its logo
+// goes home, same as Cartridge's own marquee.
+document.getElementById('clashPageMarquee').addEventListener('click', showHomeScreen);
 
 function buildClashShareText(){
   const total = CLASH_STAGES.length * CLASH_ROUNDS_PER_STAGE;
@@ -3654,7 +3703,7 @@ clashDiffHardBtn.addEventListener('click', ()=> setClashDifficulty('hard'));
 
 secretGameTrigger.addEventListener('click', ()=>{
   helpModal.classList.remove('show');
-  clashModal.classList.add('show');
+  showClashPage();
   startClashDaily();
 });
 
@@ -3670,13 +3719,27 @@ const homePlayBtn = document.getElementById('homePlayBtn');
 const homeFreeplayBtn = document.getElementById('homeFreeplayBtn');
 const gameMarquee = document.getElementById('gameMarquee');
 
-function showHomeScreen(){
+function hideAllTopScreens(){
+  homeScreen.style.display = 'none';
   gameScreen.style.display = 'none';
+  clashModal.classList.remove('show');
+  gridModal.classList.remove('show');
+}
+function showHomeScreen(){
+  hideAllTopScreens();
   homeScreen.style.display = 'flex';
 }
 function showGameScreen(){
-  homeScreen.style.display = 'none';
+  hideAllTopScreens();
   gameScreen.style.display = 'block';
+}
+function showClashPage(){
+  hideAllTopScreens();
+  clashModal.classList.add('show');
+}
+function showGridPage(){
+  hideAllTopScreens();
+  gridModal.classList.add('show');
 }
 
 homeDate.textContent = new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
@@ -3716,10 +3779,10 @@ renderHomeSelector();
 homePlayBtn.addEventListener('click', ()=>{
   const key = HOME_GAMES[homeSelectedIndex].key;
   if(key === 'clash'){
-    clashModal.classList.add('show');
+    showClashPage();
     startClashDaily();
   } else if(key === 'connect'){
-    gridModal.classList.add('show');
+    showGridPage();
     startGridDaily();
   } else {
     showGameScreen();
@@ -3729,10 +3792,10 @@ homePlayBtn.addEventListener('click', ()=>{
 homeFreeplayBtn.addEventListener('click', ()=>{
   const key = HOME_GAMES[homeSelectedIndex].key;
   if(key === 'clash'){
-    clashModal.classList.add('show');
+    showClashPage();
     startClashFreeplay();
   } else if(key === 'connect'){
-    gridModal.classList.add('show');
+    showGridPage();
     startGridFreeplay();
   } else {
     showGameScreen();
@@ -3941,7 +4004,8 @@ const gridModal = document.getElementById('gridModal');
 const gridPlayArea = document.getElementById('gridPlayArea');
 const gridResultsArea = document.getElementById('gridResultsArea');
 const gridModeLabel = document.getElementById('gridModeLabel');
-const gridDiffRow = document.getElementById('gridDiffRow');
+const gridModeDailyBtn = document.getElementById('gridModeDailyBtn');
+const gridModeFreeplayBtn = document.getElementById('gridModeFreeplayBtn');
 const gridDiffEasyBtn = document.getElementById('gridDiffEasyBtn');
 const gridDiffHardBtn = document.getElementById('gridDiffHardBtn');
 const gridLivesEl = document.getElementById('gridLivesLabel');
@@ -4007,11 +4071,18 @@ function updateGridSubmitState(){
   gridSubmitBtn.disabled = gridSelected.length !== 4 || gridLocked || gridGameOver;
 }
 
+function updateGridModeTabs(){
+  gridModeDailyBtn.classList.toggle('active', gridMode !== 'freeplay');
+  gridModeFreeplayBtn.classList.toggle('active', gridMode === 'freeplay');
+}
+gridModeDailyBtn.addEventListener('click', ()=>{ if(gridMode !== 'daily') startGridDaily(); });
+gridModeFreeplayBtn.addEventListener('click', ()=>{ if(gridMode !== 'freeplay') startGridFreeplay(); });
+
 function renderGridAll(){
   gridModeLabel.textContent = gridMode === 'daily' ? `DAILY #${dailyNumberLabel(gridDailyDate)}`
     : gridMode === 'archive' ? `REPLAY #${dailyNumberLabel(gridArchiveDate)} (${formatUKDate(gridArchiveDate)})`
     : 'FREE PLAY';
-  gridDiffRow.classList.toggle('show', gridMode === 'freeplay');
+  updateGridModeTabs();
   renderGridLives();
   renderGridSolvedRow();
   renderGridTiles();
@@ -4187,8 +4258,9 @@ gridDeselectBtn.addEventListener('click', ()=>{
 
 gridFreeplayBtn.addEventListener('click', startGridFreeplay);
 gridPlayAgainBtn.addEventListener('click', startGridFreeplay);
-gridCloseBtn.addEventListener('click', ()=> gridModal.classList.remove('show'));
-wireModal(gridModal, 'gridModalClose');
+gridCloseBtn.addEventListener('click', showHomeScreen);
+// Connect is a full page now too — same reasoning as Clash's logo above.
+document.getElementById('gridPageMarquee').addEventListener('click', showHomeScreen);
 
 function buildConnectShareText(){
   const label = gridMode === 'daily' ? `CARTRIDGE CONNECT Daily #${dailyNumberLabel(gridDailyDate)}`
@@ -4281,20 +4353,16 @@ sideMenuOverlay.addEventListener('click', closeSideMenu);
 
 menuCartridgeBtn.addEventListener('click', ()=>{
   closeSideMenu();
-  clashModal.classList.remove('show');
-  gridModal.classList.remove('show');
   showHomeScreen();
 });
 menuClashBtn.addEventListener('click', ()=>{
   closeSideMenu();
-  gridModal.classList.remove('show');
-  clashModal.classList.add('show');
+  showClashPage();
   startClashDaily();
 });
 menuGridBtn.addEventListener('click', ()=>{
   closeSideMenu();
-  clashModal.classList.remove('show');
-  gridModal.classList.add('show');
+  showGridPage();
   startGridDaily();
 });
 
