@@ -606,6 +606,12 @@
     padding: 10px 0;
   }
   .settings-note.show { display: block; }
+  .settings-data-section { margin-top: 6px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .settings-section-heading {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; color: var(--text);
+    margin-bottom: 4px;
+  }
+  #dataActionMsg { padding-top: 4px; }
   @media (max-width: 860px) {
     .board-head { display: none; }
     .cart-row { display: flex; flex-wrap: wrap; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
@@ -825,7 +831,7 @@
       <span class="side-menu-label">Cartridge Connect</span>
     </button>
     <button class="side-menu-item" id="menuChaosBtn" style="display:none;">
-      <span class="side-menu-icon">🕹️</span>
+      <span class="side-menu-icon">💥</span>
       <span class="side-menu-label">Cartridge Chaos</span>
     </button>
   </div>
@@ -1026,7 +1032,7 @@
 </div>
 
 <div class="chaos-unlock-toast" id="chaosUnlockToast">
-  <div class="chaos-unlock-toast-title">🕹️ CARTRIDGE CHAOS UNLOCKED!</div>
+  <div class="chaos-unlock-toast-title">💥 CARTRIDGE CHAOS UNLOCKED!</div>
   <div class="chaos-unlock-toast-sub">Cycle the home screen arrows to find it.</div>
 </div>
 
@@ -1084,6 +1090,17 @@
         </div>
       </div>
     </div>
+
+    <div class="settings-data-section">
+      <div class="settings-section-heading">Your Data</div>
+      <div class="settings-note show">All your stats — streaks, achievements, best scores — live only in this browser. Export a backup to move them to another device or browser.</div>
+      <div class="btn-row">
+        <button class="ghost-btn" id="exportDataBtn">⬇️ Export Stats</button>
+        <button class="ghost-btn" id="importDataBtn">⬆️ Import Stats</button>
+        <input type="file" id="importDataInput" accept="application/json,.json" style="display:none;">
+      </div>
+      <div class="settings-note" id="dataActionMsg"></div>
+    </div>
   </div>
 </div>
 
@@ -1122,9 +1139,15 @@
       <div class="help-note">Hover a badge for a hint on how to unlock it.</div>
       <div class="achv-grid" id="achvGrid"></div>
       <button class="chaos-button" id="chaosUnlockBtn">
-        🕹️ CARTRIDGE CHAOS
+        💥 CARTRIDGE CHAOS
         <div class="achv-hint-popup" id="chaosLockedHint">Unlock all achievements to unlock.</div>
       </button>
+
+      <div class="legendary-section" id="legendarySection" style="display:none;">
+        <div class="achievements-heading" style="color:var(--violet); margin-top:18px;">🏆 Legendary</div>
+        <div class="help-note">Extra, just-for-fun challenges — unlocked because you've earned everything else.</div>
+        <div class="achv-grid" id="legendaryGrid"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -2890,6 +2913,20 @@ const ACHIEVEMENTS = [
 ];
 const ACHIEVEMENTS_BY_ID = Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, a]));
 
+// A second, purely-for-fun tier that only appears once every achievement
+// above is earned — silly, extreme, "why would you even do this" badges as a
+// reward for genuinely finishing the game. Stored in the same unlocked{} map
+// as everything else, just kept in a separate list so they don't count
+// towards (or block) Cartridge Master / unlocking Chaos itself.
+const LEGENDARY_ACHIEVEMENTS = [
+  {id:'touch_grass',     name:'Touch Some Grass', icon:'🌱', hint:'Play the Daily 365 days in a row. Maybe take a walk after.'},
+  {id:'chaos_incarnate', name:'Chaos Incarnate',  icon:'💥', hint:'Score 25 or higher in a single Cartridge Chaos run.'},
+  {id:'night_owl',       name:'Night Owl',        icon:'🦉', hint:'Finish a round of any game between midnight and 4am.'},
+  {id:'rule_breaker',    name:'Rule Breaker',     icon:'😏', hint:'Find and use the secret shortcut hidden in How to Play.'},
+  {id:'groundhog_day',   name:'Groundhog Day',    icon:'🔁', hint:'Play Free Play in Cartridge, Cartridge Clash, and Cartridge Connect all in the same day.'},
+];
+const LEGENDARY_BY_ID = Object.fromEntries(LEGENDARY_ACHIEVEMENTS.map(a => [a.id, a]));
+
 function loadAchievementState(){
   const fallback = { unlocked:{}, totalWins:0, modeWins:{daily:false, freeplay:false, archive:false}, archiveSolvedDates:[] };
   try{
@@ -2966,7 +3003,7 @@ function evaluateAchievements(outcome){ // outcome: 'win' | 'lose'
   function unlock(id){
     if(state.unlocked[id]) return;
     state.unlocked[id] = new Date().toISOString();
-    newlyUnlocked.push(ACHIEVEMENTS_BY_ID[id]);
+    newlyUnlocked.push(ACHIEVEMENTS_BY_ID[id] || LEGENDARY_BY_ID[id]);
   }
 
   if(outcome === 'win'){
@@ -3021,7 +3058,12 @@ function evaluateAchievements(outcome){ // outcome: 'win' | 'lose'
     if(playedStreak >= 20) unlock('godlike');
     if(playedStreak >= 25) unlock('tactical_nuke');
     if(playedStreak >= 30) unlock('cartridge_king');
+    if(playedStreak >= 365) unlock('touch_grass');
   }
+
+  // Legendary tier — checked regardless of outcome or mode.
+  newlyUnlocked.push(...checkNightOwl());
+  if(appMode === 'freeplay') newlyUnlocked.push(...markFreeplayPlayed('cartridge'));
 
   if(ACHIEVEMENTS.filter(a => a.id !== 'cartridge_master').every(a => state.unlocked[a.id])){
     unlock('cartridge_master');
@@ -3049,7 +3091,7 @@ function unlockAchievements(ids){
   ids.forEach(id=>{
     if(state.unlocked[id]) return;
     state.unlocked[id] = new Date().toISOString();
-    newlyUnlocked.push(ACHIEVEMENTS_BY_ID[id]);
+    newlyUnlocked.push(ACHIEVEMENTS_BY_ID[id] || LEGENDARY_BY_ID[id]);
   });
   if(!state.unlocked['cartridge_master'] &&
      ACHIEVEMENTS.filter(a => a.id !== 'cartridge_master').every(a => state.unlocked[a.id])){
@@ -3058,6 +3100,28 @@ function unlockAchievements(ids){
   }
   saveAchievementState(state);
   return newlyUnlocked;
+}
+
+// ----- Legendary tier helpers, shared across all 4 games -----
+
+// Night Owl — checked wherever a round ends, in any game.
+function checkNightOwl(){
+  const hour = new Date().getHours();
+  return unlockAchievements(hour >= 0 && hour < 4 ? ['night_owl'] : []);
+}
+
+// Groundhog Day — needs Free Play played in all 3 core games on the same
+// calendar day. Each game reports in here when one of its own Free Play
+// rounds ends; the record resets whenever the date rolls over.
+const FREEPLAY_LOG_KEY = 'cartridgeFreeplayLog_v1';
+function markFreeplayPlayed(game){
+  const date = todayKey();
+  let log;
+  try{ log = JSON.parse(localStorage.getItem(FREEPLAY_LOG_KEY) || 'null'); }catch(e){ log = null; }
+  if(!log || log.date !== date) log = { date, cartridge:false, clash:false, connect:false };
+  log[game] = true;
+  try{ localStorage.setItem(FREEPLAY_LOG_KEY, JSON.stringify(log)); }catch(e){}
+  return unlockAchievements(log.cartridge && log.clash && log.connect ? ['groundhog_day'] : []);
 }
 
 // "Green" means: Cartridge solved that day, a perfect 15/15 in Cartridge Clash,
@@ -3114,6 +3178,23 @@ function renderAchievements(){
     </div>`;
   }).join('');
   if(typeof updateChaosButton === 'function') updateChaosButton();
+
+  const legendarySection = document.getElementById('legendarySection');
+  const legendaryGrid = document.getElementById('legendaryGrid');
+  if(legendarySection && legendaryGrid && typeof chaosIsUnlocked === 'function'){
+    const show = chaosIsUnlocked();
+    legendarySection.style.display = show ? '' : 'none';
+    if(show){
+      legendaryGrid.innerHTML = LEGENDARY_ACHIEVEMENTS.map(a=>{
+        const unlocked = !!achievementState.unlocked[a.id];
+        return `<div class="achv-badge${unlocked?' unlocked':''}" title="${a.name} — ${a.hint}">
+          <div class="achv-icon">${a.icon}</div>
+          <div class="achv-name">${a.name}</div>
+          <div class="achv-hint-popup">${a.name} — ${a.hint}</div>
+        </div>`;
+      }).join('');
+    }
+  }
 }
 
 // Tap a badge to show its name+hint (the title="" tooltip only works on mouse
@@ -3878,7 +3959,10 @@ function endClashGame(){
   const total = CLASH_STAGES.length * CLASH_ROUNDS_PER_STAGE;
   playSfx(clashScore === total ? 'win' : 'lose');
   showClashResults();
-  const unlocked = checkClashAchievements().concat(clashMode !== 'freeplay' ? checkCrossGameAchievements() : []);
+  const unlocked = checkClashAchievements()
+    .concat(clashMode !== 'freeplay' ? checkCrossGameAchievements() : [])
+    .concat(checkNightOwl())
+    .concat(clashMode === 'freeplay' ? markFreeplayPlayed('clash') : []);
   renderAchievementToasts(unlocked, 'clashAchvToastList');
 }
 
@@ -4477,7 +4561,10 @@ gridSubmitBtn.addEventListener('click', ()=>{
         else if(gridMode === 'archive') recordGridDailyResult(gridArchiveDate, true);
         playSfx('win');
         showGridResults(true);
-        const unlocked = checkGridAchievements(true).concat(gridMode !== 'freeplay' ? checkCrossGameAchievements() : []);
+        const unlocked = checkGridAchievements(true)
+          .concat(gridMode !== 'freeplay' ? checkCrossGameAchievements() : [])
+          .concat(checkNightOwl())
+          .concat(gridMode === 'freeplay' ? markFreeplayPlayed('connect') : []);
         renderAchievementToasts(unlocked, 'gridAchvToastList');
       }
     }, 700);
@@ -4514,7 +4601,10 @@ gridSubmitBtn.addEventListener('click', ()=>{
       else if(gridMode === 'archive') recordGridDailyResult(gridArchiveDate, false);
       playSfx('lose');
       showGridResults(false);
-      const unlocked = checkGridAchievements(false).concat(gridMode !== 'freeplay' ? checkCrossGameAchievements() : []);
+      const unlocked = checkGridAchievements(false)
+        .concat(gridMode !== 'freeplay' ? checkCrossGameAchievements() : [])
+        .concat(checkNightOwl())
+        .concat(gridMode === 'freeplay' ? markFreeplayPlayed('connect') : []);
       renderAchievementToasts(unlocked, 'gridAchvToastList');
       return;
     }
@@ -4791,6 +4881,8 @@ function endChaosGame(){
   } else {
     chaosBestScoreText.textContent = `Best: ${best}`;
   }
+  const unlocked = unlockAchievements(chaosScore >= 25 ? ['chaos_incarnate'] : []).concat(checkNightOwl());
+  renderAchievementToasts(unlocked, 'chaosAchvToastList');
 }
 
 function buildChaosShareText(){
@@ -4839,9 +4931,90 @@ document.getElementById('secretUnlockAllSwatch').addEventListener('click', ()=>{
   if(secretUnlockAllCount >= 5){
     secretUnlockAllCount = 0;
     unlockAchievements(ACHIEVEMENTS.map(a => a.id).filter(id => id !== 'cartridge_master'));
+    unlockAchievements(['rule_breaker']); // using the shortcut is itself a legendary achievement
     renderAchievements();
     updateChaosButton();
   }
+});
+
+// ---------- Export / Import stats — everything lives only in this browser's
+// localStorage, so this is the only way for someone to move their streaks,
+// achievements, and best scores to another device or browser. Deliberately
+// excludes the cover-art cache: it's just a performance cache of image URLs,
+// not player data, and would only bloat the backup file. ----------
+const EXPORTABLE_KEYS = [
+  'cartridgeDailyState_v1', 'cartridgeDailyHistory_v1',
+  'cartridge_achievements_v1', 'cartridgeFreeplayLog_v1', 'cartridgeHintUsage_v1',
+  'cartridgeClashBest_v1', 'cartridgeClashDailyState_v1', 'cartridgeClashHistory_v1',
+  'cartridgeGridDailyState_v1', 'cartridgeGridHistory_v1',
+  'cartridgeChaosBest_v1', 'cartridgeChaosStats_v1',
+  'cartridgeSfxMuted_v1',
+];
+
+async function exportStatsData(){
+  const msgEl = document.getElementById('dataActionMsg');
+  const data = {};
+  EXPORTABLE_KEYS.forEach(key=>{
+    const value = localStorage.getItem(key);
+    if(value !== null) data[key] = value;
+  });
+  const payload = { app: 'cartridge', exportVersion: 1, exportedAt: new Date().toISOString(), data };
+  const json = JSON.stringify(payload, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const filename = `cartridge-backup-${todayKey()}.json`;
+
+  // Try the native share sheet first (great on mobile — AirDrop/message the
+  // backup file directly); fall back to a plain download link otherwise.
+  const file = new File([blob], filename, { type: 'application/json' });
+  if(navigator.canShare && navigator.canShare({ files: [file] })){
+    try{
+      await navigator.share({ files: [file], title: 'Cartridge stats backup' });
+      msgEl.textContent = 'Backup shared.';
+      return;
+    }catch(e){
+      if(e && e.name === 'AbortError') return; // they cancelled the share sheet on purpose
+      // otherwise fall through to the download below
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=> URL.revokeObjectURL(url), 4000);
+  msgEl.textContent = `Downloaded ${filename} \u2014 move it to your other device, then use Import Stats there.`;
+}
+document.getElementById('exportDataBtn').addEventListener('click', exportStatsData);
+
+const importDataInput = document.getElementById('importDataInput');
+document.getElementById('importDataBtn').addEventListener('click', ()=> importDataInput.click());
+importDataInput.addEventListener('change', ()=>{
+  const file = importDataInput.files && importDataInput.files[0];
+  importDataInput.value = ''; // so picking the same file again still fires 'change'
+  if(!file) return;
+  const msgEl = document.getElementById('dataActionMsg');
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    let payload;
+    try{ payload = JSON.parse(reader.result); }catch(e){
+      msgEl.textContent = 'That file isn\u2019t valid \u2014 could not read it.';
+      return;
+    }
+    if(!payload || payload.app !== 'cartridge' || !payload.data){
+      msgEl.textContent = 'That doesn\u2019t look like a Cartridge stats backup.';
+      return;
+    }
+    const ok = confirm('This will replace your current stats on this device with the ones from this backup. Continue?');
+    if(!ok) return;
+    Object.keys(payload.data).forEach(key=>{
+      if(EXPORTABLE_KEYS.includes(key)){
+        try{ localStorage.setItem(key, payload.data[key]); }catch(e){}
+      }
+    });
+    msgEl.textContent = 'Import complete \u2014 reloading\u2026';
+    setTimeout(()=> location.reload(), 800);
+  };
+  reader.onerror = ()=>{ msgEl.textContent = 'Could not read that file.'; };
+  reader.readAsText(file);
 });
 
 // ---------- Games menu (hamburger + side drawer) ----------
