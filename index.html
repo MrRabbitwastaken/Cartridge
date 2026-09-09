@@ -376,6 +376,10 @@
     color: var(--text); font-family: 'Space Grotesk', sans-serif; font-size: 13px; cursor: pointer;
   }
   .ghost-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+  .ghost-btn.all-done {
+    opacity: 0.5; cursor: not-allowed; border-color: var(--green); color: var(--green);
+  }
+  .ghost-btn.all-done:hover { border-color: var(--green); color: var(--green); }
   .win-banner {
     display:none; margin: 18px 0; padding: 16px 22px; align-items: center; gap: 18px; text-align: left;
     background: linear-gradient(135deg, rgba(57,255,136,0.15), rgba(0,229,255,0.1));
@@ -981,6 +985,7 @@
         <button class="ghost-btn" id="clashShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="clashFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="clashPlayAgainBtn" style="display:none;">Play again</button>
+        <button class="ghost-btn" id="clashNextDailyBtn" style="display:none;"></button>
         <button class="ghost-btn" id="clashCloseBtn">Close</button>
       </div>
     </div>
@@ -1011,6 +1016,7 @@
         <button class="ghost-btn" id="gridShuffleBtn">Shuffle</button>
         <button class="ghost-btn" id="gridDeselectBtn">Deselect</button>
         <button class="ghost-btn confirm-btn" id="gridSubmitBtn" disabled>Submit</button>
+        <button class="ghost-btn" id="gridGiveUpBtn">Give up😭</button>
       </div>
     </div>
 
@@ -1022,6 +1028,7 @@
         <button class="ghost-btn" id="gridShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="gridFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="gridPlayAgainBtn" style="display:none;">New puzzle</button>
+        <button class="ghost-btn" id="gridNextDailyBtn" style="display:none;"></button>
         <button class="ghost-btn" id="gridCloseBtn">Close</button>
       </div>
     </div>
@@ -1279,6 +1286,7 @@
       <div class="btn-row">
         <button class="share-btn" id="shareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="winBannerNewGameBtn" style="display:none; margin-top:12px;">🔄 New Game</button>
+        <button class="ghost-btn" id="winBannerNextDailyBtn" style="display:none; margin-top:12px;"></button>
       </div>
     </div>
   </div>
@@ -1408,8 +1416,6 @@ const GAMES = [
 {title:"Halo Infinite",year:2021,publisher:"Xbox Game Studios",critic:87,genres:["FPS","Shooter"],platforms:["PC","Xbox"],sales:20,hours:12,perspective:"First-Person",clueText:"Part of the Halo franchise"},
 {title:"The Elder Scrolls IV: Oblivion",year:2006,publisher:"Bethesda Softworks",critic:94,genres:["Action RPG","Open World"],platforms:["PC","PlayStation","Xbox"],sales:9.5,hours:22,perspective:"First-Person",clueText:"Part of the Elder Scrolls franchise"},
 {title:"Fallout: New Vegas",year:2010,publisher:"Bethesda Softworks",critic:84,genres:["Action RPG","Open World"],platforms:["PC","PlayStation","Xbox"],sales:12,hours:30,perspective:"First-Person",clueText:"Part of the Fallout franchise"},
-{title:"Final Fantasy X",year:2001,publisher:"Square Enix",critic:92,genres:["RPG"],platforms:["Retro"],sales:8.6,hours:38,perspective:"Third-Person",clueText:"Part of the Final Fantasy franchise"},
-{title:"Final Fantasy XVI",year:2023,publisher:"Square Enix",critic:87,genres:["Action RPG"],platforms:["PlayStation"],sales:3,hours:35,perspective:"Third-Person",clueText:"Part of the Final Fantasy franchise"},
 {title:"Dark Souls",year:2011,publisher:"Bandai Namco",critic:89,genres:["Action RPG"],platforms:["PC","PlayStation","Xbox"],sales:10,hours:34,perspective:"Third-Person",clueText:"Part of the Dark Souls franchise"},
 {title:"Assassin's Creed Brotherhood",year:2010,publisher:"Ubisoft",critic:90,genres:["Action-Adventure","Open World"],platforms:["PC","PlayStation","Xbox"],sales:8,hours:15,perspective:"Third-Person",clueText:"Part of the Assassin's Creed franchise"},
 {title:"Assassin's Creed IV: Black Flag",year:2013,publisher:"Ubisoft",critic:87,genres:["Action-Adventure","Open World"],platforms:["PC","PlayStation","Xbox"],sales:14,hours:21,perspective:"Third-Person",clueText:"Part of the Assassin's Creed franchise"},
@@ -1494,11 +1500,6 @@ const GAMES = [
 {title:"Halo Wars",year:2009,publisher:"Microsoft Studios",critic:81,genres:["Strategy"],platforms:["Xbox"],sales:3,hours:10,perspective:"Top-Down",clueText:"Part of the Halo franchise"},
 {title:"The Elder Scrolls III: Morrowind",year:2002,publisher:"Bethesda Softworks",critic:89,genres:["Action RPG","Open World"],platforms:["PC","Xbox"],sales:4,hours:33,perspective:"First-Person",clueText:"Part of the Elder Scrolls franchise"},
 {title:"Fallout 2",year:1998,publisher:"Interplay Entertainment",critic:86,genres:["Action RPG","Open World"],platforms:["PC"],sales:2,hours:27,perspective:"Isometric",clueText:"Part of the Fallout franchise"},
-{title:"Final Fantasy VI",year:1994,publisher:"Square Enix",critic:92,genres:["RPG"],platforms:["Retro"],sales:3.48,hours:35,perspective:"Third-Person",clueText:"Part of the Final Fantasy franchise"},
-{title:"Final Fantasy VIII",year:1999,publisher:"Square Enix",critic:90,genres:["RPG"],platforms:["Retro"],sales:11,hours:40,perspective:"Third-Person",clueText:"Part of the Final Fantasy franchise"},
-{title:"Final Fantasy IX",year:2000,publisher:"Square Enix",critic:87,genres:["RPG"],platforms:["Retro"],sales:5.6,hours:40,perspective:"Third-Person",clueText:"Part of the Final Fantasy franchise"},
-{title:"Final Fantasy XIII",year:2009,publisher:"Square Enix",critic:83,genres:["RPG"],platforms:["PC","PlayStation","Xbox"],sales:11,hours:36,perspective:"Third-Person",clueText:"Part of the Final Fantasy franchise"},
-{title:"Final Fantasy VII Remake",year:2020,publisher:"Square Enix",critic:87,genres:["Action RPG"],platforms:["PlayStation"],sales:7,hours:33,perspective:"Third-Person",clueText:"Part of the Final Fantasy franchise"},
 {title:"Dark Souls II",year:2014,publisher:"Bandai Namco",critic:86,genres:["Action RPG"],platforms:["PC","PlayStation","Xbox"],sales:2.5,hours:35,perspective:"Third-Person",clueText:"Part of the Dark Souls franchise"},
 {title:"God of War II",year:2007,publisher:"Sony Interactive Entertainment",critic:93,genres:["Action-Adventure"],platforms:["PlayStation"],sales:4.3,hours:10,perspective:"Third-Person",clueText:"Part of the God of War franchise"},
 {title:"God of War: Ascension",year:2013,publisher:"Sony Interactive Entertainment",critic:79,genres:["Action-Adventure"],platforms:["PlayStation"],sales:3.3,hours:10,perspective:"Third-Person",clueText:"Part of the God of War franchise"},
@@ -1595,9 +1596,6 @@ const GAMES = [
 {title:"Halo Wars 2",year:2017,publisher:"Xbox Game Studios",critic:76,genres:["Strategy"],platforms:["PC","Xbox"],sales:1,hours:9,perspective:"Top-Down",clueText:"Part of the Halo franchise"},
 {title:"The Elder Scrolls II: Daggerfall",year:1996,publisher:"Bethesda Softworks",critic:90,genres:["Action RPG","Open World"],platforms:["PC"],sales:1,hours:30,perspective:"First-Person",clueText:"Part of the Elder Scrolls franchise"},
 {title:"Fallout (1997)",year:1997,publisher:"Interplay Entertainment",critic:89,genres:["Action RPG","Open World"],platforms:["PC"],sales:1,hours:25,perspective:"Isometric",clueText:"Part of the Fallout franchise"},
-{title:"Final Fantasy IV",year:1991,publisher:"Square Enix",critic:84,genres:["RPG"],platforms:["Retro"],sales:2,hours:25,perspective:"Third-Person",clueText:"Part of the Final Fantasy franchise"},
-{title:"Final Fantasy XII",year:2006,publisher:"Square Enix",critic:92,genres:["RPG"],platforms:["Retro"],sales:6,hours:45,perspective:"Third-Person",clueText:"Part of the Final Fantasy franchise"},
-{title:"Final Fantasy VII Rebirth",year:2024,publisher:"Square Enix",critic:92,genres:["Action RPG"],platforms:["PlayStation"],sales:3,hours:40,perspective:"Third-Person",clueText:"Part of the Final Fantasy franchise"},
 {title:"God of War: Ghost of Sparta",year:2010,publisher:"Sony Interactive Entertainment",critic:87,genres:["Action-Adventure"],platforms:["Handheld"],sales:1,hours:7,perspective:"Third-Person",clueText:"Part of the God of War franchise"},
 {title:"Uncharted: The Lost Legacy",year:2017,publisher:"Sony Interactive Entertainment",critic:85,genres:["Action-Adventure"],platforms:["PlayStation"],sales:2.5,hours:8,perspective:"Third-Person",clueText:"Part of the Uncharted franchise"},
 {title:"Resident Evil 4 (2023)",year:2023,publisher:"Capcom",critic:93,genres:["Action-Adventure","Shooter","Horror"],platforms:["PC","PlayStation","Xbox"],sales:10,hours:14,perspective:"Third-Person",clueText:"Part of the Resident Evil franchise"},
@@ -1891,10 +1889,14 @@ function dailyNumberLabel(dateStr){
 
 // Same date-seeded approach as Cartridge Clash and Cartridge Connect — every
 // player gets the same target on a given date, with no hand-curated schedule
-// to maintain.
+// to maintain. Weighted toward the same well-known Easy pool used elsewhere,
+// since an obscure pick (e.g. a deep-cut Final Fantasy entry) can feel unfair
+// on a Daily that everyone only gets one shot at — Free Play's Hard mode is
+// still where the full, tougher roster lives.
 function getDailyTargetFor(dateStr){
   const rng = mulberry32(hashStr('cartridge-' + dateStr));
-  return GAMES[Math.floor(rng() * GAMES.length)];
+  const pool = rng() < 0.7 ? EASY_POOL : GAMES;
+  return pool[Math.floor(rng() * pool.length)];
 }
 
 function loadDailyHistory(){
@@ -2345,10 +2347,15 @@ function showResultBanner(kind, titleText, detailText){
   // Free Play only — Daily/Archive rounds shouldn't offer a quick "next round"
   // button, since there's nothing to jump to.
   winBannerNewGameBtn.style.display = appMode === 'freeplay' ? '' : 'none';
+  // "Play Next Daily" only makes sense once you've actually finished today's
+  // Cartridge daily, not a Free Play or Archive-replay round.
+  if(appMode === 'daily') updateNextDailyButton(winBannerNextDailyBtn, 'cartridge');
+  else winBannerNextDailyBtn.style.display = 'none';
 }
 const giveUpBtn = document.getElementById('giveUpBtn');
 const newGameBtn = document.getElementById('newGameBtn');
 const winBannerNewGameBtn = document.getElementById('winBannerNewGameBtn');
+const winBannerNextDailyBtn = document.getElementById('winBannerNextDailyBtn');
 const cluePanel = document.getElementById('cluePanel');
 const perspectivePanel = document.getElementById('perspectivePanel');
 const modeDailyBtn = document.getElementById('modeDailyBtn');
@@ -3732,6 +3739,7 @@ const clashBestScore = document.getElementById('clashBestScore');
 const clashFreeplayBtn = document.getElementById('clashFreeplayBtn');
 const clashShareBtn = document.getElementById('clashShareBtn');
 const clashPlayAgainBtn = document.getElementById('clashPlayAgainBtn');
+const clashNextDailyBtn = document.getElementById('clashNextDailyBtn');
 const clashCloseBtn = document.getElementById('clashCloseBtn');
 const secretGameTrigger = document.getElementById('secretGameTrigger');
 
@@ -3999,6 +4007,8 @@ function showClashResults(){
   }
   clashFreeplayBtn.style.display = clashMode === 'daily' ? '' : 'none';
   clashPlayAgainBtn.style.display = clashMode === 'freeplay' ? '' : 'none';
+  if(clashMode === 'daily') updateNextDailyButton(clashNextDailyBtn, 'clash');
+  else clashNextDailyBtn.style.display = 'none';
 }
 
 function endClashGame(){
@@ -4269,10 +4279,7 @@ function seededPickLimitSeries(arr, n, rng, maxPerSeries){
 }
 
 const GRID_CRITIC_BRACKETS = [
-  {lo:90, hi:101, label:'Critic score 90+'},
-  {lo:80, hi:90,  label:'Critic score 80\u201389'},
-  {lo:70, hi:80,  label:'Critic score 70\u201379'},
-  {lo:0,  hi:70,  label:'Critic score under 70'},
+  {lo:95, hi:101, label:'Critic score 95+'},
 ];
 const GRID_COLORS = ['cyan', 'amber', 'pink', 'green']; // easiest -> hardest — no magenta/red here, since Connect uses that colour for "incorrect" elsewhere and a solved category shouldn't look like a mistake
 
@@ -4385,6 +4392,19 @@ function buildGenreGridPuzzle(seedStr, pool){
       fallback.push({ type:'critic', label:b.label, games: picked.map(g=>g.title) });
     }
   });
+  // With only one narrow 95+ bracket now (instead of 4 covering the whole
+  // dataset), the block above can no longer guarantee 4 groups on its own —
+  // top up with arbitrary disjoint groups from whatever's left over so a
+  // puzzle is always produced no matter what.
+  if(fallback.length < 4){
+    const remaining = pool.filter(g => !usedTitles.has(g.title));
+    const shuffled = seededShuffle(remaining, rng);
+    let cursor = 0;
+    while(fallback.length < 4 && cursor + 4 <= shuffled.length){
+      fallback.push({ type:'critic', label:`Mystery Group ${fallback.length + 1}`, games: shuffled.slice(cursor, cursor + 4).map(g=>g.title) });
+      cursor += 4;
+    }
+  }
   return finalizeGridPuzzle(fallback, rng);
 }
 
@@ -4432,12 +4452,14 @@ const gridSolvedRowEl = document.getElementById('gridSolvedRow');
 const gridTilesEl = document.getElementById('gridTilesGrid');
 const gridMessageEl = document.getElementById('gridMessage');
 const gridSubmitBtn = document.getElementById('gridSubmitBtn');
+const gridGiveUpBtn = document.getElementById('gridGiveUpBtn');
 const gridShuffleBtn = document.getElementById('gridShuffleBtn');
 const gridDeselectBtn = document.getElementById('gridDeselectBtn');
 const gridFinalMessage = document.getElementById('gridFinalMessage');
 const gridRevealList = document.getElementById('gridRevealList');
 const gridFreeplayBtn = document.getElementById('gridFreeplayBtn');
 const gridPlayAgainBtn = document.getElementById('gridPlayAgainBtn');
+const gridNextDailyBtn = document.getElementById('gridNextDailyBtn');
 const gridCloseBtn = document.getElementById('gridCloseBtn');
 const gridShareBtn = document.getElementById('gridShareBtn');
 
@@ -4534,6 +4556,8 @@ function showGridResults(won){
   `).join('');
   gridFreeplayBtn.style.display = gridMode === 'daily' ? '' : 'none';
   gridPlayAgainBtn.style.display = gridMode === 'freeplay' ? '' : 'none';
+  if(gridMode === 'daily') updateNextDailyButton(gridNextDailyBtn, 'connect');
+  else gridNextDailyBtn.style.display = 'none';
 }
 
 function hideGridResults(){
@@ -4680,6 +4704,25 @@ gridDeselectBtn.addEventListener('click', ()=>{
   renderGridTiles();
   updateGridSubmitState();
 });
+
+// Mirrors Cartridge's own Give Up — ends the round as a loss immediately,
+// revealing whatever categories hadn't been solved yet.
+function giveUpGrid(){
+  if(gridGameOver || gridLocked) return;
+  gridLocked = true;
+  gridGameOver = true;
+  persistGridDaily();
+  if(gridMode === 'daily') recordGridDailyResult(gridDailyDate, false);
+  else if(gridMode === 'archive') recordGridDailyResult(gridArchiveDate, false);
+  playSfx('lose');
+  showGridResults(false);
+  const unlocked = checkGridAchievements(false)
+    .concat(gridMode !== 'freeplay' ? checkCrossGameAchievements() : [])
+    .concat(checkNightOwl())
+    .concat(gridMode === 'freeplay' ? markFreeplayPlayed('connect') : []);
+  renderAchievementToasts(unlocked, 'gridAchvToastList');
+}
+gridGiveUpBtn.addEventListener('click', giveUpGrid);
 
 gridFreeplayBtn.addEventListener('click', startGridFreeplay);
 gridPlayAgainBtn.addEventListener('click', startGridFreeplay);
@@ -5070,6 +5113,59 @@ importDataInput.addEventListener('change', ()=>{
   reader.onerror = ()=>{ msgEl.textContent = 'Could not read that file.'; };
   reader.readAsText(file);
 });
+
+// ---------- "Play Next Daily" — shown on any daily win/loss banner, cycles to
+// whichever of today's dailies hasn't been played yet ----------
+const DAILY_GAME_SEQUENCE = [
+  { key: 'cartridge', label: 'Cartridge' },
+  { key: 'clash', label: 'Cartridge Clash' },
+  { key: 'connect', label: 'Cartridge Connect' },
+];
+
+function isDailyGameCompletedToday(key){
+  const date = todayKey();
+  if(key === 'cartridge') return !!loadDailyHistory()[date];
+  if(key === 'clash') return typeof loadClashHistory()[date] === 'number';
+  if(key === 'connect') return !!loadGridHistory()[date];
+  return false;
+}
+
+// Looks forward through the sequence from whichever game you're on, wrapping
+// around, and returns the first one not yet completed today — so it works
+// however you actually play them, not just in a fixed left-to-right order.
+function findNextUncompletedDailyGame(currentKey){
+  const idx = DAILY_GAME_SEQUENCE.findIndex(g => g.key === currentKey);
+  for(let i = 1; i <= DAILY_GAME_SEQUENCE.length; i++){
+    const candidate = DAILY_GAME_SEQUENCE[(idx + i) % DAILY_GAME_SEQUENCE.length];
+    if(!isDailyGameCompletedToday(candidate.key)) return candidate;
+  }
+  return null; // every daily is done for today
+}
+
+function goToDailyGame(key){
+  if(key === 'clash'){ showClashPage(); startClashDaily(); }
+  else if(key === 'connect'){ showGridPage(); startGridDaily(); }
+  else { showGameScreen(); enterDailyMode(); }
+}
+
+// Shared updater for the button on each game's results banner — shows the
+// next uncompleted daily's name, or a greyed "all done" state once every
+// daily has been played today.
+function updateNextDailyButton(btnEl, currentKey){
+  const next = findNextUncompletedDailyGame(currentKey);
+  btnEl.style.display = '';
+  if(next){
+    btnEl.textContent = `Play ${next.label} Daily`;
+    btnEl.disabled = false;
+    btnEl.classList.remove('all-done');
+    btnEl.onclick = ()=> goToDailyGame(next.key);
+  } else {
+    btnEl.textContent = `You've completed today's games! \ud83c\udf89`;
+    btnEl.disabled = true;
+    btnEl.classList.add('all-done');
+    btnEl.onclick = null;
+  }
+}
 
 // ---------- Games menu (hamburger + side drawer) ----------
 const menuBtn = document.getElementById('menuBtn');
