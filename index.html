@@ -150,8 +150,12 @@
      TV screen art or the header marquee on narrow/mobile viewports, since
      the icon nav is fixed to the viewport while the TV spans full width there. */
   @media (max-width: 700px) {
-    .home-screen { align-items: flex-start; padding-top: 76px; }
+    .home-screen { align-items: flex-start; padding-top: 76px; padding-left: 10px; padding-right: 10px; }
     .wrap { padding-top: 76px; }
+    /* The TV was capped by the same 24px side padding used everywhere else,
+       leaving it — and its screen text — noticeably smaller than it needs to
+       be on a phone. Let it use nearly the full width instead. */
+    .console-wrap { max-width: 100%; }
   }
 
   header { text-align: center; margin-bottom: 24px; }
