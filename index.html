@@ -41,6 +41,7 @@
     --pink: #ff8fc7;
     --slate: #4a5170;
     --violet: #b98cff;
+    --orange: #ff8c42;
     --text: #f1f3fa;
     --text-dim: #8890b5;
     /* Text/message colour for elements that sit directly on the page's own
@@ -873,6 +874,56 @@
     font-size: 11px; text-decoration: line-through;
   }
 
+  /* ---------- Cartridge Chronicle ---------- */
+  .chronicle-hint {
+    text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 13px;
+    color: var(--text-dim); margin-bottom: 14px;
+  }
+  .chronicle-hint b { color: var(--orange); }
+  .chronicle-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+  .chronicle-card {
+    display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 10px;
+    background: var(--panel-2); border: 1px solid var(--line); position: relative;
+    transition: box-shadow .15s ease;
+  }
+  .chronicle-card.dragging {
+    z-index: 20; box-shadow: 0 10px 24px rgba(0,0,0,0.5); border-color: var(--orange);
+    cursor: grabbing; transition: none;
+  }
+  .chronicle-drag-handle {
+    flex: 0 0 auto; font-size: 18px; color: var(--text-dim); padding: 4px 2px;
+    cursor: grab; touch-action: none; line-height: 1;
+  }
+  .chronicle-drag-handle:hover { color: var(--orange); }
+  .chronicle-rank {
+    flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; background: var(--orange);
+    color: #2e1400; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .chronicle-cover {
+    flex: 0 0 auto; width: 42px; height: 56px; border-radius: 6px; overflow: hidden;
+    background: var(--panel); display: flex; align-items: center; justify-content: center;
+  }
+  .chronicle-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .chronicle-title {
+    flex: 1 1 auto; min-width: 0; font-family: 'Space Grotesk', sans-serif; font-size: 14px;
+    color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .chronicle-move-btns { flex: 0 0 auto; display: flex; flex-direction: column; gap: 2px; }
+  .chronicle-move-btn {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 5px; color: var(--text-dim);
+    font-size: 11px; padding: 2px 8px; cursor: pointer; line-height: 1.4;
+  }
+  .chronicle-move-btn:hover:not(:disabled) { border-color: var(--orange); color: var(--orange); }
+  .chronicle-move-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+  .chronicle-reveal-list { display: flex; flex-direction: column; gap: 6px; margin: 14px 0; text-align: left; }
+  .chronicle-reveal-row {
+    padding: 8px 12px; border-radius: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px;
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--text);
+  }
+  .chronicle-reveal-row.correct { border-color: var(--green); color: var(--green); }
+  .chronicle-reveal-row.incorrect { border-color: var(--magenta); color: var(--magenta); }
+
   /* ---------- Light mode ---------- */
   body.light-mode {
     /* Warm dark mahogany/coffee tones instead of the cool navy panels, echoing
@@ -949,6 +1000,10 @@
       <span class="side-menu-icon">🎭</span>
       <span class="side-menu-label">Cartridge Charades</span>
     </button>
+    <button class="side-menu-item" id="menuChronicleBtn" style="display:none;">
+      <span class="side-menu-icon">📜</span>
+      <span class="side-menu-label">Cartridge Chronicle</span>
+    </button>
     <button class="side-menu-item" id="menuChaosBtn" style="display:none;">
       <span class="side-menu-icon">💥</span>
       <span class="side-menu-label">Cartridge Chaos</span>
@@ -971,6 +1026,10 @@
     <div class="streak-section">
       <div class="streak-game-label">Cartridge Charades</div>
       <div class="streak-row" id="streakCharadesRow"></div>
+    </div>
+    <div class="streak-section" id="streakChronicleSection" style="display:none;">
+      <div class="streak-game-label">Cartridge Chronicle</div>
+      <div class="streak-row" id="streakChronicleRow"></div>
     </div>
   </div>
 </nav>
@@ -995,7 +1054,7 @@
         <div class="legend" style="justify-content:flex-start; margin:0;">
           <span><span class="swatch exact" id="secretUnlockAllSwatch" style="cursor:pointer;"></span> Exact match</span>
           <span><span class="swatch close" id="secretResetDailyBtn" style="cursor:pointer;"></span> Close</span>
-          <span><span class="swatch far"></span> No match</span>
+          <span><span class="swatch far" id="secretChronicleUnlockSwatch" style="cursor:pointer;"></span> No match</span>
         </div>
         <p style="margin-top:10px;">▲ / ▼ next to a number means the answer is higher or lower than your guess. Genre and Platform show individual pills that light up per tag, so you can see exactly which ones the mystery game shares.</p>
       </div>
@@ -1208,6 +1267,45 @@
   </div>
 </div>
 
+<div class="modal-overlay page-mode" id="chronicleModal">
+  <div class="wrap" style="max-width:640px;">
+    <header>
+      <div class="marquee" id="chroniclePageMarquee" style="color:var(--orange);" title="Back to home">CARTRIDGE CHRONICLE</div>
+      <div class="tagline">Five games. No years. <b>Put them in order.</b></div>
+    </header>
+
+    <div class="mode-nav" id="chronicleModeNav" style="--mode-accent:var(--orange); --mode-glow:rgba(255,140,66,0.35);">
+      <button class="mode-btn active" id="chronicleModeDailyBtn">🗓️ Daily Challenge</button>
+      <button class="mode-btn" id="chronicleModeFreeplayBtn">🎮 Free Play</button>
+    </div>
+
+    <div id="chroniclePlayArea">
+      <div class="grid-top-row">
+        <span id="chronicleModeLabel">DAILY</span>
+      </div>
+      <div class="chronicle-hint">Oldest <b>&rarr;</b> Newest</div>
+      <div class="chronicle-list" id="chronicleList"></div>
+      <div class="btn-row">
+        <button class="ghost-btn confirm-btn" id="chronicleSubmitBtn">Submit Order</button>
+      </div>
+    </div>
+
+    <div id="chronicleResultsArea" class="clash-results" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid var(--line);">
+      <div class="clash-heading" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700;" id="chronicleFinalMessage">4/5 correct!</div>
+      <div class="clash-final-score" id="chronicleFinalScore">4/5</div>
+      <div class="clash-best-score" id="chronicleBestScore">Best: 4/5</div>
+      <div class="chronicle-reveal-list" id="chronicleRevealList"></div>
+      <div class="achv-toast-list" id="chronicleAchvToastList"></div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn" id="chronicleShareBtn">📋 Share Results</button>
+        <button class="ghost-btn" id="chronicleFreeplayBtn">Play Free Play</button>
+        <button class="ghost-btn" id="chroniclePlayAgainBtn" style="display:none;">New Puzzle</button>
+        <button class="ghost-btn" id="chronicleCloseBtn">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="settingsModal">
   <div class="modal-box">
     <button class="modal-close" id="settingsModalClose">✕</button>
@@ -1313,6 +1411,12 @@
       <div class="archive-game-heading" style="color:var(--pink);">Cartridge Charades</div>
       <div class="archive-stats" id="archiveStatsCharades"></div>
       <div class="archive-grid" id="archiveGridCharades"></div>
+    </div>
+
+    <div class="archive-game-section" id="archiveSectionChronicle" style="display:none;">
+      <div class="archive-game-heading" style="color:var(--orange);">Cartridge Chronicle</div>
+      <div class="archive-stats" id="archiveStatsChronicle"></div>
+      <div class="archive-grid" id="archiveGridChronicle"></div>
     </div>
 
     <div class="archive-game-section" id="archiveSectionChaos" style="display:none;">
@@ -2266,6 +2370,19 @@ function renderCharadesArchive(){
   renderGameArchiveRow(days, document.getElementById('archiveStatsCharades'), document.getElementById('archiveGridCharades'), {playable: true});
 }
 
+function chronicleDayInfo(dateStr){
+  const score = loadChronicleHistory()[dateStr];
+  if(typeof score !== 'number') return {played:false, won:false, label:null};
+  return {played:true, won: score === 5, label: String(score), score};
+}
+function renderChronicleArchive(){
+  const days = buildLastNDays(7, chronicleDayInfo);
+  renderGameArchiveRow(days, document.getElementById('archiveStatsChronicle'), document.getElementById('archiveGridChronicle'), {
+    partialClass: ' amber', scoreTotal: 5, playable: true,
+    streakLabel: 'Perfect streak', bestStreakLabel: 'Best perfect streak',
+  });
+}
+
 // No 7-day grid here — Chaos is a repeatable arcade high-score chase, not a
 // daily puzzle, so "played today" doesn't mean anything for it.
 function renderChaosArchive(){
@@ -2286,6 +2403,10 @@ function openArchivePanel(){
   renderClashArchive();
   renderConnectArchive();
   renderCharadesArchive();
+  const chronicleSection = document.getElementById('archiveSectionChronicle');
+  const chronicleShow = chronicleUnlocked();
+  chronicleSection.style.display = chronicleShow ? '' : 'none';
+  if(chronicleShow) renderChronicleArchive();
   const chaosSection = document.getElementById('archiveSectionChaos');
   const chaosUnlocked = chaosIsUnlocked();
   chaosSection.style.display = chaosUnlocked ? '' : 'none';
@@ -2729,6 +2850,14 @@ document.getElementById('archiveGridCharades').addEventListener('click', (e)=>{
   closeArchivePanel();
   showCharadesPage();
   startCharadesArchive(cell.dataset.date);
+});
+
+document.getElementById('archiveGridChronicle').addEventListener('click', (e)=>{
+  const cell = e.target.closest('.archive-cell.playable');
+  if(!cell) return;
+  closeArchivePanel();
+  showChroniclePage();
+  startChronicleArchive(cell.dataset.date);
 });
 
 function playArchivedDay(dateStr){
@@ -4295,6 +4424,7 @@ function hideAllTopScreens(){
   gridModal.classList.remove('show');
   chaosModal.classList.remove('show');
   charadesModal.classList.remove('show');
+  chronicleModal.classList.remove('show');
 }
 function showHomeScreen(){
   hideAllTopScreens();
@@ -4323,8 +4453,12 @@ const HOME_GAMES_BASE = [
   { key: 'charades',  label: 'CARTRIDGE CHARADES', color: 'var(--pink)',  tagline: 'Emoji only. No words.<br><b>Guess the game.</b>' },
 ];
 const HOME_GAME_CHAOS = { key: 'chaos', label: 'CARTRIDGE CHAOS', color: 'var(--violet)', tagline: 'Fast questions. No mercy.<br><b>Beat the clock.</b>' };
+const HOME_GAME_CHRONICLE = { key: 'chronicle', label: 'CARTRIDGE CHRONICLE', color: 'var(--orange)', tagline: 'Five games. No years.<br><b>Put them in order.</b>' };
 function getHomeGames(){
-  return chaosIsUnlocked() ? [...HOME_GAMES_BASE, HOME_GAME_CHAOS] : HOME_GAMES_BASE;
+  const games = [...HOME_GAMES_BASE];
+  if(chronicleUnlocked()) games.push(HOME_GAME_CHRONICLE);
+  if(chaosIsUnlocked()) games.push(HOME_GAME_CHAOS);
+  return games;
 }
 let homeSelectedIndex = 0;
 
@@ -4371,6 +4505,9 @@ homePlayBtn.addEventListener('click', ()=>{
   } else if(key === 'charades'){
     showCharadesPage();
     startCharadesDaily();
+  } else if(key === 'chronicle'){
+    showChroniclePage();
+    startChronicleDaily();
   } else if(key === 'chaos'){
     showChaosPage();
     startChaosGame();
@@ -4390,6 +4527,9 @@ homeFreeplayBtn.addEventListener('click', ()=>{
   } else if(key === 'charades'){
     showCharadesPage();
     startCharadesFreeplay();
+  } else if(key === 'chronicle'){
+    showChroniclePage();
+    startChronicleFreeplay();
   } else if(key === 'chaos'){
     showChaosPage();
     startChaosGame();
@@ -5250,6 +5390,7 @@ const EXPORTABLE_KEYS = [
   'cartridgeClashBest_v1', 'cartridgeClashDailyState_v1', 'cartridgeClashHistory_v1',
   'cartridgeGridDailyState_v1', 'cartridgeGridHistory_v1',
   'cartridgeCharadesDailyState_v1', 'cartridgeCharadesHistory_v1',
+  'cartridgeChronicleDailyState_v1', 'cartridgeChronicleHistory_v1', 'cartridgeChronicleBest_v1', 'cartridgeChronicleUnlocked_v1',
   'cartridgeChaosBest_v1', 'cartridgeChaosStats_v1',
   'cartridgeSfxMuted_v1', 'cartridgeTheme_v1',
 ];
@@ -5727,6 +5868,331 @@ charadesPlayAgainBtn.addEventListener('click', startCharadesFreeplay);
 charadesCloseBtn.addEventListener('click', showHomeScreen);
 document.getElementById('charadesPageMarquee').addEventListener('click', showHomeScreen);
 
+// ---------- Cartridge Chronicle (order 5 games oldest -> newest, secret —
+// unlocked by tapping the grey "No match" swatch in How to Play 5 times) ----------
+const CHRONICLE_UNLOCK_KEY = 'cartridgeChronicleUnlocked_v1';
+function chronicleUnlocked(){
+  try{ return localStorage.getItem(CHRONICLE_UNLOCK_KEY) === 'true'; }catch(e){ return false; }
+}
+function unlockChronicle(){
+  try{ localStorage.setItem(CHRONICLE_UNLOCK_KEY, 'true'); }catch(e){}
+}
+
+const CHRONICLE_POOL = EASY_POOL; // same well-known pool as Clash/Connect's Easy difficulty
+
+const chronicleModal = document.getElementById('chronicleModal');
+const chroniclePlayArea = document.getElementById('chroniclePlayArea');
+const chronicleResultsArea = document.getElementById('chronicleResultsArea');
+const chronicleModeLabel = document.getElementById('chronicleModeLabel');
+const chronicleList = document.getElementById('chronicleList');
+const chronicleSubmitBtn = document.getElementById('chronicleSubmitBtn');
+const chronicleFinalMessage = document.getElementById('chronicleFinalMessage');
+const chronicleFinalScore = document.getElementById('chronicleFinalScore');
+const chronicleBestScore = document.getElementById('chronicleBestScore');
+const chronicleRevealList = document.getElementById('chronicleRevealList');
+const chronicleShareBtn = document.getElementById('chronicleShareBtn');
+const chronicleFreeplayBtn = document.getElementById('chronicleFreeplayBtn');
+const chroniclePlayAgainBtn = document.getElementById('chroniclePlayAgainBtn');
+const chronicleCloseBtn = document.getElementById('chronicleCloseBtn');
+const chronicleModeDailyBtn = document.getElementById('chronicleModeDailyBtn');
+const chronicleModeFreeplayBtn = document.getElementById('chronicleModeFreeplayBtn');
+
+let chronicleMode = 'daily'; // 'daily' | 'freeplay' | 'archive'
+let chronicleDailyDate = null;
+let chronicleArchiveDate = null;
+let chronicleGames = [];        // the 5 game objects in this round
+let chronicleCorrectOrder = []; // titles, oldest -> newest
+let chronicleCurrentOrder = []; // titles, in the player's current arrangement
+let chronicleGameOver = false;
+let chronicleScore = 0;
+let chronicleCoverCache = {};
+
+function showChroniclePage(){
+  hideAllTopScreens();
+  chronicleModal.classList.add('show');
+}
+
+// Guarantees all 5 games have distinct release years — two games sharing a
+// year meant the "correct" order between them came down to an alphabetical
+// tiebreak the player had no way to actually know, which made the puzzle
+// genuinely unfair rather than just hard.
+function buildChroniclePuzzle(seedStr){
+  const rng = mulberry32(hashStr('chronicle-' + seedStr));
+  const shuffledPool = seededShuffle(CHRONICLE_POOL, rng);
+  const games = [];
+  const usedYears = new Set();
+  for(const g of shuffledPool){
+    if(usedYears.has(g.year)) continue;
+    games.push(g);
+    usedYears.add(g.year);
+    if(games.length === 5) break;
+  }
+  const correctOrder = [...games].sort((a,b)=> a.year - b.year).map(g=>g.title);
+  let displayOrder = seededShuffle(games, rng).map(g=>g.title);
+  if(displayOrder.join('|') === correctOrder.join('|')){
+    displayOrder = seededShuffle(games, rng).map(g=>g.title); // the rare case it shuffled into the answer
+  }
+  return { games, correctOrder, displayOrder };
+}
+
+const CHRONICLE_STATE_KEY = 'cartridgeChronicleDailyState_v1';
+function loadChronicleDailyState(){
+  try{ const raw = localStorage.getItem(CHRONICLE_STATE_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+}
+function saveChronicleDailyState(state){
+  try{ localStorage.setItem(CHRONICLE_STATE_KEY, JSON.stringify(state)); }catch(e){}
+}
+function persistChronicleDaily(){
+  if(chronicleMode !== 'daily') return;
+  saveChronicleDailyState({
+    date: chronicleDailyDate, order: chronicleCurrentOrder.slice(),
+    gameOver: chronicleGameOver, score: chronicleScore,
+  });
+}
+
+const CHRONICLE_HISTORY_KEY = 'cartridgeChronicleHistory_v1';
+function loadChronicleHistory(){
+  try{ const raw = localStorage.getItem(CHRONICLE_HISTORY_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; }
+}
+function saveChronicleHistory(hist){
+  try{ localStorage.setItem(CHRONICLE_HISTORY_KEY, JSON.stringify(hist)); }catch(e){}
+}
+function recordChronicleDailyResult(dateStr, score){
+  const hist = loadChronicleHistory();
+  if(typeof hist[dateStr] === 'number' && hist[dateStr] >= score) return;
+  hist[dateStr] = score;
+  saveChronicleHistory(hist);
+}
+
+const CHRONICLE_BEST_KEY = 'cartridgeChronicleBest_v1';
+function loadChronicleBest(){
+  try{ return parseInt(localStorage.getItem(CHRONICLE_BEST_KEY), 10) || 0; }catch(e){ return 0; }
+}
+function saveChronicleBest(score){
+  try{ localStorage.setItem(CHRONICLE_BEST_KEY, String(score)); }catch(e){}
+}
+
+function updateChronicleModeTabs(){
+  chronicleModeDailyBtn.classList.toggle('active', chronicleMode !== 'freeplay');
+  chronicleModeFreeplayBtn.classList.toggle('active', chronicleMode === 'freeplay');
+}
+
+function renderChronicleList(){
+  chronicleList.innerHTML = chronicleCurrentOrder.map((title, i)=>{
+    const cached = chronicleCoverCache[title];
+    const coverHtml = cached === undefined ? '<div class="clash-card-loading">···</div>'
+      : cached ? `<img src="${cached}" alt="">` : '<div class="cover-placeholder">···</div>';
+    return `
+      <div class="chronicle-card" data-title="${title.replace(/"/g,'&quot;')}">
+        <div class="chronicle-drag-handle" title="Drag to reorder">⠿</div>
+        <div class="chronicle-rank">${i + 1}</div>
+        <div class="chronicle-cover">${coverHtml}</div>
+        <div class="chronicle-title">${title}</div>
+        <div class="chronicle-move-btns">
+          <button class="chronicle-move-btn" data-dir="up" data-idx="${i}" ${i === 0 || chronicleGameOver ? 'disabled' : ''}>▲</button>
+          <button class="chronicle-move-btn" data-dir="down" data-idx="${i}" ${i === chronicleCurrentOrder.length - 1 || chronicleGameOver ? 'disabled' : ''}>▼</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  chronicleCurrentOrder.forEach(title=>{
+    if(chronicleCoverCache[title] !== undefined) return;
+    fetchCoverArt(title).then(url=>{
+      chronicleCoverCache[title] = url || null;
+      if(!chronicleGameOver) renderChronicleList();
+    });
+  });
+}
+chronicleList.addEventListener('click', (e)=>{
+  const btn = e.target.closest('.chronicle-move-btn');
+  if(!btn || chronicleGameOver) return;
+  const idx = Number(btn.dataset.idx);
+  const dir = btn.dataset.dir;
+  if(dir === 'up' && idx > 0){
+    [chronicleCurrentOrder[idx - 1], chronicleCurrentOrder[idx]] = [chronicleCurrentOrder[idx], chronicleCurrentOrder[idx - 1]];
+  } else if(dir === 'down' && idx < chronicleCurrentOrder.length - 1){
+    [chronicleCurrentOrder[idx + 1], chronicleCurrentOrder[idx]] = [chronicleCurrentOrder[idx], chronicleCurrentOrder[idx + 1]];
+  }
+  persistChronicleDaily();
+  renderChronicleList();
+});
+
+// ----- Drag to reorder (Pointer Events — unified handling for mouse, touch,
+// and pen, so this works the same way on phones as on desktop). The dragged
+// card follows the pointer visually; the other cards stay put until drop, at
+// which point we work out the target slot from where the pointer ended up
+// and reorder the underlying array in one go. -----
+let chronicleDrag = null;
+function chronicleCardIndex(card){
+  return Array.from(chronicleList.children).indexOf(card);
+}
+chronicleList.addEventListener('pointerdown', (e)=>{
+  if(chronicleGameOver) return;
+  const handle = e.target.closest('.chronicle-drag-handle');
+  const card = e.target.closest('.chronicle-card');
+  if(!handle || !card) return;
+  e.preventDefault();
+  chronicleDrag = { card, startIndex: chronicleCardIndex(card), startY: e.clientY };
+  card.classList.add('dragging');
+  card.setPointerCapture(e.pointerId);
+});
+chronicleList.addEventListener('pointermove', (e)=>{
+  if(!chronicleDrag) return;
+  const dy = e.clientY - chronicleDrag.startY;
+  chronicleDrag.card.style.transform = `translateY(${dy}px)`;
+});
+function endChronicleDrag(e){
+  if(!chronicleDrag) return;
+  const { card, startIndex } = chronicleDrag;
+  card.classList.remove('dragging');
+  card.style.transform = '';
+
+  // Target slot = how many of the OTHER (still-static) cards' centers the
+  // pointer ended up below.
+  const others = Array.from(chronicleList.children).filter(c => c !== card);
+  let targetIndex = 0;
+  others.forEach(other=>{
+    const r = other.getBoundingClientRect();
+    if(e.clientY > r.top + r.height / 2) targetIndex++;
+  });
+  targetIndex = Math.max(0, Math.min(chronicleCurrentOrder.length - 1, targetIndex));
+
+  if(targetIndex !== startIndex){
+    const [moved] = chronicleCurrentOrder.splice(startIndex, 1);
+    chronicleCurrentOrder.splice(targetIndex, 0, moved);
+    persistChronicleDaily();
+  }
+  chronicleDrag = null;
+  renderChronicleList();
+}
+chronicleList.addEventListener('pointerup', endChronicleDrag);
+chronicleList.addEventListener('pointercancel', endChronicleDrag);
+
+function renderChronicleRound(){
+  chronicleModeLabel.textContent = chronicleMode === 'daily' ? `DAILY #${dailyNumberLabel(chronicleDailyDate)}`
+    : chronicleMode === 'archive' ? `REPLAY #${dailyNumberLabel(chronicleArchiveDate)} (${formatUKDate(chronicleArchiveDate)})`
+    : 'FREE PLAY';
+  updateChronicleModeTabs();
+  renderChronicleList();
+}
+
+function chronicleResultMessage(score){
+  if(score === 5) return 'Perfect! \ud83c\udfc6';
+  if(score >= 3) return 'Pretty good!';
+  if(score >= 1) return 'Not bad!';
+  return 'Tough one!';
+}
+
+function showChronicleResults(){
+  chroniclePlayArea.style.display = 'none';
+  chronicleResultsArea.style.display = '';
+  chronicleFinalMessage.textContent = `${chronicleScore}/5 \u2014 ${chronicleResultMessage(chronicleScore)}`;
+  chronicleFinalScore.textContent = `${chronicleScore}/5`;
+  const best = loadChronicleBest();
+  if(chronicleScore > best){
+    saveChronicleBest(chronicleScore);
+    chronicleBestScore.textContent = `New best: ${chronicleScore}/5!`;
+  } else {
+    chronicleBestScore.textContent = `Best: ${best}/5`;
+  }
+  chronicleRevealList.innerHTML = chronicleCorrectOrder.map((title, i)=>{
+    const correct = chronicleCurrentOrder[i] === title;
+    const game = chronicleGames.find(g => g.title === title);
+    return `<div class="chronicle-reveal-row ${correct ? 'correct' : 'incorrect'}">${i + 1}. ${title} (${game.year})</div>`;
+  }).join('');
+  chronicleFreeplayBtn.style.display = chronicleMode === 'daily' ? '' : 'none';
+  chroniclePlayAgainBtn.style.display = chronicleMode === 'freeplay' ? '' : 'none';
+}
+function hideChronicleResults(){
+  chronicleResultsArea.style.display = 'none';
+  chroniclePlayArea.style.display = '';
+}
+
+function submitChronicle(){
+  if(chronicleGameOver) return;
+  chronicleGameOver = true;
+  chronicleScore = chronicleCurrentOrder.filter((title, i) => title === chronicleCorrectOrder[i]).length;
+  playSfx(chronicleScore === 5 ? 'win' : 'lose');
+  persistChronicleDaily();
+  if(chronicleMode === 'daily') recordChronicleDailyResult(chronicleDailyDate, chronicleScore);
+  else if(chronicleMode === 'archive') recordChronicleDailyResult(chronicleArchiveDate, chronicleScore);
+  renderChronicleList();
+  showChronicleResults();
+  const unlocked = checkNightOwl();
+  renderAchievementToasts(unlocked, 'chronicleAchvToastList');
+}
+chronicleSubmitBtn.addEventListener('click', submitChronicle);
+
+function startChronicleRound(puzzle){
+  chronicleGames = puzzle.games;
+  chronicleCorrectOrder = puzzle.correctOrder;
+  chronicleCurrentOrder = puzzle.displayOrder.slice();
+  chronicleGameOver = false;
+  chronicleScore = 0;
+  chronicleCoverCache = {};
+  hideChronicleResults();
+  renderChronicleRound();
+}
+
+function startChronicleDaily(){
+  const date = todayKey();
+  chronicleMode = 'daily';
+  chronicleDailyDate = date;
+  const puzzle = buildChroniclePuzzle(date);
+  let stored = loadChronicleDailyState();
+  if(!stored || stored.date !== date){
+    stored = { date, order: puzzle.displayOrder.slice(), gameOver: false, score: 0 };
+    saveChronicleDailyState(stored);
+  }
+  chronicleGames = puzzle.games;
+  chronicleCorrectOrder = puzzle.correctOrder;
+  chronicleCurrentOrder = stored.order.slice();
+  chronicleGameOver = stored.gameOver;
+  chronicleScore = stored.score;
+  chronicleCoverCache = {};
+  renderChronicleRound();
+  if(chronicleGameOver) showChronicleResults();
+  else hideChronicleResults();
+}
+
+function startChronicleFreeplay(){
+  chronicleMode = 'freeplay';
+  startChronicleRound(buildChroniclePuzzle('freeplay-' + Math.random().toString(36).slice(2)));
+}
+
+function startChronicleArchive(dateStr){
+  chronicleMode = 'archive';
+  chronicleArchiveDate = dateStr;
+  startChronicleRound(buildChroniclePuzzle(dateStr));
+}
+
+function buildChronicleShareText(){
+  const label = chronicleMode === 'daily' ? `CARTRIDGE CHRONICLE Daily #${dailyNumberLabel(chronicleDailyDate)}`
+    : chronicleMode === 'archive' ? `CARTRIDGE CHRONICLE Replay #${dailyNumberLabel(chronicleArchiveDate)}`
+    : 'CARTRIDGE CHRONICLE \u2014 Free Play';
+  return `${label}\n${chronicleScore}/5 \u2014 ${chronicleResultMessage(chronicleScore)}`;
+}
+
+chronicleModeDailyBtn.addEventListener('click', ()=>{ if(chronicleMode !== 'daily') startChronicleDaily(); });
+chronicleModeFreeplayBtn.addEventListener('click', ()=>{ if(chronicleMode !== 'freeplay') startChronicleFreeplay(); });
+
+chronicleShareBtn.addEventListener('click', ()=> shareOrCopy(buildChronicleShareText(), chronicleShareBtn));
+chronicleFreeplayBtn.addEventListener('click', startChronicleFreeplay);
+chroniclePlayAgainBtn.addEventListener('click', startChronicleFreeplay);
+chronicleCloseBtn.addEventListener('click', showHomeScreen);
+document.getElementById('chroniclePageMarquee').addEventListener('click', showHomeScreen);
+
+// ----- Secret unlock: tap the "No match" swatch in How to Play 5 times -----
+let secretChronicleUnlockCount = 0;
+document.getElementById('secretChronicleUnlockSwatch').addEventListener('click', ()=>{
+  secretChronicleUnlockCount++;
+  if(secretChronicleUnlockCount >= 5){
+    secretChronicleUnlockCount = 0;
+    unlockChronicle();
+    renderHomeSelector();
+  }
+});
+
 // ---------- Games menu (hamburger + side drawer) ----------
 const menuBtn = document.getElementById('menuBtn');
 const sideMenu = document.getElementById('sideMenu');
@@ -5736,6 +6202,7 @@ const menuCartridgeBtn = document.getElementById('menuCartridgeBtn');
 const menuClashBtn = document.getElementById('menuClashBtn');
 const menuGridBtn = document.getElementById('menuGridBtn');
 const menuCharadesBtn = document.getElementById('menuCharadesBtn');
+const menuChronicleBtn = document.getElementById('menuChronicleBtn');
 const menuChaosBtn = document.getElementById('menuChaosBtn');
 
 function renderStreakRowHtml(historyMap){
@@ -5777,6 +6244,10 @@ function renderAllStreaks(){
   document.getElementById('streakClashRow').innerHTML = renderClashStreakRowHtml(loadClashHistory(), CLASH_STAGES.length * CLASH_ROUNDS_PER_STAGE);
   document.getElementById('streakGridRow').innerHTML = renderStreakRowHtml(loadGridHistory());
   document.getElementById('streakCharadesRow').innerHTML = renderStreakRowHtml(loadCharadesHistory());
+  const chronicleSection = document.getElementById('streakChronicleSection');
+  const chronicleShow = chronicleUnlocked();
+  chronicleSection.style.display = chronicleShow ? '' : 'none';
+  if(chronicleShow) document.getElementById('streakChronicleRow').innerHTML = renderClashStreakRowHtml(loadChronicleHistory(), 5);
 }
 
 function openSideMenu(){
@@ -5784,13 +6255,16 @@ function openSideMenu(){
   const clashOpen = clashModal.classList.contains('show');
   const gridOpen = gridModal.classList.contains('show');
   const charadesOpen = charadesModal.classList.contains('show');
+  const chronicleOpen = chronicleModal.classList.contains('show');
   const chaosOpen = chaosModal.classList.contains('show');
+  menuChronicleBtn.style.display = chronicleUnlocked() ? '' : 'none';
   menuChaosBtn.style.display = chaosIsUnlocked() ? '' : 'none';
   menuClashBtn.classList.toggle('active', clashOpen);
   menuGridBtn.classList.toggle('active', gridOpen);
   menuCharadesBtn.classList.toggle('active', charadesOpen);
+  menuChronicleBtn.classList.toggle('active', chronicleOpen);
   menuChaosBtn.classList.toggle('active', chaosOpen);
-  menuCartridgeBtn.classList.toggle('active', !clashOpen && !gridOpen && !charadesOpen && !chaosOpen);
+  menuCartridgeBtn.classList.toggle('active', !clashOpen && !gridOpen && !charadesOpen && !chronicleOpen && !chaosOpen);
   renderAllStreaks();
   sideMenu.classList.add('show');
   sideMenuOverlay.classList.add('show');
@@ -5821,6 +6295,11 @@ menuCharadesBtn.addEventListener('click', ()=>{
   closeSideMenu();
   showCharadesPage();
   startCharadesDaily();
+});
+menuChronicleBtn.addEventListener('click', ()=>{
+  closeSideMenu();
+  showChroniclePage();
+  startChronicleDaily();
 });
 menuChaosBtn.addEventListener('click', ()=>{
   closeSideMenu();
