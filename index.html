@@ -1863,7 +1863,9 @@ const GAMES = [
 {title:"Resident Evil Requiem",year:2026,publisher:"Capcom",critic:89,genres:["Action-Adventure","Horror","Shooter"],platforms:["PC","PlayStation","Xbox","Switch"],sales:8,hours:14,perspective:"First/Third-Person",clueText:"A dual-protagonist survival horror game marking the 30th anniversary of its franchise"},
 {title:"Pragmata",year:2026,publisher:"Capcom",critic:86,genres:["Action-Adventure","Shooter"],platforms:["PC","PlayStation","Xbox","Switch"],sales:2,hours:12,perspective:"Third-Person",clueText:"A sci-fi action-adventure where an astronaut and an android hack and shoot their way across a lunar facility"},
 {title:"007 First Light",year:2026,publisher:"IO Interactive",critic:87,genres:["Action-Adventure","Stealth"],platforms:["PC","PlayStation","Xbox"],sales:4,hours:20,perspective:"Third-Person",clueText:"An origin story following a young James Bond's rise through MI6's 00 program"},
-{title:"Avatar: Frontiers of Pandora",year:2023,publisher:"Ubisoft",critic:72,genres:["Action-Adventure","Open World"],platforms:["PC","PlayStation","Xbox"],sales:3,hours:18,perspective:"First-Person",clueText:"An open-world action-adventure game set in a new region of Pandora from the Avatar film series"}
+{title:"Avatar: Frontiers of Pandora",year:2023,publisher:"Ubisoft",critic:72,genres:["Action-Adventure","Open World"],platforms:["PC","PlayStation","Xbox"],sales:3,hours:18,perspective:"First-Person",clueText:"An open-world action-adventure game set in a new region of Pandora from the Avatar film series"},
+{title:"Guitar Hero",year:2005,publisher:"Activision",critic:91,genres:["Party"],platforms:["PlayStation"],sales:1.5,hours:8,clueText:"A rhythm game played with a guitar-shaped controller, credited with kickstarting the mid-2000s music game boom"},
+{title:"Kingdom Hearts",year:2002,publisher:"Square Enix",critic:87,genres:["Action RPG"],platforms:["PlayStation"],sales:6,hours:30,perspective:"Third-Person",clueText:"An action RPG crossover between Disney worlds and Final Fantasy characters, following a boy wielding a giant key"}
 ];
 
 // ---------- Sound design (retro blips via Web Audio, no audio files needed) ----------
@@ -5385,24 +5387,89 @@ function unlockCharades(){
 
 const CHARADES_MAX_GUESSES = 6;
 
-// Order matches EASY_POOL exactly (GAMES filtered by isEasyPoolGame, in GAMES'
-// own array order) — paired up by array index below, so there's no risk of a
-// title typo silently breaking a clue lookup.
-const CHARADES_EMOJI_LIST = [
-  '🚗🔫🌴💰', '🪂🏝️🔫💯', '🍄🏎️🍌🏁', '🤠🐴🔫🌵', '🏝️🦝🎣🏠',
-  '🗡️🛡️🌳🐴', '⛏️🌍🏠✨', '🐉⚔️🏔️📜', '🌾🚜🐄❤️', '👨‍🚀🔪❓🚀',
-  '🤖🌃💊🔫', '🚗⚽🚀', '👫🧸🎮❤️', '🍄🎩🌍🚀', '🪖✈️💣🎖️',
-  '🏚️🔫🛡️💣', '🏎️🌎🏁🎪', '🐉⚔️🏹🌋', '💍🐎⚔️🔥', '🐛⚔️🕸️🏚️',
-  '⛰️👧💨❤️', '☕🥊🎨👹', '💀🔥⚔️🏛️', '🐉🎲⚔️📖', '👽🔫🪐🟢',
-  '😈🔥⚔️💀', '🪖⚔️✈️🌍', '🦸🔫🌍👥', '🚀🌌🪐🔨', '🪖🔫💥🌊',
-  '🪖🔫💥🎖️', '🪖🔫🌪️🤖', '🪖💥🌴🎖️', '🪂🏗️🔫🌪️', '🧱👾🎮🌐',
-  '🪖🔫🗺️💀', '⚔️🏰🐉🧙', '🔫🎯💥🕵️', '🦸🔫🚀🏆', '💣🔫🧨👮',
-  '🏠💍🛋️👪', '👽🔫🚀🌌', '🧙‍♂️🏰⚡📖', '🫘🏃🎪🏆', '🏎️🏁🛞🏆',
-  '🦖🏝️🔥⛏️', '🧟🌲🔫🎒', '🏚️🔫🪓🧍', '🔪🌲🏃😱', '👻🔦📸😱',
-  '🐉🏜️🌦️🏹', '⚔️🐉🎭🌐', '⚔️🐉🌍👹', '🚀📜⚔️🌌', '☠️⛵💰🦜',
-];
-const CHARADES_CLUES = {};
-EASY_POOL.forEach((g, i) => { CHARADES_CLUES[g.title] = CHARADES_EMOJI_LIST[i]; });
+// Keyed directly by title (not paired by array position) so adding or
+// changing a clue later can never silently drift out of sync with the pool —
+// CHARADES_POOL below is just "every game that has an entry here".
+const CHARADES_CLUES = {
+  'Grand Theft Auto V': '🚗🔫🌴💰',
+  'PUBG: Battlegrounds': '🪂🏝️🔫💯',
+  'Mario Kart 8 Deluxe': '🍄🏎️🍌🏁',
+  'Red Dead Redemption 2': '🤠🐴🔫🌵',
+  'Animal Crossing: New Horizons': '🏝️🦝🎣🏠',
+  'The Legend of Zelda: Breath of the Wild': '🗡️🛡️🌳🐴',
+  'Terraria': '⛏️🌍🏠✨',
+  'The Elder Scrolls V: Skyrim': '🐉⚔️🏔️📜',
+  'Stardew Valley': '🌾🚜🐄❤️',
+  'Among Us': '👨‍🚀🔪❓🚀',
+  'Cyberpunk 2077': '🦾😎💣🌆',
+  'Rocket League': '🚀🚗⚽🥅',
+  'It Takes Two': '👫🧸🎮❤️',
+  'Super Mario Odyssey': '🍄🎩🌍🚀',
+  'Battlefield 1': '🪖✈️💣🎖️',
+  "Tom Clancy's Rainbow Six Siege": '🏚️🔫🛡️💣',
+  'Forza Horizon 5': '🏎️🌎🏁🎪',
+  'Monster Hunter: World': '🐉⚔️🏹🌋',
+  'Elden Ring': '💍🐎⚔️🔥',
+  'Hollow Knight': '🐛⚔️🕸️🏚️',
+  'Celeste': '⛰️👧💨❤️',
+  'Cuphead': '☕🥊🎨👹',
+  'Hades': '💀🔥⚔️🏛️',
+  "Baldur's Gate 3": '🐉🎲⚔️📖',
+  'Halo Infinite': '👽🔫🪐🟢',
+  'Diablo IV': '😈🔥⚔️💀',
+  'Battlefield V': '🪖⚔️✈️🌍',
+  'Overwatch 2': '🦸🔫🌍👥',
+  "No Man's Sky": '🚀🌌🪐🔨',
+  'Battlefield 4': '🪖🔫💥🌊',
+  'Battlefield 3': '🪖🔫💥🎖️',
+  'Battlefield 2042': '🪖🔫🌪️🤖',
+  'Battlefield: Bad Company 2': '🪖💥🌴🎖️',
+  'Fortnite': '🪂🏗️🔫🌪️',
+  'Roblox': '🧱👾🎮🌐',
+  'Call of Duty: Warzone': '🪖🔫🗺️💀',
+  'League of Legends': '⚔️🏰🐉🧙',
+  'Valorant': '🔫🎯💥🕵️',
+  'Apex Legends': '🦸🔫🚀🏆',
+  'Counter-Strike 2': '💣🔫🧨👮',
+  'The Sims 4': '🏠💍🛋️👪',
+  'Destiny 2': '👽🔫🚀🌌',
+  'Hogwarts Legacy': '🧙‍♂️🏰⚡📖',
+  'Fall Guys': '🫘🏃🎪🏆',
+  'Gran Turismo 7': '🏎️🏁🛞🏆',
+  'ARK: Survival Evolved': '🦖🏝️🔥⛏️',
+  'DayZ': '🧟🌲🔫🎒',
+  'Rust': '🏚️🔫🪓🧍',
+  'Dead by Daylight': '🔪🌲🏃😱',
+  'Phasmophobia': '👻🔦📸😱',
+  'Monster Hunter Wilds': '🐉🏜️🌦️🏹',
+  'Final Fantasy XIV': '⚔️🐉🎭🌐',
+  'World of Warcraft': '⚔️🐉🌍👹',
+  'Starfield': '🚀📜⚔️🌌',
+  'Sea of Thieves': '☠️⛵💰🦜',
+  // ----- added on request -----
+  "Marvel's Spider-Man": '🦸\u200d♂️🎒🕸️🕷️',
+  "Assassin's Creed Odyssey": '⚔️🇬🇷🥷⛵',
+  'God of War (2018)': '🧑🏻\u200d🦲💪🏻🪓🏹',
+  'Portal 2': '🪞🔫🪞🌌',
+  'Guitar Hero': '🎸🎵🎶🎵',
+  'Kingdom Hearts': '🐭🔑🏰❤️',
+  'Metal Gear Solid': '🥷🔫📦❗',
+  // ----- 10 more popular picks -----
+  'Minecraft': '🧱⛏️🌍🐷',
+  'The Witcher 3: Wild Hunt': '🐺⚔️🧙\u200d♂️🐴',
+  'Doom (2016)': '👹🔫🔥💀',
+  'Street Fighter 6': '👊🥋🔥🎮',
+  'Tekken 8': '👊🤖⚡🥋',
+  'The Last of Us': '🍄🧟🎒❤️',
+  'Super Smash Bros. Ultimate': '🥊🍄⭐👊',
+  'Persona 5': '🎭🔫👑😈',
+  "Uncharted 4: A Thief's End": '🗺️💰🏛️🔫',
+  'Crash Bandicoot N. Sane Trilogy': '🦘📦🍊💥',
+};
+// Every game that has a clue above — independent of EASY_POOL (used by
+// Clash/Connect's Easy difficulty), so growing this list never changes what
+// shows up there.
+const CHARADES_POOL = GAMES.filter(g => CHARADES_CLUES.hasOwnProperty(g.title));
 
 // Grapheme-aware splitting so multi-codepoint emoji (families, ZWJ sequences,
 // flags) each count as one clue "piece" instead of being torn into fragments.
@@ -5447,11 +5514,11 @@ function showCharadesPage(){
   charadesModal.classList.add('show');
 }
 
-function charadesPool(){ return EASY_POOL; }
+function charadesPool(){ return CHARADES_POOL; }
 
 function getCharadesTargetFor(dateStr){
   const rng = mulberry32(hashStr('charades-' + dateStr));
-  return EASY_POOL[Math.floor(rng() * EASY_POOL.length)];
+  return CHARADES_POOL[Math.floor(rng() * CHARADES_POOL.length)];
 }
 
 const CHARADES_STATE_KEY = 'cartridgeCharadesDailyState_v1';
@@ -5626,7 +5693,7 @@ function startCharadesDaily(){
 
 function startCharadesFreeplay(){
   charadesMode = 'freeplay';
-  startCharadesRound(EASY_POOL[Math.floor(Math.random() * EASY_POOL.length)]);
+  startCharadesRound(CHARADES_POOL[Math.floor(Math.random() * CHARADES_POOL.length)]);
 }
 
 function startCharadesArchive(dateStr){
