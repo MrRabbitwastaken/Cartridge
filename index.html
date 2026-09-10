@@ -880,19 +880,19 @@
     color: var(--text-dim); margin-bottom: 14px;
   }
   .chronicle-hint b { color: var(--orange); }
-  .chronicle-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+  .chronicle-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; position: relative; }
   .chronicle-card {
     display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 10px;
     background: var(--panel-2); border: 1px solid var(--line); position: relative;
-    transition: box-shadow .15s ease;
+    transition: box-shadow .15s ease, transform .2s ease; cursor: grab; touch-action: none;
   }
   .chronicle-card.dragging {
     z-index: 20; box-shadow: 0 10px 24px rgba(0,0,0,0.5); border-color: var(--orange);
-    cursor: grabbing; transition: none; touch-action: none;
+    cursor: grabbing; transition: none;
   }
+  .chronicle-move-btns, .chronicle-move-btn { touch-action: auto; } /* arrows still just tap-to-click, not drag */
   .chronicle-drag-handle {
-    flex: 0 0 auto; font-size: 18px; color: var(--text-dim); padding: 4px 2px;
-    cursor: grab; touch-action: none; line-height: 1;
+    flex: 0 0 auto; font-size: 18px; color: var(--text-dim); padding: 4px 2px; line-height: 1;
   }
   .chronicle-drag-handle:hover { color: var(--orange); }
   .chronicle-rank {
@@ -6036,7 +6036,7 @@ function renderChronicleList(animate){
     if(chronicleCoverCache[title] !== undefined) return;
     fetchCoverArt(title).then(url=>{
       chronicleCoverCache[title] = url || null;
-      if(!chronicleGameOver) renderChronicleList();
+      if(!chronicleGameOver && !chronicleDrag) renderChronicleList();
     });
   });
 
@@ -6077,18 +6077,50 @@ chronicleList.addEventListener('click', (e)=>{
 // and pen). Grab the ⠿ handle to pick a card up — the dragged card follows
 // the pointer; the other cards stay put until drop, at which point we work
 // out the target slot from where the pointer ended up and reorder the
-// underlying array in one go, animated in with the FLIP transition above. -----
+// underlying array in one go, animated in with the FLIP transition above.
+// While dragging, the other cards physically slide out of the way to open a
+// gap at the spot the card would land — not just a static list with the
+// dragged card floating over the top of everything. -----
 let chronicleDrag = null;
 function chronicleCardIndex(card){
   return Array.from(chronicleList.children).indexOf(card);
 }
+// How many of the OTHER (still-static) cards' centers the pointer is
+// currently below — used both for the live reflow and the real drop.
+function chronicleTargetIndex(pointerY, draggedCard){
+  const others = Array.from(chronicleList.children).filter(c => c !== draggedCard && c.classList.contains('chronicle-card'));
+  let targetIndex = 0;
+  others.forEach(other=>{
+    const r = other.getBoundingClientRect();
+    if(pointerY > r.top + r.height / 2) targetIndex++;
+  });
+  return Math.max(0, Math.min(chronicleCurrentOrder.length - 1, targetIndex));
+}
+// Shifts every OTHER card up or down by one slot's worth of space to open a
+// gap at targetIndex — cards between the dragged card's start and current
+// target slide into the space it vacated; everything else stays put.
+function reflowChronicleCards(targetIndex, startIndex, draggedCard){
+  const others = Array.from(chronicleList.children).filter(c => c !== draggedCard && c.classList.contains('chronicle-card'));
+  others.forEach((otherCard, j)=>{
+    const originalIndex = j < startIndex ? j : j + 1;
+    let shift = 0;
+    if(startIndex < targetIndex && originalIndex > startIndex && originalIndex <= targetIndex){
+      shift = -chronicleDrag.slotHeight;
+    } else if(startIndex > targetIndex && originalIndex >= targetIndex && originalIndex < startIndex){
+      shift = chronicleDrag.slotHeight;
+    }
+    otherCard.style.transform = shift ? `translateY(${shift}px)` : '';
+  });
+}
 chronicleList.addEventListener('pointerdown', (e)=>{
   if(chronicleGameOver) return;
-  const handle = e.target.closest('.chronicle-drag-handle');
+  if(e.target.closest('.chronicle-move-btn')) return; // the ▲▼ arrows keep their own click behaviour
   const card = e.target.closest('.chronicle-card');
-  if(!handle || !card) return;
+  if(!card) return;
   e.preventDefault();
-  chronicleDrag = { card, startIndex: chronicleCardIndex(card), startY: e.clientY };
+  const listStyle = getComputedStyle(chronicleList);
+  const slotHeight = card.offsetHeight + parseFloat(listStyle.rowGap || listStyle.gap || '10');
+  chronicleDrag = { card, startIndex: chronicleCardIndex(card), startY: e.clientY, slotHeight };
   card.classList.add('dragging');
   card.setPointerCapture(e.pointerId);
   document.body.classList.add('chronicle-drag-lock');
@@ -6098,6 +6130,8 @@ chronicleList.addEventListener('pointermove', (e)=>{
   e.preventDefault(); // stop the page itself scrolling while a card is being dragged
   const dy = e.clientY - chronicleDrag.startY;
   chronicleDrag.card.style.transform = `translateY(${dy}px) scale(1.03)`;
+  const targetIndex = chronicleTargetIndex(e.clientY, chronicleDrag.card);
+  reflowChronicleCards(targetIndex, chronicleDrag.startIndex, chronicleDrag.card);
 }, { passive: false });
 function endChronicleDrag(e){
   if(!chronicleDrag) return;
@@ -6106,23 +6140,14 @@ function endChronicleDrag(e){
   card.style.transform = '';
   document.body.classList.remove('chronicle-drag-lock');
 
-  // Target slot = how many of the OTHER (still-static) cards' centers the
-  // pointer ended up below.
-  const others = Array.from(chronicleList.children).filter(c => c !== card);
-  let targetIndex = 0;
-  others.forEach(other=>{
-    const r = other.getBoundingClientRect();
-    if(e.clientY > r.top + r.height / 2) targetIndex++;
-  });
-  targetIndex = Math.max(0, Math.min(chronicleCurrentOrder.length - 1, targetIndex));
-
+  const targetIndex = chronicleTargetIndex(e.clientY, card);
   if(targetIndex !== startIndex){
     const [moved] = chronicleCurrentOrder.splice(startIndex, 1);
     chronicleCurrentOrder.splice(targetIndex, 0, moved);
     persistChronicleDaily();
   }
   chronicleDrag = null;
-  renderChronicleList(true);
+  renderChronicleList(true); // rebuild replaces every reflow transform with the real final layout
 }
 chronicleList.addEventListener('pointerup', endChronicleDrag);
 chronicleList.addEventListener('pointercancel', endChronicleDrag);
