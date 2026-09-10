@@ -331,6 +331,25 @@
   #guessBtn:hover { box-shadow: 0 0 18px rgba(255,46,99,0.55); }
   #guessBtn:active { transform: scale(0.97); }
   #guessBtn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow:none; }
+
+  /* Charades' guess input/button reuse Cartridge's own exact styling —
+     same box, same focus glow, same solid magenta GUESS button — since they're
+     doing the same job (typing a game title from a dropdown-backed list). */
+  #charadesInput {
+    width: 100%; padding: 14px 16px; background: var(--panel); border: 2px solid var(--line);
+    border-radius: 8px; color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 15px;
+    outline: none; transition: border-color .15s;
+  }
+  #charadesInput:focus { border-color: var(--cyan); }
+  #charadesInput:disabled { opacity: 0.5; }
+  #charadesGuessBtn {
+    padding: 14px 22px; background: var(--magenta); border: none; border-radius: 8px; color: #fff;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; letter-spacing: 0.5px; cursor: pointer;
+    transition: transform .1s, box-shadow .15s; box-shadow: 0 0 0 rgba(255,46,99,0);
+  }
+  #charadesGuessBtn:hover { box-shadow: 0 0 18px rgba(255,46,99,0.55); }
+  #charadesGuessBtn:active { transform: scale(0.97); }
+  #charadesGuessBtn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow:none; }
   .cover-panel {
     flex: 0 0 auto; width: 76px; height: 102px; border-radius: 8px; overflow: hidden;
     position: relative; background: var(--panel-2); border: 2px solid var(--line);
@@ -352,11 +371,13 @@
      button and cover art. Reorder (not restructure) the same 3 elements so
      Guess + cover art form a compact centered row, with the search box given
      its own full-width row underneath for comfortable typing. Desktop is
-     untouched. */
+     untouched. Charades' guess row reuses the same .search-box class, so it
+     gets the same full-width-below treatment automatically — just needs its
+     own button pinned above like Cartridge's. */
   @media (max-width: 640px) {
-    .search-row { justify-content: center; }
+    .search-row, .charades-guess-row { justify-content: center; }
     .search-box { order: 3; flex: 1 1 100%; min-width: 0; }
-    #guessBtn { order: 1; }
+    #guessBtn, #charadesGuessBtn { order: 1; }
     .cover-panel { order: 2; }
   }
 
@@ -838,6 +859,20 @@
   .chaos-button .achv-hint-popup { bottom: calc(100% + 10px); }
   .chaos-button.show-hint .achv-hint-popup { display: block; }
 
+  /* ---------- Cartridge Charades ---------- */
+  .charades-emoji-display {
+    text-align: center; font-size: clamp(34px, 9vw, 56px); margin: 18px 0 22px;
+    line-height: 1.3; letter-spacing: 6px;
+  }
+  .charades-guess-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  .charades-guess-row #charadesGuessBtn { flex: 0 0 auto; }
+  .charades-guess-history { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; min-height: 26px; }
+  .charades-chip {
+    display: inline-block; padding: 4px 10px; border-radius: 14px; background: var(--panel-2);
+    border: 1px solid var(--magenta); color: var(--magenta); font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; text-decoration: line-through;
+  }
+
   /* ---------- Light mode ---------- */
   body.light-mode {
     /* Warm dark mahogany/coffee tones instead of the cool navy panels, echoing
@@ -910,6 +945,10 @@
       <span class="side-menu-icon">🧩</span>
       <span class="side-menu-label">Cartridge Connect</span>
     </button>
+    <button class="side-menu-item" id="menuCharadesBtn" style="display:none;">
+      <span class="side-menu-icon">🎭</span>
+      <span class="side-menu-label">Cartridge Charades</span>
+    </button>
     <button class="side-menu-item" id="menuChaosBtn" style="display:none;">
       <span class="side-menu-icon">💥</span>
       <span class="side-menu-label">Cartridge Chaos</span>
@@ -952,7 +991,7 @@
         <div class="legend" style="justify-content:flex-start; margin:0;">
           <span><span class="swatch exact" id="secretUnlockAllSwatch" style="cursor:pointer;"></span> Exact match</span>
           <span><span class="swatch close" id="secretResetDailyBtn" style="cursor:pointer;"></span> Close</span>
-          <span><span class="swatch far"></span> No match</span>
+          <span><span class="swatch far" id="secretCharadesUnlockSwatch" style="cursor:pointer;"></span> No match</span>
         </div>
         <p style="margin-top:10px;">▲ / ▼ next to a number means the answer is higher or lower than your guess. Genre and Platform show individual pills that light up per tag, so you can see exactly which ones the mystery game shares.</p>
       </div>
@@ -1119,6 +1158,52 @@
   <div class="chaos-unlock-toast-sub">Cycle the home screen arrows to find it.</div>
 </div>
 
+<div class="modal-overlay page-mode" id="charadesModal">
+  <div class="wrap" style="max-width:640px;">
+    <header>
+      <div class="marquee" id="charadesPageMarquee" style="color:var(--pink);" title="Back to home">CARTRIDGE CHARADES</div>
+      <div class="tagline">Emoji only. No words. <b>Guess the game.</b></div>
+    </header>
+
+    <div class="mode-nav" id="charadesModeNav" style="--mode-accent:var(--pink); --mode-glow:rgba(255,143,199,0.35);">
+      <button class="mode-btn active" id="charadesModeDailyBtn">🗓️ Daily Challenge</button>
+      <button class="mode-btn" id="charadesModeFreeplayBtn">🎮 Free Play</button>
+    </div>
+
+    <div id="charadesPlayArea">
+      <div class="grid-top-row">
+        <span id="charadesModeLabel">DAILY</span>
+        <span id="charadesGuessLabel">Guess 1/6</span>
+      </div>
+      <div class="charades-emoji-display" id="charadesEmojiDisplay">❔ ❔ ❔ ❔</div>
+      <div class="charades-guess-row">
+        <div class="search-box">
+          <input type="text" id="charadesInput" placeholder="Type a game title…" autocomplete="off">
+          <div class="dropdown hidden" id="charadesDropdown"></div>
+        </div>
+        <button id="charadesGuessBtn">GUESS</button>
+      </div>
+      <div class="charades-guess-history" id="charadesGuessHistory"></div>
+      <div class="msg" id="charadesMsg"></div>
+      <div class="btn-row">
+        <button class="ghost-btn" id="charadesGiveUpBtn">Give up😭</button>
+      </div>
+    </div>
+
+    <div id="charadesResultsArea" class="clash-results" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid var(--line);">
+      <div class="clash-heading" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700;" id="charadesFinalMessage">Solved it!</div>
+      <div class="clash-final-score" id="charadesFinalScore"></div>
+      <div class="achv-toast-list" id="charadesAchvToastList"></div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn" id="charadesShareBtn">📋 Share Results</button>
+        <button class="ghost-btn" id="charadesFreeplayBtn">Play Free Play</button>
+        <button class="ghost-btn" id="charadesPlayAgainBtn" style="display:none;">New Puzzle</button>
+        <button class="ghost-btn" id="charadesCloseBtn">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="settingsModal">
   <div class="modal-box">
     <button class="modal-close" id="settingsModalClose">✕</button>
@@ -1218,6 +1303,12 @@
       <div class="archive-game-heading" style="color:var(--green);">Cartridge Connect</div>
       <div class="archive-stats" id="archiveStatsConnect"></div>
       <div class="archive-grid" id="archiveGridConnect"></div>
+    </div>
+
+    <div class="archive-game-section" id="archiveSectionCharades" style="display:none;">
+      <div class="archive-game-heading" style="color:var(--pink);">Cartridge Charades</div>
+      <div class="archive-stats" id="archiveStatsCharades"></div>
+      <div class="archive-grid" id="archiveGridCharades"></div>
     </div>
 
     <div class="archive-game-section" id="archiveSectionChaos" style="display:none;">
@@ -2159,6 +2250,16 @@ function renderConnectArchive(){
   renderGameArchiveRow(days, document.getElementById('archiveStatsConnect'), document.getElementById('archiveGridConnect'), {playable: true});
 }
 
+function charadesDayInfo(dateStr){
+  const e = loadCharadesHistory()[dateStr];
+  if(!e) return {played:false, won:false, label:null};
+  return {played:true, won: e.status === 'won', label: e.status === 'won' ? String(e.guesses) : 'X'};
+}
+function renderCharadesArchive(){
+  const days = buildLastNDays(7, charadesDayInfo);
+  renderGameArchiveRow(days, document.getElementById('archiveStatsCharades'), document.getElementById('archiveGridCharades'), {playable: true});
+}
+
 // No 7-day grid here — Chaos is a repeatable arcade high-score chase, not a
 // daily puzzle, so "played today" doesn't mean anything for it.
 function renderChaosArchive(){
@@ -2178,6 +2279,10 @@ function openArchivePanel(){
   renderArchive();
   renderClashArchive();
   renderConnectArchive();
+  const charadesSection = document.getElementById('archiveSectionCharades');
+  const charadesShow = charadesUnlocked();
+  charadesSection.style.display = charadesShow ? '' : 'none';
+  if(charadesShow) renderCharadesArchive();
   const chaosSection = document.getElementById('archiveSectionChaos');
   const chaosUnlocked = chaosIsUnlocked();
   chaosSection.style.display = chaosUnlocked ? '' : 'none';
@@ -2613,6 +2718,14 @@ document.getElementById('archiveGridConnect').addEventListener('click', (e)=>{
   closeArchivePanel();
   showGridPage();
   startGridArchive(cell.dataset.date);
+});
+
+document.getElementById('archiveGridCharades').addEventListener('click', (e)=>{
+  const cell = e.target.closest('.archive-cell.playable');
+  if(!cell) return;
+  closeArchivePanel();
+  showCharadesPage();
+  startCharadesArchive(cell.dataset.date);
 });
 
 function playArchivedDay(dateStr){
@@ -4178,6 +4291,7 @@ function hideAllTopScreens(){
   clashModal.classList.remove('show');
   gridModal.classList.remove('show');
   chaosModal.classList.remove('show');
+  charadesModal.classList.remove('show');
 }
 function showHomeScreen(){
   hideAllTopScreens();
@@ -4205,8 +4319,12 @@ const HOME_GAMES_BASE = [
   { key: 'connect',   label: 'CARTRIDGE CONNECT',  color: 'var(--green)', tagline: 'Sixteen games. Four hidden groups.<br><b>Find the connections.</b>' },
 ];
 const HOME_GAME_CHAOS = { key: 'chaos', label: 'CARTRIDGE CHAOS', color: 'var(--violet)', tagline: 'Fast questions. No mercy.<br><b>Beat the clock.</b>' };
+const HOME_GAME_CHARADES = { key: 'charades', label: 'CARTRIDGE CHARADES', color: 'var(--pink)', tagline: 'Emoji only. No words.<br><b>Guess the game.</b>' };
 function getHomeGames(){
-  return chaosIsUnlocked() ? [...HOME_GAMES_BASE, HOME_GAME_CHAOS] : HOME_GAMES_BASE;
+  const games = [...HOME_GAMES_BASE];
+  if(charadesUnlocked()) games.push(HOME_GAME_CHARADES);
+  if(chaosIsUnlocked()) games.push(HOME_GAME_CHAOS);
+  return games;
 }
 let homeSelectedIndex = 0;
 
@@ -4250,6 +4368,9 @@ homePlayBtn.addEventListener('click', ()=>{
   } else if(key === 'connect'){
     showGridPage();
     startGridDaily();
+  } else if(key === 'charades'){
+    showCharadesPage();
+    startCharadesDaily();
   } else if(key === 'chaos'){
     showChaosPage();
     startChaosGame();
@@ -4266,6 +4387,9 @@ homeFreeplayBtn.addEventListener('click', ()=>{
   } else if(key === 'connect'){
     showGridPage();
     startGridFreeplay();
+  } else if(key === 'charades'){
+    showCharadesPage();
+    startCharadesFreeplay();
   } else if(key === 'chaos'){
     showChaosPage();
     startChaosGame();
@@ -5125,6 +5249,7 @@ const EXPORTABLE_KEYS = [
   'cartridge_achievements_v1', 'cartridgeFreeplayLog_v1', 'cartridgeHintUsage_v1',
   'cartridgeClashBest_v1', 'cartridgeClashDailyState_v1', 'cartridgeClashHistory_v1',
   'cartridgeGridDailyState_v1', 'cartridgeGridHistory_v1',
+  'cartridgeCharadesDailyState_v1', 'cartridgeCharadesHistory_v1', 'cartridgeCharadesUnlocked_v1',
   'cartridgeChaosBest_v1', 'cartridgeChaosStats_v1',
   'cartridgeSfxMuted_v1', 'cartridgeTheme_v1',
 ];
@@ -5248,6 +5373,315 @@ function updateNextDailyButton(btnEl, currentKey){
   }
 }
 
+// ---------- Cartridge Charades (emoji guessing, Easy pool only — secret,
+// unlocked by tapping the grey "No match" swatch in How to Play 5 times) ----------
+const CHARADES_UNLOCK_KEY = 'cartridgeCharadesUnlocked_v1';
+function charadesUnlocked(){
+  try{ return localStorage.getItem(CHARADES_UNLOCK_KEY) === 'true'; }catch(e){ return false; }
+}
+function unlockCharades(){
+  try{ localStorage.setItem(CHARADES_UNLOCK_KEY, 'true'); }catch(e){}
+}
+
+const CHARADES_MAX_GUESSES = 6;
+
+// Order matches EASY_POOL exactly (GAMES filtered by isEasyPoolGame, in GAMES'
+// own array order) — paired up by array index below, so there's no risk of a
+// title typo silently breaking a clue lookup.
+const CHARADES_EMOJI_LIST = [
+  '🚗🔫🌴💰', '🪂🏝️🔫💯', '🍄🏎️🍌🏁', '🤠🐴🔫🌵', '🏝️🦝🎣🏠',
+  '🗡️🛡️🌳🐴', '⛏️🌍🏠✨', '🐉⚔️🏔️📜', '🌾🚜🐄❤️', '👨‍🚀🔪❓🚀',
+  '🤖🌃💊🔫', '🚗⚽🚀', '👫🧸🎮❤️', '🍄🎩🌍🚀', '🪖✈️💣🎖️',
+  '🏚️🔫🛡️💣', '🏎️🌎🏁🎪', '🐉⚔️🏹🌋', '💍🐎⚔️🔥', '🐛⚔️🕸️🏚️',
+  '⛰️👧💨❤️', '☕🥊🎨👹', '💀🔥⚔️🏛️', '🐉🎲⚔️📖', '👽🔫🪐🟢',
+  '😈🔥⚔️💀', '🪖⚔️✈️🌍', '🦸🔫🌍👥', '🚀🌌🪐🔨', '🪖🔫💥🌊',
+  '🪖🔫💥🎖️', '🪖🔫🌪️🤖', '🪖💥🌴🎖️', '🪂🏗️🔫🌪️', '🧱👾🎮🌐',
+  '🪖🔫🗺️💀', '⚔️🏰🐉🧙', '🔫🎯💥🕵️', '🦸🔫🚀🏆', '💣🔫🧨👮',
+  '🏠💍🛋️👪', '👽🔫🚀🌌', '🧙‍♂️🏰⚡📖', '🫘🏃🎪🏆', '🏎️🏁🛞🏆',
+  '🦖🏝️🔥⛏️', '🧟🌲🔫🎒', '🏚️🔫🪓🧍', '🔪🌲🏃😱', '👻🔦📸😱',
+  '🐉🏜️🌦️🏹', '⚔️🐉🎭🌐', '⚔️🐉🌍👹', '🚀📜⚔️🌌', '☠️⛵💰🦜',
+];
+const CHARADES_CLUES = {};
+EASY_POOL.forEach((g, i) => { CHARADES_CLUES[g.title] = CHARADES_EMOJI_LIST[i]; });
+
+// Grapheme-aware splitting so multi-codepoint emoji (families, ZWJ sequences,
+// flags) each count as one clue "piece" instead of being torn into fragments.
+function splitEmoji(str){
+  if(typeof Intl !== 'undefined' && Intl.Segmenter){
+    return Array.from(new Intl.Segmenter('en', {granularity:'grapheme'}).segment(str), s => s.segment);
+  }
+  return Array.from(str);
+}
+
+const charadesModal = document.getElementById('charadesModal');
+const charadesPlayArea = document.getElementById('charadesPlayArea');
+const charadesResultsArea = document.getElementById('charadesResultsArea');
+const charadesModeLabel = document.getElementById('charadesModeLabel');
+const charadesGuessLabel = document.getElementById('charadesGuessLabel');
+const charadesEmojiDisplay = document.getElementById('charadesEmojiDisplay');
+const charadesInput = document.getElementById('charadesInput');
+const charadesDropdown = document.getElementById('charadesDropdown');
+const charadesGuessBtn = document.getElementById('charadesGuessBtn');
+const charadesGuessHistory = document.getElementById('charadesGuessHistory');
+const charadesMsg = document.getElementById('charadesMsg');
+const charadesGiveUpBtn = document.getElementById('charadesGiveUpBtn');
+const charadesFinalMessage = document.getElementById('charadesFinalMessage');
+const charadesFinalScore = document.getElementById('charadesFinalScore');
+const charadesShareBtn = document.getElementById('charadesShareBtn');
+const charadesFreeplayBtn = document.getElementById('charadesFreeplayBtn');
+const charadesPlayAgainBtn = document.getElementById('charadesPlayAgainBtn');
+const charadesCloseBtn = document.getElementById('charadesCloseBtn');
+const charadesModeDailyBtn = document.getElementById('charadesModeDailyBtn');
+const charadesModeFreeplayBtn = document.getElementById('charadesModeFreeplayBtn');
+
+let charadesMode = 'daily'; // 'daily' | 'freeplay' | 'archive'
+let charadesDailyDate = null;
+let charadesArchiveDate = null;
+let charadesTarget = null;
+let charadesGuessedTitles = [];
+let charadesGameOver = false;
+let charadesWon = false;
+
+function showCharadesPage(){
+  hideAllTopScreens();
+  charadesModal.classList.add('show');
+}
+
+function charadesPool(){ return EASY_POOL; }
+
+function getCharadesTargetFor(dateStr){
+  const rng = mulberry32(hashStr('charades-' + dateStr));
+  return EASY_POOL[Math.floor(rng() * EASY_POOL.length)];
+}
+
+const CHARADES_STATE_KEY = 'cartridgeCharadesDailyState_v1';
+function loadCharadesDailyState(){
+  try{ const raw = localStorage.getItem(CHARADES_STATE_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+}
+function saveCharadesDailyState(state){
+  try{ localStorage.setItem(CHARADES_STATE_KEY, JSON.stringify(state)); }catch(e){}
+}
+function persistCharadesDaily(){
+  if(charadesMode !== 'daily') return;
+  saveCharadesDailyState({
+    date: charadesDailyDate, guessedTitles: charadesGuessedTitles.slice(),
+    gameOver: charadesGameOver, won: charadesWon,
+  });
+}
+
+const CHARADES_HISTORY_KEY = 'cartridgeCharadesHistory_v1';
+function loadCharadesHistory(){
+  try{ const raw = localStorage.getItem(CHARADES_HISTORY_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; }
+}
+function saveCharadesHistory(hist){
+  try{ localStorage.setItem(CHARADES_HISTORY_KEY, JSON.stringify(hist)); }catch(e){}
+}
+function recordCharadesDailyResult(dateStr, won, guessCount){
+  const hist = loadCharadesHistory();
+  hist[dateStr] = { status: won ? 'won' : 'lost', guesses: guessCount };
+  saveCharadesHistory(hist);
+}
+
+function updateCharadesModeTabs(){
+  charadesModeDailyBtn.classList.toggle('active', charadesMode !== 'freeplay');
+  charadesModeFreeplayBtn.classList.toggle('active', charadesMode === 'freeplay');
+}
+
+function renderCharadesRound(){
+  charadesModeLabel.textContent = charadesMode === 'daily' ? `DAILY #${dailyNumberLabel(charadesDailyDate)}`
+    : charadesMode === 'archive' ? `REPLAY #${dailyNumberLabel(charadesArchiveDate)} (${formatUKDate(charadesArchiveDate)})`
+    : 'FREE PLAY';
+  updateCharadesModeTabs();
+
+  const guessCount = charadesGuessedTitles.length;
+  charadesGuessLabel.textContent = `Guess ${Math.min(guessCount + 1, CHARADES_MAX_GUESSES)}/${CHARADES_MAX_GUESSES}`;
+
+  const allEmoji = splitEmoji(CHARADES_CLUES[charadesTarget.title] || '❔');
+  const revealCount = Math.min(allEmoji.length, 2 + guessCount);
+  const hidden = Math.max(0, allEmoji.length - revealCount);
+  charadesEmojiDisplay.textContent = allEmoji.slice(0, revealCount).join(' ') + (hidden ? ' ' + '❔'.repeat(hidden) : '');
+
+  charadesGuessHistory.innerHTML = charadesGuessedTitles.map(t => `<span class="charades-chip">${t}</span>`).join('');
+  charadesMsg.textContent = '';
+  charadesInput.value = '';
+  charadesInput.disabled = charadesGameOver;
+  charadesGuessBtn.disabled = charadesGameOver;
+}
+
+function renderCharadesDropdown(query){
+  const q = query.trim().toLowerCase();
+  if(!q){ charadesDropdown.classList.add('hidden'); charadesDropdown.innerHTML = ''; return; }
+  const guessedSet = new Set(charadesGuessedTitles);
+  const matches = charadesPool().filter(g => g.title.toLowerCase().includes(q)).slice(0, 8);
+  if(!matches.length){ charadesDropdown.classList.add('hidden'); charadesDropdown.innerHTML = ''; return; }
+  charadesDropdown.innerHTML = matches.map(g => {
+    const already = guessedSet.has(g.title);
+    return `<div class="dropdown-item${already ? ' disabled' : ''}" data-title="${g.title.replace(/"/g,'&quot;')}">${g.title}${already ? ' (already guessed)' : ''}</div>`;
+  }).join('');
+  charadesDropdown.classList.remove('hidden');
+}
+function hideCharadesDropdown(){ charadesDropdown.classList.add('hidden'); charadesDropdown.innerHTML = ''; }
+
+function charadesResultMessage(){
+  return charadesWon ? 'Solved it! \ud83c\udf89' : 'Out of guesses!';
+}
+
+function showCharadesResults(){
+  charadesPlayArea.style.display = 'none';
+  charadesResultsArea.style.display = '';
+  const guessCount = charadesGuessedTitles.length + (charadesWon ? 1 : 0);
+  charadesFinalMessage.textContent = charadesResultMessage();
+  charadesFinalScore.textContent = charadesWon
+    ? `Solved in ${guessCount}/${CHARADES_MAX_GUESSES}`
+    : `The answer was ${charadesTarget.title}`;
+  charadesFreeplayBtn.style.display = charadesMode === 'daily' ? '' : 'none';
+  charadesPlayAgainBtn.style.display = charadesMode === 'freeplay' ? '' : 'none';
+}
+function hideCharadesResults(){
+  charadesResultsArea.style.display = 'none';
+  charadesPlayArea.style.display = '';
+}
+
+function endCharadesRound(){
+  persistCharadesDaily();
+  const guessCount = charadesGuessedTitles.length + (charadesWon ? 1 : 0);
+  if(charadesMode === 'daily') recordCharadesDailyResult(charadesDailyDate, charadesWon, guessCount);
+  else if(charadesMode === 'archive') recordCharadesDailyResult(charadesArchiveDate, charadesWon, guessCount);
+  renderCharadesRound();
+  showCharadesResults();
+  const unlocked = checkNightOwl();
+  renderAchievementToasts(unlocked, 'charadesAchvToastList');
+}
+
+function submitCharadesGuess(){
+  if(charadesGameOver) return;
+  const val = charadesInput.value.trim();
+  if(!val) return;
+  const match = charadesPool().find(g => g.title.toLowerCase() === val.toLowerCase());
+  if(!match){ charadesMsg.textContent = 'Not in the pool \u2014 pick from the dropdown.'; return; }
+  if(charadesGuessedTitles.includes(match.title)){ charadesMsg.textContent = 'Already tried that one.'; hideCharadesDropdown(); return; }
+
+  hideCharadesDropdown();
+
+  if(match.title === charadesTarget.title){
+    charadesWon = true;
+    charadesGameOver = true;
+    playSfx('win');
+    endCharadesRound();
+    return;
+  }
+
+  charadesGuessedTitles.push(match.title);
+  playSfx('incorrect');
+  if(charadesGuessedTitles.length >= CHARADES_MAX_GUESSES){
+    charadesGameOver = true;
+    charadesWon = false;
+    playSfx('lose');
+    endCharadesRound();
+    return;
+  }
+  persistCharadesDaily();
+  renderCharadesRound();
+}
+
+// Mirrors Cartridge/Clash/Connect's own Give Up — ends the round as a loss
+// immediately, revealing the answer.
+function giveUpCharades(){
+  if(charadesGameOver) return;
+  charadesGameOver = true;
+  charadesWon = false;
+  playSfx('lose');
+  endCharadesRound();
+}
+charadesGiveUpBtn.addEventListener('click', giveUpCharades);
+
+function startCharadesRound(target){
+  charadesTarget = target;
+  charadesGuessedTitles = [];
+  charadesGameOver = false;
+  charadesWon = false;
+  hideCharadesDropdown();
+  hideCharadesResults();
+  renderCharadesRound();
+}
+
+function startCharadesDaily(){
+  const date = todayKey();
+  charadesMode = 'daily';
+  charadesDailyDate = date;
+  let stored = loadCharadesDailyState();
+  if(!stored || stored.date !== date){
+    stored = { date, guessedTitles: [], gameOver: false, won: false };
+    saveCharadesDailyState(stored);
+  }
+  charadesTarget = getCharadesTargetFor(date);
+  charadesGuessedTitles = stored.guessedTitles.slice();
+  charadesGameOver = stored.gameOver;
+  charadesWon = stored.won;
+  hideCharadesDropdown();
+  renderCharadesRound();
+  if(charadesGameOver) showCharadesResults();
+  else hideCharadesResults();
+}
+
+function startCharadesFreeplay(){
+  charadesMode = 'freeplay';
+  startCharadesRound(EASY_POOL[Math.floor(Math.random() * EASY_POOL.length)]);
+}
+
+function startCharadesArchive(dateStr){
+  charadesMode = 'archive';
+  charadesArchiveDate = dateStr;
+  startCharadesRound(getCharadesTargetFor(dateStr));
+}
+
+function buildCharadesShareText(){
+  const label = charadesMode === 'daily' ? `CARTRIDGE CHARADES Daily #${dailyNumberLabel(charadesDailyDate)}`
+    : charadesMode === 'archive' ? `CARTRIDGE CHARADES Replay #${dailyNumberLabel(charadesArchiveDate)}`
+    : 'CARTRIDGE CHARADES \u2014 Free Play';
+  const guessCount = charadesGuessedTitles.length + (charadesWon ? 1 : 0);
+  return charadesWon
+    ? `${label}\nSolved in ${guessCount}/${CHARADES_MAX_GUESSES} \ud83c\udfad`
+    : `${label}\nStumped! \ud83c\udfad`;
+}
+
+charadesInput.addEventListener('input', ()=> renderCharadesDropdown(charadesInput.value));
+charadesInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); submitCharadesGuess(); }
+  if(e.key === 'Escape'){ hideCharadesDropdown(); }
+});
+charadesDropdown.addEventListener('click', (e)=>{
+  const item = e.target.closest('.dropdown-item');
+  if(!item || item.classList.contains('disabled')) return;
+  charadesInput.value = item.dataset.title;
+  hideCharadesDropdown();
+  submitCharadesGuess();
+});
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('#charadesModal .search-box')) hideCharadesDropdown();
+});
+charadesGuessBtn.addEventListener('click', submitCharadesGuess);
+
+charadesModeDailyBtn.addEventListener('click', ()=>{ if(charadesMode !== 'daily') startCharadesDaily(); });
+charadesModeFreeplayBtn.addEventListener('click', ()=>{ if(charadesMode !== 'freeplay') startCharadesFreeplay(); });
+
+charadesShareBtn.addEventListener('click', ()=> shareOrCopy(buildCharadesShareText(), charadesShareBtn));
+charadesFreeplayBtn.addEventListener('click', startCharadesFreeplay);
+charadesPlayAgainBtn.addEventListener('click', startCharadesFreeplay);
+charadesCloseBtn.addEventListener('click', showHomeScreen);
+document.getElementById('charadesPageMarquee').addEventListener('click', showHomeScreen);
+
+// ----- Secret unlock: tap the "No match" swatch in How to Play 5 times -----
+let secretCharadesUnlockCount = 0;
+document.getElementById('secretCharadesUnlockSwatch').addEventListener('click', ()=>{
+  secretCharadesUnlockCount++;
+  if(secretCharadesUnlockCount >= 5){
+    secretCharadesUnlockCount = 0;
+    unlockCharades();
+    renderHomeSelector();
+  }
+});
+
 // ---------- Games menu (hamburger + side drawer) ----------
 const menuBtn = document.getElementById('menuBtn');
 const sideMenu = document.getElementById('sideMenu');
@@ -5256,6 +5690,7 @@ const sideMenuClose = document.getElementById('sideMenuClose');
 const menuCartridgeBtn = document.getElementById('menuCartridgeBtn');
 const menuClashBtn = document.getElementById('menuClashBtn');
 const menuGridBtn = document.getElementById('menuGridBtn');
+const menuCharadesBtn = document.getElementById('menuCharadesBtn');
 const menuChaosBtn = document.getElementById('menuChaosBtn');
 
 function renderStreakRowHtml(historyMap){
@@ -5302,12 +5737,15 @@ function openSideMenu(){
   // reflect which game is currently on screen so the active one is highlighted
   const clashOpen = clashModal.classList.contains('show');
   const gridOpen = gridModal.classList.contains('show');
+  const charadesOpen = charadesModal.classList.contains('show');
   const chaosOpen = chaosModal.classList.contains('show');
+  menuCharadesBtn.style.display = charadesUnlocked() ? '' : 'none';
   menuChaosBtn.style.display = chaosIsUnlocked() ? '' : 'none';
   menuClashBtn.classList.toggle('active', clashOpen);
   menuGridBtn.classList.toggle('active', gridOpen);
+  menuCharadesBtn.classList.toggle('active', charadesOpen);
   menuChaosBtn.classList.toggle('active', chaosOpen);
-  menuCartridgeBtn.classList.toggle('active', !clashOpen && !gridOpen && !chaosOpen);
+  menuCartridgeBtn.classList.toggle('active', !clashOpen && !gridOpen && !charadesOpen && !chaosOpen);
   renderAllStreaks();
   sideMenu.classList.add('show');
   sideMenuOverlay.classList.add('show');
@@ -5333,6 +5771,11 @@ menuGridBtn.addEventListener('click', ()=>{
   closeSideMenu();
   showGridPage();
   startGridDaily();
+});
+menuCharadesBtn.addEventListener('click', ()=>{
+  closeSideMenu();
+  showCharadesPage();
+  startCharadesDaily();
 });
 menuChaosBtn.addEventListener('click', ()=>{
   closeSideMenu();
