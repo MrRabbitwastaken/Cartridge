@@ -888,7 +888,7 @@
   }
   .chronicle-card.dragging {
     z-index: 20; box-shadow: 0 10px 24px rgba(0,0,0,0.5); border-color: var(--orange);
-    cursor: grabbing; transition: none;
+    cursor: grabbing; transition: none; touch-action: none;
   }
   .chronicle-drag-handle {
     flex: 0 0 auto; font-size: 18px; color: var(--text-dim); padding: 4px 2px;
@@ -925,6 +925,11 @@
   .chronicle-reveal-row.incorrect { border-color: var(--magenta); color: var(--magenta); }
 
   /* ---------- Light mode ---------- */
+  /* Belt-and-suspenders for the Chronicle drag: e.preventDefault() on the
+     pointer events should already stop the page scrolling mid-drag, but this
+     guarantees it outright regardless of any per-browser touch quirks. */
+  body.chronicle-drag-lock { overflow: hidden; touch-action: none; }
+
   body.light-mode {
     /* Warm dark mahogany/coffee tones instead of the cool navy panels, echoing
        the sunlit room's wood-and-terracotta palette — still dark enough that
@@ -971,6 +976,9 @@
   body.light-mode .ghost-btn.all-done:hover {
     border-color: #1a7a3e; color: #1a7a3e;
   }
+  body.light-mode .chronicle-hint {
+    color: var(--text-on-photo-dim);
+  }
 </style>
 </head>
 <body>
@@ -986,7 +994,7 @@
   <div class="side-menu-list">
     <button class="side-menu-item" id="menuCartridgeBtn">
       <span class="side-menu-icon">🕹️</span>
-      <span class="side-menu-label">Cartridge</span>
+      <span class="side-menu-label">Cartridge Classic</span>
     </button>
     <button class="side-menu-item" id="menuClashBtn">
       <span class="side-menu-icon">🃏</span>
@@ -1012,7 +1020,7 @@
 
   <div class="side-menu-streaks">
     <div class="streak-section">
-      <div class="streak-game-label">Cartridge</div>
+      <div class="streak-game-label">Cartridge Classic</div>
       <div class="streak-row" id="streakCartridgeRow"></div>
     </div>
     <div class="streak-section">
@@ -1390,7 +1398,7 @@
     <button class="ghost-btn" id="statsCardBtn" style="margin-bottom:16px;">📸 Share Stats Card</button>
 
     <div class="archive-game-section">
-      <div class="archive-game-heading" style="color:var(--cyan);">Cartridge</div>
+      <div class="archive-game-heading" style="color:var(--cyan);">Cartridge Classic</div>
       <div class="archive-stats" id="archiveStats"></div>
       <div class="archive-grid" id="archiveGrid"></div>
     </div>
@@ -1484,7 +1492,7 @@
 
 <div class="wrap" id="gameScreen">
   <header>
-    <div class="marquee" id="gameMarquee" title="Back to home">CARTRIDGE</div>
+    <div class="marquee" id="gameMarquee" title="Back to home">CARTRIDGE CLASSIC</div>
     <div class="tagline">Insert a title. Read the board. <b>Find the game.</b></div>
   </header>
 
@@ -1973,7 +1981,9 @@ const GAMES = [
 {title:"007 First Light",year:2026,publisher:"IO Interactive",critic:87,genres:["Action-Adventure","Stealth"],platforms:["PC","PlayStation","Xbox"],sales:4,hours:20,perspective:"Third-Person",clueText:"An origin story following a young James Bond's rise through MI6's 00 program"},
 {title:"Avatar: Frontiers of Pandora",year:2023,publisher:"Ubisoft",critic:72,genres:["Action-Adventure","Open World"],platforms:["PC","PlayStation","Xbox"],sales:3,hours:18,perspective:"First-Person",clueText:"An open-world action-adventure game set in a new region of Pandora from the Avatar film series"},
 {title:"Guitar Hero",year:2005,publisher:"Activision",critic:91,genres:["Party"],platforms:["PlayStation"],sales:1.5,hours:8,clueText:"A rhythm game played with a guitar-shaped controller, credited with kickstarting the mid-2000s music game boom"},
-{title:"Kingdom Hearts",year:2002,publisher:"Square Enix",critic:87,genres:["Action RPG"],platforms:["PlayStation"],sales:6,hours:30,perspective:"Third-Person",clueText:"An action RPG crossover between Disney worlds and Final Fantasy characters, following a boy wielding a giant key"}
+{title:"Kingdom Hearts",year:2002,publisher:"Square Enix",critic:87,genres:["Action RPG"],platforms:["PlayStation"],sales:6,hours:30,perspective:"Third-Person",clueText:"An action RPG crossover between Disney worlds and Final Fantasy characters, following a boy wielding a giant key"},
+{title:"RollerCoaster Tycoon",year:1999,publisher:"Hasbro Interactive",critic:89,genres:["Simulation"],platforms:["PC"],sales:4,hours:20,clueText:"A theme park management sim where you design and build your own rollercoasters"},
+{title:"Plants vs. Zombies",year:2009,publisher:"PopCap Games",critic:89,genres:["Strategy"],platforms:["PC"],sales:3,hours:10,perspective:"Top-Down",clueText:"A tower-defense game where garden plants fend off waves of zombies trying to reach your house"}
 ];
 
 // ---------- Sound design (retro blips via Web Audio, no audio files needed) ----------
@@ -2463,7 +2473,7 @@ async function buildStatsCardBlob(){
   ctx.fillText(new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'}), W / 2, 138);
 
   const sections = [
-    { name: 'CARTRIDGE', color: C.cyan, days: buildLastNDays(7, cartridgeDayInfo), scoreTotal: null },
+    { name: 'CARTRIDGE CLASSIC', color: C.cyan, days: buildLastNDays(7, cartridgeDayInfo), scoreTotal: null },
     { name: 'CARTRIDGE CLASH', color: C.amber, days: buildLastNDays(7, clashDayInfo), scoreTotal: CLASH_STAGES.length * CLASH_ROUNDS_PER_STAGE },
     { name: 'CARTRIDGE CONNECT', color: C.green, days: buildLastNDays(7, connectDayInfo), scoreTotal: null },
   ];
@@ -3918,9 +3928,9 @@ function guessRowSquares(g){
 }
 
 function shareHeaderLabel(){
-  if(appMode === 'daily' && dailyState) return `CARTRIDGE Daily #${dailyNumberLabel(dailyState.date)}`;
-  if(appMode === 'archive' && archiveReplayDate) return `CARTRIDGE Replay #${dailyNumberLabel(archiveReplayDate)}`;
-  return 'CARTRIDGE — Free Play';
+  if(appMode === 'daily' && dailyState) return `CARTRIDGE CLASSIC Daily #${dailyNumberLabel(dailyState.date)}`;
+  if(appMode === 'archive' && archiveReplayDate) return `CARTRIDGE CLASSIC Replay #${dailyNumberLabel(archiveReplayDate)}`;
+  return 'CARTRIDGE CLASSIC — Free Play';
 }
 
 function buildShareText(){
@@ -4447,7 +4457,7 @@ function showGridPage(){
 // is shown in — the arrow that leads to a game is tinted to match it.
 // Cartridge Chaos only joins the cycle once every other achievement is earned.
 const HOME_GAMES_BASE = [
-  { key: 'cartridge', label: 'CARTRIDGE',          color: 'var(--cyan)',  tagline: 'Insert a title. Read the board.<br><b>Find the game.</b>' },
+  { key: 'cartridge', label: 'CARTRIDGE CLASSIC',  color: 'var(--cyan)',  tagline: 'Insert a title. Read the board.<br><b>Find the game.</b>' },
   { key: 'clash',     label: 'CARTRIDGE CLASH',    color: 'var(--amber)', tagline: 'Pick a side. Trust the numbers.<br><b>Survive the streak.</b>' },
   { key: 'connect',   label: 'CARTRIDGE CONNECT',  color: 'var(--green)', tagline: 'Sixteen games. Four hidden groups.<br><b>Find the connections.</b>' },
   { key: 'charades',  label: 'CARTRIDGE CHARADES', color: 'var(--pink)',  tagline: 'Emoji only. No words.<br><b>Guess the game.</b>' },
@@ -5167,7 +5177,7 @@ function chaosGenerateCartridgeRound(){
 function renderChaosRound(){
   chaosAnswered = false;
   const r = chaosCurrentRound;
-  chaosRoundLabel.textContent = r.type === 'clash' ? 'CARTRIDGE CLASH' : r.type === 'connect' ? 'CARTRIDGE CONNECT' : 'CARTRIDGE';
+  chaosRoundLabel.textContent = r.type === 'clash' ? 'CARTRIDGE CLASH' : r.type === 'connect' ? 'CARTRIDGE CONNECT' : 'CARTRIDGE CLASSIC';
   chaosPrompt.textContent = r.prompt;
 
   if(r.type === 'clash'){
@@ -5464,7 +5474,7 @@ importDataInput.addEventListener('change', ()=>{
 // ---------- "Play Next Daily" — shown on any daily win/loss banner, cycles to
 // whichever of today's dailies hasn't been played yet ----------
 const DAILY_GAME_SEQUENCE = [
-  { key: 'cartridge', label: 'Cartridge' },
+  { key: 'cartridge', label: 'Cartridge Classic' },
   { key: 'clash', label: 'Cartridge Clash' },
   { key: 'connect', label: 'Cartridge Connect' },
 ];
@@ -5595,6 +5605,26 @@ const CHARADES_CLUES = {
   'Persona 5': '🎭🔫👑😈',
   "Uncharted 4: A Thief's End": '🗺️💰🏛️🔫',
   'Crash Bandicoot N. Sane Trilogy': '🦘📦🍊💥',
+  // ----- 19 more added on request -----
+  'The Legend of Zelda: Tears of the Kingdom': '🌄⚔️😭🏰',
+  'Wii Fit': '🎳⚽🥊💪',
+  'Gears of War 3': '⚙️🪖⛽💥',
+  'Gears of War 2': '⚙️🪖👰🧟',
+  'Tetris': '🌈⬇️',
+  "Assassin's Creed IV: Black Flag": '🥷⚓☠️🏴',
+  'The Legend of Zelda: Ocarina of Time': '👦⚔️🎶👨',
+  'Sonic the Hedgehog': '💍🔵🦔🏃',
+  'Resident Evil 4': '👮🧟⛓️🪚',
+  'Injustice 2': '🦸🆚🦇👨',
+  'The Last of Us Part II': '🍄👨🏌️💀',
+  'Ghost of Tsushima': '👻🥷🏯🗾',
+  'Horizon Zero Dawn': '👧🏹0️⃣🌄',
+  'Horizon Forbidden West': '👧🏹⛔⬅️',
+  'Pac-Man': '🟡👻🍒🕹️',
+  'Ratchet & Clank: Rift Apart': '🔧➕🤖🔩',
+  'Death Stranding': '💀🖤🏖️🚼',
+  'RollerCoaster Tycoon': '🎢🎡💸🌭',
+  'Plants vs. Zombies': '🌵🆚🧟🌻',
 };
 // Every game that has a clue above — independent of EASY_POOL (used by
 // Clash/Connect's Easy difficulty), so growing this list never changes what
@@ -5977,7 +6007,14 @@ function updateChronicleModeTabs(){
   chronicleModeFreeplayBtn.classList.toggle('active', chronicleMode === 'freeplay');
 }
 
-function renderChronicleList(){
+function renderChronicleList(animate){
+  const prevRects = {};
+  if(animate){
+    Array.from(chronicleList.children).forEach(card=>{
+      prevRects[card.dataset.title] = card.getBoundingClientRect();
+    });
+  }
+
   chronicleList.innerHTML = chronicleCurrentOrder.map((title, i)=>{
     const cached = chronicleCoverCache[title];
     const coverHtml = cached === undefined ? '<div class="clash-card-loading">···</div>'
@@ -6002,6 +6039,25 @@ function renderChronicleList(){
       if(!chronicleGameOver) renderChronicleList();
     });
   });
+
+  // FLIP technique: the cards just rebuilt in their new order, so "play" a
+  // slide from each one's old screen position to where it landed — gives
+  // reordering some actual weight instead of an instant snap.
+  if(animate){
+    Array.from(chronicleList.children).forEach(card=>{
+      const oldRect = prevRects[card.dataset.title];
+      if(!oldRect) return;
+      const newRect = card.getBoundingClientRect();
+      const dy = oldRect.top - newRect.top;
+      if(Math.abs(dy) < 1) return;
+      card.style.transition = 'none';
+      card.style.transform = `translateY(${dy}px)`;
+      requestAnimationFrame(()=>{
+        card.style.transition = 'transform .32s cubic-bezier(0.34, 1.35, 0.64, 1)';
+        card.style.transform = '';
+      });
+    });
+  }
 }
 chronicleList.addEventListener('click', (e)=>{
   const btn = e.target.closest('.chronicle-move-btn');
@@ -6014,14 +6070,14 @@ chronicleList.addEventListener('click', (e)=>{
     [chronicleCurrentOrder[idx + 1], chronicleCurrentOrder[idx]] = [chronicleCurrentOrder[idx], chronicleCurrentOrder[idx + 1]];
   }
   persistChronicleDaily();
-  renderChronicleList();
+  renderChronicleList(true);
 });
 
 // ----- Drag to reorder (Pointer Events — unified handling for mouse, touch,
-// and pen, so this works the same way on phones as on desktop). The dragged
-// card follows the pointer visually; the other cards stay put until drop, at
-// which point we work out the target slot from where the pointer ended up
-// and reorder the underlying array in one go. -----
+// and pen). Grab the ⠿ handle to pick a card up — the dragged card follows
+// the pointer; the other cards stay put until drop, at which point we work
+// out the target slot from where the pointer ended up and reorder the
+// underlying array in one go, animated in with the FLIP transition above. -----
 let chronicleDrag = null;
 function chronicleCardIndex(card){
   return Array.from(chronicleList.children).indexOf(card);
@@ -6035,17 +6091,20 @@ chronicleList.addEventListener('pointerdown', (e)=>{
   chronicleDrag = { card, startIndex: chronicleCardIndex(card), startY: e.clientY };
   card.classList.add('dragging');
   card.setPointerCapture(e.pointerId);
-});
+  document.body.classList.add('chronicle-drag-lock');
+}, { passive: false });
 chronicleList.addEventListener('pointermove', (e)=>{
   if(!chronicleDrag) return;
+  e.preventDefault(); // stop the page itself scrolling while a card is being dragged
   const dy = e.clientY - chronicleDrag.startY;
-  chronicleDrag.card.style.transform = `translateY(${dy}px)`;
-});
+  chronicleDrag.card.style.transform = `translateY(${dy}px) scale(1.03)`;
+}, { passive: false });
 function endChronicleDrag(e){
   if(!chronicleDrag) return;
   const { card, startIndex } = chronicleDrag;
   card.classList.remove('dragging');
   card.style.transform = '';
+  document.body.classList.remove('chronicle-drag-lock');
 
   // Target slot = how many of the OTHER (still-static) cards' centers the
   // pointer ended up below.
@@ -6063,7 +6122,7 @@ function endChronicleDrag(e){
     persistChronicleDaily();
   }
   chronicleDrag = null;
-  renderChronicleList();
+  renderChronicleList(true);
 }
 chronicleList.addEventListener('pointerup', endChronicleDrag);
 chronicleList.addEventListener('pointercancel', endChronicleDrag);
