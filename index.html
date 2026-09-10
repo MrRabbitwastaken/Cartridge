@@ -945,7 +945,7 @@
       <span class="side-menu-icon">🧩</span>
       <span class="side-menu-label">Cartridge Connect</span>
     </button>
-    <button class="side-menu-item" id="menuCharadesBtn" style="display:none;">
+    <button class="side-menu-item" id="menuCharadesBtn">
       <span class="side-menu-icon">🎭</span>
       <span class="side-menu-label">Cartridge Charades</span>
     </button>
@@ -967,6 +967,10 @@
     <div class="streak-section">
       <div class="streak-game-label">Cartridge Connect</div>
       <div class="streak-row" id="streakGridRow"></div>
+    </div>
+    <div class="streak-section">
+      <div class="streak-game-label">Cartridge Charades</div>
+      <div class="streak-row" id="streakCharadesRow"></div>
     </div>
   </div>
 </nav>
@@ -991,7 +995,7 @@
         <div class="legend" style="justify-content:flex-start; margin:0;">
           <span><span class="swatch exact" id="secretUnlockAllSwatch" style="cursor:pointer;"></span> Exact match</span>
           <span><span class="swatch close" id="secretResetDailyBtn" style="cursor:pointer;"></span> Close</span>
-          <span><span class="swatch far" id="secretCharadesUnlockSwatch" style="cursor:pointer;"></span> No match</span>
+          <span><span class="swatch far"></span> No match</span>
         </div>
         <p style="margin-top:10px;">▲ / ▼ next to a number means the answer is higher or lower than your guess. Genre and Platform show individual pills that light up per tag, so you can see exactly which ones the mystery game shares.</p>
       </div>
@@ -1305,7 +1309,7 @@
       <div class="archive-grid" id="archiveGridConnect"></div>
     </div>
 
-    <div class="archive-game-section" id="archiveSectionCharades" style="display:none;">
+    <div class="archive-game-section" id="archiveSectionCharades">
       <div class="archive-game-heading" style="color:var(--pink);">Cartridge Charades</div>
       <div class="archive-stats" id="archiveStatsCharades"></div>
       <div class="archive-grid" id="archiveGridCharades"></div>
@@ -2281,10 +2285,7 @@ function openArchivePanel(){
   renderArchive();
   renderClashArchive();
   renderConnectArchive();
-  const charadesSection = document.getElementById('archiveSectionCharades');
-  const charadesShow = charadesUnlocked();
-  charadesSection.style.display = charadesShow ? '' : 'none';
-  if(charadesShow) renderCharadesArchive();
+  renderCharadesArchive();
   const chaosSection = document.getElementById('archiveSectionChaos');
   const chaosUnlocked = chaosIsUnlocked();
   chaosSection.style.display = chaosUnlocked ? '' : 'none';
@@ -4319,14 +4320,11 @@ const HOME_GAMES_BASE = [
   { key: 'cartridge', label: 'CARTRIDGE',          color: 'var(--cyan)',  tagline: 'Insert a title. Read the board.<br><b>Find the game.</b>' },
   { key: 'clash',     label: 'CARTRIDGE CLASH',    color: 'var(--amber)', tagline: 'Pick a side. Trust the numbers.<br><b>Survive the streak.</b>' },
   { key: 'connect',   label: 'CARTRIDGE CONNECT',  color: 'var(--green)', tagline: 'Sixteen games. Four hidden groups.<br><b>Find the connections.</b>' },
+  { key: 'charades',  label: 'CARTRIDGE CHARADES', color: 'var(--pink)',  tagline: 'Emoji only. No words.<br><b>Guess the game.</b>' },
 ];
 const HOME_GAME_CHAOS = { key: 'chaos', label: 'CARTRIDGE CHAOS', color: 'var(--violet)', tagline: 'Fast questions. No mercy.<br><b>Beat the clock.</b>' };
-const HOME_GAME_CHARADES = { key: 'charades', label: 'CARTRIDGE CHARADES', color: 'var(--pink)', tagline: 'Emoji only. No words.<br><b>Guess the game.</b>' };
 function getHomeGames(){
-  const games = [...HOME_GAMES_BASE];
-  if(charadesUnlocked()) games.push(HOME_GAME_CHARADES);
-  if(chaosIsUnlocked()) games.push(HOME_GAME_CHAOS);
-  return games;
+  return chaosIsUnlocked() ? [...HOME_GAMES_BASE, HOME_GAME_CHAOS] : HOME_GAMES_BASE;
 }
 let homeSelectedIndex = 0;
 
@@ -5251,7 +5249,7 @@ const EXPORTABLE_KEYS = [
   'cartridge_achievements_v1', 'cartridgeFreeplayLog_v1', 'cartridgeHintUsage_v1',
   'cartridgeClashBest_v1', 'cartridgeClashDailyState_v1', 'cartridgeClashHistory_v1',
   'cartridgeGridDailyState_v1', 'cartridgeGridHistory_v1',
-  'cartridgeCharadesDailyState_v1', 'cartridgeCharadesHistory_v1', 'cartridgeCharadesUnlocked_v1',
+  'cartridgeCharadesDailyState_v1', 'cartridgeCharadesHistory_v1',
   'cartridgeChaosBest_v1', 'cartridgeChaosStats_v1',
   'cartridgeSfxMuted_v1', 'cartridgeTheme_v1',
 ];
@@ -5375,16 +5373,7 @@ function updateNextDailyButton(btnEl, currentKey){
   }
 }
 
-// ---------- Cartridge Charades (emoji guessing, Easy pool only — secret,
-// unlocked by tapping the grey "No match" swatch in How to Play 5 times) ----------
-const CHARADES_UNLOCK_KEY = 'cartridgeCharadesUnlocked_v1';
-function charadesUnlocked(){
-  try{ return localStorage.getItem(CHARADES_UNLOCK_KEY) === 'true'; }catch(e){ return false; }
-}
-function unlockCharades(){
-  try{ localStorage.setItem(CHARADES_UNLOCK_KEY, 'true'); }catch(e){}
-}
-
+// ---------- Cartridge Charades (emoji guessing) ----------
 const CHARADES_MAX_GUESSES = 6;
 
 // Keyed directly by title (not paired by array position) so adding or
@@ -5738,17 +5727,6 @@ charadesPlayAgainBtn.addEventListener('click', startCharadesFreeplay);
 charadesCloseBtn.addEventListener('click', showHomeScreen);
 document.getElementById('charadesPageMarquee').addEventListener('click', showHomeScreen);
 
-// ----- Secret unlock: tap the "No match" swatch in How to Play 5 times -----
-let secretCharadesUnlockCount = 0;
-document.getElementById('secretCharadesUnlockSwatch').addEventListener('click', ()=>{
-  secretCharadesUnlockCount++;
-  if(secretCharadesUnlockCount >= 5){
-    secretCharadesUnlockCount = 0;
-    unlockCharades();
-    renderHomeSelector();
-  }
-});
-
 // ---------- Games menu (hamburger + side drawer) ----------
 const menuBtn = document.getElementById('menuBtn');
 const sideMenu = document.getElementById('sideMenu');
@@ -5798,6 +5776,7 @@ function renderAllStreaks(){
   document.getElementById('streakCartridgeRow').innerHTML = renderStreakRowHtml(loadDailyHistory());
   document.getElementById('streakClashRow').innerHTML = renderClashStreakRowHtml(loadClashHistory(), CLASH_STAGES.length * CLASH_ROUNDS_PER_STAGE);
   document.getElementById('streakGridRow').innerHTML = renderStreakRowHtml(loadGridHistory());
+  document.getElementById('streakCharadesRow').innerHTML = renderStreakRowHtml(loadCharadesHistory());
 }
 
 function openSideMenu(){
@@ -5806,7 +5785,6 @@ function openSideMenu(){
   const gridOpen = gridModal.classList.contains('show');
   const charadesOpen = charadesModal.classList.contains('show');
   const chaosOpen = chaosModal.classList.contains('show');
-  menuCharadesBtn.style.display = charadesUnlocked() ? '' : 'none';
   menuChaosBtn.style.display = chaosIsUnlocked() ? '' : 'none';
   menuClashBtn.classList.toggle('active', clashOpen);
   menuGridBtn.classList.toggle('active', gridOpen);
