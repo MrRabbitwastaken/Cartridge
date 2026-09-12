@@ -998,6 +998,11 @@
   body.light-mode .chronicle-hint {
     color: #000000;
   }
+  /* Belt-and-suspenders: force both labels to the exact same color via their
+     own IDs directly, so there's no possibility of one reading differently
+     from the other regardless of anything else that might apply to either. */
+  #chronicleHintTop, #chronicleHintBottom { color: #ffffff; }
+  body.light-mode #chronicleHintTop, body.light-mode #chronicleHintBottom { color: #000000; }
 </style>
 </head>
 <body>
@@ -2444,7 +2449,8 @@ function closeArchivePanel(){ archivePanel.classList.remove('show'); }
 // ---------- Shareable stats card (canvas-rendered PNG) ----------
 const STATS_CARD_COLORS = {
   bg: '#073763', panel2: '#1b2044', cyan: '#00e5ff', green: '#39ff88',
-  amber: '#ffc145', magenta: '#ff2e63', text: '#f1f3fa', textDim: '#8890b5',
+  amber: '#ffc145', magenta: '#ff2e63', pink: '#ff8fc7', orange: '#ff8c42',
+  violet: '#b98cff', text: '#f1f3fa', textDim: '#8890b5',
 };
 const statsCardBtn = document.getElementById('statsCardBtn');
 
@@ -2464,11 +2470,32 @@ function drawStatsCardRoundedRect(ctx, x, y, w, h, r){
 async function buildStatsCardBlob(){
   if(document.fonts && document.fonts.ready){ try{ await document.fonts.ready; }catch(e){} }
 
-  const W = 700, H = 1000;
+  const W = 700;
+  const C = STATS_CARD_COLORS;
+
+  const gridSections = [
+    { name: 'CARTRIDGE CLASSIC', color: C.cyan, days: buildLastNDays(7, cartridgeDayInfo), scoreTotal: null },
+    { name: 'CARTRIDGE CLASH', color: C.amber, days: buildLastNDays(7, clashDayInfo), scoreTotal: CLASH_STAGES.length * CLASH_ROUNDS_PER_STAGE },
+    { name: 'CARTRIDGE CONNECT', color: C.green, days: buildLastNDays(7, connectDayInfo), scoreTotal: null },
+    { name: 'CARTRIDGE CHARADES', color: C.pink, days: buildLastNDays(7, charadesDayInfo), scoreTotal: null },
+    { name: 'CARTRIDGE CHRONICLE', color: C.orange, days: buildLastNDays(7, chronicleDayInfo), scoreTotal: CHRONICLE_MAX_SCORE },
+  ];
+  const showChaos = chaosIsUnlocked();
+
+  const padX = 40;
+  const innerW = W - padX * 2;
+  const cellGap = 8;
+  const cellSize = (innerW - cellGap * 6) / 7;
+  const gridSectionHeight = 22 + cellSize + 24 + 78; // name + calendar row + 4 stats
+
+  const headerHeight = 178;
+  const chaosSectionHeight = showChaos ? 96 : 0;
+  const footerHeight = 60;
+  const H = Math.ceil(headerHeight + gridSections.length * gridSectionHeight + chaosSectionHeight + footerHeight);
+
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
-  const C = STATS_CARD_COLORS;
 
   ctx.fillStyle = C.bg;
   ctx.fillRect(0, 0, W, H);
@@ -2487,17 +2514,9 @@ async function buildStatsCardBlob(){
   ctx.font = "13px 'IBM Plex Mono'";
   ctx.fillText(new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'}), W / 2, 138);
 
-  const sections = [
-    { name: 'CARTRIDGE CLASSIC', color: C.cyan, days: buildLastNDays(7, cartridgeDayInfo), scoreTotal: null },
-    { name: 'CARTRIDGE CLASH', color: C.amber, days: buildLastNDays(7, clashDayInfo), scoreTotal: CLASH_STAGES.length * CLASH_ROUNDS_PER_STAGE },
-    { name: 'CARTRIDGE CONNECT', color: C.green, days: buildLastNDays(7, connectDayInfo), scoreTotal: null },
-  ];
+  let y = headerHeight;
 
-  const padX = 40;
-  const innerW = W - padX * 2;
-  let y = 178;
-
-  sections.forEach(section=>{
+  gridSections.forEach(section=>{
     const stats = computeGameStats(section.days);
 
     ctx.textAlign = 'left';
@@ -2506,8 +2525,6 @@ async function buildStatsCardBlob(){
     ctx.fillText(section.name, padX, y);
     y += 22;
 
-    const cellGap = 8;
-    const cellSize = (innerW - cellGap * 6) / 7;
     section.days.forEach((d, i)=>{
       const x = padX + i * (cellSize + cellGap);
       let fill = C.panel2, textColor = C.textDim;
@@ -2549,6 +2566,39 @@ async function buildStatsCardBlob(){
     });
     y += 78;
   });
+
+  // Chaos has no daily calendar — it's a repeatable arcade high-score chase,
+  // not a puzzle with a "played today" concept — so it gets a simpler
+  // 3-stat block instead of the 7-day grid the other 5 games get.
+  if(showChaos){
+    const best = loadChaosBest();
+    const cstats = loadChaosStats();
+    const avg = cstats.played ? Math.round(cstats.totalScore / cstats.played) : 0;
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = C.violet;
+    ctx.font = "bold 20px 'Space Grotesk'";
+    ctx.fillText('CARTRIDGE CHAOS', padX, y);
+    y += 30;
+
+    const chaosStatDefs = [
+      { label: 'BEST SCORE', value: String(best) },
+      { label: 'PLAYED', value: String(cstats.played) },
+      { label: 'AVG SCORE', value: String(avg) },
+    ];
+    const statW3 = innerW / 3;
+    chaosStatDefs.forEach((s, i)=>{
+      const cx = padX + statW3 * i + statW3 / 2;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = C.text;
+      ctx.font = "bold 22px 'Space Grotesk'";
+      ctx.fillText(s.value, cx, y + 26);
+      ctx.fillStyle = C.textDim;
+      ctx.font = "10px 'IBM Plex Mono'";
+      ctx.fillText(s.label, cx, y + 44);
+    });
+    y += chaosSectionHeight;
+  }
 
   ctx.textAlign = 'center';
   ctx.fillStyle = C.textDim;
