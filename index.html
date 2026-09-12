@@ -192,11 +192,7 @@
   .swatch.close{ background: var(--amber); }
   .swatch.far{ background: var(--slate); }
   .difficulty-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
-  /* Daily Challenge / Free Play toggle — hidden while in a game so the screen
-     is fully dedicated to game info (e.g. Chronicle's stats). Mode-switching
-     still works via each game's home/results screens; only this in-game
-     toggle is hidden, so no JS logic needed to change. */
-  .mode-nav { display: none; gap: 8px; margin-bottom: 18px; }
+  .mode-nav { display: flex; gap: 8px; margin-bottom: 18px; }
   .mode-btn {
     flex: 1; padding: 12px 18px; background: var(--panel); border: 2px solid var(--line); border-radius: 10px;
     color: var(--text-dim); font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700;
@@ -381,6 +377,10 @@
     font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-dim); text-align: center; padding: 4px;
   }
   .msg { min-height: 20px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--msg-on-photo); margin: 6px 2px 18px; text-align: center; }
+  #guessCount {
+    font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 700;
+    color: var(--text-on-photo-dim); text-align: center; margin: 8px 2px 0;
+  }
 
   /* Mobile only: the search box was too cramped sharing a row with the Guess
      button and cover art. Reorder (not restructure) the same 3 elements so
@@ -890,11 +890,12 @@
 
   /* ---------- Cartridge Chronicle ---------- */
   .chronicle-hint {
-    text-align: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px;
-    color: #ffffff; margin-bottom: 14px;
+    text-align: left; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px;
+    color: #ffffff; margin: 0 4px 8px;
   }
+  .chronicle-hint-bottom { margin: 8px 4px 14px; }
   .chronicle-hint b { color: var(--orange); }
-  .chronicle-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; position: relative; }
+  .chronicle-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 0; position: relative; }
   .chronicle-card {
     display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 10px;
     background: var(--panel-2); border: 1px solid var(--line); position: relative;
@@ -1124,11 +1125,6 @@
       <div class="tagline">Pick a side. Trust the numbers. <b>Survive the streak.</b></div>
     </header>
 
-    <div class="mode-nav" id="clashModeNav" style="--mode-accent:var(--amber); --mode-glow:rgba(255,193,69,0.35);">
-      <button class="mode-btn active" id="clashModeDailyBtn">🗓️ Daily Challenge</button>
-      <button class="mode-btn" id="clashModeFreeplayBtn">🎮 Free Play</button>
-    </div>
-
     <div id="clashPlayArea">
       <div class="grid-top-row">
         <span id="clashModeLabel">DAILY</span>
@@ -1181,11 +1177,6 @@
       <div class="marquee" id="gridPageMarquee" style="color:var(--green);" title="Back to home">CARTRIDGE CONNECT</div>
       <div class="tagline">Sixteen games. Four hidden groups. <b>Find the connections.</b></div>
     </header>
-
-    <div class="mode-nav" id="gridModeNav" style="--mode-accent:var(--green); --mode-glow:rgba(57,255,136,0.35);">
-      <button class="mode-btn active" id="gridModeDailyBtn">🗓️ Daily Challenge</button>
-      <button class="mode-btn" id="gridModeFreeplayBtn">🎮 Free Play</button>
-    </div>
 
     <div id="gridPlayArea">
       <div class="grid-top-row">
@@ -1262,11 +1253,6 @@
       <div class="tagline">Emoji only. No words. <b>Guess the game.</b></div>
     </header>
 
-    <div class="mode-nav" id="charadesModeNav" style="--mode-accent:var(--pink); --mode-glow:rgba(255,143,199,0.35);">
-      <button class="mode-btn active" id="charadesModeDailyBtn">🗓️ Daily Challenge</button>
-      <button class="mode-btn" id="charadesModeFreeplayBtn">🎮 Free Play</button>
-    </div>
-
     <div id="charadesPlayArea">
       <div class="grid-top-row">
         <span id="charadesModeLabel">DAILY</span>
@@ -1309,22 +1295,14 @@
       <div class="tagline">Five games. No years. <b>Put them in order.</b></div>
     </header>
 
-    <div class="mode-nav" id="chronicleModeNav" style="--mode-accent:var(--orange); --mode-glow:rgba(255,140,66,0.35);">
-      <button class="mode-btn active" id="chronicleModeDailyBtn">🗓️ Daily Challenge</button>
-      <button class="mode-btn" id="chronicleModeFreeplayBtn">🎮 Free Play</button>
-    </div>
-
     <div id="chroniclePlayArea" style="position:relative;">
       <div class="grid-top-row">
-        <span id="chronicleModeLabel">DAILY</span>
+        <span id="chronicleModeLabel">Stage 1/3 \u2014 Release Year</span>
         <span id="chronicleScoreLabel">Score: 0/15</span>
       </div>
-      <div class="clash-progress" style="justify-content:center; gap:14px; margin-bottom:6px;">
-        <span id="chronicleStageLabel">Stage 1/3 \u2014 Release Year</span>
-        <span id="chronicleRoundLabel">Round 1/5</span>
-      </div>
-      <div class="chronicle-hint" id="chronicleHint">Oldest <b>&rarr;</b> Newest</div>
+      <div class="chronicle-hint" id="chronicleHintTop"></div>
       <div class="chronicle-list" id="chronicleList"></div>
+      <div class="chronicle-hint chronicle-hint-bottom" id="chronicleHintBottom"></div>
       <div class="btn-row">
         <button class="ghost-btn confirm-btn" id="chronicleSubmitBtn">Submit Order</button>
       </div>
@@ -1531,11 +1509,6 @@
     <div class="tagline">Insert a title. Read the board. <b>Find the game.</b></div>
   </header>
 
-  <div class="mode-nav">
-    <button class="mode-btn active" id="modeDailyBtn">🗓️ Daily Challenge</button>
-    <button class="mode-btn" id="modeFreeplayBtn">🎮 Free Play</button>
-  </div>
-
   <div class="daily-banner show" id="dailyBanner">
     <div class="daily-banner-left">
       <span class="daily-badge" id="dailyBadge">DAILY #0</span>
@@ -1561,6 +1534,7 @@
       <div class="cover-placeholder" id="coverPlaceholder">···</div>
     </div>
   </div>
+  <div id="guessCount">Guesses: 0/10</div>
   <div class="msg" id="msg"></div>
 
   <div class="win-banner" id="winBanner">
@@ -1588,7 +1562,6 @@
   <div id="board"></div>
 
   <div class="status-bar">
-    <div id="guessCount">Guesses: 0/10</div>
     <div class="btn-row">
       <button class="ghost-btn" id="giveUpBtn">Give up😭</button>
       <button class="ghost-btn" id="newGameBtn">New game</button>
@@ -2685,8 +2658,6 @@ const winBannerNewGameBtn = document.getElementById('winBannerNewGameBtn');
 const winBannerNextDailyBtn = document.getElementById('winBannerNextDailyBtn');
 const cluePanel = document.getElementById('cluePanel');
 const perspectivePanel = document.getElementById('perspectivePanel');
-const modeDailyBtn = document.getElementById('modeDailyBtn');
-const modeFreeplayBtn = document.getElementById('modeFreeplayBtn');
 const freeplayControls = document.getElementById('freeplayControls');
 const clashFreeplayControls = document.getElementById('clashFreeplayControls');
 const gridFreeplayControls = document.getElementById('gridFreeplayControls');
@@ -2940,8 +2911,6 @@ backToDailyBtn.addEventListener('click', enterDailyMode);
 // ---------- Top-level mode switching (Daily Challenge vs Free Play) ----------
 let archiveReplayDate = null;
 function updateModeUI(){
-  modeDailyBtn.classList.toggle('active', appMode === 'daily');
-  modeFreeplayBtn.classList.toggle('active', appMode === 'freeplay');
   dailyBanner.classList.toggle('show', appMode === 'daily');
   archiveReplayBanner.classList.toggle('show', appMode === 'archive');
   newGameBtn.style.display = (appMode === 'daily' || appMode === 'archive') ? 'none' : '';
@@ -3012,9 +2981,6 @@ function enterFreeplayMode(){
     pickTarget();
   }
 }
-
-modeDailyBtn.addEventListener('click', enterDailyMode);
-modeFreeplayBtn.addEventListener('click', enterFreeplayMode);
 
 function pickTarget(){
   const pool = currentPool();
@@ -4095,8 +4061,6 @@ const clashModal = document.getElementById('clashModal');
 const clashPlayArea = document.getElementById('clashPlayArea');
 const clashResultsArea = document.getElementById('clashResultsArea');
 const clashModeLabel = document.getElementById('clashModeLabel');
-const clashModeDailyBtn = document.getElementById('clashModeDailyBtn');
-const clashModeFreeplayBtn = document.getElementById('clashModeFreeplayBtn');
 const clashDiffEasyBtn = document.getElementById('clashDiffEasyBtn');
 const clashDiffHardBtn = document.getElementById('clashDiffHardBtn');
 const clashStageLabel = document.getElementById('clashStageLabel');
@@ -4200,19 +4164,11 @@ function loadClashCardArt(cardEl, game){
   });
 }
 
-function updateClashModeTabs(){
-  clashModeDailyBtn.classList.toggle('active', clashMode !== 'freeplay');
-  clashModeFreeplayBtn.classList.toggle('active', clashMode === 'freeplay');
-}
-clashModeDailyBtn.addEventListener('click', ()=>{ if(clashMode !== 'daily') startClashDaily(); });
-clashModeFreeplayBtn.addEventListener('click', ()=>{ if(clashMode !== 'freeplay') startClashFreeplay(); });
-
 function renderClashRound(){
   const stage = CLASH_STAGES[clashStageIndex];
   clashModeLabel.textContent = clashMode === 'daily' ? `DAILY #${dailyNumberLabel(clashDailyDate)}`
     : clashMode === 'archive' ? `REPLAY #${dailyNumberLabel(clashArchiveDate)} (${formatUKDate(clashArchiveDate)})`
     : 'FREE PLAY';
-  updateClashModeTabs();
   clashStageLabel.textContent = `Stage ${clashStageIndex + 1}/${CLASH_STAGES.length} — ${stage.label}`;
   clashRoundLabel.textContent = `Round ${clashRound}/${CLASH_ROUNDS_PER_STAGE}`;
   clashScoreValue.textContent = String(clashScore);
@@ -4849,8 +4805,6 @@ const gridModal = document.getElementById('gridModal');
 const gridPlayArea = document.getElementById('gridPlayArea');
 const gridResultsArea = document.getElementById('gridResultsArea');
 const gridModeLabel = document.getElementById('gridModeLabel');
-const gridModeDailyBtn = document.getElementById('gridModeDailyBtn');
-const gridModeFreeplayBtn = document.getElementById('gridModeFreeplayBtn');
 const gridDiffEasyBtn = document.getElementById('gridDiffEasyBtn');
 const gridDiffHardBtn = document.getElementById('gridDiffHardBtn');
 const gridLivesEl = document.getElementById('gridLivesLabel');
@@ -4918,18 +4872,10 @@ function updateGridSubmitState(){
   gridSubmitBtn.disabled = gridSelected.length !== 4 || gridLocked || gridGameOver;
 }
 
-function updateGridModeTabs(){
-  gridModeDailyBtn.classList.toggle('active', gridMode !== 'freeplay');
-  gridModeFreeplayBtn.classList.toggle('active', gridMode === 'freeplay');
-}
-gridModeDailyBtn.addEventListener('click', ()=>{ if(gridMode !== 'daily') startGridDaily(); });
-gridModeFreeplayBtn.addEventListener('click', ()=>{ if(gridMode !== 'freeplay') startGridFreeplay(); });
-
 function renderGridAll(){
   gridModeLabel.textContent = gridMode === 'daily' ? `DAILY #${dailyNumberLabel(gridDailyDate)}`
     : gridMode === 'archive' ? `REPLAY #${dailyNumberLabel(gridArchiveDate)} (${formatUKDate(gridArchiveDate)})`
     : 'FREE PLAY';
-  updateGridModeTabs();
   renderGridLives();
   renderGridSolvedRow();
   renderGridTiles();
@@ -5792,8 +5738,6 @@ const charadesFreeplayBtn = document.getElementById('charadesFreeplayBtn');
 const charadesPlayAgainBtn = document.getElementById('charadesPlayAgainBtn');
 const charadesNextDailyBtn = document.getElementById('charadesNextDailyBtn');
 const charadesCloseBtn = document.getElementById('charadesCloseBtn');
-const charadesModeDailyBtn = document.getElementById('charadesModeDailyBtn');
-const charadesModeFreeplayBtn = document.getElementById('charadesModeFreeplayBtn');
 
 let charadesMode = 'daily'; // 'daily' | 'freeplay' | 'archive'
 let charadesDailyDate = null;
@@ -5843,16 +5787,10 @@ function recordCharadesDailyResult(dateStr, won, guessCount){
   saveCharadesHistory(hist);
 }
 
-function updateCharadesModeTabs(){
-  charadesModeDailyBtn.classList.toggle('active', charadesMode !== 'freeplay');
-  charadesModeFreeplayBtn.classList.toggle('active', charadesMode === 'freeplay');
-}
-
 function renderCharadesRound(){
   charadesModeLabel.textContent = charadesMode === 'daily' ? `DAILY #${dailyNumberLabel(charadesDailyDate)}`
     : charadesMode === 'archive' ? `REPLAY #${dailyNumberLabel(charadesArchiveDate)} (${formatUKDate(charadesArchiveDate)})`
     : 'FREE PLAY';
-  updateCharadesModeTabs();
 
   const guessCount = charadesGuessedTitles.length;
   charadesGuessLabel.textContent = `Guess ${Math.min(guessCount + 1, CHARADES_MAX_GUESSES)}/${CHARADES_MAX_GUESSES}`;
@@ -6051,9 +5989,6 @@ document.addEventListener('click', (e)=>{
 });
 charadesGuessBtn.addEventListener('click', submitCharadesGuess);
 
-charadesModeDailyBtn.addEventListener('click', ()=>{ if(charadesMode !== 'daily') startCharadesDaily(); });
-charadesModeFreeplayBtn.addEventListener('click', ()=>{ if(charadesMode !== 'freeplay') startCharadesFreeplay(); });
-
 charadesShareBtn.addEventListener('click', ()=> shareOrCopy(buildCharadesShareText(), charadesShareBtn));
 charadesFreeplayBtn.addEventListener('click', startCharadesFreeplay);
 charadesPlayAgainBtn.addEventListener('click', startCharadesFreeplay);
@@ -6068,10 +6003,9 @@ const chroniclePlayArea = document.getElementById('chroniclePlayArea');
 const chronicleResultsArea = document.getElementById('chronicleResultsArea');
 const chronicleModeLabel = document.getElementById('chronicleModeLabel');
 const chronicleScoreLabel = document.getElementById('chronicleScoreLabel');
-const chronicleStageLabel = document.getElementById('chronicleStageLabel');
-const chronicleRoundLabel = document.getElementById('chronicleRoundLabel');
 const chronicleStageAnnounce = document.getElementById('chronicleStageAnnounce');
-const chronicleHint = document.getElementById('chronicleHint');
+const chronicleHintTop = document.getElementById('chronicleHintTop');
+const chronicleHintBottom = document.getElementById('chronicleHintBottom');
 const chronicleList = document.getElementById('chronicleList');
 const chronicleSubmitBtn = document.getElementById('chronicleSubmitBtn');
 const chronicleFinalMessage = document.getElementById('chronicleFinalMessage');
@@ -6083,8 +6017,6 @@ const chronicleFreeplayBtn = document.getElementById('chronicleFreeplayBtn');
 const chroniclePlayAgainBtn = document.getElementById('chroniclePlayAgainBtn');
 const chronicleNextDailyBtn = document.getElementById('chronicleNextDailyBtn');
 const chronicleCloseBtn = document.getElementById('chronicleCloseBtn');
-const chronicleModeDailyBtn = document.getElementById('chronicleModeDailyBtn');
-const chronicleModeFreeplayBtn = document.getElementById('chronicleModeFreeplayBtn');
 
 // 3 stages of 5 rounds each — one round is still "order these 5 games,"
 // same as before; a full Daily/Free Play/Archive run is now 15 of them.
@@ -6187,11 +6119,6 @@ function loadChronicleBest(){
 }
 function saveChronicleBest(score){
   try{ localStorage.setItem(CHRONICLE_BEST_KEY, String(score)); }catch(e){}
-}
-
-function updateChronicleModeTabs(){
-  chronicleModeDailyBtn.classList.toggle('active', chronicleMode !== 'freeplay');
-  chronicleModeFreeplayBtn.classList.toggle('active', chronicleMode === 'freeplay');
 }
 
 function renderChronicleList(animate){
@@ -6344,15 +6271,11 @@ chronicleList.addEventListener('pointercancel', endChronicleDrag);
 
 function renderChronicleRound(){
   const stage = CHRONICLE_STAGES[chronicleStageIndex];
-  chronicleModeLabel.textContent = chronicleMode === 'daily' ? `DAILY #${dailyNumberLabel(chronicleDailyDate)}`
-    : chronicleMode === 'archive' ? `REPLAY #${dailyNumberLabel(chronicleArchiveDate)} (${formatUKDate(chronicleArchiveDate)})`
-    : ''; // Free Play's own mode-nav tab already says as much — no need to repeat it here
+  chronicleModeLabel.textContent = `Stage ${chronicleStageIndex + 1}/${CHRONICLE_STAGES.length} \u2014 ${stage.label}`;
   chronicleScoreLabel.textContent = `Score: ${chronicleScore}/${CHRONICLE_MAX_SCORE}`;
-  chronicleStageLabel.textContent = `Stage ${chronicleStageIndex + 1}/${CHRONICLE_STAGES.length} \u2014 ${stage.label}`;
-  chronicleRoundLabel.style.display = 'none'; // redundant now that each stage is just 1 round
   const cat = CHRONICLE_CATEGORIES[stage.key];
-  chronicleHint.innerHTML = `${cat.low} <b>&rarr;</b> ${cat.high}`;
-  updateChronicleModeTabs();
+  chronicleHintTop.textContent = cat.low;
+  chronicleHintBottom.textContent = cat.high;
   renderChronicleList();
 }
 
@@ -6604,9 +6527,6 @@ function buildChronicleShareText(){
     : 'CARTRIDGE CHRONICLE \u2014 Free Play';
   return `${label}\n${chronicleScore}/${CHRONICLE_MAX_SCORE} \u2014 ${chronicleResultMessage(chronicleScore)}`;
 }
-
-chronicleModeDailyBtn.addEventListener('click', ()=>{ if(chronicleMode !== 'daily') startChronicleDaily(); });
-chronicleModeFreeplayBtn.addEventListener('click', ()=>{ if(chronicleMode !== 'freeplay') startChronicleFreeplay(); });
 
 chronicleShareBtn.addEventListener('click', ()=> shareOrCopy(buildChronicleShareText(), chronicleShareBtn));
 chronicleFreeplayBtn.addEventListener('click', startChronicleFreeplay);
