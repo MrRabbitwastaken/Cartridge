@@ -42,6 +42,7 @@
     --slate: #4a5170;
     --violet: #b98cff;
     --orange: #ff8c42;
+    --teal: #2dd4bf;
     --text: #f1f3fa;
     --text-dim: #8890b5;
     /* Text/message colour for elements that sit directly on the page's own
@@ -520,23 +521,6 @@
   .side-menu-item:hover { background: var(--panel-2); border-color: var(--line); }
   .side-menu-item.active { border-color: var(--cyan); color: var(--cyan); }
   .side-menu-icon { font-size: 20px; flex: 0 0 auto; }
-  .side-menu-streaks { padding: 4px 10px 14px; border-top: 1px solid var(--line); margin-top: 4px; }
-  .streak-section { margin-top: 14px; }
-  .streak-section:first-child { margin-top: 4px; }
-  .streak-game-label {
-    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 11px; color: var(--text-dim);
-    text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px;
-  }
-  .streak-row { display: flex; gap: 4px; }
-  .streak-cell {
-    flex: 1; aspect-ratio: 1; border-radius: 6px; display: flex; align-items: center; justify-content: center;
-    font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 700; border: 1px solid var(--line);
-    background: var(--panel-2); color: var(--text-dim); min-width: 0;
-  }
-  .streak-cell.won { background: var(--green); border-color: var(--green); color: #06210f; }
-  .streak-cell.lost { background: var(--magenta); border-color: var(--magenta); color: #fff; }
-  .streak-cell.amber { background: var(--amber); border-color: var(--amber); color: #3a2600; font-size: 8px; }
-  .streak-cell.today { box-shadow: 0 0 0 2px var(--cyan); }
   .icon-btn {
     width: 38px; height: 38px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line);
     color: var(--text-dim); font-size: 16px; display: flex; align-items: center; justify-content: center;
@@ -943,6 +927,80 @@
   .chronicle-card.correct { border-color: var(--green); box-shadow: 0 0 12px rgba(57,255,136,0.3); }
   .chronicle-card.incorrect { border-color: var(--magenta); box-shadow: 0 0 12px rgba(255,46,99,0.3); }
 
+  /* ---------- Cartridge Crossword ---------- */
+  .crossword-grid-scroll { overflow-x: auto; margin: 14px 0; padding-bottom: 6px; display: flex; justify-content: center; }
+  #crosswordGrid {
+    display: grid; gap: 2px; background: var(--line); border: 2px solid var(--line);
+    border-radius: 6px; width: fit-content; --cw-cell: 32px;
+  }
+  .cw-cell { width: var(--cw-cell); height: var(--cw-cell); background: var(--panel-2); position: relative; display: flex; align-items: center; justify-content: center; }
+  .cw-cell.blocked { background: transparent; }
+  .cw-cell input {
+    width: 100%; height: 100%; background: transparent; border: none; outline: none;
+    text-align: center; text-transform: uppercase; color: var(--text);
+    font-family: 'IBM Plex Mono', monospace; font-size: calc(var(--cw-cell) * 0.46); font-weight: 700;
+    caret-color: transparent; padding: 0;
+  }
+  .cw-cell.in-word { background: rgba(45,212,191,0.1); }
+  .cw-cell.correct { background: rgba(57,255,136,0.22); }
+  .cw-cell.correct input { color: var(--green); }
+  .cw-number { position: absolute; top: 1px; left: 2px; font-size: calc(var(--cw-cell) * 0.24); color: var(--text-dim); pointer-events: none; line-height: 1; }
+  .cw-clue-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 560px) { .cw-clue-cols { grid-template-columns: 1fr; } }
+  .cw-clue-heading { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; color: var(--teal); margin-bottom: 10px; letter-spacing: 0.5px; }
+  .cw-clue-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+  .cw-clue-item { font-size: 11.5px; line-height: 1.5; color: var(--text-on-photo-dim); cursor: pointer; padding: 7px 8px; border-radius: 6px; border: 1px solid transparent; }
+  .cw-clue-item:hover { background: var(--panel-2); }
+  .cw-clue-item.active { background: rgba(45,212,191,0.12); border-color: var(--teal); color: var(--text-on-photo); }
+  .cw-clue-item.solved { color: var(--green); text-decoration: line-through; text-decoration-color: rgba(57,255,136,0.5); }
+  .cw-clue-num { color: var(--teal); font-weight: 700; margin-right: 4px; }
+
+  .active-clue-bar {
+    display: none; background: var(--panel-2); border: 1px solid var(--teal); border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 14px; gap: 8px; flex-direction: column;
+  }
+  .active-clue-bar.show { display: flex; }
+  .active-clue-text { font-size: 12px; color: var(--text-on-photo); line-height: 1.4; }
+  .active-clue-text .num { color: var(--teal); font-weight: 700; }
+  .active-clue-input-row { display: flex; gap: 8px; }
+  #crosswordWholeWordInput {
+    flex: 1; background: var(--bg); border: 1px solid var(--line); border-radius: 7px;
+    color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 15px;
+    padding: 8px 10px; text-transform: uppercase; letter-spacing: 2px; outline: none;
+  }
+  #crosswordWholeWordInput:focus { border-color: var(--teal); }
+  .active-clue-nav-row { display: flex; gap: 8px; justify-content: flex-end; }
+  .active-clue-nav-row button { padding: 7px 14px; font-size: 12px; }
+  .active-clue-nav-row button:hover { border-color: var(--teal); color: var(--teal); }
+  #crosswordNextWordBtn { background: var(--teal); border: none; color: #012722; font-weight: 700; }
+  #crosswordNextWordBtn:hover { color: #012722; filter: brightness(1.1); }
+
+  .win-overlay {
+    display: none; position: absolute; inset: 0; z-index: 40; align-items: center; justify-content: center;
+    background: rgba(6,8,20,0.9); padding: 20px; border-radius: 14px;
+  }
+  .win-overlay.show { display: flex; }
+  .win-card {
+    background: var(--panel); border: 2px solid var(--green); border-radius: 16px;
+    padding: 28px 24px; text-align: center; max-width: 300px;
+    box-shadow: 0 0 40px rgba(57,255,136,0.3);
+    animation: winPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes winPop { 0% { transform: scale(0.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .win-trophy { font-size: 46px; margin-bottom: 8px; animation: winBounce 1.1s ease-in-out infinite; }
+  @keyframes winBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .win-title { font-family: 'Press Start 2P', monospace; font-size: 15px; color: var(--green); text-shadow: 0 0 10px rgba(57,255,136,0.6); letter-spacing: 1px; margin-bottom: 10px; line-height: 1.5; }
+  .win-sub { font-size: 12.5px; color: var(--text-dim); margin-bottom: 18px; }
+  .win-sub b { color: var(--text); }
+  #crosswordWinContinueBtn { background: var(--green); border: none; color: #06210f; font-weight: 700; padding: 10px 20px; }
+  #crosswordWinContinueBtn:hover { color: #06210f; filter: brightness(1.1); }
+
+  .cw-medal { font-size: 15px; font-weight: 700; margin: 4px 0 14px; }
+  .cw-medal.gold { color: #ffd54f; }
+  .cw-medal.silver { color: #cfd8dc; }
+  .cw-medal.bronze { color: #d08a52; }
+  .cw-medal.none { color: var(--text-dim); }
+
   /* ---------- Light mode ---------- */
   /* Belt-and-suspenders for the Chronicle drag: e.preventDefault() on the
      pointer events should already stop the page scrolling mid-drag, but this
@@ -1036,33 +1094,14 @@
       <span class="side-menu-icon">📜</span>
       <span class="side-menu-label">Cartridge Chronicle</span>
     </button>
+    <button class="side-menu-item" id="menuCrosswordBtn">
+      <span class="side-menu-icon">🔤</span>
+      <span class="side-menu-label">Cartridge Crossword</span>
+    </button>
     <button class="side-menu-item" id="menuChaosBtn" style="display:none;">
       <span class="side-menu-icon">💥</span>
       <span class="side-menu-label">Cartridge Chaos</span>
     </button>
-  </div>
-
-  <div class="side-menu-streaks">
-    <div class="streak-section">
-      <div class="streak-game-label">Cartridge Classic</div>
-      <div class="streak-row" id="streakCartridgeRow"></div>
-    </div>
-    <div class="streak-section">
-      <div class="streak-game-label">Cartridge Clash</div>
-      <div class="streak-row" id="streakClashRow"></div>
-    </div>
-    <div class="streak-section">
-      <div class="streak-game-label">Cartridge Connect</div>
-      <div class="streak-row" id="streakGridRow"></div>
-    </div>
-    <div class="streak-section">
-      <div class="streak-game-label">Cartridge Charades</div>
-      <div class="streak-row" id="streakCharadesRow"></div>
-    </div>
-    <div class="streak-section" id="streakChronicleSection">
-      <div class="streak-game-label">Cartridge Chronicle</div>
-      <div class="streak-row" id="streakChronicleRow"></div>
-    </div>
   </div>
 </nav>
 
@@ -1113,6 +1152,10 @@
       <div class="help-section">
         <div class="help-heading">📜 Cartridge Chronicle</div>
         <p>Five games, no stats shown — put them in order from lowest to highest (drag a card, or use its ▲ / ▼ buttons). 15 rounds total, in 3 stages of 5: Release Year, then Critic Score, then Sales — a "STAGE" announcement marks each switch. Score 1 point per round for an exact match, 15 total. Same puzzle for everyone each day; finish it to unlock Free Play for endless fresh runs.</p>
+      </div>
+      <div class="help-section">
+        <div class="help-heading">🔤 Cartridge Crossword</div>
+        <p>A crossword built entirely from game titles — click a clue (or a cell) to select a word, then type the answer either letter-by-letter in the grid or all at once in the box above it. Daily is a compact 4-across/4-down grid; Free Play steps up to 5-and-5 with a fresh random layout every time. A timer tracks every solve — finish within 1:30 for Gold, 2:30 for Silver, or you'll still walk away with Bronze.</p>
       </div>
       <div class="help-section">
         <div class="help-heading">Notes</div>
@@ -1297,7 +1340,7 @@
   <div class="wrap" style="max-width:640px;">
     <header>
       <div class="marquee" id="chroniclePageMarquee" style="color:var(--orange);" title="Back to home">CARTRIDGE CHRONICLE</div>
-      <div class="tagline">Five games. No years. <b>Put them in order.</b></div>
+      <div class="tagline">Five games. Three stats to sort by. <b>Put them in order.</b></div>
     </header>
 
     <div id="chroniclePlayArea" style="position:relative;">
@@ -1326,6 +1369,75 @@
         <button class="ghost-btn" id="chroniclePlayAgainBtn" style="display:none;">New Puzzle</button>
         <button class="ghost-btn" id="chronicleNextDailyBtn" style="display:none;"></button>
         <button class="ghost-btn" id="chronicleCloseBtn">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay page-mode" id="crosswordModal">
+  <div class="wrap" style="max-width:660px;">
+    <header>
+      <div class="marquee" id="crosswordPageMarquee" style="color:var(--teal);" title="Back to home">CARTRIDGE CROSSWORD</div>
+      <div class="tagline">Games hidden in a grid. <b>Fill in the blanks.</b></div>
+    </header>
+
+    <div id="crosswordPlayArea" style="position:relative;">
+      <div class="grid-top-row">
+        <span id="crosswordModeLabel">DAILY</span>
+        <span id="crosswordTimerLabel">0:00</span>
+      </div>
+
+      <div class="active-clue-bar" id="crosswordActiveClueBar">
+        <div class="active-clue-text" id="crosswordActiveClueText"></div>
+        <div class="active-clue-input-row">
+          <input type="text" id="crosswordWholeWordInput" placeholder="Type the whole word here…" autocomplete="off" autocapitalize="characters">
+        </div>
+        <div class="active-clue-nav-row">
+          <button id="crosswordPrevWordBtn" type="button">&larr; Prev</button>
+          <button id="crosswordNextWordBtn" type="button">Next &rarr;</button>
+        </div>
+      </div>
+
+      <div class="grid-scroll"><div id="crosswordGrid"></div></div>
+
+      <div class="clue-cols">
+        <div>
+          <div class="clue-heading">ACROSS</div>
+          <div class="clue-list" id="crosswordAcrossList"></div>
+        </div>
+        <div>
+          <div class="clue-heading">DOWN</div>
+          <div class="clue-list" id="crosswordDownList"></div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="ghost-btn" id="crosswordCheckBtn">Check letters</button>
+        <button class="ghost-btn" id="crosswordRevealBtn">Reveal word</button>
+        <button class="ghost-btn" id="crosswordGiveUpBtn">Give up😭</button>
+      </div>
+
+      <div class="win-overlay" id="crosswordWinOverlay">
+        <div class="win-card">
+          <div class="win-trophy" id="crosswordWinTrophy">🏆</div>
+          <div class="win-title" id="crosswordWinTitle">CROSSWORD<br>COMPLETE!</div>
+          <div class="win-sub" id="crosswordWinSub">Solved in <b id="crosswordWinTime">0:00</b></div>
+          <button id="crosswordWinContinueBtn" type="button">Continue</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="crosswordResultsArea" class="clash-results" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid var(--line);">
+      <div class="clash-heading" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700;" id="crosswordFinalMessage">Solved!</div>
+      <div class="clash-final-score" id="crosswordFinalTime">1:23</div>
+      <div class="clash-best-score" id="crosswordBestTime">Best: 1:10</div>
+      <div class="achv-toast-list" id="crosswordAchvToastList"></div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn" id="crosswordShareBtn">📋 Share Results</button>
+        <button class="ghost-btn" id="crosswordFreeplayBtn">Play Free Play</button>
+        <button class="ghost-btn" id="crosswordPlayAgainBtn" style="display:none;">New Puzzle</button>
+        <button class="ghost-btn" id="crosswordNextDailyBtn" style="display:none;"></button>
+        <button class="ghost-btn" id="crosswordCloseBtn">Close</button>
       </div>
     </div>
   </div>
@@ -1442,6 +1554,12 @@
       <div class="archive-game-heading" style="color:var(--orange);">Cartridge Chronicle</div>
       <div class="archive-stats" id="archiveStatsChronicle"></div>
       <div class="archive-grid" id="archiveGridChronicle"></div>
+    </div>
+
+    <div class="archive-game-section" id="archiveSectionCrossword">
+      <div class="archive-game-heading" style="color:var(--teal);">Cartridge Crossword</div>
+      <div class="archive-stats" id="archiveStatsCrossword"></div>
+      <div class="archive-grid" id="archiveGridCrossword"></div>
     </div>
 
     <div class="archive-game-section" id="archiveSectionChaos" style="display:none;">
@@ -2388,6 +2506,12 @@ function renderChronicleArchive(){
   }, statsDays);
 }
 
+function renderCrosswordArchive(){
+  const days = buildLastNDays(7, crosswordDayInfo);
+  const statsDays = buildLastNDays(365, crosswordDayInfo);
+  renderGameArchiveRow(days, document.getElementById('archiveStatsCrossword'), document.getElementById('archiveGridCrossword'), {playable: true}, statsDays);
+}
+
 // No 7-day grid here — Chaos is a repeatable arcade high-score chase, not a
 // daily puzzle, so "played today" doesn't mean anything for it.
 function renderChaosArchive(){
@@ -2409,6 +2533,7 @@ function openArchivePanel(){
   renderConnectArchive();
   renderCharadesArchive();
   renderChronicleArchive();
+  renderCrosswordArchive();
   const chaosSection = document.getElementById('archiveSectionChaos');
   const chaosUnlocked = chaosIsUnlocked();
   chaosSection.style.display = chaosUnlocked ? '' : 'none';
@@ -2905,6 +3030,14 @@ document.getElementById('archiveGridChronicle').addEventListener('click', (e)=>{
   startChronicleArchive(cell.dataset.date);
 });
 
+document.getElementById('archiveGridCrossword').addEventListener('click', (e)=>{
+  const cell = e.target.closest('.archive-cell.playable');
+  if(!cell) return;
+  closeArchivePanel();
+  showCrosswordPage();
+  startCrosswordArchive(cell.dataset.date);
+});
+
 function playArchivedDay(dateStr){
   showGameScreen();
   if(appMode === 'freeplay'){
@@ -3322,6 +3455,9 @@ const ACHIEVEMENTS = [
   {id:'chronicle_jack',     name:'Jack of All Trades',   icon:'🎲', hint:'Get a perfect round in Release Year, Critic Score, and Sales at least once each.'},
   {id:'chronicle_well_read', name:'Well-Read',           icon:'📚', hint:'Score a perfect 15/15 in Cartridge Chronicle 10 times, lifetime.'},
   {id:'chronicle_so_close', name:'So Close',             icon:'😬', hint:'Score exactly 14/15 in Cartridge Chronicle.'},
+  {id:'crossword_gold',     name:'Gold Standard',        icon:'🥇', hint:'Earn a Gold medal in Cartridge Crossword by solving in 1:30 or less.'},
+  {id:'crossword_streak',   name:'Crossword Streak',     icon:'🔥', hint:'Reach a 3-day Cartridge Crossword Daily win streak.'},
+  {id:'crossword_wordsmith', name:'Wordsmith',           icon:'📝', hint:'Complete 10 Cartridge Crosswords, lifetime, in any mode.'},
   {id:'cartridge_master',  name:'Cartridge Master',      icon:'🏅', hint:'Unlock every other achievement.'},
 ];
 const ACHIEVEMENTS_BY_ID = Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, a]));
@@ -3340,8 +3476,8 @@ const LEGENDARY_ACHIEVEMENTS = [
   {id:'godlike',           name:'Godlike',               icon:'👑', hint:'Play the Daily 20 days in a row.'},
   {id:'tactical_nuke',     name:'Tactical Nuke Inbound', icon:'☢️', hint:'Play the Daily 25 days in a row.'},
   {id:'cartridge_king',    name:'Cartridge King',        icon:'🏆', hint:'Play the Daily 30 days in a row.'},
-  {id:'full_house',        name:'Full House',            icon:'🏠', hint:'Get a green result in all 5 games, all on the same day.'},
-  {id:'best_of_the_best',  name:'Best of the Best',      icon:'🌟', hint:'Get a green result in all 5 games, 7 days running.'},
+  {id:'full_house',        name:'Full House',            icon:'🏠', hint:'Get a green result in all 6 games, all on the same day.'},
+  {id:'best_of_the_best',  name:'Best of the Best',      icon:'🌟', hint:'Get a green result in all 6 games, 7 days running.'},
 ];
 const LEGENDARY_BY_ID = Object.fromEntries(LEGENDARY_ACHIEVEMENTS.map(a => [a.id, a]));
 
@@ -3564,10 +3700,10 @@ function chronicleGreenOn(dateStr){
 }
 function allGamesGreenOn(dateStr){
   return cartridgeGreenOn(dateStr) && clashGreenOn(dateStr) && connectGreenOn(dateStr)
-    && charadesGreenOn(dateStr) && chronicleGreenOn(dateStr);
+    && charadesGreenOn(dateStr) && chronicleGreenOn(dateStr) && crosswordGreenOn(dateStr);
 }
 
-// Call after any of the 5 games finishes its DAILY round — safe to call from
+// Call after any of the 6 games finishes its DAILY round — safe to call from
 // all of them, since it only unlocks based on stored history, not local state.
 function checkCrossGameAchievements(){
   const ids = [];
@@ -4490,6 +4626,7 @@ function hideAllTopScreens(){
   chaosModal.classList.remove('show');
   charadesModal.classList.remove('show');
   chronicleModal.classList.remove('show');
+  crosswordModal.classList.remove('show');
 }
 function showHomeScreen(){
   hideAllTopScreens();
@@ -4525,7 +4662,8 @@ const HOME_GAMES_BASE = [
   { key: 'clash',     label: 'CARTRIDGE CLASH',    color: 'var(--amber)', tagline: 'Pick a side. Trust the numbers.<br><b>Survive the streak.</b>' },
   { key: 'connect',   label: 'CARTRIDGE CONNECT',  color: 'var(--green)', tagline: 'Sixteen games. Four hidden groups.<br><b>Find the connections.</b>' },
   { key: 'charades',  label: 'CARTRIDGE CHARADES', color: 'var(--pink)',  tagline: 'Emoji only. No words.<br><b>Guess the game.</b>' },
-  { key: 'chronicle', label: 'CARTRIDGE CHRONICLE', color: 'var(--orange)', tagline: 'Five games. No years.<br><b>Put them in order.</b>' },
+  { key: 'chronicle', label: 'CARTRIDGE CHRONICLE', color: 'var(--orange)', tagline: 'Five games. Three stats to sort by.<br><b>Put them in order.</b>' },
+  { key: 'crossword', label: 'CARTRIDGE CROSSWORD', color: 'var(--teal)', tagline: 'Games hidden in a grid.<br><b>Fill in the blanks.</b>' },
 ];
 const HOME_GAME_CHAOS = { key: 'chaos', label: 'CARTRIDGE CHAOS', color: 'var(--violet)', tagline: 'Fast questions. No mercy.<br><b>Beat the clock.</b>' };
 function getHomeGames(){
@@ -4579,6 +4717,9 @@ homePlayBtn.addEventListener('click', ()=>{
   } else if(key === 'chronicle'){
     showChroniclePage();
     startChronicleDaily();
+  } else if(key === 'crossword'){
+    showCrosswordPage();
+    startCrosswordDaily();
   } else if(key === 'chaos'){
     showChaosPage();
     startChaosGame();
@@ -4601,6 +4742,9 @@ homeFreeplayBtn.addEventListener('click', ()=>{
   } else if(key === 'chronicle'){
     showChroniclePage();
     startChronicleFreeplay();
+  } else if(key === 'crossword'){
+    showCrosswordPage();
+    startCrosswordFreeplay();
   } else if(key === 'chaos'){
     showChaosPage();
     startChaosGame();
@@ -5496,6 +5640,7 @@ const EXPORTABLE_KEYS = [
   'cartridgeGridDailyState_v1', 'cartridgeGridHistory_v1',
   'cartridgeCharadesDailyState_v1', 'cartridgeCharadesHistory_v1',
   'cartridgeChronicleDailyState_v1', 'cartridgeChronicleHistory_v1', 'cartridgeChronicleBest_v1', 'cartridgeChroniclePerfectCategories_v1',
+  'cartridgeCrosswordDailyState_v1', 'cartridgeCrosswordHistory_v1', 'cartridgeCrosswordBestTime_v1', 'cartridgeCrosswordCompletions_v1',
   'cartridgeChaosBest_v1', 'cartridgeChaosStats_v1',
   'cartridgeSfxMuted_v1', 'cartridgeTheme_v1',
 ];
@@ -5574,6 +5719,7 @@ const DAILY_GAME_SEQUENCE = [
   { key: 'connect', label: 'Cartridge Connect' },
   { key: 'charades', label: 'Cartridge Charades' },
   { key: 'chronicle', label: 'Cartridge Chronicle' },
+  { key: 'crossword', label: 'Cartridge Crossword' },
 ];
 
 function isDailyGameCompletedToday(key){
@@ -5583,6 +5729,7 @@ function isDailyGameCompletedToday(key){
   if(key === 'connect') return !!loadGridHistory()[date];
   if(key === 'charades') return !!loadCharadesHistory()[date];
   if(key === 'chronicle') return typeof loadChronicleHistory()[date] === 'number';
+  if(key === 'crossword'){ const e = loadCrosswordHistory()[date]; return !!(e && e.completed === true); }
   return false;
 }
 
@@ -5603,6 +5750,7 @@ function goToDailyGame(key){
   else if(key === 'connect'){ showGridPage(); startGridDaily(); }
   else if(key === 'charades'){ showCharadesPage(); startCharadesDaily(); }
   else if(key === 'chronicle'){ showChroniclePage(); startChronicleDaily(); }
+  else if(key === 'crossword'){ showCrosswordPage(); startCrosswordDaily(); }
   else { showGameScreen(); enterDailyMode(); }
 }
 
@@ -6567,7 +6715,859 @@ chroniclePlayAgainBtn.addEventListener('click', startChronicleFreeplay);
 chronicleCloseBtn.addEventListener('click', showHomeScreen);
 document.getElementById('chroniclePageMarquee').addEventListener('click', showHomeScreen);
 
+// ---------- Cartridge Crossword ----------
+const CROSSWORD_POOL = [
+  { word: 'MINECRAFT', clue: "Punch trees, mine ore, build questionable houses — the best-selling game of all time" },
+  { word: 'GTA', clue: "Steal cars, cause chaos, chase the American dream across Los Santos" },
+  { word: 'ROBLOX', clue: "Millions of user-made worlds live inside this one massive platform" },
+  { word: 'LEAGUE', clue: "Five champions a side fight over three lanes in ___ of Legends" },
+  { word: 'FORTNITE', clue: "Skydive onto an island, loot fast, outlast 99 rivals as the storm closes in" },
+  { word: 'WARZONE', clue: "The Gulag gives you a second chance at life in Call of Duty: ___" },
+  { word: 'APEX', clue: "Squad up and slide your way to the top of the battle royale ___ Legends" },
+  { word: 'WARCRAFT', clue: "Millions still log into Azeroth two decades after World of ___ first launched" },
+  { word: 'SIEGE', clue: "Breach walls and destroy cover in Rainbow Six ___" },
+  { word: 'SPORTS', clue: "You swung the remote for real and still somehow lost at virtual bowling in Wii ___" },
+  { word: 'BATTLEGROUNDS', clue: "The original last-player-standing shooter, PUBG: ___" },
+  { word: 'KART', clue: "Red shells and banana peels betray friendships in Mario ___ 8 Deluxe" },
+  { word: 'REDEMPTION', clue: "Arthur Morgan rides for outlaws and loyalty in Red Dead ___ 2" },
+  { word: 'SKYRIM', clue: "You took an arrow to the knee before exploring The Elder Scrolls V: ___" },
+  { word: 'MARIO', clue: "A moustached plumber jumps on turtles to save a princess in Super ___ Bros." },
+  { word: 'WITCHER', clue: "Geralt of Rivia hunts monsters through a morally grey world in The ___ 3: Wild Hunt" },
+  { word: 'OVERWATCH', clue: "Pick a hero, hold the point — Blizzard's colorful team shooter" },
+  { word: 'FALLGUYS', clue: "Wobble across obstacle courses as a jellybean trying not to get eliminated in Fall Guys" },
+  { word: 'WARFRAME', clue: "Space ninjas in sleek exosuits parkour through this looter-shooter" },
+  { word: 'CROSSING', clue: "Pay off a raccoon's mortgage while your island slowly becomes paradise in Animal ___: New Horizons" },
+  { word: 'TERRARIA', clue: "Dig, build, and fight bosses in this 2D sandbox that came before the 3D one" },
+  { word: 'STARDEW', clue: "Inherit a run-down farm and somehow fall in love with the blacksmith in ___ Valley" },
+  { word: 'COUNTERSTRIKE', clue: "Plant the bomb or defuse it in the granddaddy of tactical shooters, ___ 2" },
+  { word: 'TETRIS', clue: "Falling blocks, rotating shapes, and the same four notes stuck in your head forever" },
+  { word: 'SMASH', clue: "Knock your rivals off the stage instead of draining their health bar in Super ___ Bros. Ultimate" },
+  { word: 'ROCKET', clue: "Cars playing football — somehow one of the most popular sports games ever, in ___ League" },
+  { word: 'POKEMON', clue: "Gotta catch them all in the game that started an entire genre, ___ Red/Blue" },
+  { word: 'ZELDA', clue: "A hero in green wakes on a cliff and is told to go anywhere, in The Legend of ___: Breath of the Wild" },
+  { word: 'DIABLO', clue: "Click on demons until loot falls out, then click on more demons, in ___ III" },
+  { word: 'WARFARE', clue: "Call of Duty's rebooted campaign traded WWII for a modern battlefield in Modern ___" },
+  { word: 'BLACKOPS', clue: "Cold War covert missions and a numbers station define Call of Duty: ___" },
+  { word: 'CYBERPUNK', clue: "Night City promises you can be anyone — glitches and all, in ___ 2077" },
+  { word: 'HOGWARTS', clue: "Attend wizarding school and skip literally all of your classes in ___ Legacy" },
+  { word: 'FANTASY', clue: "A long-running RPG series went fully online for its 14th entry, Final ___ XIV" },
+  { word: 'HUMAN', clue: "Wobbly ragdoll physics turn simple co-op puzzles into slapstick chaos in ___: Fall Flat" },
+  { word: 'ODYSSEY', clue: "Mario throws his hat at everything, including his own personal space, in Super Mario ___" },
+  { word: 'ELDEN', clue: "Die to the same boss forty times in this unforgiving open world, ___ Ring" },
+  { word: 'SURVIVAL', clue: "Tame dinosaurs and try not to starve, freeze, or get eaten in ARK: ___ Evolved" },
+  { word: 'PALWORLD', clue: "Catch adorable creatures, then put them to work in your factory" },
+  { word: 'KRATOS', clue: "An angry Spartan ghost trades his blades for an axe and adopts a son" },
+  { word: 'HORIZON', clue: "Robot dinosaurs roam a post-apocalyptic Earth in ___ Zero Dawn" },
+  { word: 'SPIDERMAN', clue: "Web-sling across a recreated New York as your friendly neighborhood hero in Marvel's ___" },
+  { word: 'HALO', clue: "A supersoldier in green armor battles an alien alliance across the stars in ___ Infinite" },
+  { word: 'VALHALLA', clue: "Raid English monasteries as a Viking in Assassin's Creed ___" },
+  { word: 'BORDERLANDS', clue: "Loot cartoonishly huge guns in a cel-shaded wasteland full of bandits, ___ 3" },
+  { word: 'VALORANT', clue: "Riot's tactical shooter where every character comes with their own set of powers" },
+  { word: 'SIMS', clue: "Build a house, ruin a life, delete the pool ladder — a classic life sim, The ___ 4" },
+  { word: 'RUST', clue: "Punch a rock, build a base, and get raided by strangers while you sleep" },
+  { word: 'THIEVES', clue: "Sail the seas, bury treasure, and get sunk by pirates in Sea of ___" },
+  { word: 'WUKONG', clue: "A stick-wielding Monkey King battles gods and demons in Black Myth: ___" },
+  { word: 'SONIC', clue: "A blue hedgehog collects rings and loses all patience for slow platforming sections" },
+  { word: 'ARKHAM', clue: "Batman patrols a walled-off super-prison covering Gotham's worst district in Batman: ___ City" },
+  { word: 'FREEMAN', clue: "A crowbar-wielding, never-speaking physicist fights aliens through Black Mesa" },
+  { word: 'FALLOUT', clue: "Emerge from an underground vault into an irradiated wasteland in ___ 4" },
+  { word: 'LARA', clue: "An archaeologist swings, climbs, and shoots her way through ancient tombs" },
+  { word: 'DOOM', clue: "Rip and tear through hell itself in this legendary demon-slaying shooter" },
+  { word: 'SOULS', clue: "Die repeatedly while learning every attack pattern in Dark ___ III" },
+  { word: 'SEKIRO', clue: "A one-armed shinobi deflects blows and pursues revenge in this unforgiving samurai game" },
+  { word: 'STARCRAFT', clue: "Command Zerg, Protoss, or Terran forces in this legendary real-time strategy game" },
+  { word: 'CRASH', clue: "An orange marsupial spins through crates and TNT in ___ Bandicoot N. Sane Trilogy" },
+  { word: 'JEDI', clue: "A hunted padawan rebuilds the Jedi Order while hiding from the Empire in Star Wars ___: Fallen Order" },
+  { word: 'FARCRY', clue: "Liberate outposts and tame a tiger companion on a pirate-infested island in ___ 3" },
+  { word: 'WATCHDOGS', clue: "Hack every camera, car, and traffic light in San Francisco in ___ 2" },
+  { word: 'ELLIE', clue: "A teenage survivor seeks revenge across a fungal-apocalypse Seattle" },
+  { word: 'VILLAGE', clue: "A towering vampire lady looms over this eerie European settlement in Resident Evil ___" },
+  { word: 'TEKKEN', clue: "Generations of one dysfunctional family settle their differences via the Iron Fist tournament" },
+  { word: 'CIVILIZATION', clue: "Build an empire from the Stone Age to the Space Age in Sid Meier's ___ VI" },
+  { word: 'FOREST', clue: "Crash-land on a cannibal-infested island and build a treehouse fortress in The ___" },
+  { word: 'DYING', clue: "Outrun zombies with rooftop parkour by day and hide from them by night in ___ Light 2" },
+  { word: 'OBLIVION', clue: "Close Daedric gates spewing demons across the land in The Elder Scrolls IV: ___" },
+  { word: 'KONG', clue: "A barrel-throwing ape's tropical home needs rescuing in Donkey ___ Country" },
+  { word: 'TWILIGHT', clue: "Link turns into a wolf to fight a shadowy realm's corruption in The Legend of Zelda: ___ Princess" },
+  { word: 'AUTOMATA', clue: "Android warriors fight machines and question their own existence in NieR: ___" },
+  { word: 'BROTHERHOOD', clue: "Ezio builds a guild of assassins across Renaissance Rome in Assassin's Creed: ___" },
+  { word: 'SYNDICATE', clue: "Twin assassins battle Templars for control of Victorian London in Assassin's Creed: ___" },
+  { word: 'MILES', clue: "A new hero swings through Harlem with electric powers in Marvel's Spider-Man: ___ Morales" },
+  { word: 'BANNERLORD', clue: "Build a medieval kingdom through diplomacy, trade, and cavalry charges in Mount & Blade II: ___" },
+  { word: 'LIMBO', clue: "A boy searches for his sister through a monochrome nightmare in this eerie puzzle-platformer" },
+  { word: 'OCARINA', clue: "Link travels through time with a magical instrument in The Legend of Zelda: ___ of Time" },
+  { word: 'SNAKE', clue: "A cardboard-box enthusiast infiltrates enemy bases without ever being seen" },
+  { word: 'HADOUKEN', clue: "Throw a fireball with this iconic quarter-circle-forward motion, first popularized by Street Fighter II" },
+  { word: 'LANCER', clue: "A rifle with a revving chainsaw bayonet cuts through the Locust Horde in Gears of War" },
+  { word: 'CUPHEAD', clue: "A living cup with boxing gloves battles impossibly hard bosses in this hand-drawn run-and-gun" },
+  { word: 'UNCHARTED', clue: "A charming treasure hunter named Nathan Drake globetrots through ancient ruins in this adventure series" },
+  { word: 'PARTY', clue: "Roll dice, collect stars, and betray your friends over minigames in Mario ___" },
+  { word: 'REACH', clue: "Defend humanity's doomed last stronghold before Earth falls in Halo: ___" },
+  { word: 'DELIVERANCE', clue: "A blacksmith's son seeks revenge across 15th-century Bohemia in Kingdom Come: ___" },
+  { word: 'EXODUS', clue: "Irradiated Moscow's survivors search for a new home aboard a train in Metro ___" },
+  { word: 'HEARTS', clue: "A boy wielding a giant key battles Heartless across Disney worlds in Kingdom ___" },
+  { word: 'OLYMPUS', clue: "Kratos climbs this mountain home of the Greek gods for his final act of vengeance in God of War III" },
+  { word: 'GUARDIANS', clue: "Master Chief searches for a missing AI companion across the galaxy in Halo 5: ___" },
+  { word: 'UNDERTALE', clue: "Spare or fight every monster you meet in this beloved indie RPG where kindness has consequences" },
+  { word: 'HADES', clue: "Escape the Greek underworld again and again in this rogue-like from Supergiant Games" },
+  { word: 'DRAKE', clue: "The treasure hunter whose name headlines Uncharted: ___'s Fortune" },
+  { word: 'PHASMOPHOBIA', clue: "Investigate haunted locations with ghost-hunting gear in this co-op horror game" },
+  { word: 'HOLLOW', clue: "A tiny knight explores a ruined insect kingdom in ___ Knight" },
+  { word: 'CELESTE', clue: "Climb a mountain and confront your own anxiety in this precision platformer" },
+  { word: 'PERSONA', clue: "Juggle high school life and stealing corrupt hearts as a Phantom Thief in ___ 5" },
+  { word: 'BLOODBORNE', clue: "Hunt beasts in a gothic nightmare city armed with a trick weapon and zero shields" },
+  { word: 'PORTAL', clue: "Test chambers, a sarcastic AI, and a promised (but lying) cake await in ___ 2" },
+];
+
+const CROSSWORD_DAILY_ACROSS = 4, CROSSWORD_DAILY_DOWN = 4;
+
+// A second, smaller pool of "category" clues — publisher, genre, and
+// platform-exclusivity questions instead of a single game's own description.
+// Real example titles pulled directly from the game library, not invented.
+const CROSSWORD_CATEGORY_POOL = [
+  { word: 'NINTENDO', clue: "Mario Kart 8 Deluxe, Super Mario Bros., and Animal Crossing: New Horizons are all published by ___" },
+  { word: 'ACTIVISION', clue: "Call of Duty: Modern Warfare, Call of Duty: Black Ops, and Guitar Hero are all published by ___" },
+  { word: 'CAPCOM', clue: "Resident Evil 4, Monster Hunter: World, and Resident Evil Village are all published by ___" },
+  { word: 'ROCKSTAR', clue: "Grand Theft Auto V, Red Dead Redemption 2, and Max Payne 3 are all published by ___ Games" },
+  { word: 'VALVE', clue: "Portal 2, Half-Life 2, and Left 4 Dead 2 are all published by ___" },
+  { word: 'BLIZZARD', clue: "Diablo IV, Overwatch 2, and World of Warcraft are all published by ___ Entertainment" },
+  { word: 'UBISOFT', clue: "Assassin's Creed Odyssey, Far Cry 3, and Watch Dogs are all published by ___" },
+  { word: 'BETHESDA', clue: "The Elder Scrolls V: Skyrim, Fallout 4, and Starfield are all published by ___ Softworks" },
+  { word: 'PLATFORMER', clue: "Super Mario Bros., New Super Mario Bros., and Super Mario 64 are all ___ games" },
+  { word: 'FIGHTING', clue: "Super Smash Bros. Ultimate, Street Fighter II, and Street Fighter V are all ___ games" },
+  { word: 'PUZZLE', clue: "Portal 2, Outer Wilds, and Slay the Spire are all ___ games" },
+  { word: 'RACING', clue: "Mario Kart 8 Deluxe, Rocket League, and Forza Horizon 5 are all ___ games" },
+  { word: 'HORROR', clue: "Bloodborne, Resident Evil 2, and Resident Evil Village are all ___ games" },
+  { word: 'STRATEGY', clue: "Sid Meier's Civilization VI, Sid Meier's Civilization V, and Halo Wars are all ___ games" },
+  { word: 'PLAYSTATION', clue: "Uncharted 4: A Thief's End, God of War Ragnar\u00f6k, and The Last of Us are exclusive to ___" },
+  { word: 'SWITCH', clue: "Animal Crossing: New Horizons, Breath of the Wild, and Super Smash Bros. Ultimate are exclusive to the Nintendo ___" },
+  { word: 'XBOX', clue: "Halo 3, Halo: Combat Evolved, and Gears of War are exclusive to ___" },
+];
+
+// One puzzle's actual pool: every game word, plus 1 or 2 randomly-chosen
+// category clues — returned separately as "priority" so the generator can
+// give them first crack at a spot rather than leaving it to chance alongside
+// ~100 other candidates.
+function buildCrosswordPuzzlePool(rng){
+  const categoryCount = 1 + Math.floor(rng() * 2); // 1 or 2
+  const chosenCategories = seededShuffle(CROSSWORD_CATEGORY_POOL, rng).slice(0, categoryCount);
+  return { pool: [...CROSSWORD_POOL, ...chosenCategories], priority: chosenCategories };
+}
+const CROSSWORD_FREEPLAY_ACROSS = 5, CROSSWORD_FREEPLAY_DOWN = 5;
+
+function cwMakeKey(r,c){ return r+','+c; }
+function cwCanPlace(grid, word, row, col, dir){
+  const len = word.length;
+  const beforeR = dir==='A' ? row : row-1, beforeC = dir==='A' ? col-1 : col;
+  if(grid.has(cwMakeKey(beforeR,beforeC))) return false;
+  const afterR = dir==='A' ? row : row+len, afterC = dir==='A' ? col+len : col;
+  if(grid.has(cwMakeKey(afterR,afterC))) return false;
+  let crossings = 0;
+  for(let i=0;i<len;i++){
+    const r = dir==='A' ? row : row+i, c = dir==='A' ? col+i : col;
+    const existing = grid.get(cwMakeKey(r,c));
+    if(existing){
+      if(existing !== word[i]) return false;
+      crossings++;
+    } else {
+      const n1 = dir==='A' ? cwMakeKey(r-1,c) : cwMakeKey(r,c-1);
+      const n2 = dir==='A' ? cwMakeKey(r+1,c) : cwMakeKey(r,c+1);
+      if(grid.has(n1) || grid.has(n2)) return false;
+    }
+  }
+  return crossings;
+}
+function cwCommitWord(grid, entry, row, col, dir){
+  for(let i=0;i<entry.word.length;i++){
+    const r = dir==='A' ? row : row+i, c = dir==='A' ? col+i : col;
+    grid.set(cwMakeKey(r,c), entry.word[i]);
+  }
+}
+// rng defaults to Math.random (Free Play); pass a seeded mulberry32 rng for
+// deterministic Daily/Archive puzzles — every seededShuffle call below then
+// draws from that same seeded sequence, keeping the whole generation
+// reproducible for a given seed.
+// priorityWords (if given) are shuffled and placed at the very front of the
+// attempt order, right after the anchor slot — so they get tried while the
+// grid still has maximum room, rather than competing on equal footing with
+// ~100 other candidates and only rarely making the cut by chance.
+function generateCrosswordPuzzle(pool, targetAcross, targetDown, rng, maxAttempts, priorityWords){
+  rng = rng || Math.random;
+  maxAttempts = maxAttempts || 500;
+  priorityWords = priorityWords || [];
+  const prioritySet = new Set(priorityWords.map(w => w.word));
+  const restOfPool = pool.filter(w => !prioritySet.has(w.word));
+
+  for(let attempt=0; attempt<maxAttempts; attempt++){
+    const order = [...seededShuffle(priorityWords, rng), ...seededShuffle(restOfPool, rng)];
+    const grid = new Map();
+    const placements = [];
+    let acrossCount=0, downCount=0;
+
+    const first = order[0];
+    const firstDir = rng()<0.5 ? 'A' : 'D';
+    cwCommitWord(grid, first, 0, 0, firstDir);
+    placements.push({...first, row:0, col:0, dir:firstDir});
+    if(firstDir==='A') acrossCount++; else downCount++;
+
+    for(const entry of order.slice(1)){
+      if(acrossCount>=targetAcross && downCount>=targetDown) break;
+      const dirsToTry = acrossCount<targetAcross && downCount<targetDown
+        ? seededShuffle(['A','D'], rng)
+        : (acrossCount<targetAcross ? ['A'] : ['D']);
+      let placed = false;
+      for(const dir of dirsToTry){
+        if(dir==='A' && acrossCount>=targetAcross) continue;
+        if(dir==='D' && downCount>=targetDown) continue;
+        const candidates = [];
+        for(const p of placements){
+          if(p.dir===dir) continue;
+          for(let pi=0; pi<p.word.length; pi++){
+            for(let ei=0; ei<entry.word.length; ei++){
+              if(p.word[pi] !== entry.word[ei]) continue;
+              const pr = p.dir==='A' ? p.row : p.row+pi;
+              const pc = p.dir==='A' ? p.col+pi : p.col;
+              const row = dir==='A' ? pr : pr-ei;
+              const col = dir==='A' ? pc-ei : pc;
+              candidates.push({row,col});
+            }
+          }
+        }
+        for(const cand of seededShuffle(candidates, rng)){
+          if(cwCanPlace(grid, entry.word, cand.row, cand.col, dir)){
+            cwCommitWord(grid, entry, cand.row, cand.col, dir);
+            placements.push({...entry, row:cand.row, col:cand.col, dir});
+            if(dir==='A') acrossCount++; else downCount++;
+            placed = true;
+            break;
+          }
+        }
+        if(placed) break;
+      }
+    }
+    if(acrossCount===targetAcross && downCount===targetDown){
+      return { placements, attempt: attempt+1 };
+    }
+  }
+  return null;
+}
+
+const crosswordModal = document.getElementById('crosswordModal');
+const crosswordPlayArea = document.getElementById('crosswordPlayArea');
+const crosswordResultsArea = document.getElementById('crosswordResultsArea');
+const crosswordModeLabel = document.getElementById('crosswordModeLabel');
+const crosswordTimerLabel = document.getElementById('crosswordTimerLabel');
+const crosswordGrid = document.getElementById('crosswordGrid');
+const crosswordActiveClueBar = document.getElementById('crosswordActiveClueBar');
+const crosswordActiveClueText = document.getElementById('crosswordActiveClueText');
+const crosswordWholeWordInput = document.getElementById('crosswordWholeWordInput');
+const crosswordWinOverlay = document.getElementById('crosswordWinOverlay');
+const crosswordWinTime = document.getElementById('crosswordWinTime');
+const crosswordWinSub = document.getElementById('crosswordWinSub');
+const crosswordFinalMessage = document.getElementById('crosswordFinalMessage');
+const crosswordFinalTime = document.getElementById('crosswordFinalTime');
+const crosswordBestTime = document.getElementById('crosswordBestTime');
+const crosswordShareBtn = document.getElementById('crosswordShareBtn');
+const crosswordFreeplayBtn = document.getElementById('crosswordFreeplayBtn');
+const crosswordPlayAgainBtn = document.getElementById('crosswordPlayAgainBtn');
+const crosswordNextDailyBtn = document.getElementById('crosswordNextDailyBtn');
+const crosswordCloseBtn = document.getElementById('crosswordCloseBtn');
+const crosswordCheckBtn = document.getElementById('crosswordCheckBtn');
+const crosswordRevealBtn = document.getElementById('crosswordRevealBtn');
+const crosswordGiveUpBtn = document.getElementById('crosswordGiveUpBtn');
+
+let crosswordMode = 'daily'; // 'daily' | 'freeplay' | 'archive'
+let crosswordDailyDate = null;
+let crosswordArchiveDate = null;
+let crosswordPlacements = [];
+let crosswordCells = {};
+let crosswordActiveWordIdx = null;
+let crosswordGameOver = false;
+let crosswordStartTimestamp = null;
+let crosswordElapsedBeforePause = 0;
+let crosswordTimerInterval = null;
+
+function showCrosswordPage(){
+  hideAllTopScreens();
+  crosswordModal.classList.add('show');
+}
+
+function cwFormatTime(seconds){
+  seconds = Math.max(0, Math.round(seconds));
+  const m = Math.floor(seconds/60), s = seconds%60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+function crosswordCurrentElapsed(){
+  if(!crosswordStartTimestamp) return crosswordElapsedBeforePause;
+  return crosswordElapsedBeforePause + (Date.now() - crosswordStartTimestamp)/1000;
+}
+function startCrosswordTimer(){
+  crosswordStartTimestamp = Date.now();
+  if(crosswordTimerInterval) clearInterval(crosswordTimerInterval);
+  crosswordTimerInterval = setInterval(()=>{
+    crosswordTimerLabel.textContent = cwFormatTime(crosswordCurrentElapsed());
+  }, 500);
+  crosswordTimerLabel.textContent = cwFormatTime(crosswordCurrentElapsed());
+}
+function stopCrosswordTimer(){
+  crosswordElapsedBeforePause = crosswordCurrentElapsed();
+  crosswordStartTimestamp = null;
+  if(crosswordTimerInterval){ clearInterval(crosswordTimerInterval); crosswordTimerInterval = null; }
+  crosswordTimerLabel.textContent = cwFormatTime(crosswordElapsedBeforePause);
+}
+
+function buildCrosswordCellMap(){
+  crosswordCells = {};
+  crosswordPlacements.forEach((p, idx)=>{
+    for(let i=0;i<p.word.length;i++){
+      const r = p.dir==='A' ? p.row : p.row+i;
+      const c = p.dir==='A' ? p.col+i : p.col;
+      const key = r+','+c;
+      if(!crosswordCells[key]) crosswordCells[key] = { r, c, letter: p.word[i], words: [] };
+      crosswordCells[key].words.push(idx);
+    }
+  });
+  let num = 1;
+  const numbered = {};
+  crosswordPlacements.forEach(p=>{
+    const key = p.row+','+p.col;
+    if(!numbered[key]){ numbered[key] = num++; }
+    p.number = numbered[key];
+  });
+  crosswordPlacements.forEach(p=>{
+    crosswordCells[p.row+','+p.col].number = numbered[p.row+','+p.col];
+  });
+}
+
+function cwFitGridToViewport(cols){
+  const available = Math.min(window.innerWidth - 40, 600);
+  const maxCell = 32, minCell = 15;
+  const size = Math.max(minCell, Math.min(maxCell, Math.floor((available - (cols-1)*2) / cols)));
+  crosswordGrid.style.setProperty('--cw-cell', size+'px');
+}
+
+function renderCrosswordGrid(resumeCellValues){
+  let minR=0,maxR=0,minC=0,maxC=0;
+  Object.values(crosswordCells).forEach(c=>{
+    minR = Math.min(minR, c.r); maxR = Math.max(maxR, c.r);
+    minC = Math.min(minC, c.c); maxC = Math.max(maxC, c.c);
+  });
+  const rows = maxR-minR+1, cols = maxC-minC+1;
+  cwFitGridToViewport(cols);
+  crosswordGrid.style.gridTemplateColumns = `repeat(${cols}, var(--cw-cell))`;
+  crosswordGrid.innerHTML = '';
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const key = (r+minR)+','+(c+minC);
+      const cellData = crosswordCells[key];
+      const div = document.createElement('div');
+      if(!cellData){
+        div.className = 'cw-cell blocked';
+      } else {
+        div.className = 'cw-cell';
+        div.dataset.key = key;
+        if(cellData.number){
+          const numEl = document.createElement('div');
+          numEl.className = 'cw-number';
+          numEl.textContent = cellData.number;
+          div.appendChild(numEl);
+        }
+        const input = document.createElement('input');
+        input.maxLength = 1;
+        input.dataset.key = key;
+        if(resumeCellValues && resumeCellValues[key]) input.value = resumeCellValues[key];
+        input.addEventListener('input', onCrosswordCellInput);
+        input.addEventListener('keydown', onCrosswordCellKeydown);
+        input.addEventListener('focus', ()=> onCrosswordCellFocus(key));
+        div.appendChild(input);
+      }
+      crosswordGrid.appendChild(div);
+    }
+  }
+}
+
+function renderCrosswordClues(){
+  const across = crosswordPlacements.filter(p=>p.dir==='A').sort((a,b)=>a.number-b.number);
+  const down = crosswordPlacements.filter(p=>p.dir==='D').sort((a,b)=>a.number-b.number);
+  const build = (list) => list.map(p=>{
+    const idx = crosswordPlacements.indexOf(p);
+    const solved = isCrosswordWordSolved(idx);
+    return `<div class="cw-clue-item${solved?' solved':''}" data-idx="${idx}">
+      <span class="cw-clue-num">${p.number}${p.dir==='A'?'A':'D'}.</span>${p.clue}
+    </div>`;
+  }).join('');
+  document.getElementById('crosswordAcrossList').innerHTML = build(across);
+  document.getElementById('crosswordDownList').innerHTML = build(down);
+  document.querySelectorAll('#crosswordAcrossList .cw-clue-item, #crosswordDownList .cw-clue-item').forEach(el=>{
+    el.addEventListener('click', ()=> selectCrosswordWord(Number(el.dataset.idx)));
+  });
+}
+
+function isCrosswordWordSolved(idx){
+  const p = crosswordPlacements[idx];
+  for(let i=0;i<p.word.length;i++){
+    const r = p.dir==='A' ? p.row : p.row+i;
+    const c = p.dir==='A' ? p.col+i : p.col;
+    const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
+    if(!input || input.value.toUpperCase() !== p.word[i]) return false;
+  }
+  return true;
+}
+
+function selectCrosswordWord(idx){
+  crosswordActiveWordIdx = idx;
+  const p = crosswordPlacements[idx];
+  document.querySelectorAll('.cw-cell').forEach(c=>c.classList.remove('in-word'));
+  for(let i=0;i<p.word.length;i++){
+    const r = p.dir==='A' ? p.row : p.row+i;
+    const c = p.dir==='A' ? p.col+i : p.col;
+    const cellEl = document.querySelector(`.cw-cell[data-key="${r+','+c}"]`);
+    if(cellEl) cellEl.classList.add('in-word');
+  }
+  document.querySelectorAll('#crosswordAcrossList .cw-clue-item, #crosswordDownList .cw-clue-item').forEach(el=>{
+    el.classList.toggle('active', Number(el.dataset.idx) === idx);
+  });
+
+  crosswordActiveClueBar.classList.add('show');
+  crosswordActiveClueText.innerHTML = `<span class="num">${p.number}${p.dir==='A'?' Across':' Down'}</span> \u2014 ${p.clue}`;
+  let current = '';
+  for(let i=0;i<p.word.length;i++){
+    const r = p.dir==='A' ? p.row : p.row+i;
+    const c = p.dir==='A' ? p.col+i : p.col;
+    const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
+    current += (input && input.value) ? input.value : ' ';
+  }
+  crosswordWholeWordInput.value = current;
+  crosswordWholeWordInput.maxLength = p.word.length;
+  crosswordWholeWordInput.onfocus = () => crosswordWholeWordInput.select();
+}
+
+function onCrosswordCellFocus(key){
+  if(crosswordGameOver) return;
+  const cellData = crosswordCells[key];
+  if(!cellData) return;
+  const idx = cellData.words.includes(crosswordActiveWordIdx) ? crosswordActiveWordIdx : cellData.words[0];
+  selectCrosswordWord(idx);
+}
+function onCrosswordCellInput(e){
+  if(crosswordGameOver){ e.target.value=''; return; }
+  e.target.value = e.target.value.toUpperCase().slice(-1);
+  syncCrosswordWholeWordInput();
+  cwAdvanceFromCell(e.target.dataset.key);
+  updateCrosswordProgress();
+}
+function onCrosswordCellKeydown(e){
+  const key = e.target.dataset.key;
+  const [r,c] = key.split(',').map(Number);
+  const p = crosswordPlacements[crosswordActiveWordIdx];
+  if(e.key === 'Backspace' && !e.target.value){ cwMoveInWord(r,c,p,-1); }
+  else if(e.key === 'ArrowRight'){ cwFocusCell(r,c+1); }
+  else if(e.key === 'ArrowLeft'){ cwFocusCell(r,c-1); }
+  else if(e.key === 'ArrowDown'){ cwFocusCell(r+1,c); }
+  else if(e.key === 'ArrowUp'){ cwFocusCell(r-1,c); }
+}
+function cwFocusCell(r,c){
+  const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
+  if(input) input.focus();
+}
+function cwAdvanceFromCell(key){
+  const [r,c] = key.split(',').map(Number);
+  const p = crosswordPlacements[crosswordActiveWordIdx];
+  if(!p) return;
+  cwMoveInWord(r,c,p,1);
+}
+function cwMoveInWord(r,c,p,dir){
+  const nr = p.dir==='D' ? r+dir : r;
+  const nc = p.dir==='A' ? c+dir : c;
+  cwFocusCell(nr,nc);
+}
+function syncCrosswordWholeWordInput(){
+  if(crosswordActiveWordIdx === null) return;
+  const p = crosswordPlacements[crosswordActiveWordIdx];
+  let value = '';
+  for(let i=0;i<p.word.length;i++){
+    const r = p.dir==='A' ? p.row : p.row+i;
+    const c = p.dir==='A' ? p.col+i : p.col;
+    const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
+    value += (input && input.value) ? input.value : ' ';
+  }
+  crosswordWholeWordInput.value = value;
+}
+crosswordWholeWordInput.addEventListener('input', (e)=>{
+  if(crosswordActiveWordIdx === null || crosswordGameOver) return;
+  const p = crosswordPlacements[crosswordActiveWordIdx];
+  const value = e.target.value.toUpperCase().replace(/ /g, '').slice(0, p.word.length);
+  e.target.value = value;
+  for(let i=0;i<p.word.length;i++){
+    const r = p.dir==='A' ? p.row : p.row+i;
+    const c = p.dir==='A' ? p.col+i : p.col;
+    const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
+    if(input) input.value = value[i] || '';
+  }
+  updateCrosswordProgress();
+});
+
+function cwGetOrderedWordIndices(){
+  const across = crosswordPlacements.map((p,idx)=>({p,idx})).filter(o=>o.p.dir==='A').sort((a,b)=>a.p.number-b.p.number);
+  const down = crosswordPlacements.map((p,idx)=>({p,idx})).filter(o=>o.p.dir==='D').sort((a,b)=>a.p.number-b.p.number);
+  return [...across, ...down].map(o=>o.idx);
+}
+function crosswordGoToNextWord(){
+  if(crosswordActiveWordIdx === null) return;
+  const order = cwGetOrderedWordIndices();
+  const pos = order.indexOf(crosswordActiveWordIdx);
+  for(let step=1; step<=order.length; step++){
+    const idx = order[(pos+step) % order.length];
+    if(!isCrosswordWordSolved(idx)){ selectCrosswordWord(idx); return; }
+  }
+  selectCrosswordWord(order[(pos+1) % order.length]);
+}
+function crosswordGoToPrevWord(){
+  if(crosswordActiveWordIdx === null) return;
+  const order = cwGetOrderedWordIndices();
+  const pos = order.indexOf(crosswordActiveWordIdx);
+  for(let step=1; step<=order.length; step++){
+    const idx = order[(pos-step+order.length) % order.length];
+    if(!isCrosswordWordSolved(idx)){ selectCrosswordWord(idx); return; }
+  }
+  selectCrosswordWord(order[(pos-1+order.length) % order.length]);
+}
+document.getElementById('crosswordNextWordBtn').addEventListener('click', crosswordGoToNextWord);
+document.getElementById('crosswordPrevWordBtn').addEventListener('click', crosswordGoToPrevWord);
+
+const CROSSWORD_STATE_KEY = 'cartridgeCrosswordDailyState_v1';
+function loadCrosswordDailyState(){
+  try{ const raw = localStorage.getItem(CROSSWORD_STATE_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+}
+function saveCrosswordDailyState(state){
+  try{ localStorage.setItem(CROSSWORD_STATE_KEY, JSON.stringify(state)); }catch(e){}
+}
+function persistCrosswordDaily(){
+  if(crosswordMode !== 'daily') return;
+  const cellValues = {};
+  Object.keys(crosswordCells).forEach(key=>{
+    const input = document.querySelector(`#crosswordGrid input[data-key="${key}"]`);
+    if(input && input.value) cellValues[key] = input.value;
+  });
+  saveCrosswordDailyState({
+    date: crosswordDailyDate, cellValues, elapsed: crosswordCurrentElapsed(), gameOver: crosswordGameOver,
+    portrait: cwWantsPortrait(), // so resuming on a different-shaped device knows not to reuse stale cell positions
+  });
+}
+
+const CROSSWORD_HISTORY_KEY = 'cartridgeCrosswordHistory_v1';
+function loadCrosswordHistory(){
+  try{ const raw = localStorage.getItem(CROSSWORD_HISTORY_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; }
+}
+function saveCrosswordHistory(hist){
+  try{ localStorage.setItem(CROSSWORD_HISTORY_KEY, JSON.stringify(hist)); }catch(e){}
+}
+function recordCrosswordDailyResult(dateStr, completed, seconds){
+  const hist = loadCrosswordHistory();
+  hist[dateStr] = { completed, seconds: seconds != null ? Math.round(seconds) : null };
+  saveCrosswordHistory(hist);
+}
+
+const CROSSWORD_BEST_KEY = 'cartridgeCrosswordBestTime_v1';
+function loadCrosswordBest(){
+  try{ const v = parseFloat(localStorage.getItem(CROSSWORD_BEST_KEY)); return isNaN(v) ? null : v; }catch(e){ return null; }
+}
+function saveCrosswordBest(seconds){
+  try{ localStorage.setItem(CROSSWORD_BEST_KEY, String(seconds)); }catch(e){}
+}
+
+const CROSSWORD_COMPLETIONS_KEY = 'cartridgeCrosswordCompletions_v1';
+function incrementCrosswordCompletions(){
+  let n = 0;
+  try{ n = parseInt(localStorage.getItem(CROSSWORD_COMPLETIONS_KEY), 10) || 0; }catch(e){}
+  n++;
+  try{ localStorage.setItem(CROSSWORD_COMPLETIONS_KEY, String(n)); }catch(e){}
+  return n;
+}
+function loadCrosswordCompletions(){
+  try{ return parseInt(localStorage.getItem(CROSSWORD_COMPLETIONS_KEY), 10) || 0; }catch(e){ return 0; }
+}
+
+function crosswordDayInfo(dateStr){
+  const e = loadCrosswordHistory()[dateStr];
+  if(!e) return {played:false, won:false, label:null};
+  return {played:true, won: e.completed === true, label: e.completed ? cwFormatTime(e.seconds) : 'X'};
+}
+function crosswordGreenOn(dateStr){
+  const e = loadCrosswordHistory()[dateStr];
+  return !!(e && e.completed === true);
+}
+function currentCrosswordStreak(){
+  const days = buildLastNDays(30, crosswordDayInfo);
+  let streak = 0;
+  for(let i=days.length-1;i>=0;i--){
+    const d = days[i];
+    if(d.isToday && !d.played) continue;
+    if(d.played && d.won){ streak++; }
+    else break;
+  }
+  return streak;
+}
+
+function crosswordGrade(seconds){
+  if(seconds <= 90) return 'gold';
+  if(seconds <= 150) return 'silver';
+  return 'bronze'; // no time limit — everyone who finishes earns at least Bronze
+}
+function crosswordGradeLabel(grade){
+  return { gold:'\ud83e\udd47 Gold', silver:'\ud83e\udd48 Silver', bronze:'\ud83e\udd49 Bronze' }[grade];
+}
+
+function updateCrosswordProgress(){
+  let solvedCount = 0;
+  crosswordPlacements.forEach((p,idx)=>{ if(isCrosswordWordSolved(idx)) solvedCount++; });
+  document.querySelectorAll('.cw-cell').forEach(el=>el.classList.remove('correct'));
+  crosswordPlacements.forEach((p,idx)=>{
+    if(isCrosswordWordSolved(idx)){
+      for(let i=0;i<p.word.length;i++){
+        const r = p.dir==='A' ? p.row : p.row+i;
+        const c = p.dir==='A' ? p.col+i : p.col;
+        const cellEl = document.querySelector(`.cw-cell[data-key="${r+','+c}"]`);
+        if(cellEl) cellEl.classList.add('correct');
+      }
+    }
+  });
+  renderCrosswordClues();
+  const total = crosswordMode === 'freeplay' ? (CROSSWORD_FREEPLAY_ACROSS + CROSSWORD_FREEPLAY_DOWN) : (CROSSWORD_DAILY_ACROSS + CROSSWORD_DAILY_DOWN);
+  if(!crosswordGameOver) persistCrosswordDaily();
+  if(solvedCount === total && !crosswordGameOver){
+    endCrosswordRound(true);
+  }
+}
+
+function showCrosswordResults(gaveUp){
+  crosswordPlayArea.style.display = 'none';
+  crosswordResultsArea.style.display = '';
+  const elapsed = crosswordElapsedBeforePause;
+  if(gaveUp){
+    crosswordFinalMessage.textContent = 'Gave up — here\'s the answer';
+    crosswordFinalTime.textContent = cwFormatTime(elapsed);
+  } else {
+    crosswordFinalMessage.textContent = 'Solved!';
+    crosswordFinalTime.textContent = cwFormatTime(elapsed);
+  }
+  if(!gaveUp){
+    const grade = crosswordGrade(elapsed);
+    crosswordBestTime.innerHTML = `<span class="cw-medal ${grade}">${crosswordGradeLabel(grade)}</span>`;
+    // "Best time" is tracked for Free Play specifically — Daily/Archive puzzles
+    // are a different, smaller size, so comparing them against Free Play's
+    // best wouldn't mean anything.
+    if(crosswordMode === 'freeplay'){
+      const best = loadCrosswordBest();
+      if(best == null || elapsed < best){
+        saveCrosswordBest(elapsed);
+        crosswordBestTime.innerHTML += ` \u2014 New best time!`;
+      } else {
+        crosswordBestTime.innerHTML += ` \u2014 Best: ${cwFormatTime(best)}`;
+      }
+    }
+  } else {
+    crosswordBestTime.textContent = '';
+  }
+  crosswordFreeplayBtn.style.display = crosswordMode === 'daily' ? '' : 'none';
+  crosswordPlayAgainBtn.style.display = crosswordMode === 'freeplay' ? '' : 'none';
+  if(crosswordMode === 'daily') updateNextDailyButton(crosswordNextDailyBtn, 'crossword');
+  else crosswordNextDailyBtn.style.display = 'none';
+}
+function hideCrosswordResults(){
+  crosswordResultsArea.style.display = 'none';
+  crosswordPlayArea.style.display = '';
+}
+
+function endCrosswordRound(solved){
+  crosswordGameOver = true;
+  stopCrosswordTimer();
+  const elapsed = crosswordElapsedBeforePause;
+  persistCrosswordDaily();
+
+  if(solved){
+    if(crosswordMode === 'daily') recordCrosswordDailyResult(crosswordDailyDate, true, elapsed);
+    else if(crosswordMode === 'archive') recordCrosswordDailyResult(crosswordArchiveDate, true, elapsed);
+    incrementCrosswordCompletions();
+    crosswordWinTime.textContent = cwFormatTime(elapsed);
+    crosswordWinSub.innerHTML = `Solved in <b>${cwFormatTime(elapsed)}</b> \u2014 ${crosswordGradeLabel(crosswordGrade(elapsed))}`;
+    crosswordWinOverlay.classList.add('show');
+  } else {
+    if(crosswordMode === 'daily') recordCrosswordDailyResult(crosswordDailyDate, false, elapsed);
+    else if(crosswordMode === 'archive') recordCrosswordDailyResult(crosswordArchiveDate, false, elapsed);
+    showCrosswordResults(true);
+  }
+
+  const ids = [];
+  if(solved && crosswordGrade(elapsed) === 'gold') ids.push('crossword_gold');
+  if(solved && (crosswordMode === 'daily' || crosswordMode === 'archive')){
+    if(currentCrosswordStreak() >= 3) ids.push('crossword_streak');
+  }
+  if(solved && loadCrosswordCompletions() >= 10) ids.push('crossword_wordsmith');
+  const unlocked = checkNightOwl()
+    .concat(unlockAchievements(ids))
+    .concat(solved && crosswordMode !== 'freeplay' ? checkCrossGameAchievements() : []);
+  renderAchievementToasts(unlocked, 'crosswordAchvToastList');
+}
+document.getElementById('crosswordWinContinueBtn').addEventListener('click', ()=>{
+  crosswordWinOverlay.classList.remove('show');
+  showCrosswordResults(false);
+});
+
+// Forces the grid to a portrait shape (taller than wide) on phones and a
+// landscape shape (wider than tall) on desktop — the crossword generator's
+// natural output shape is essentially random, so rather than fight the
+// placement algorithm to produce a specific shape, we just transpose the
+// finished grid when needed: swapping every word's row/col and flipping its
+// Across/Down direction produces an equally valid crossword, just rotated
+// 90 degrees, with every intersection preserved.
+function cwWantsPortrait(){
+  return window.innerWidth < 700;
+}
+function cwOrientPlacements(placements){
+  let minR=0, maxR=0, minC=0, maxC=0;
+  placements.forEach(p=>{
+    const endR = p.dir==='D' ? p.row + p.word.length - 1 : p.row;
+    const endC = p.dir==='A' ? p.col + p.word.length - 1 : p.col;
+    minR = Math.min(minR, p.row); maxR = Math.max(maxR, endR);
+    minC = Math.min(minC, p.col); maxC = Math.max(maxC, endC);
+  });
+  const rows = maxR - minR + 1, cols = maxC - minC + 1;
+  const isPortrait = rows >= cols;
+  if(isPortrait === cwWantsPortrait()) return placements;
+  return placements.map(p => ({ ...p, row: p.col, col: p.row, dir: p.dir === 'A' ? 'D' : 'A' }));
+}
+
+function startCrosswordRound(result, resumeCellValues){
+  crosswordPlacements = cwOrientPlacements(result.placements);
+  crosswordActiveWordIdx = null;
+  crosswordActiveClueBar.classList.remove('show');
+  crosswordWinOverlay.classList.remove('show');
+  buildCrosswordCellMap();
+  renderCrosswordGrid(resumeCellValues || {});
+  renderCrosswordClues();
+}
+
+function startCrosswordDaily(){
+  const date = todayKey();
+  crosswordMode = 'daily';
+  crosswordDailyDate = date;
+  const rng = mulberry32(hashStr('crossword-' + date));
+  const { pool: cwPool, priority: cwPriority } = buildCrosswordPuzzlePool(rng);
+  const result = generateCrosswordPuzzle(cwPool, CROSSWORD_DAILY_ACROSS, CROSSWORD_DAILY_DOWN, rng, 500, cwPriority);
+  if(!result){ crosswordModeLabel.textContent = 'Could not generate today\'s puzzle'; return; }
+
+  let stored = loadCrosswordDailyState();
+  if(!stored || stored.date !== date){
+    stored = { date, cellValues:{}, elapsed:0, gameOver:false };
+    saveCrosswordDailyState(stored);
+  }
+  crosswordElapsedBeforePause = stored.elapsed || 0;
+  crosswordGameOver = stored.gameOver;
+  crosswordModeLabel.textContent = `DAILY #${dailyNumberLabel(date)}`;
+  // If the grid's orientation differs from when this was saved (e.g. it was
+  // started on a phone and resumed on a desktop), the saved cell coordinates
+  // no longer line up with the transposed grid — start that part visually
+  // fresh rather than show letters in the wrong squares. Elapsed time and
+  // completion status still carry over correctly either way.
+  const orientationMatches = stored.portrait === undefined || stored.portrait === cwWantsPortrait();
+  startCrosswordRound(result, orientationMatches ? stored.cellValues : {});
+
+  if(crosswordGameOver){
+    crosswordTimerLabel.textContent = cwFormatTime(crosswordElapsedBeforePause);
+    const hist = loadCrosswordHistory()[date];
+    showCrosswordResults(!(hist && hist.completed));
+  } else {
+    hideCrosswordResults();
+    startCrosswordTimer();
+  }
+}
+
+function startCrosswordFreeplay(){
+  crosswordMode = 'freeplay';
+  const { pool: cwPool, priority: cwPriority } = buildCrosswordPuzzlePool(Math.random);
+  const result = generateCrosswordPuzzle(cwPool, CROSSWORD_FREEPLAY_ACROSS, CROSSWORD_FREEPLAY_DOWN, Math.random, 500, cwPriority);
+  if(!result){ return; }
+  crosswordElapsedBeforePause = 0;
+  crosswordGameOver = false;
+  crosswordModeLabel.textContent = '';
+  hideCrosswordResults();
+  startCrosswordRound(result, {});
+  startCrosswordTimer();
+}
+
+function startCrosswordArchive(dateStr){
+  crosswordMode = 'archive';
+  crosswordArchiveDate = dateStr;
+  const rng = mulberry32(hashStr('crossword-' + dateStr));
+  const { pool: cwPool, priority: cwPriority } = buildCrosswordPuzzlePool(rng);
+  const result = generateCrosswordPuzzle(cwPool, CROSSWORD_DAILY_ACROSS, CROSSWORD_DAILY_DOWN, rng, 500, cwPriority);
+  if(!result){ return; }
+  crosswordElapsedBeforePause = 0;
+  crosswordGameOver = false;
+  crosswordModeLabel.textContent = `REPLAY #${dailyNumberLabel(dateStr)} (${formatUKDate(dateStr)})`;
+  hideCrosswordResults();
+  startCrosswordRound(result, {});
+  startCrosswordTimer();
+}
+
+crosswordCheckBtn.addEventListener('click', ()=>{
+  document.querySelectorAll('#crosswordGrid input').forEach(input=>{
+    const key = input.dataset.key;
+    const cellData = crosswordCells[key];
+    if(input.value && cellData && input.value.toUpperCase() !== cellData.letter){
+      input.style.color = 'var(--magenta)';
+      setTimeout(()=>{ input.style.color = ''; }, 700);
+    }
+  });
+});
+crosswordRevealBtn.addEventListener('click', ()=>{
+  if(crosswordActiveWordIdx === null || crosswordGameOver) return;
+  const p = crosswordPlacements[crosswordActiveWordIdx];
+  for(let i=0;i<p.word.length;i++){
+    const r = p.dir==='A' ? p.row : p.row+i;
+    const c = p.dir==='A' ? p.col+i : p.col;
+    const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
+    if(input) input.value = p.word[i];
+  }
+  syncCrosswordWholeWordInput();
+  updateCrosswordProgress();
+});
+crosswordGiveUpBtn.addEventListener('click', ()=>{
+  if(crosswordGameOver) return;
+  crosswordPlacements.forEach(p=>{
+    for(let i=0;i<p.word.length;i++){
+      const r = p.dir==='A' ? p.row : p.row+i;
+      const c = p.dir==='A' ? p.col+i : p.col;
+      const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
+      if(input) input.value = p.word[i];
+    }
+  });
+  endCrosswordRound(false);
+});
+
+function buildCrosswordShareText(){
+  const elapsed = crosswordElapsedBeforePause;
+  const label = crosswordMode === 'daily' ? `CARTRIDGE CROSSWORD Daily #${dailyNumberLabel(crosswordDailyDate)}`
+    : crosswordMode === 'archive' ? `CARTRIDGE CROSSWORD Replay #${dailyNumberLabel(crosswordArchiveDate)}`
+    : 'CARTRIDGE CROSSWORD \u2014 Free Play';
+  const gradeText = crosswordMode === 'freeplay' ? ` \u2014 ${crosswordGradeLabel(crosswordGrade(elapsed))}` : '';
+  return `${label}\nSolved in ${cwFormatTime(elapsed)}${gradeText}`;
+}
+crosswordShareBtn.addEventListener('click', ()=> shareOrCopy(buildCrosswordShareText(), crosswordShareBtn));
+crosswordFreeplayBtn.addEventListener('click', startCrosswordFreeplay);
+crosswordPlayAgainBtn.addEventListener('click', startCrosswordFreeplay);
+crosswordCloseBtn.addEventListener('click', showHomeScreen);
+document.getElementById('crosswordPageMarquee').addEventListener('click', showHomeScreen);
+window.addEventListener('resize', ()=>{
+  if(!crosswordPlacements.length) return;
+  let maxC=0, minC=0;
+  Object.values(crosswordCells).forEach(c=>{ minC=Math.min(minC,c.c); maxC=Math.max(maxC,c.c); });
+  cwFitGridToViewport(maxC-minC+1);
+});
+
 // ---------- Games menu (hamburger + side drawer) ----------
+
 const menuBtn = document.getElementById('menuBtn');
 const sideMenu = document.getElementById('sideMenu');
 const sideMenuOverlay = document.getElementById('sideMenuOverlay');
@@ -6577,49 +7577,8 @@ const menuClashBtn = document.getElementById('menuClashBtn');
 const menuGridBtn = document.getElementById('menuGridBtn');
 const menuCharadesBtn = document.getElementById('menuCharadesBtn');
 const menuChronicleBtn = document.getElementById('menuChronicleBtn');
+const menuCrosswordBtn = document.getElementById('menuCrosswordBtn');
 const menuChaosBtn = document.getElementById('menuChaosBtn');
-
-function renderStreakRowHtml(historyMap){
-  let html = '';
-  for(let offset = 6; offset >= 0; offset--){
-    const date = dateKeyFromOffset(offset);
-    const entry = historyMap[date];
-    const status = entry ? (typeof entry === 'string' ? entry : entry.status) : null;
-    const dayNum = Number(date.slice(8,10));
-    const cls = 'streak-cell' + (status === 'won' ? ' won' : status === 'lost' ? ' lost' : '') + (offset === 0 ? ' today' : '');
-    const outcome = status === 'won' ? 'Solved' : status === 'lost' ? 'Missed' : 'Not played';
-    html += `<div class="${cls}" title="${formatUKDate(date)} \u2014 ${outcome}">${dayNum}</div>`;
-  }
-  return html;
-}
-
-// Clash's daily tracker shows the actual score for the day (e.g. "10/15") rather
-// than a plain win/loss mark, since every round is played through regardless of
-// mistakes — green for a perfect run, amber for anything else attempted.
-function renderClashStreakRowHtml(historyMap, total){
-  let html = '';
-  for(let offset = 6; offset >= 0; offset--){
-    const date = dateKeyFromOffset(offset);
-    const score = historyMap[date];
-    const dayNum = Number(date.slice(8,10));
-    if(typeof score === 'number'){
-      const cls = 'streak-cell' + (score >= total ? ' won' : ' amber') + (offset === 0 ? ' today' : '');
-      html += `<div class="${cls}" title="${formatUKDate(date)} \u2014 ${score}/${total}">${score}/${total}</div>`;
-    } else {
-      const cls = 'streak-cell' + (offset === 0 ? ' today' : '');
-      html += `<div class="${cls}" title="${formatUKDate(date)} \u2014 Not played">${dayNum}</div>`;
-    }
-  }
-  return html;
-}
-
-function renderAllStreaks(){
-  document.getElementById('streakCartridgeRow').innerHTML = renderStreakRowHtml(loadDailyHistory());
-  document.getElementById('streakClashRow').innerHTML = renderClashStreakRowHtml(loadClashHistory(), CLASH_STAGES.length * CLASH_ROUNDS_PER_STAGE);
-  document.getElementById('streakGridRow').innerHTML = renderStreakRowHtml(loadGridHistory());
-  document.getElementById('streakCharadesRow').innerHTML = renderStreakRowHtml(loadCharadesHistory());
-  document.getElementById('streakChronicleRow').innerHTML = renderClashStreakRowHtml(loadChronicleHistory(), 15);
-}
 
 function openSideMenu(){
   // reflect which game is currently on screen so the active one is highlighted
@@ -6627,15 +7586,16 @@ function openSideMenu(){
   const gridOpen = gridModal.classList.contains('show');
   const charadesOpen = charadesModal.classList.contains('show');
   const chronicleOpen = chronicleModal.classList.contains('show');
+  const crosswordOpen = crosswordModal.classList.contains('show');
   const chaosOpen = chaosModal.classList.contains('show');
   menuChaosBtn.style.display = chaosIsUnlocked() ? '' : 'none';
   menuClashBtn.classList.toggle('active', clashOpen);
   menuGridBtn.classList.toggle('active', gridOpen);
   menuCharadesBtn.classList.toggle('active', charadesOpen);
   menuChronicleBtn.classList.toggle('active', chronicleOpen);
+  menuCrosswordBtn.classList.toggle('active', crosswordOpen);
   menuChaosBtn.classList.toggle('active', chaosOpen);
-  menuCartridgeBtn.classList.toggle('active', !clashOpen && !gridOpen && !charadesOpen && !chronicleOpen && !chaosOpen);
-  renderAllStreaks();
+  menuCartridgeBtn.classList.toggle('active', !clashOpen && !gridOpen && !charadesOpen && !chronicleOpen && !crosswordOpen && !chaosOpen);
   sideMenu.classList.add('show');
   sideMenuOverlay.classList.add('show');
 }
@@ -6670,6 +7630,11 @@ menuChronicleBtn.addEventListener('click', ()=>{
   closeSideMenu();
   showChroniclePage();
   startChronicleDaily();
+});
+menuCrosswordBtn.addEventListener('click', ()=>{
+  closeSideMenu();
+  showCrosswordPage();
+  startCrosswordDaily();
 });
 menuChaosBtn.addEventListener('click', ()=>{
   closeSideMenu();
