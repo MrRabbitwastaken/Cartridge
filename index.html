@@ -949,9 +949,12 @@
   @media (max-width: 560px) { .cw-clue-cols { grid-template-columns: 1fr; } }
   .cw-clue-heading { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; color: var(--teal); margin-bottom: 10px; letter-spacing: 0.5px; }
   .cw-clue-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
-  .cw-clue-item { font-size: 11.5px; line-height: 1.5; color: var(--text-on-photo-dim); cursor: pointer; padding: 7px 8px; border-radius: 6px; border: 1px solid transparent; }
-  .cw-clue-item:hover { background: var(--panel-2); }
-  .cw-clue-item.active { background: rgba(45,212,191,0.12); border-color: var(--teal); color: var(--text-on-photo); }
+  .cw-clue-item {
+    font-size: 11.5px; line-height: 1.5; color: var(--text-on-photo); cursor: pointer;
+    padding: 7px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel-2);
+  }
+  .cw-clue-item:hover { border-color: var(--teal); }
+  .cw-clue-item.active { background: rgba(45,212,191,0.16); border-color: var(--teal); color: var(--text-on-photo); }
   .cw-clue-item.solved { color: var(--green); text-decoration: line-through; text-decoration-color: rgba(57,255,136,0.5); }
   .cw-clue-num { color: var(--teal); font-weight: 700; margin-right: 4px; }
 
@@ -7099,7 +7102,7 @@ function renderCrosswordClues(){
   document.getElementById('crosswordAcrossList').innerHTML = build(across);
   document.getElementById('crosswordDownList').innerHTML = build(down);
   document.querySelectorAll('#crosswordAcrossList .cw-clue-item, #crosswordDownList .cw-clue-item').forEach(el=>{
-    el.addEventListener('click', ()=> selectCrosswordWord(Number(el.dataset.idx)));
+    el.addEventListener('click', ()=> selectCrosswordWord(Number(el.dataset.idx), true));
   });
 }
 
@@ -7114,7 +7117,13 @@ function isCrosswordWordSolved(idx){
   return true;
 }
 
-function selectCrosswordWord(idx){
+// focusFirstCell: true when the word is being chosen from outside the grid
+// (a clue click, Next/Prev) — jump the keyboard to its first cell so typing
+// immediately lands in the right place. False when a cell was clicked
+// directly (onCrosswordCellFocus): that cell already has focus from the
+// user's own click, so don't yank it back to the start of the word.
+function selectCrosswordWord(idx, focusFirstCell){
+  const wordChanged = idx !== crosswordActiveWordIdx;
   crosswordActiveWordIdx = idx;
   const p = crosswordPlacements[idx];
   document.querySelectorAll('.cw-cell').forEach(c=>c.classList.remove('in-word'));
@@ -7130,16 +7139,27 @@ function selectCrosswordWord(idx){
 
   crosswordActiveClueBar.classList.add('show');
   crosswordActiveClueText.innerHTML = `<span class="num">${p.number}${p.dir==='A'?' Across':' Down'}</span> \u2014 ${p.clue}`;
-  let current = '';
-  for(let i=0;i<p.word.length;i++){
-    const r = p.dir==='A' ? p.row : p.row+i;
-    const c = p.dir==='A' ? p.col+i : p.col;
-    const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
-    current += (input && input.value) ? input.value : ' ';
-  }
-  crosswordWholeWordInput.value = current;
+  // Always starts blank, even if some letters are already correct from a
+  // crossing word — trying to pre-fill it and select-all on focus was
+  // triggering the phone's native Cut/Copy/Paste text-selection popup instead
+  // of just letting you type. Existing progress is still visible in the grid
+  // itself; this box is just for typing a fresh answer into it.
+  crosswordWholeWordInput.value = '';
   crosswordWholeWordInput.maxLength = p.word.length;
-  crosswordWholeWordInput.onfocus = () => crosswordWholeWordInput.select();
+
+  if(focusFirstCell){
+    const firstInput = document.querySelector(`#crosswordGrid input[data-key="${p.row+','+p.col}"]`);
+    if(firstInput) firstInput.focus();
+  }
+  // Only scroll when the active word actually changes — this used to run on
+  // every single keystroke as focus advanced cell-to-cell within the SAME
+  // word (since a cell gaining focus always calls this), smooth-scrolling
+  // the page on every letter typed.
+  if(wordChanged){
+    requestAnimationFrame(()=>{
+      crosswordActiveClueBar.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    });
+  }
 }
 
 function onCrosswordCellFocus(key){
@@ -7147,12 +7167,11 @@ function onCrosswordCellFocus(key){
   const cellData = crosswordCells[key];
   if(!cellData) return;
   const idx = cellData.words.includes(crosswordActiveWordIdx) ? crosswordActiveWordIdx : cellData.words[0];
-  selectCrosswordWord(idx);
+  selectCrosswordWord(idx, false);
 }
 function onCrosswordCellInput(e){
   if(crosswordGameOver){ e.target.value=''; return; }
   e.target.value = e.target.value.toUpperCase().slice(-1);
-  syncCrosswordWholeWordInput();
   cwAdvanceFromCell(e.target.dataset.key);
   updateCrosswordProgress();
 }
@@ -7181,22 +7200,13 @@ function cwMoveInWord(r,c,p,dir){
   const nc = p.dir==='A' ? c+dir : c;
   cwFocusCell(nr,nc);
 }
-function syncCrosswordWholeWordInput(){
-  if(crosswordActiveWordIdx === null) return;
-  const p = crosswordPlacements[crosswordActiveWordIdx];
-  let value = '';
-  for(let i=0;i<p.word.length;i++){
-    const r = p.dir==='A' ? p.row : p.row+i;
-    const c = p.dir==='A' ? p.col+i : p.col;
-    const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
-    value += (input && input.value) ? input.value : ' ';
-  }
-  crosswordWholeWordInput.value = value;
-}
+// Types straight into the grid from position 0 of the word every time — the
+// box always starts blank (see selectCrosswordWord), so there's no existing
+// content to merge with or fight over.
 crosswordWholeWordInput.addEventListener('input', (e)=>{
   if(crosswordActiveWordIdx === null || crosswordGameOver) return;
   const p = crosswordPlacements[crosswordActiveWordIdx];
-  const value = e.target.value.toUpperCase().replace(/ /g, '').slice(0, p.word.length);
+  const value = e.target.value.toUpperCase().slice(0, p.word.length);
   e.target.value = value;
   for(let i=0;i<p.word.length;i++){
     const r = p.dir==='A' ? p.row : p.row+i;
@@ -7218,9 +7228,9 @@ function crosswordGoToNextWord(){
   const pos = order.indexOf(crosswordActiveWordIdx);
   for(let step=1; step<=order.length; step++){
     const idx = order[(pos+step) % order.length];
-    if(!isCrosswordWordSolved(idx)){ selectCrosswordWord(idx); return; }
+    if(!isCrosswordWordSolved(idx)){ selectCrosswordWord(idx, true); return; }
   }
-  selectCrosswordWord(order[(pos+1) % order.length]);
+  selectCrosswordWord(order[(pos+1) % order.length], true);
 }
 function crosswordGoToPrevWord(){
   if(crosswordActiveWordIdx === null) return;
@@ -7228,9 +7238,9 @@ function crosswordGoToPrevWord(){
   const pos = order.indexOf(crosswordActiveWordIdx);
   for(let step=1; step<=order.length; step++){
     const idx = order[(pos-step+order.length) % order.length];
-    if(!isCrosswordWordSolved(idx)){ selectCrosswordWord(idx); return; }
+    if(!isCrosswordWordSolved(idx)){ selectCrosswordWord(idx, true); return; }
   }
-  selectCrosswordWord(order[(pos-1+order.length) % order.length]);
+  selectCrosswordWord(order[(pos-1+order.length) % order.length], true);
 }
 document.getElementById('crosswordNextWordBtn').addEventListener('click', crosswordGoToNextWord);
 document.getElementById('crosswordPrevWordBtn').addEventListener('click', crosswordGoToPrevWord);
@@ -7530,7 +7540,6 @@ crosswordRevealBtn.addEventListener('click', ()=>{
     const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
     if(input) input.value = p.word[i];
   }
-  syncCrosswordWholeWordInput();
   updateCrosswordProgress();
 });
 crosswordGiveUpBtn.addEventListener('click', ()=>{
