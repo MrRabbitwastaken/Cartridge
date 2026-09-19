@@ -984,7 +984,10 @@
     display: none; background: var(--panel-2); border: 1px solid var(--teal); border-radius: 10px;
     padding: 12px 14px; margin-bottom: 14px; gap: 8px; flex-direction: column;
   }
-  .active-clue-bar.show { display: flex; }
+  .active-clue-bar.show {
+    display: flex; position: sticky; top: 64px; z-index: 20;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  }
   .active-clue-text { font-size: 12px; color: var(--text-on-photo); line-height: 1.4; }
   .active-clue-text .num { color: var(--teal); font-weight: 700; }
   .active-clue-input-row { display: flex; gap: 8px; }
@@ -999,6 +1002,8 @@
   .active-clue-nav-row button:hover { border-color: var(--teal); color: var(--teal); }
   #crosswordNextWordBtn { background: var(--teal); border: none; color: #012722; font-weight: 700; }
   #crosswordNextWordBtn:hover { color: #012722; filter: brightness(1.1); }
+  #crosswordClueBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+  #crosswordClueBtn:disabled:hover { border-color: var(--line); color: inherit; }
 
   .win-overlay {
     display: none; position: absolute; inset: 0; z-index: 40; align-items: center; justify-content: center;
@@ -1259,11 +1264,13 @@
       <div class="grid-solved-row" id="gridSolvedRow"></div>
       <div class="grid-tiles" id="gridTilesGrid"></div>
       <div class="grid-message" id="gridMessage"></div>
-      <div class="btn-row">
-        <button class="ghost-btn" id="gridShuffleBtn">Shuffle</button>
-        <button class="ghost-btn" id="gridDeselectBtn">Deselect</button>
-        <button class="ghost-btn confirm-btn" id="gridSubmitBtn" disabled>Submit</button>
+      <div class="btn-row" style="justify-content:space-between;">
         <button class="ghost-btn" id="gridGiveUpBtn">Give up😭</button>
+        <div class="btn-row">
+          <button class="ghost-btn" id="gridShuffleBtn">Shuffle</button>
+          <button class="ghost-btn" id="gridDeselectBtn">Deselect</button>
+          <button class="ghost-btn confirm-btn" id="gridSubmitBtn" disabled>Submit</button>
+        </div>
       </div>
     </div>
 
@@ -1278,6 +1285,17 @@
         <button class="ghost-btn" id="gridNextDailyBtn" style="display:none;"></button>
         <button class="ghost-btn" id="gridCloseBtn">Close</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="giveUpConfirmModal">
+  <div class="modal-box" style="max-width:360px; text-align:center;">
+    <div class="modal-title" style="margin:0 0 14px;">GIVE UP?</div>
+    <p style="font-family:'IBM Plex Mono', monospace; font-size:13.5px; color:var(--text); line-height:1.6; margin:0 0 20px;">Are you sure you want to give up? This will end the round.</p>
+    <div class="btn-row" style="justify-content:center;">
+      <button class="ghost-btn" id="giveUpConfirmYes">Yes, give up</button>
+      <button class="ghost-btn confirm-btn" id="giveUpConfirmNo">No, keep playing</button>
     </div>
   </div>
 </div>
@@ -1418,9 +1436,14 @@
           <input type="text" id="crosswordWholeWordInput" placeholder="Type the whole word here…" autocomplete="off" autocapitalize="characters">
         </div>
         <div class="active-clue-nav-row">
+          <button id="crosswordClueBtn" type="button">🔎 Reveal a letter</button>
           <button id="crosswordPrevWordBtn" type="button">&larr; Prev</button>
           <button id="crosswordNextWordBtn" type="button">Next &rarr;</button>
         </div>
+      </div>
+
+      <div class="btn-row" style="justify-content:center; margin-bottom:10px;">
+        <button class="ghost-btn" id="crosswordStartTopBtn" type="button">⤒ Start from the top</button>
       </div>
 
       <div class="grid-scroll"><div id="crosswordGrid"></div></div>
@@ -2972,6 +2995,30 @@ themeDarkBtn.addEventListener('click', ()=> applyTheme('dark'));
 themeLightBtn.addEventListener('click', ()=> applyTheme('light'));
 applyTheme(currentTheme);
 
+// ---------- Shared "Are you sure you want to give up?" confirmation ----------
+// Used by every game's Give Up button (Classic, Connect, Charades, Crossword)
+// in both Daily and Free Play — one modal, one callback stashed until Yes/No
+// is pressed, so a stray tap on Give Up never instantly ends the round.
+const giveUpConfirmModal = document.getElementById('giveUpConfirmModal');
+const giveUpConfirmYes = document.getElementById('giveUpConfirmYes');
+const giveUpConfirmNo = document.getElementById('giveUpConfirmNo');
+let giveUpConfirmAction = null;
+function askGiveUpConfirm(action){
+  giveUpConfirmAction = action;
+  giveUpConfirmModal.classList.add('show');
+}
+function closeGiveUpConfirm(){
+  giveUpConfirmModal.classList.remove('show');
+  giveUpConfirmAction = null;
+}
+giveUpConfirmYes.addEventListener('click', ()=>{
+  const action = giveUpConfirmAction;
+  closeGiveUpConfirm();
+  if(action) action();
+});
+giveUpConfirmNo.addEventListener('click', closeGiveUpConfirm);
+giveUpConfirmModal.addEventListener('click', (e)=>{ if(e.target === giveUpConfirmModal) closeGiveUpConfirm(); });
+
 // ---------- Icon nav: Help / Stats / Settings modals ----------
 const helpBtn = document.getElementById('helpBtn');
 const statsBtn = document.getElementById('statsBtn');
@@ -3243,7 +3290,10 @@ document.addEventListener('click', (e)=>{
   if(!e.target.closest('.search-box')) hideDropdown();
 });
 guessBtn.addEventListener('click', submitGuess);
-giveUpBtn.addEventListener('click', giveUp);
+giveUpBtn.addEventListener('click', ()=>{
+  if(giveUpBtn.disabled || solved) return;
+  askGiveUpConfirm(giveUp);
+});
 newGameBtn.addEventListener('click', ()=>{ if(appMode === 'daily' || appMode === 'archive') return; pickTarget(); });
 winBannerNewGameBtn.addEventListener('click', ()=>{ if(appMode !== 'freeplay') return; pickTarget(); });
 
@@ -4652,6 +4702,7 @@ function hideAllTopScreens(){
   charadesModal.classList.remove('show');
   chronicleModal.classList.remove('show');
   crosswordModal.classList.remove('show');
+  if(typeof closeGiveUpConfirm === 'function') closeGiveUpConfirm();
 }
 function showHomeScreen(){
   hideAllTopScreens();
@@ -5265,7 +5316,10 @@ function giveUpGrid(){
     .concat(gridMode === 'freeplay' ? markFreeplayPlayed('connect') : []);
   renderAchievementToasts(unlocked, 'gridAchvToastList');
 }
-gridGiveUpBtn.addEventListener('click', giveUpGrid);
+gridGiveUpBtn.addEventListener('click', ()=>{
+  if(gridGameOver || gridLocked) return;
+  askGiveUpConfirm(giveUpGrid);
+});
 
 gridFreeplayBtn.addEventListener('click', startGridFreeplay);
 gridPlayAgainBtn.addEventListener('click', startGridFreeplay);
@@ -6126,7 +6180,10 @@ function giveUpCharades(){
   playSfx('lose');
   endCharadesRound();
 }
-charadesGiveUpBtn.addEventListener('click', giveUpCharades);
+charadesGiveUpBtn.addEventListener('click', ()=>{
+  if(charadesGameOver) return;
+  askGiveUpConfirm(giveUpCharades);
+});
 
 function startCharadesRound(target){
   charadesTarget = target;
@@ -7090,6 +7147,9 @@ let crosswordPlacements = [];
 let crosswordCells = {};
 let crosswordActiveWordIdx = null;
 let crosswordGameOver = false;
+const CROSSWORD_MAX_CLUES = 3;
+let crosswordCluesUsed = 0; // "Reveal a letter" uses, capped per game
+let crosswordWordRevealProgress = {}; // idx -> letters revealed so far for that word
 let crosswordStartTimestamp = null;
 let crosswordElapsedBeforePause = 0;
 let crosswordTimerInterval = null;
@@ -7180,7 +7240,13 @@ function renderCrosswordGrid(resumeCellValues){
           div.appendChild(numEl);
         }
         const input = document.createElement('input');
-        input.maxLength = 1;
+        // No maxLength here on purpose: a native maxlength="1" attribute
+        // blocks a NEW keystroke outright once a cell already holds a
+        // character (from a crossing word or resumed progress), since the
+        // browser won't insert past the cap without the old value being
+        // selected first. onCrosswordCellInput below always keeps just the
+        // latest typed character (.slice(-1)), so leaving length unbounded
+        // here means typing a letter always overwrites whatever was there.
         input.dataset.key = key;
         if(resumeCellValues && resumeCellValues[key]) input.value = resumeCellValues[key];
         input.addEventListener('input', onCrosswordCellInput);
@@ -7243,12 +7309,13 @@ function selectCrosswordWord(idx, focusFirstCell){
 
   crosswordActiveClueBar.classList.add('show');
   crosswordActiveClueText.innerHTML = `<span class="num">${p.number}${p.dir==='A'?' Across':' Down'}</span> \u2014 ${p.clue}`;
-  // Always starts blank, even if some letters are already correct from a
-  // crossing word — trying to pre-fill it and select-all on focus was
-  // triggering the phone's native Cut/Copy/Paste text-selection popup instead
-  // of just letting you type. Existing progress is still visible in the grid
-  // itself; this box is just for typing a fresh answer into it.
-  crosswordWholeWordInput.value = '';
+  // Starts blank rather than pre-filled with whatever's already correct in
+  // the grid — pre-filling AND select-all on focus was triggering the
+  // phone's native Cut/Copy/Paste text-selection popup instead of just
+  // letting you type. The one exception is letters revealed with the
+  // "Reveal a letter" button: those are shown here too since the point of
+  // that button is to hand you the letter, not just drop it in the grid.
+  crosswordWholeWordInput.value = crosswordRevealedPrefix(idx);
   crosswordWholeWordInput.maxLength = p.word.length;
 
   if(focusFirstCell){
@@ -7349,6 +7416,57 @@ function crosswordGoToPrevWord(){
 document.getElementById('crosswordNextWordBtn').addEventListener('click', crosswordGoToNextWord);
 document.getElementById('crosswordPrevWordBtn').addEventListener('click', crosswordGoToPrevWord);
 
+// ---------- Reveal a letter: reveals the active word's next letter (the
+// first press reveals letter 1, the next press on that same word reveals
+// letter 2, and so on), capped at CROSSWORD_MAX_CLUES uses total per game
+// (persists across a resumed Daily; resets on every new puzzle — see
+// startCrosswordRound). Per-word progress is remembered so switching away
+// and back to a word continues where it left off instead of starting over. ----------
+const crosswordClueBtn = document.getElementById('crosswordClueBtn');
+function updateCrosswordClueBtn(){
+  const left = CROSSWORD_MAX_CLUES - crosswordCluesUsed;
+  crosswordClueBtn.textContent = `🔎 Reveal a letter (${Math.max(left,0)} left)`;
+  crosswordClueBtn.disabled = left <= 0 || crosswordGameOver;
+}
+// idx -> how many letters (from the start of the word) have been revealed
+// via this button so far.
+function crosswordRevealedPrefix(idx){
+  const p = crosswordPlacements[idx];
+  const n = crosswordWordRevealProgress[idx] || 0;
+  return n > 0 ? p.word.slice(0, n) : '';
+}
+crosswordClueBtn.addEventListener('click', ()=>{
+  if(crosswordGameOver || crosswordActiveWordIdx === null) return;
+  if(crosswordCluesUsed >= CROSSWORD_MAX_CLUES) return;
+  const idx = crosswordActiveWordIdx;
+  const p = crosswordPlacements[idx];
+  const progress = crosswordWordRevealProgress[idx] || 0;
+  if(progress >= p.word.length) return; // this word is already fully revealed
+  const r = p.dir==='A' ? p.row : p.row+progress;
+  const c = p.dir==='A' ? p.col+progress : p.col;
+  const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
+  if(input) input.value = p.word[progress];
+  crosswordWordRevealProgress[idx] = progress + 1;
+  crosswordWholeWordInput.value = crosswordRevealedPrefix(idx);
+  crosswordCluesUsed++;
+  updateCrosswordClueBtn();
+  updateCrosswordProgress();
+  if(crosswordMode === 'daily') persistCrosswordDaily();
+});
+document.getElementById('crosswordStartTopBtn').addEventListener('click', function(){
+  if(crosswordGameOver) return;
+  const order = cwGetOrderedWordIndices();
+  if(order.length){
+    // false: don't jump focus into a grid cell (that pulls the page's
+    // native scroll-into-view down to the board). Show the clue/answer
+    // box instead and put the cursor straight in its text field, since
+    // the box is what the player actually wants to start typing into.
+    selectCrosswordWord(order[0], false);
+    crosswordWholeWordInput.focus();
+  }
+  this.style.display = 'none';
+});
+
 const CROSSWORD_STATE_KEY = 'cartridgeCrosswordDailyState_v1';
 function loadCrosswordDailyState(){
   try{ const raw = localStorage.getItem(CROSSWORD_STATE_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
@@ -7366,6 +7484,8 @@ function persistCrosswordDaily(){
   saveCrosswordDailyState({
     date: crosswordDailyDate, cellValues, elapsed: crosswordCurrentElapsed(), gameOver: crosswordGameOver,
     portrait: cwWantsPortrait(), // so resuming on a different-shaped device knows not to reuse stale cell positions
+    cluesUsed: crosswordCluesUsed,
+    revealProgress: crosswordWordRevealProgress,
   });
 }
 
@@ -7495,6 +7615,7 @@ function hideCrosswordResults(){
 
 function endCrosswordRound(solved){
   crosswordGameOver = true;
+  updateCrosswordClueBtn();
   stopCrosswordTimer();
   const elapsed = crosswordElapsedBeforePause;
   persistCrosswordDaily();
@@ -7560,6 +7681,11 @@ function startCrosswordRound(result, resumeCellValues){
   buildCrosswordCellMap();
   renderCrosswordGrid(resumeCellValues || {});
   renderCrosswordClues();
+  const startTopBtn = document.getElementById('crosswordStartTopBtn');
+  if(startTopBtn) startTopBtn.style.display = '';
+  crosswordCluesUsed = 0;
+  crosswordWordRevealProgress = {};
+  updateCrosswordClueBtn();
 }
 
 function startCrosswordDaily(){
@@ -7586,6 +7712,9 @@ function startCrosswordDaily(){
   // completion status still carry over correctly either way.
   const orientationMatches = stored.portrait === undefined || stored.portrait === cwWantsPortrait();
   startCrosswordRound(result, orientationMatches ? stored.cellValues : {});
+  crosswordCluesUsed = stored.cluesUsed || 0;
+  crosswordWordRevealProgress = orientationMatches ? (stored.revealProgress || {}) : {};
+  updateCrosswordClueBtn();
 
   if(crosswordGameOver){
     crosswordTimerLabel.textContent = cwFormatTime(crosswordElapsedBeforePause);
@@ -7646,7 +7775,7 @@ crosswordRevealBtn.addEventListener('click', ()=>{
   }
   updateCrosswordProgress();
 });
-crosswordGiveUpBtn.addEventListener('click', ()=>{
+function giveUpCrossword(){
   if(crosswordGameOver) return;
   crosswordPlacements.forEach(p=>{
     for(let i=0;i<p.word.length;i++){
@@ -7657,6 +7786,10 @@ crosswordGiveUpBtn.addEventListener('click', ()=>{
     }
   });
   endCrosswordRound(false);
+}
+crosswordGiveUpBtn.addEventListener('click', ()=>{
+  if(crosswordGameOver) return;
+  askGiveUpConfirm(giveUpCrossword);
 });
 
 function buildCrosswordShareText(){
