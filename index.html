@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cartridge — Daily Gaming Guessing Games & Crossword | 6 Games in 1</title>
-<meta name="description" content="Cartridge is a free daily gaming trivia hub with 6 games in one: a video game guessing game, a higher/lower stats clash, a category-connections puzzle, an emoji charades game, a stat-ordering game, and a gaming crossword. New puzzles every day, no account needed.">
+<title>Cartridge — Daily Gaming Guessing Games & Crossword | 7 Games in 1</title>
+<meta name="description" content="Cartridge is a free daily gaming trivia hub with 7 games in one: a video game guessing game, a higher/lower stats clash, a category-connections puzzle, an emoji charades game, a stat-ordering game, a number-guessing game, and a gaming crossword. New puzzles every day, no account needed.">
 <meta name="keywords" content="gaming crossword, gaming guessing game, gaming daily game, video game trivia, daily video game puzzle, guess the video game, video game wordle, gaming quiz">
 <link rel="canonical" href="https://gamecartridge.co.uk/">
 
 <meta property="og:title" content="Cartridge — Daily Gaming Guessing Games & Crossword">
-<meta property="og:description" content="6 daily gaming puzzle games in one free hub: a guessing game, a stats clash, a connections puzzle, emoji charades, a stat-ordering game, and a gaming crossword. New puzzles every day.">
+<meta property="og:description" content="7 daily gaming puzzle games in one free hub: a guessing game, a stats clash, a connections puzzle, emoji charades, a stat-ordering game, a number-guessing game, and a gaming crossword. New puzzles every day.">
 <meta property="og:url" content="https://gamecartridge.co.uk/">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://gamecartridge.co.uk/preview.jpg">
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Cartridge — Daily Gaming Guessing Games & Crossword">
-<meta name="twitter:description" content="6 daily gaming puzzle games in one free hub, including a gaming crossword and a daily guessing game. New puzzles every day.">
+<meta name="twitter:description" content="7 daily gaming puzzle games in one free hub, including a gaming crossword and a daily guessing game. New puzzles every day.">
 <meta name="twitter:image" content="https://gamecartridge.co.uk/preview.jpg">
 
 <script type="application/ld+json">
@@ -25,7 +25,7 @@
   "@type": "WebApplication",
   "name": "Cartridge",
   "url": "https://gamecartridge.co.uk/",
-  "description": "A free daily gaming trivia hub with 6 games: Cartridge Classic (a video game guessing game), Cartridge Clash (a higher/lower stats game), Cartridge Connect (a category-connections puzzle), Cartridge Charades (an emoji guessing game), Cartridge Chronicle (a stat-ordering game), and Cartridge Crossword (a gaming crossword). New puzzles every day.",
+  "description": "A free daily gaming trivia hub with 7 games: Cartridge Classic (a video game guessing game), Cartridge Clash (a higher/lower stats game), Cartridge Connect (a category-connections puzzle), Cartridge Charades (an emoji guessing game), Cartridge Chronicle (a stat-ordering game), Cartridge Countdown (a number-guessing game), and Cartridge Crossword (a gaming crossword). New puzzles every day.",
   "applicationCategory": "GameApplication",
   "operatingSystem": "Any",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -35,6 +35,7 @@
     { "@type": "Game", "name": "Cartridge Connect", "description": "A daily category-connections puzzle built from video game titles." },
     { "@type": "Game", "name": "Cartridge Charades", "description": "A daily emoji guessing game — guess the video game from emoji only." },
     { "@type": "Game", "name": "Cartridge Chronicle", "description": "A daily stat-ordering game — put five games in order by release year, critic score, or sales." },
+    { "@type": "Game", "name": "Cartridge Countdown", "description": "A daily number-guessing game — estimate a hidden stat like release year, critic score, sales, or hours to beat." },
     { "@type": "Game", "name": "Cartridge Crossword", "description": "A daily gaming crossword built entirely from video game titles, characters, and publishers." }
   ]
 }
@@ -543,6 +544,7 @@
   }
   .side-menu-item:hover { background: var(--panel-2); border-color: var(--line); }
   .side-menu-item.active { border-color: var(--cyan); color: var(--cyan); }
+  .side-menu-divider { border: none; border-top: 1px solid var(--line); margin: 10px 4px; }
   .side-menu-icon { font-size: 20px; flex: 0 0 auto; }
   .icon-btn {
     width: 38px; height: 38px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line);
@@ -950,6 +952,81 @@
   .chronicle-card.correct { border-color: var(--green); box-shadow: 0 0 12px rgba(57,255,136,0.3); }
   .chronicle-card.incorrect { border-color: var(--magenta); box-shadow: 0 0 12px rgba(255,46,99,0.3); }
 
+  /* ---------- Cartridge Countdown ---------- */
+  .countdown-card {
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 16px; margin: 12px 0; text-align: center;
+  }
+  .countdown-title {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; color: var(--text);
+    margin-bottom: 10px;
+  }
+  .countdown-facts { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 16px; }
+  .countdown-fact-pill {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 4px 10px; border-radius: 999px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--text-dim);
+  }
+  .countdown-stat-row {
+    padding: 14px 0; border-top: 1px solid var(--line);
+  }
+  .countdown-stat-row:first-child { border-top: none; padding-top: 4px; }
+  .countdown-mystery {
+    font-family: 'Press Start 2P', monospace; font-size: 11px; color: var(--gold);
+    text-shadow: 0 0 8px rgba(255,210,63,0.5); margin-bottom: 4px; letter-spacing: 0.5px;
+  }
+  .countdown-guess-value {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 28px; color: var(--gold);
+    margin: 4px 0 10px;
+  }
+  .countdown-slider-row { padding: 0 6px; }
+  .countdown-slider {
+    width: 100%; accent-color: var(--gold); height: 6px; cursor: pointer;
+  }
+  .countdown-slider-labels {
+    display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px; color: var(--text-dim); margin-top: 2px;
+  }
+  .countdown-reveal-bar {
+    position: relative; height: 10px; border-radius: 999px; background: var(--panel);
+    border: 1px solid var(--line); margin: 22px 6px 26px;
+  }
+  .countdown-stat-points {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--gold); margin-top: -14px;
+  }
+  .countdown-reveal-fill {
+    position: absolute; top: 0; bottom: 0; border-radius: 999px; background: rgba(255,210,63,0.25);
+  }
+  .countdown-pin {
+    position: absolute; top: 50%; width: 16px; height: 16px; border-radius: 50%;
+    transform: translate(-50%, -50%); border: 2px solid var(--bg); box-shadow: 0 0 0 1px rgba(0,0,0,0.3);
+    transition: left .6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .countdown-pin-guess { background: var(--cyan); z-index: 2; }
+  .countdown-pin-actual { background: var(--gold); z-index: 3; }
+  .countdown-pin-label {
+    position: absolute; top: -26px; transform: translateX(-50%); white-space: nowrap;
+    font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600;
+  }
+  .countdown-pin-guess .countdown-pin-label { color: var(--cyan); }
+  .countdown-pin-actual .countdown-pin-label { color: var(--gold); top: 16px; }
+  .countdown-round-result {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; color: var(--text);
+    margin-bottom: 4px;
+  }
+  .countdown-round-points { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--gold); }
+  .countdown-reveal-list { display: flex; flex-direction: column; gap: 6px; margin: 14px 0; text-align: left; }
+  .countdown-reveal-heading {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; color: var(--gold);
+    margin-top: 10px; display: flex; justify-content: space-between;
+  }
+  .countdown-reveal-heading:first-child { margin-top: 0; }
+  .countdown-reveal-row {
+    padding: 8px 12px; border-radius: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px;
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--text);
+    display: flex; justify-content: space-between; gap: 10px;
+  }
+  .countdown-reveal-row .pts { color: var(--gold); font-weight: 700; flex: 0 0 auto; }
+
   /* ---------- Cartridge Crossword ---------- */
   .crossword-grid-scroll { overflow-x: auto; margin: 14px 0; padding-bottom: 6px; display: flex; justify-content: center; }
   #crosswordGrid {
@@ -1125,6 +1202,10 @@
       <span class="side-menu-icon">📜</span>
       <span class="side-menu-label">Cartridge Chronicle</span>
     </button>
+    <button class="side-menu-item" id="menuCountdownBtn">
+      <span class="side-menu-icon">🎯</span>
+      <span class="side-menu-label">Cartridge Countdown</span>
+    </button>
     <button class="side-menu-item" id="menuCrosswordBtn">
       <span class="side-menu-icon">🔤</span>
       <span class="side-menu-label">Cartridge Crossword</span>
@@ -1132,6 +1213,11 @@
     <button class="side-menu-item" id="menuChaosBtn" style="display:none;">
       <span class="side-menu-icon">💥</span>
       <span class="side-menu-label">Cartridge Chaos</span>
+    </button>
+    <hr class="side-menu-divider">
+    <button class="side-menu-item" id="menuMoviesBtn">
+      <span class="side-menu-icon">🎬</span>
+      <span class="side-menu-label">Cartridge Movies</span>
     </button>
   </div>
 </nav>
@@ -1156,7 +1242,7 @@
         <div class="legend" style="justify-content:flex-start; margin:0;">
           <span><span class="swatch exact" id="secretUnlockAllSwatch" style="cursor:pointer;"></span> Exact match</span>
           <span><span class="swatch close" id="secretResetDailyBtn" style="cursor:pointer;"></span> Close</span>
-          <span><span class="swatch far"></span> No match</span>
+          <span><span class="swatch far" id="secretRevealSwatch" style="cursor:pointer;"></span> No match</span>
         </div>
         <p style="margin-top:10px;">▲ / ▼ next to a number means the answer is higher or lower than your guess. Genre and Platform show individual pills that light up per tag, so you can see exactly which ones the mystery game shares.</p>
       </div>
@@ -1183,6 +1269,10 @@
       <div class="help-section">
         <div class="help-heading">📜 Cartridge Chronicle</div>
         <p>Five games, no stats shown — put them in order from lowest to highest (drag a card, or use its ▲ / ▼ buttons). 15 rounds total, in 3 stages of 5: Release Year, then Critic Score, then Sales — a "STAGE" announcement marks each switch. Score 1 point per round for an exact match, 15 total. Same puzzle for everyone each day; finish it to unlock Free Play for endless fresh runs.</p>
+      </div>
+      <div class="help-section">
+        <div class="help-heading">🎯 Cartridge Countdown</div>
+        <p>Publisher, Genre, and Platform are shown — every stat is hidden. Each run picks 3 of the 4 stat types (Release Year, Critic Score, Copies Sold, Hours to Beat) to guess; drag all three sliders, then lock in to see how close you got on each. Points are based on proximity, not exact matches, so a near-miss still scores well. 3 rounds a day, 100 points each (split across the 3 stats), for 300 total. Same 3 games and stats for everyone each day; finish it to unlock Free Play for endless fresh runs.</p>
       </div>
       <div class="help-section">
         <div class="help-heading">🔤 Cartridge Crossword</div>
@@ -1336,6 +1426,11 @@
 <div class="chaos-unlock-toast" id="chaosUnlockToast">
   <div class="chaos-unlock-toast-title">💥 CARTRIDGE CHAOS UNLOCKED!</div>
   <div class="chaos-unlock-toast-sub">Cycle the home screen arrows to find it.</div>
+</div>
+
+<div class="chaos-unlock-toast" id="secretUnlockToast">
+  <div class="chaos-unlock-toast-title">🔓 SECRET UNLOCKED!</div>
+  <div class="chaos-unlock-toast-sub">Cartridge Countdown and Cartridge Movies are now available.</div>
 </div>
 
 <div class="modal-overlay page-mode" id="charadesModal">
@@ -1492,6 +1587,49 @@
   </div>
 </div>
 
+<div class="modal-overlay page-mode" id="countdownModal">
+  <div class="wrap" style="max-width:640px;">
+    <header>
+      <div class="marquee" id="countdownPageMarquee" style="color:var(--gold);" title="Back to home">CARTRIDGE COUNTDOWN</div>
+      <div class="tagline">One stat missing. Trust your gut. <b>Guess the number.</b></div>
+    </header>
+
+    <div id="countdownPlayArea" style="position:relative;">
+      <div class="grid-top-row">
+        <span id="countdownModeLabel">Round 1/3</span>
+        <span id="countdownScoreLabel">Score: 0/300</span>
+      </div>
+
+      <div class="countdown-card">
+        <div class="countdown-title" id="countdownGameTitle">Game Title</div>
+        <div class="countdown-facts" id="countdownFacts"></div>
+        <div id="countdownStatRows"></div>
+        <div class="countdown-round-result" id="countdownRoundResult" style="display:none;"></div>
+      </div>
+
+      <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn confirm-btn" id="countdownLockBtn">Lock in guesses</button>
+        <button class="ghost-btn confirm-btn" id="countdownNextBtn" style="display:none;">Next round</button>
+      </div>
+    </div>
+
+    <div id="countdownResultsArea" class="clash-results" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid var(--line);">
+      <div class="clash-heading" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700;" id="countdownFinalMessage">210/300 — Pretty good!</div>
+      <div class="clash-final-score" id="countdownFinalScore">210/300</div>
+      <div class="clash-best-score" id="countdownBestScore">Best: 210/300</div>
+      <div class="countdown-reveal-list" id="countdownRevealList"></div>
+      <div class="achv-toast-list" id="countdownAchvToastList"></div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn" id="countdownShareBtn">📋 Share Results</button>
+        <button class="ghost-btn" id="countdownFreeplayBtn">Play Free Play</button>
+        <button class="ghost-btn" id="countdownPlayAgainBtn" style="display:none;">New Puzzle</button>
+        <button class="ghost-btn" id="countdownNextDailyBtn" style="display:none;"></button>
+        <button class="ghost-btn" id="countdownCloseBtn">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="settingsModal">
   <div class="modal-box">
     <button class="modal-close" id="settingsModalClose">✕</button>
@@ -1572,7 +1710,7 @@
   <div class="modal-box">
     <button class="modal-close" id="archivePanelClose">✕</button>
     <div class="modal-title">DAILY ARCHIVE</div>
-    <div class="help-note" style="margin-bottom:12px;">Last 7 days across all 3 games — click a past Cartridge day to play it.</div>
+    <div class="help-note" style="margin-bottom:12px;">Last 7 days across all games — click a past day to replay it.</div>
     <button class="ghost-btn" id="statsCardBtn" style="margin-bottom:16px;">📸 Share Stats Card</button>
 
     <div class="archive-game-section">
@@ -1603,6 +1741,12 @@
       <div class="archive-game-heading" style="color:var(--orange);">Cartridge Chronicle</div>
       <div class="archive-stats" id="archiveStatsChronicle"></div>
       <div class="archive-grid" id="archiveGridChronicle"></div>
+    </div>
+
+    <div class="archive-game-section" id="archiveSectionCountdown" style="display:none;">
+      <div class="archive-game-heading" style="color:var(--gold);">Cartridge Countdown</div>
+      <div class="archive-stats" id="archiveStatsCountdown"></div>
+      <div class="archive-grid" id="archiveGridCountdown"></div>
     </div>
 
     <div class="archive-game-section" id="archiveSectionCrossword">
@@ -1743,6 +1887,12 @@
   </div>
 
 <script>
+// Declared up front — getHomeGames() reads this via secretIsUnlocked() as
+// soon as the script runs, well before the fuller secret-unlock block below.
+const SECRET_UNLOCK_KEY = 'cartridgeSecretUnlock_v1';
+function secretIsUnlocked(){
+  return localStorage.getItem(SECRET_UNLOCK_KEY) === '1';
+}
 const GAMES = [
 {title:"Minecraft",year:2011,publisher:"Mojang Studios",critic:93,genres:["Sandbox","Survival"],platforms:["PC","PlayStation","Xbox","Switch","Mobile"],sales:300,hours:28,perspective:"First-Person",clueText:"Not part of a numbered sequence, but has spin-offs like Minecraft Dungeons and Minecraft Legends"},
 {title:"Grand Theft Auto V",year:2013,publisher:"Rockstar Games",critic:97,genres:["Action-Adventure","Open World"],platforms:["PC","PlayStation","Xbox"],sales:210,hours:31,perspective:"Third-Person",clueText:"Part of the long-running Grand Theft Auto franchise"},
@@ -2561,6 +2711,14 @@ function renderCrosswordArchive(){
   renderGameArchiveRow(days, document.getElementById('archiveStatsCrossword'), document.getElementById('archiveGridCrossword'), {playable: true}, statsDays);
 }
 
+function renderCountdownArchive(){
+  const days = buildLastNDays(7, countdownDayInfo);
+  const statsDays = buildLastNDays(365, countdownDayInfo);
+  renderGameArchiveRow(days, document.getElementById('archiveStatsCountdown'), document.getElementById('archiveGridCountdown'), {
+    scoreTotal: COUNTDOWN_MAX_SCORE, playable: true,
+  }, statsDays);
+}
+
 // No 7-day grid here — Chaos is a repeatable arcade high-score chase, not a
 // daily puzzle, so "played today" doesn't mean anything for it.
 function renderChaosArchive(){
@@ -2583,6 +2741,10 @@ function openArchivePanel(){
   renderCharadesArchive();
   renderChronicleArchive();
   renderCrosswordArchive();
+  const countdownSection = document.getElementById('archiveSectionCountdown');
+  const countdownUnlocked = secretIsUnlocked();
+  countdownSection.style.display = countdownUnlocked ? '' : 'none';
+  if(countdownUnlocked) renderCountdownArchive();
   const chaosSection = document.getElementById('archiveSectionChaos');
   const chaosUnlocked = chaosIsUnlocked();
   chaosSection.style.display = chaosUnlocked ? '' : 'none';
@@ -3111,6 +3273,14 @@ document.getElementById('archiveGridCrossword').addEventListener('click', (e)=>{
   startCrosswordArchive(cell.dataset.date);
 });
 
+document.getElementById('archiveGridCountdown').addEventListener('click', (e)=>{
+  const cell = e.target.closest('.archive-cell.playable');
+  if(!cell) return;
+  closeArchivePanel();
+  showCountdownPage();
+  startCountdownArchive(cell.dataset.date);
+});
+
 function playArchivedDay(dateStr){
   showGameScreen();
   if(appMode === 'freeplay'){
@@ -3534,6 +3704,9 @@ const ACHIEVEMENTS = [
   {id:'crossword_gold',     name:'Gold Standard',        icon:'🥇', hint:'Earn a Gold medal in Cartridge Crossword by solving in 1:30 or less.'},
   {id:'crossword_streak',   name:'Crossword Streak',     icon:'🔥', hint:'Reach a 3-day Cartridge Crossword Daily win streak.'},
   {id:'crossword_wordsmith', name:'Wordsmith',           icon:'📝', hint:'Complete 10 Cartridge Crosswords, lifetime, in any mode.'},
+  {id:'countdown_bullseye', name:'Bullseye',             icon:'🎯', hint:'Land an exact guess (0 off) in Cartridge Countdown.'},
+  {id:'countdown_streak',  name:'Countdown Streak',      icon:'🔥', hint:'Reach a 3-day Cartridge Countdown Daily streak.'},
+  {id:'countdown_veteran', name:'Seasoned Guesser',      icon:'🎲', hint:'Complete 10 Cartridge Countdowns, lifetime, in any mode.'},
   {id:'cartridge_master',  name:'Cartridge Master',      icon:'🏅', hint:'Unlock every other achievement.'},
 ];
 const ACHIEVEMENTS_BY_ID = Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, a]));
@@ -3552,8 +3725,8 @@ const LEGENDARY_ACHIEVEMENTS = [
   {id:'godlike',           name:'Godlike',               icon:'👑', hint:'Play the Daily 20 days in a row.'},
   {id:'tactical_nuke',     name:'Tactical Nuke Inbound', icon:'☢️', hint:'Play the Daily 25 days in a row.'},
   {id:'cartridge_king',    name:'Cartridge King',        icon:'🏆', hint:'Play the Daily 30 days in a row.'},
-  {id:'full_house',        name:'Full House',            icon:'🏠', hint:'Get a green result in all 6 games, all on the same day.'},
-  {id:'best_of_the_best',  name:'Best of the Best',      icon:'🌟', hint:'Get a green result in all 6 games, 7 days running.'},
+  {id:'full_house',        name:'Full House',            icon:'🏠', hint:'Get a green result in all 7 games, all on the same day.'},
+  {id:'best_of_the_best',  name:'Best of the Best',      icon:'🌟', hint:'Get a green result in all 7 games, 7 days running.'},
 ];
 const LEGENDARY_BY_ID = Object.fromEntries(LEGENDARY_ACHIEVEMENTS.map(a => [a.id, a]));
 
@@ -3776,10 +3949,10 @@ function chronicleGreenOn(dateStr){
 }
 function allGamesGreenOn(dateStr){
   return cartridgeGreenOn(dateStr) && clashGreenOn(dateStr) && connectGreenOn(dateStr)
-    && charadesGreenOn(dateStr) && chronicleGreenOn(dateStr) && crosswordGreenOn(dateStr);
+    && charadesGreenOn(dateStr) && chronicleGreenOn(dateStr) && countdownGreenOn(dateStr) && crosswordGreenOn(dateStr);
 }
 
-// Call after any of the 6 games finishes its DAILY round — safe to call from
+// Call after any of the 7 games finishes its DAILY round — safe to call from
 // all of them, since it only unlocks based on stored history, not local state.
 function checkCrossGameAchievements(){
   const ids = [];
@@ -4703,6 +4876,7 @@ function hideAllTopScreens(){
   charadesModal.classList.remove('show');
   chronicleModal.classList.remove('show');
   crosswordModal.classList.remove('show');
+  countdownModal.classList.remove('show');
   if(typeof closeGiveUpConfirm === 'function') closeGiveUpConfirm();
 }
 function showHomeScreen(){
@@ -4742,9 +4916,18 @@ const HOME_GAMES_BASE = [
   { key: 'chronicle', label: 'CARTRIDGE CHRONICLE', color: 'var(--orange)', tagline: 'Five games. Three stats to sort by.<br><b>Put them in order.</b>' },
   { key: 'crossword', label: 'CARTRIDGE CROSSWORD', color: 'var(--teal)', tagline: 'Games hidden in a grid.<br><b>Fill in the blanks.</b>' },
 ];
+// Countdown stays out of the cycle until the "No match" swatch secret is
+// triggered — see secretIsUnlocked() below.
+const HOME_GAME_COUNTDOWN = { key: 'countdown', label: 'CARTRIDGE COUNTDOWN', color: 'var(--gold)', tagline: 'Every stat missing. Trust your gut.<br><b>Guess the numbers.</b>' };
 const HOME_GAME_CHAOS = { key: 'chaos', label: 'CARTRIDGE CHAOS', color: 'var(--violet)', tagline: 'Fast questions. No mercy.<br><b>Beat the clock.</b>' };
 function getHomeGames(){
-  return chaosIsUnlocked() ? [...HOME_GAMES_BASE, HOME_GAME_CHAOS] : HOME_GAMES_BASE;
+  const games = [...HOME_GAMES_BASE];
+  if(secretIsUnlocked()){
+    const crosswordIdx = games.findIndex(g => g.key === 'crossword');
+    games.splice(crosswordIdx, 0, HOME_GAME_COUNTDOWN);
+  }
+  if(chaosIsUnlocked()) games.push(HOME_GAME_CHAOS);
+  return games;
 }
 let homeSelectedIndex = 0;
 
@@ -4794,6 +4977,9 @@ homePlayBtn.addEventListener('click', ()=>{
   } else if(key === 'chronicle'){
     showChroniclePage();
     startChronicleDaily();
+  } else if(key === 'countdown'){
+    showCountdownPage();
+    startCountdownDaily();
   } else if(key === 'crossword'){
     showCrosswordPage();
     startCrosswordDaily();
@@ -4819,6 +5005,9 @@ homeFreeplayBtn.addEventListener('click', ()=>{
   } else if(key === 'chronicle'){
     showChroniclePage();
     startChronicleFreeplay();
+  } else if(key === 'countdown'){
+    showCountdownPage();
+    startCountdownFreeplay();
   } else if(key === 'crossword'){
     showCrosswordPage();
     startCrosswordFreeplay();
@@ -5661,6 +5850,28 @@ chaosUnlockBtn.addEventListener('click', ()=>{
   playSfx('chaosUnlock');
 });
 
+// ----- Secret unlock: Cartridge Countdown and the Cartridge Movies link stay
+// hidden from the home screen / side menu / archive until someone taps the
+// "No match" swatch in How to Play 7 times. (SECRET_UNLOCK_KEY and
+// secretIsUnlocked() are declared at the very top of this script, since
+// getHomeGames() needs them the moment the page loads.) -----
+const secretUnlockToast = document.getElementById('secretUnlockToast');
+let secretRevealCount = 0;
+document.getElementById('secretRevealSwatch').addEventListener('click', ()=>{
+  if(secretIsUnlocked()) return;
+  secretRevealCount++;
+  if(secretRevealCount >= 7){
+    secretRevealCount = 0;
+    localStorage.setItem(SECRET_UNLOCK_KEY, '1');
+    helpModal.classList.remove('show');
+    showHomeScreen();
+    renderHomeSelector();
+    secretUnlockToast.classList.add('show');
+    setTimeout(()=> secretUnlockToast.classList.remove('show'), 2600);
+    playSfx('chaosUnlock');
+  }
+});
+
 // ----- Test-only shortcut: tap the "Exact match" swatch in How to Play 5
 // times to force-unlock every achievement (and Chaos with it), without
 // having to actually earn all 24 through play. -----
@@ -5799,6 +6010,7 @@ const DAILY_GAME_SEQUENCE = [
   { key: 'connect', label: 'Cartridge Connect' },
   { key: 'charades', label: 'Cartridge Charades' },
   { key: 'chronicle', label: 'Cartridge Chronicle' },
+  { key: 'countdown', label: 'Cartridge Countdown' },
   { key: 'crossword', label: 'Cartridge Crossword' },
 ];
 
@@ -5809,6 +6021,7 @@ function isDailyGameCompletedToday(key){
   if(key === 'connect') return !!loadGridHistory()[date];
   if(key === 'charades') return !!loadCharadesHistory()[date];
   if(key === 'chronicle') return typeof loadChronicleHistory()[date] === 'number';
+  if(key === 'countdown') return countdownGreenOn(date);
   if(key === 'crossword'){ const e = loadCrosswordHistory()[date]; return !!(e && e.completed === true); }
   return false;
 }
@@ -5820,6 +6033,7 @@ function findNextUncompletedDailyGame(currentKey){
   const idx = DAILY_GAME_SEQUENCE.findIndex(g => g.key === currentKey);
   for(let i = 1; i <= DAILY_GAME_SEQUENCE.length; i++){
     const candidate = DAILY_GAME_SEQUENCE[(idx + i) % DAILY_GAME_SEQUENCE.length];
+    if(candidate.key === 'countdown' && !secretIsUnlocked()) continue; // stays out of rotation until unlocked
     if(!isDailyGameCompletedToday(candidate.key)) return candidate;
   }
   return null; // every daily is done for today
@@ -5830,6 +6044,7 @@ function goToDailyGame(key){
   else if(key === 'connect'){ showGridPage(); startGridDaily(); }
   else if(key === 'charades'){ showCharadesPage(); startCharadesDaily(); }
   else if(key === 'chronicle'){ showChroniclePage(); startChronicleDaily(); }
+  else if(key === 'countdown'){ showCountdownPage(); startCountdownDaily(); }
   else if(key === 'crossword'){ showCrosswordPage(); startCrosswordDaily(); }
   else { showGameScreen(); enterDailyMode(); }
 }
@@ -7813,6 +8028,463 @@ window.addEventListener('resize', ()=>{
   cwFitGridToViewport(maxC-minC+1);
 });
 
+// ---------- Cartridge Countdown (guess the hidden numbers) ----------
+const COUNTDOWN_POOL = EASY_POOL; // same well-known pool as Clash/Connect/Chronicle
+
+const countdownModal = document.getElementById('countdownModal');
+const countdownPlayArea = document.getElementById('countdownPlayArea');
+const countdownResultsArea = document.getElementById('countdownResultsArea');
+const countdownModeLabel = document.getElementById('countdownModeLabel');
+const countdownScoreLabel = document.getElementById('countdownScoreLabel');
+const countdownGameTitle = document.getElementById('countdownGameTitle');
+const countdownFacts = document.getElementById('countdownFacts');
+const countdownStatRows = document.getElementById('countdownStatRows');
+const countdownRoundResult = document.getElementById('countdownRoundResult');
+const countdownLockBtn = document.getElementById('countdownLockBtn');
+const countdownNextBtn = document.getElementById('countdownNextBtn');
+const countdownFinalMessage = document.getElementById('countdownFinalMessage');
+const countdownFinalScore = document.getElementById('countdownFinalScore');
+const countdownBestScore = document.getElementById('countdownBestScore');
+const countdownRevealList = document.getElementById('countdownRevealList');
+const countdownShareBtn = document.getElementById('countdownShareBtn');
+const countdownFreeplayBtn = document.getElementById('countdownFreeplayBtn');
+const countdownPlayAgainBtn = document.getElementById('countdownPlayAgainBtn');
+const countdownNextDailyBtn = document.getElementById('countdownNextDailyBtn');
+const countdownCloseBtn = document.getElementById('countdownCloseBtn');
+
+function showCountdownPage(){
+  hideAllTopScreens();
+  countdownModal.classList.add('show');
+}
+
+const COUNTDOWN_TOTAL_ROUNDS = 3;
+const COUNTDOWN_STATS_PER_ROUND = 3; // out of 4 stat types — which 3 stays fixed for the whole run
+const COUNTDOWN_POINTS_PER_ROUND = 100; // a round's score is the average of its 3 stat guesses
+const COUNTDOWN_MAX_SCORE = COUNTDOWN_TOTAL_ROUNDS * COUNTDOWN_POINTS_PER_ROUND; // 300
+
+function countdownScoreAbs(guess, actual, zeroAt){
+  const err = Math.abs(guess - actual);
+  return Math.round(100 * Math.max(0, 1 - err / zeroAt));
+}
+function countdownScoreRel(guess, actual, zeroAt){
+  const rel = Math.abs(guess - actual) / Math.max(actual, 1);
+  return Math.round(100 * Math.max(0, 1 - rel / zeroAt));
+}
+
+// Four stats to guess from, each with its own display scale and its own
+// scoring tolerance (how far off before that stat scores zero). A slider
+// maps to an INDEX into `scale`, not the raw value — Sales and Hours are
+// heavily skewed toward small numbers (most games sell under 30M, take
+// under 35 hours), so a plain linear slider would waste most of its length
+// on values that almost never come up. A curated step scale keeps the whole
+// slider useful for the range that actually matters.
+const COUNTDOWN_STAT_TYPES = [
+  {
+    key: 'year', label: 'Release Year', unit: '',
+    buildScale(){
+      const years = COUNTDOWN_POOL.map(g=>g.year);
+      const lo = Math.min(...years) - 3, hi = Math.max(...years) + 3;
+      const scale = [];
+      for(let y=lo; y<=hi; y++) scale.push(y);
+      return scale;
+    },
+    score(guess, actual){ return countdownScoreAbs(guess, actual, 15); },
+  },
+  {
+    key: 'critic', label: 'Critic Score', unit: '/100',
+    buildScale(){ const scale=[]; for(let s=40;s<=100;s++) scale.push(s); return scale; },
+    score(guess, actual){ return countdownScoreAbs(guess, actual, 25); },
+  },
+  {
+    key: 'sales', label: 'Copies Sold', unit: 'M',
+    buildScale(){ return [1,2,3,4,5,6,7,8,10,12,15,20,25,30,40,50,60,75,90,100,125,150,200,250,300]; },
+    score(guess, actual){ return countdownScoreRel(guess, actual, 1.5); },
+  },
+  {
+    key: 'hours', label: 'Hours to Beat', unit: 'h',
+    buildScale(){ return [1,2,3,4,5,6,7,8,10,12,15,18,20,25,30,35,40,50,60,75,90,100,125,150,175,200]; },
+    score(guess, actual){ return countdownScoreRel(guess, actual, 1.3); },
+  },
+];
+const COUNTDOWN_STAT_BY_KEY = Object.fromEntries(COUNTDOWN_STAT_TYPES.map(s => [s.key, s]));
+
+function countdownFormatValue(statKey, value){
+  if(statKey === 'critic') return `${value}/100`;
+  if(statKey === 'sales') return `${value}M`;
+  if(statKey === 'hours') return `${value}h`;
+  return String(value); // year
+}
+
+function countdownClosestScaleIndex(scale, value){
+  let bestIdx = 0, bestDiff = Infinity;
+  scale.forEach((v,i)=>{
+    const diff = Math.abs(v - value);
+    if(diff < bestDiff){ bestDiff = diff; bestIdx = i; }
+  });
+  return bestIdx;
+}
+
+let countdownMode = 'daily'; // 'daily' | 'freeplay' | 'archive'
+let countdownDailyDate = null;
+let countdownArchiveDate = null;
+let countdownStatKeys = [];     // the 3 stat types guessed EVERY round this run (fixed for the whole run)
+let countdownRounds = [];       // the 3 games, one per round
+let countdownRoundIdx = 0;      // 0-based index into countdownRounds
+let countdownScore = 0;
+let countdownRoundScores = [];  // one 0-100 round score per completed round, in order
+let countdownRoundDetails = []; // {title, stats:[{statKey,guess,actual,points}...], roundScore} per completed round
+let countdownLocked = false;    // true once the current round's 3 guesses are locked in
+let countdownGameOver = false;
+
+// Picks this run's 3 stat types and 3 games deterministically from a seed
+// string. Which 3 of the 4 stat types are in play (and which one sits out
+// entirely) varies day to day, but stays the same across all 3 rounds of a
+// single run — every game gets asked about the same 3 things.
+function buildCountdownRun(seedStr){
+  const rng = mulberry32(hashStr('countdown-' + seedStr));
+  const statKeys = seededShuffle(COUNTDOWN_STAT_TYPES.map(s=>s.key), rng).slice(0, COUNTDOWN_STATS_PER_ROUND);
+  const games = seededShuffle(COUNTDOWN_POOL, rng).slice(0, COUNTDOWN_TOTAL_ROUNDS);
+  return { statKeys, games };
+}
+
+function countdownStatDisplayFacts(game){
+  const pills = [
+    `Publisher: ${game.publisher}`,
+    `Genre: ${(game.genres||[]).join(', ')}`,
+    `Platform: ${(game.platforms||[]).join(', ')}`,
+  ];
+  if(game.perspective) pills.push(`Perspective: ${game.perspective}`);
+  return pills;
+}
+
+function renderCountdownRound(){
+  const game = countdownRounds[countdownRoundIdx];
+  countdownModeLabel.textContent = `Round ${countdownRoundIdx + 1}/${COUNTDOWN_TOTAL_ROUNDS}`;
+  countdownScoreLabel.textContent = `Score: ${countdownScore}/${COUNTDOWN_MAX_SCORE}`;
+  countdownGameTitle.textContent = game.title;
+  countdownFacts.innerHTML = countdownStatDisplayFacts(game)
+    .map(f => `<span class="countdown-fact-pill">${f}</span>`).join('');
+
+  countdownStatRows.innerHTML = countdownStatKeys.map(statKey=>{
+    const statType = COUNTDOWN_STAT_BY_KEY[statKey];
+    const scale = statType.buildScale();
+    const midIdx = Math.floor(scale.length / 2);
+    return `
+      <div class="countdown-stat-row" data-stat="${statKey}">
+        <div class="countdown-mystery">??? ${statType.label.toUpperCase()} ???</div>
+        <div class="countdown-guess-value" data-role="value">${countdownFormatValue(statKey, scale[midIdx])}</div>
+        <div class="countdown-slider-row">
+          <input type="range" class="countdown-slider" data-stat="${statKey}" min="0" max="${scale.length - 1}" step="1" value="${midIdx}">
+          <div class="countdown-slider-labels">
+            <span>${countdownFormatValue(statKey, scale[0])}</span>
+            <span>${countdownFormatValue(statKey, scale[scale.length - 1])}</span>
+          </div>
+        </div>
+        <div class="countdown-reveal-bar" data-role="bar" style="display:none;">
+          <div class="countdown-reveal-fill" data-role="fill"></div>
+          <div class="countdown-pin countdown-pin-guess" data-role="pin-guess"><div class="countdown-pin-label" data-role="pin-guess-label"></div></div>
+          <div class="countdown-pin countdown-pin-actual" data-role="pin-actual"><div class="countdown-pin-label" data-role="pin-actual-label"></div></div>
+        </div>
+        <div class="countdown-stat-points" data-role="points" style="display:none;"></div>
+      </div>
+    `;
+  }).join('');
+
+  countdownRoundResult.style.display = 'none';
+  countdownLockBtn.style.display = '';
+  countdownLockBtn.disabled = false;
+  countdownNextBtn.style.display = 'none';
+  countdownLocked = false;
+}
+// Event delegation — the 3 slider rows are rebuilt fresh every round, so a
+// single listener on the container outlives them instead of needing to be
+// re-attached each time.
+countdownStatRows.addEventListener('input', (e)=>{
+  if(!e.target.classList.contains('countdown-slider') || countdownLocked || countdownGameOver) return;
+  const statKey = e.target.dataset.stat;
+  const scale = COUNTDOWN_STAT_BY_KEY[statKey].buildScale();
+  const val = scale[Number(e.target.value)];
+  const row = e.target.closest('.countdown-stat-row');
+  row.querySelector('[data-role="value"]').textContent = countdownFormatValue(statKey, val);
+});
+
+function lockCountdownGuess(){
+  if(countdownLocked || countdownGameOver) return;
+  countdownLocked = true;
+  countdownLockBtn.style.display = 'none';
+
+  const game = countdownRounds[countdownRoundIdx];
+  const statDetails = [];
+  let sum = 0;
+
+  countdownStatKeys.forEach(statKey=>{
+    const statType = COUNTDOWN_STAT_BY_KEY[statKey];
+    const scale = statType.buildScale();
+    const row = countdownStatRows.querySelector(`.countdown-stat-row[data-stat="${statKey}"]`);
+    const slider = row.querySelector('.countdown-slider');
+    slider.disabled = true;
+    const guess = scale[Number(slider.value)];
+    const actual = game[statKey];
+    const points = statType.score(guess, actual);
+    sum += points;
+    statDetails.push({ statKey, guess, actual, points });
+
+    // Pins sit at the SCALE's index position, not the raw value — keeps a
+    // skewed stat like Sales legible instead of every low value bunching up
+    // at the far left of the bar.
+    const guessIdx = scale.indexOf(guess);
+    const actualIdx = countdownClosestScaleIndex(scale, actual);
+    const guessPct = (guessIdx / (scale.length - 1)) * 100;
+    const actualPct = (actualIdx / (scale.length - 1)) * 100;
+    row.querySelector('[data-role="bar"]').style.display = '';
+    row.querySelector('[data-role="pin-guess"]').style.left = guessPct + '%';
+    row.querySelector('[data-role="pin-actual"]').style.left = actualPct + '%';
+    row.querySelector('[data-role="pin-guess-label"]').textContent = 'You: ' + countdownFormatValue(statKey, guess);
+    row.querySelector('[data-role="pin-actual-label"]').textContent = 'Actual: ' + countdownFormatValue(statKey, actual);
+    row.querySelector('[data-role="fill"]').style.left = Math.min(guessPct, actualPct) + '%';
+    row.querySelector('[data-role="fill"]').style.width = Math.abs(actualPct - guessPct) + '%';
+    const ptsEl = row.querySelector('[data-role="points"]');
+    ptsEl.style.display = '';
+    ptsEl.textContent = `${points} point${points === 1 ? '' : 's'}${points >= 95 ? ' — Bullseye! 🎯' : ''}`;
+  });
+
+  const roundScore = Math.round(sum / countdownStatKeys.length);
+  countdownRoundScores.push(roundScore);
+  countdownRoundDetails.push({ title: game.title, stats: statDetails, roundScore });
+  countdownScore += roundScore;
+  countdownScoreLabel.textContent = `Score: ${countdownScore}/${COUNTDOWN_MAX_SCORE}`;
+  playSfx(roundScore >= 70 ? 'correct' : 'incorrect');
+
+  countdownRoundResult.style.display = '';
+  countdownRoundResult.innerHTML = `<div class="countdown-round-points">Round total: ${roundScore}/100</div>`;
+
+  countdownNextBtn.textContent = countdownRoundIdx < COUNTDOWN_TOTAL_ROUNDS - 1 ? 'Next round' : 'See results';
+  countdownNextBtn.style.display = '';
+}
+countdownLockBtn.addEventListener('click', lockCountdownGuess);
+
+function countdownAdvance(){
+  if(countdownRoundIdx < COUNTDOWN_TOTAL_ROUNDS - 1){
+    countdownRoundIdx++;
+    renderCountdownRound();
+    if(countdownMode === 'daily') persistCountdownDaily();
+  } else {
+    endCountdownGame();
+  }
+}
+countdownNextBtn.addEventListener('click', countdownAdvance);
+
+function countdownGrade(score){
+  if(score >= 250) return 'gold';
+  if(score >= 150) return 'silver';
+  return 'bronze';
+}
+function countdownGradeLabel(grade){
+  if(grade === 'gold') return '🥇 Gold';
+  if(grade === 'silver') return '🥈 Silver';
+  return '🥉 Bronze';
+}
+function countdownResultMessage(score){
+  if(score >= 270) return 'Incredible! 🎯';
+  if(score >= 200) return 'Great guessing!';
+  if(score >= 120) return 'Not bad!';
+  return 'Tough one!';
+}
+
+const COUNTDOWN_STATE_KEY = 'cartridgeCountdownDailyState_v1';
+function loadCountdownDailyState(){
+  try{ const raw = localStorage.getItem(COUNTDOWN_STATE_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+}
+function saveCountdownDailyState(state){
+  try{ localStorage.setItem(COUNTDOWN_STATE_KEY, JSON.stringify(state)); }catch(e){}
+}
+// Only ever called right after advancing to a fresh, not-yet-locked round
+// (or at game end) — never immediately after locking a round's guesses — so
+// a resumed Daily always reloads onto a clean round instead of risking a
+// re-lock double-scoring the same round twice.
+function persistCountdownDaily(){
+  if(countdownMode !== 'daily') return;
+  saveCountdownDailyState({
+    date: countdownDailyDate, roundIdx: countdownRoundIdx,
+    roundScores: countdownRoundScores.slice(), roundDetails: countdownRoundDetails.slice(),
+    score: countdownScore, gameOver: countdownGameOver,
+  });
+}
+
+const COUNTDOWN_HISTORY_KEY = 'cartridgeCountdownHistory_v1';
+function loadCountdownHistory(){
+  try{ const raw = localStorage.getItem(COUNTDOWN_HISTORY_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; }
+}
+function saveCountdownHistory(hist){
+  try{ localStorage.setItem(COUNTDOWN_HISTORY_KEY, JSON.stringify(hist)); }catch(e){}
+}
+function recordCountdownDailyResult(dateStr, score){
+  const hist = loadCountdownHistory();
+  hist[dateStr] = { completed: true, score };
+  saveCountdownHistory(hist);
+}
+
+const COUNTDOWN_BEST_KEY = 'cartridgeCountdownBest_v1';
+function loadCountdownBest(){
+  try{ return parseInt(localStorage.getItem(COUNTDOWN_BEST_KEY), 10) || 0; }catch(e){ return 0; }
+}
+function saveCountdownBest(score){
+  try{ localStorage.setItem(COUNTDOWN_BEST_KEY, String(score)); }catch(e){}
+}
+
+const COUNTDOWN_COMPLETIONS_KEY = 'cartridgeCountdownCompletions_v1';
+function incrementCountdownCompletions(){
+  let n = 0;
+  try{ n = parseInt(localStorage.getItem(COUNTDOWN_COMPLETIONS_KEY), 10) || 0; }catch(e){}
+  n++;
+  try{ localStorage.setItem(COUNTDOWN_COMPLETIONS_KEY, String(n)); }catch(e){}
+  return n;
+}
+function loadCountdownCompletions(){
+  try{ return parseInt(localStorage.getItem(COUNTDOWN_COMPLETIONS_KEY), 10) || 0; }catch(e){ return 0; }
+}
+
+function countdownDayInfo(dateStr){
+  const e = loadCountdownHistory()[dateStr];
+  if(!e) return {played:false, won:false, label:null};
+  return {played:true, won: e.completed === true, label: String(e.score), score: e.score};
+}
+function currentCountdownStreak(){
+  const days = buildLastNDays(30, countdownDayInfo);
+  let streak = 0;
+  for(let i=days.length-1;i>=0;i--){
+    const d = days[i];
+    if(d.isToday && !d.played) continue;
+    if(d.played && d.won){ streak++; }
+    else break;
+  }
+  return streak;
+}
+function countdownGreenOn(dateStr){
+  const e = loadCountdownHistory()[dateStr];
+  return !!(e && e.completed === true);
+}
+
+function showCountdownResults(){
+  countdownPlayArea.style.display = 'none';
+  countdownResultsArea.style.display = '';
+  countdownFinalMessage.textContent = `${countdownScore}/${COUNTDOWN_MAX_SCORE} — ${countdownResultMessage(countdownScore)}`;
+  countdownFinalScore.textContent = `${countdownScore}/${COUNTDOWN_MAX_SCORE} — ${countdownGradeLabel(countdownGrade(countdownScore))}`;
+  const best = loadCountdownBest();
+  if(countdownScore > best){
+    saveCountdownBest(countdownScore);
+    countdownBestScore.textContent = `New best: ${countdownScore}/${COUNTDOWN_MAX_SCORE}!`;
+  } else {
+    countdownBestScore.textContent = `Best: ${best}/${COUNTDOWN_MAX_SCORE}`;
+  }
+  countdownRevealList.innerHTML = countdownRoundDetails.map(rd=>{
+    const rows = rd.stats.map(s=>{
+      const statType = COUNTDOWN_STAT_BY_KEY[s.statKey];
+      return `<div class="countdown-reveal-row"><span>${statType.label}: you guessed ${countdownFormatValue(s.statKey, s.guess)}, actual was ${countdownFormatValue(s.statKey, s.actual)}</span><span class="pts">${s.points} pts</span></div>`;
+    }).join('');
+    return `<div class="countdown-reveal-heading"><span>${rd.title}</span><span>${rd.roundScore}/100</span></div>${rows}`;
+  }).join('');
+  countdownFreeplayBtn.style.display = countdownMode === 'daily' ? '' : 'none';
+  countdownPlayAgainBtn.style.display = countdownMode === 'freeplay' ? '' : 'none';
+  if(countdownMode === 'daily') updateNextDailyButton(countdownNextDailyBtn, 'countdown');
+  else countdownNextDailyBtn.style.display = 'none';
+}
+function hideCountdownResults(){
+  countdownResultsArea.style.display = 'none';
+  countdownPlayArea.style.display = '';
+}
+
+function endCountdownGame(){
+  countdownGameOver = true;
+  persistCountdownDaily();
+  if(countdownMode === 'daily') recordCountdownDailyResult(countdownDailyDate, countdownScore);
+  else if(countdownMode === 'archive') recordCountdownDailyResult(countdownArchiveDate, countdownScore);
+  incrementCountdownCompletions();
+  showCountdownResults();
+
+  const ids = [];
+  if(countdownRoundDetails.some(rd => rd.stats.some(s => s.points === 100))) ids.push('countdown_bullseye');
+  if((countdownMode === 'daily' || countdownMode === 'archive') && currentCountdownStreak() >= 3) ids.push('countdown_streak');
+  if(loadCountdownCompletions() >= 10) ids.push('countdown_veteran');
+
+  const unlocked = checkNightOwl()
+    .concat(unlockAchievements(ids))
+    .concat(countdownMode !== 'freeplay' ? checkCrossGameAchievements() : []);
+  renderAchievementToasts(unlocked, 'countdownAchvToastList');
+}
+
+function startCountdownDaily(){
+  const date = todayKey();
+  countdownMode = 'daily';
+  countdownDailyDate = date;
+  const run = buildCountdownRun(date);
+  countdownStatKeys = run.statKeys;
+  countdownRounds = run.games;
+
+  let stored = loadCountdownDailyState();
+  if(!stored || stored.date !== date){
+    stored = { date, roundIdx: 0, roundScores: [], roundDetails: [], score: 0, gameOver: false };
+    saveCountdownDailyState(stored);
+  }
+  countdownRoundIdx = Math.min(stored.roundIdx || 0, COUNTDOWN_TOTAL_ROUNDS - 1);
+  countdownScore = stored.score || 0;
+  countdownGameOver = stored.gameOver;
+  countdownRoundScores = stored.roundScores ? stored.roundScores.slice() : [];
+  countdownRoundDetails = stored.roundDetails ? stored.roundDetails.slice() : [];
+
+  if(countdownGameOver){
+    showCountdownResults();
+    return;
+  }
+  hideCountdownResults();
+  renderCountdownRound();
+}
+
+function startCountdownFreeplay(){
+  countdownMode = 'freeplay';
+  const run = buildCountdownRun('freeplay-' + Math.random().toString(36).slice(2));
+  countdownStatKeys = run.statKeys;
+  countdownRounds = run.games;
+  countdownRoundIdx = 0;
+  countdownScore = 0;
+  countdownGameOver = false;
+  countdownRoundScores = [];
+  countdownRoundDetails = [];
+  hideCountdownResults();
+  renderCountdownRound();
+}
+
+function startCountdownArchive(dateStr){
+  countdownMode = 'archive';
+  countdownArchiveDate = dateStr;
+  const run = buildCountdownRun(dateStr);
+  countdownStatKeys = run.statKeys;
+  countdownRounds = run.games;
+  countdownRoundIdx = 0;
+  countdownScore = 0;
+  countdownGameOver = false;
+  countdownRoundScores = [];
+  countdownRoundDetails = [];
+  hideCountdownResults();
+  renderCountdownRound();
+}
+
+function buildCountdownShareText(){
+  const label = countdownMode === 'daily' ? `CARTRIDGE COUNTDOWN Daily #${dailyNumberLabel(countdownDailyDate)}`
+    : countdownMode === 'archive' ? `CARTRIDGE COUNTDOWN Replay #${dailyNumberLabel(countdownArchiveDate)}`
+    : 'CARTRIDGE COUNTDOWN — Free Play';
+  const bars = countdownRoundScores.map(p => p >= 90 ? '🟩' : p >= 60 ? '🟨' : p >= 30 ? '🟧' : '🟥').join('');
+  return `${label}\n${countdownScore}/${COUNTDOWN_MAX_SCORE} ${bars}\n${countdownGradeLabel(countdownGrade(countdownScore))}`;
+}
+
+countdownShareBtn.addEventListener('click', ()=> shareOrCopy(buildCountdownShareText(), countdownShareBtn));
+countdownFreeplayBtn.addEventListener('click', startCountdownFreeplay);
+countdownPlayAgainBtn.addEventListener('click', startCountdownFreeplay);
+countdownCloseBtn.addEventListener('click', showHomeScreen);
+document.getElementById('countdownPageMarquee').addEventListener('click', showHomeScreen);
+
+
+
 // ---------- Games menu (hamburger + side drawer) ----------
 
 const menuBtn = document.getElementById('menuBtn');
@@ -7824,8 +8496,10 @@ const menuClashBtn = document.getElementById('menuClashBtn');
 const menuGridBtn = document.getElementById('menuGridBtn');
 const menuCharadesBtn = document.getElementById('menuCharadesBtn');
 const menuChronicleBtn = document.getElementById('menuChronicleBtn');
+const menuCountdownBtn = document.getElementById('menuCountdownBtn');
 const menuCrosswordBtn = document.getElementById('menuCrosswordBtn');
 const menuChaosBtn = document.getElementById('menuChaosBtn');
+const menuMoviesBtn = document.getElementById('menuMoviesBtn');
 
 function openSideMenu(){
   // reflect which game is currently on screen so the active one is highlighted
@@ -7834,15 +8508,19 @@ function openSideMenu(){
   const charadesOpen = charadesModal.classList.contains('show');
   const chronicleOpen = chronicleModal.classList.contains('show');
   const crosswordOpen = crosswordModal.classList.contains('show');
+  const countdownOpen = countdownModal.classList.contains('show');
   const chaosOpen = chaosModal.classList.contains('show');
   menuChaosBtn.style.display = chaosIsUnlocked() ? '' : 'none';
+  menuCountdownBtn.style.display = secretIsUnlocked() ? '' : 'none';
+  menuMoviesBtn.style.display = secretIsUnlocked() ? '' : 'none';
   menuClashBtn.classList.toggle('active', clashOpen);
   menuGridBtn.classList.toggle('active', gridOpen);
   menuCharadesBtn.classList.toggle('active', charadesOpen);
   menuChronicleBtn.classList.toggle('active', chronicleOpen);
+  menuCountdownBtn.classList.toggle('active', countdownOpen);
   menuCrosswordBtn.classList.toggle('active', crosswordOpen);
   menuChaosBtn.classList.toggle('active', chaosOpen);
-  menuCartridgeBtn.classList.toggle('active', !clashOpen && !gridOpen && !charadesOpen && !chronicleOpen && !crosswordOpen && !chaosOpen);
+  menuCartridgeBtn.classList.toggle('active', !clashOpen && !gridOpen && !charadesOpen && !chronicleOpen && !countdownOpen && !crosswordOpen && !chaosOpen);
   sideMenu.classList.add('show');
   sideMenuOverlay.classList.add('show');
 }
@@ -7878,6 +8556,11 @@ menuChronicleBtn.addEventListener('click', ()=>{
   showChroniclePage();
   startChronicleDaily();
 });
+menuCountdownBtn.addEventListener('click', ()=>{
+  closeSideMenu();
+  showCountdownPage();
+  startCountdownDaily();
+});
 menuCrosswordBtn.addEventListener('click', ()=>{
   closeSideMenu();
   showCrosswordPage();
@@ -7887,6 +8570,12 @@ menuChaosBtn.addEventListener('click', ()=>{
   closeSideMenu();
   showChaosPage();
   startChaosGame();
+});
+// Movies is a separate site (its own HTML page, own game database), not
+// another modal on this page — so unlike every other menu item, this one
+// navigates away instead of swapping which top screen is visible.
+menuMoviesBtn.addEventListener('click', ()=>{
+  window.location.href = 'movies.html';
 });
 
 showHomeScreen();
