@@ -58,14 +58,14 @@
      in front of the plain --bg fallback color in case posters fail to load. */
   .site-poster-backdrop {
     position: fixed; inset: 0; z-index: 0;
-    display: flex; gap: 3px; opacity: 0.22; filter: saturate(1.15);
+    display: flex; gap: 3px; opacity: 0.4; filter: saturate(1.15);
     pointer-events: none; overflow: hidden;
   }
   .site-poster-backdrop img { flex: 1 1 0; min-width: 0; height: 100%; object-fit: cover; }
   .site-poster-scrim {
     position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background: radial-gradient(ellipse at 50% 30%, transparent 0%, var(--bg) 88%),
-      linear-gradient(180deg, color-mix(in srgb, var(--bg) 55%, transparent) 0%, var(--bg) 92%);
+    background: radial-gradient(ellipse at 50% 30%, transparent 0%, color-mix(in srgb, var(--bg) 65%, transparent) 100%),
+      linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--bg) 55%, transparent) 100%);
   }
   .wrap { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; padding: 32px 20px 80px; }
   #gameScreen { display: none; }
@@ -910,6 +910,17 @@
   .cup-category-item .cup-category-count {
     font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-on-photo-dim); font-weight: 400;
   }
+  .cup-category-item.cup-category-special { border-color: var(--gold); border-style: dashed; }
+  .cup-year-list {
+    display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; justify-content: center;
+    max-width: 480px; margin: 20px auto 0;
+  }
+  .cup-year-item {
+    padding: 12px 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2);
+    color: var(--text-on-photo); font-family: 'Press Start 2P', monospace; font-size: 13px;
+    cursor: pointer; transition: border-color .15s ease, transform .15s ease;
+  }
+  .cup-year-item:hover { border-color: var(--gold); transform: translateY(-1px); }
 
   /* Mobile only — the header, tagline, timer bar and a bigger cover image all
      stacked up meant the answer choices ran off-screen and needed scrolling.
@@ -1396,7 +1407,7 @@
       <span class="side-menu-icon">🍿</span>
       <span class="side-menu-label">Cinema Chaos</span>
     </button>
-    <button class="side-menu-item" id="movieMenuCodeBtn">
+    <button class="side-menu-item" id="movieMenuCodeBtn" style="display:none;">
       <span class="side-menu-icon">🔤</span>
       <span class="side-menu-label">Cinema Code</span>
     </button>
@@ -1462,7 +1473,7 @@
       <div class="archive-stats" id="movieStatsChaos"></div>
     </div>
 
-    <div class="archive-game-section">
+    <div class="archive-game-section" id="movieStatsCodeSection" style="display:none;">
       <div class="archive-game-heading" style="color:var(--cyan);">Cinema Code</div>
       <div class="archive-stats" id="movieStatsCode"></div>
     </div>
@@ -1734,6 +1745,13 @@
       <div class="cup-category-list" id="cupCategoryList"></div>
       <div class="btn-row" style="justify-content:center; margin-top:14px;">
         <button class="ghost-btn" id="cupCategoriesBackBtn">← Back</button>
+      </div>
+    </div>
+
+    <div id="cupYearsArea" style="display:none;">
+      <div class="cup-year-list" id="cupYearList"></div>
+      <div class="btn-row" style="justify-content:center; margin-top:14px;">
+        <button class="ghost-btn" id="cupYearsBackBtn">← Back</button>
       </div>
     </div>
 
@@ -2242,6 +2260,224 @@ MOVIES.push({title:'Monsters, Inc.',year:2001,genres:['Animation','Family'],gros
 MOVIES.push({title:'Cars',year:2006,genres:['Animation','Family'],gross:462,score:74,rated:'G',studio:'Pixar'});
 MOVIES.push({title:'The Incredibles',year:2004,genres:['Animation','Action'],gross:633,score:97,rated:'PG',studio:'Pixar'});
 
+// ---- Bulk catalog expansion: action/thriller, horror, sci-fi disaster,
+// fantasy/YA adventure, comedy, and music/biopic titles ----
+MOVIES.push({title:'American Gangster',year:2007,genres:['Crime','Drama'],gross:266,score:79,rated:'R',studio:'Universal'});
+MOVIES.push({title:'Body of Lies',year:2008,genres:['Thriller','Spy'],gross:115,score:57,rated:'R',studio:'Warner Bros.'});
+MOVIES.push({title:'Public Enemies',year:2009,genres:['Crime','Drama'],gross:214,score:68,rated:'R',studio:'Universal'});
+MOVIES.push({title:'Law Abiding Citizen',year:2009,genres:['Thriller','Crime'],gross:127,score:25,rated:'R',studio:'Overture Films'});
+MOVIES.push({title:'The Lincoln Lawyer',year:2011,genres:['Thriller','Crime'],gross:58,score:86,rated:'R',studio:'Lionsgate'});
+MOVIES.push({title:'Enemy',year:2013,genres:['Mystery','Thriller'],gross:4,score:71,rated:'R',studio:'A24'});
+MOVIES.push({title:'Nocturnal Animals',year:2016,genres:['Thriller','Drama'],gross:32,score:73,rated:'R',studio:'Focus Features'});
+MOVIES.push({title:'The Gift',year:2015,genres:['Thriller'],gross:59,score:92,rated:'R',studio:'STX Entertainment'});
+MOVIES.push({title:'Searching',year:2018,genres:['Thriller','Mystery'],gross:75,score:91,rated:'PG-13',studio:'Screen Gems'});
+MOVIES.push({title:'Missing',year:2023,genres:['Thriller','Mystery'],gross:34,score:87,rated:'PG-13',studio:'Sony Pictures'});
+MOVIES.push({title:'The Invisible Man',year:2020,genres:['Horror','Thriller'],gross:144,score:91,rated:'R',studio:'Universal'});
+MOVIES.push({title:'Split',year:2016,genres:['Horror','Thriller'],gross:278,score:78,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'Glass',year:2019,genres:['Thriller','Superhero'],gross:247,score:37,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'Us',year:2019,genres:['Horror','Thriller'],gross:256,score:93,rated:'R',studio:'Universal'});
+MOVIES.push({title:'Nope',year:2022,genres:['Horror','Sci-Fi'],gross:172,score:83,rated:'R',studio:'Universal'});
+MOVIES.push({title:'The Menu',year:2022,genres:['Comedy','Thriller'],gross:78,score:88,rated:'R',studio:'Fox Searchlight'});
+MOVIES.push({title:'Talk to Me',year:2023,genres:['Horror'],gross:92,score:94,rated:'R',studio:'A24'});
+MOVIES.push({title:'Smile',year:2022,genres:['Horror'],gross:217,score:79,rated:'R',studio:'Paramount'});
+MOVIES.push({title:'Smile 2',year:2024,genres:['Horror'],gross:139,score:89,rated:'R',studio:'Paramount'});
+MOVIES.push({title:'Barbarian',year:2022,genres:['Horror'],gross:45,score:92,rated:'R',studio:'20th Century Fox'});
+MOVIES.push({title:'Ready or Not',year:2019,genres:['Horror','Comedy'],gross:57,score:88,rated:'R',studio:'Fox Searchlight'});
+MOVIES.push({title:'Don\'t Breathe',year:2016,genres:['Horror','Thriller'],gross:157,score:88,rated:'R',studio:'Sony Pictures'});
+MOVIES.push({title:'Don\'t Breathe 2',year:2021,genres:['Horror','Thriller'],gross:60,score:41,rated:'R',studio:'Sony Pictures'});
+MOVIES.push({title:'Crawl',year:2019,genres:['Horror','Thriller'],gross:92,score:84,rated:'R',studio:'Paramount'});
+MOVIES.push({title:'Peninsula',year:2020,genres:['Action','Horror'],gross:78,score:66,rated:'Not Rated',studio:'CJ Entertainment'});
+MOVIES.push({title:'28 Days Later',year:2002,genres:['Horror','Sci-Fi'],gross:85,score:87,rated:'R',studio:'Fox Searchlight'});
+MOVIES.push({title:'28 Weeks Later',year:2007,genres:['Horror','Sci-Fi'],gross:64,score:71,rated:'R',studio:'20th Century Fox'});
+MOVIES.push({title:'Dawn of the Dead',year:2004,genres:['Horror'],gross:102,score:75,rated:'R',studio:'Universal'});
+MOVIES.push({title:'Zombieland',year:2009,genres:['Comedy','Horror'],gross:102,score:89,rated:'R',studio:'Columbia Pictures'});
+MOVIES.push({title:'Zombieland: Double Tap',year:2019,genres:['Comedy','Horror'],gross:122,score:68,rated:'R',studio:'Columbia Pictures'});
+MOVIES.push({title:'REC',year:2007,genres:['Horror'],gross:32,score:89,rated:'R',studio:'Filmax'});
+MOVIES.push({title:'The Mist',year:2007,genres:['Horror','Sci-Fi'],gross:57,score:72,rated:'R',studio:'The Weinstein Company'});
+MOVIES.push({title:'The Descent',year:2005,genres:['Horror'],gross:57,score:86,rated:'R',studio:'Lionsgate'});
+MOVIES.push({title:'The Cabin in the Woods',year:2012,genres:['Horror','Comedy'],gross:66,score:92,rated:'R',studio:'Lionsgate'});
+MOVIES.push({title:'Evil Dead',year:2013,genres:['Horror'],gross:97,score:63,rated:'R',studio:'Sony Pictures'});
+MOVIES.push({title:'Evil Dead Rise',year:2023,genres:['Horror'],gross:146,score:84,rated:'R',studio:'Warner Bros.'});
+MOVIES.push({title:'The Expendables',year:2010,genres:['Action'],gross:274,score:41,rated:'R',studio:'Lionsgate'});
+MOVIES.push({title:'The Expendables 2',year:2012,genres:['Action'],gross:314,score:65,rated:'R',studio:'Lionsgate'});
+MOVIES.push({title:'The Expendables 3',year:2014,genres:['Action'],gross:216,score:32,rated:'PG-13',studio:'Lionsgate'});
+MOVIES.push({title:'The Expendables 4',year:2023,genres:['Action'],gross:65,score:10,rated:'R',studio:'Lionsgate'});
+MOVIES.push({title:'The Mechanic',year:2011,genres:['Action','Thriller'],gross:76,score:60,rated:'R',studio:'CBS Films'});
+MOVIES.push({title:'Mechanic: Resurrection',year:2016,genres:['Action'],gross:125,score:43,rated:'R',studio:'Summit Entertainment'});
+MOVIES.push({title:'Parker',year:2013,genres:['Action','Crime'],gross:46,score:33,rated:'R',studio:'MGM'});
+MOVIES.push({title:'Safe',year:2012,genres:['Action','Thriller'],gross:30,score:61,rated:'R',studio:'Lionsgate'});
+MOVIES.push({title:'Homefront',year:2013,genres:['Action','Crime'],gross:44,score:39,rated:'R',studio:'Open Road Films'});
+MOVIES.push({title:'Crank',year:2006,genres:['Action'],gross:46,score:62,rated:'R',studio:'Lionsgate'});
+MOVIES.push({title:'Crank: High Voltage',year:2009,genres:['Action'],gross:34,score:59,rated:'R',studio:'Lionsgate'});
+MOVIES.push({title:'The Transporter 2',year:2005,genres:['Action'],gross:86,score:40,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'The Transporter 3',year:2008,genres:['Action'],gross:110,score:33,rated:'PG-13',studio:'EuropaCorp'});
+MOVIES.push({title:'Death Race',year:2008,genres:['Action','Sci-Fi'],gross:76,score:34,rated:'R',studio:'Universal'});
+MOVIES.push({title:'Death Race 2',year:2010,genres:['Action','Sci-Fi'],gross:8,score:24,rated:'R',studio:'Universal'});
+MOVIES.push({title:'Taken',year:2008,genres:['Action','Thriller'],gross:226,score:58,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'Taken 2',year:2012,genres:['Action','Thriller'],gross:376,score:22,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'Taken 3',year:2014,genres:['Action','Thriller'],gross:326,score:9,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'Unknown',year:2011,genres:['Thriller'],gross:130,score:54,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'Non-Stop',year:2014,genres:['Action','Thriller'],gross:223,score:84,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'The Commuter',year:2018,genres:['Action','Thriller'],gross:120,score:55,rated:'PG-13',studio:'Lionsgate'});
+MOVIES.push({title:'Run All Night',year:2015,genres:['Action','Thriller'],gross:74,score:60,rated:'R',studio:'Warner Bros.'});
+MOVIES.push({title:'A Walk Among the Tombstones',year:2014,genres:['Crime','Thriller'],gross:62,score:58,rated:'R',studio:'Universal'});
+MOVIES.push({title:'Peppermint',year:2018,genres:['Action','Thriller'],gross:53,score:12,rated:'R',studio:'STX Entertainment'});
+MOVIES.push({title:'The Foreigner',year:2017,genres:['Action','Thriller'],gross:145,score:74,rated:'R',studio:'STX Entertainment'});
+MOVIES.push({title:'The November Man',year:2014,genres:['Action','Spy'],gross:48,score:34,rated:'R',studio:'Relativity Media'});
+MOVIES.push({title:'Shooter',year:2007,genres:['Action','Thriller'],gross:95,score:48,rated:'R',studio:'Paramount'});
+MOVIES.push({title:'13 Hours',year:2016,genres:['Action','War'],gross:69,score:52,rated:'R',studio:'Paramount'});
+MOVIES.push({title:'The Covenant',year:2023,genres:['War','Action'],gross:13,score:90,rated:'R',studio:'Amazon MGM Studios'});
+MOVIES.push({title:'Operation Fortune: Ruse de Guerre',year:2023,genres:['Action','Spy'],gross:45,score:51,rated:'R',studio:'Lionsgate'});
+MOVIES.push({title:'The Ministry of Ungentlemanly Warfare',year:2024,genres:['Action','War'],gross:40,score:66,rated:'R',studio:'Lionsgate'});
+MOVIES.push({title:'RocknRolla',year:2008,genres:['Crime','Action'],gross:26,score:68,rated:'R',studio:'Warner Bros.'});
+MOVIES.push({title:'Sherlock Holmes',year:2009,genres:['Action','Mystery'],gross:524,score:70,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'Sherlock Holmes: A Game of Shadows',year:2011,genres:['Action','Mystery'],gross:545,score:60,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'King Arthur: Legend of the Sword',year:2017,genres:['Action','Fantasy'],gross:149,score:29,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'Layer Cake',year:2004,genres:['Crime','Thriller'],gross:18,score:74,rated:'R',studio:'Sony Pictures Classics'});
+MOVIES.push({title:'Revolver',year:2005,genres:['Crime','Thriller'],gross:7,score:26,rated:'R',studio:'Millennium Films'});
+MOVIES.push({title:'The Brothers Grimsby',year:2016,genres:['Comedy','Action'],gross:30,score:39,rated:'R',studio:'Sony Pictures'});
+MOVIES.push({title:'Lock, Stock and Two Smoking Barrels',year:1998,genres:['Crime','Comedy'],gross:14,score:76,rated:'R',studio:'Gramercy Pictures'});
+MOVIES.push({title:'The Italian Job',year:2003,genres:['Action','Crime'],gross:176,score:73,rated:'PG-13',studio:'Paramount'});
+MOVIES.push({title:'Ocean\'s Twelve',year:2004,genres:['Crime','Comedy'],gross:363,score:55,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'Ocean\'s Thirteen',year:2007,genres:['Crime','Comedy'],gross:311,score:63,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'Now You See Me',year:2013,genres:['Crime','Thriller'],gross:351,score:51,rated:'PG-13',studio:'Lionsgate'});
+MOVIES.push({title:'Now You See Me 2',year:2016,genres:['Crime','Thriller'],gross:335,score:34,rated:'PG-13',studio:'Lionsgate'});
+MOVIES.push({title:'The Lost City',year:2022,genres:['Adventure','Comedy'],gross:191,score:76,rated:'PG-13',studio:'Paramount'});
+MOVIES.push({title:'Jungle Cruise',year:2021,genres:['Adventure','Fantasy'],gross:220,score:63,rated:'PG-13',studio:'Walt Disney'});
+MOVIES.push({title:'Uncharted',year:2022,genres:['Action','Adventure'],gross:407,score:41,rated:'PG-13',studio:'Sony Pictures'});
+MOVIES.push({title:'Free Guy',year:2021,genres:['Action','Comedy'],gross:331,score:80,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'The Adam Project',year:2022,genres:['Sci-Fi','Adventure'],gross:20,score:67,rated:'PG-13',studio:'Netflix'});
+MOVIES.push({title:'Red Notice',year:2021,genres:['Action','Comedy'],gross:50,score:36,rated:'PG-13',studio:'Netflix'});
+MOVIES.push({title:'Skyscraper',year:2018,genres:['Action','Thriller'],gross:304,score:49,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'Rampage',year:2018,genres:['Action','Sci-Fi'],gross:428,score:51,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'San Andreas',year:2015,genres:['Action','Thriller'],gross:474,score:49,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'Geostorm',year:2017,genres:['Action','Sci-Fi'],gross:221,score:14,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'Deepwater Horizon',year:2016,genres:['Action','Thriller'],gross:121,score:83,rated:'PG-13',studio:'Summit Entertainment'});
+MOVIES.push({title:'Battleship',year:2012,genres:['Action','Sci-Fi'],gross:303,score:34,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'Real Steel',year:2011,genres:['Action','Sci-Fi'],gross:299,score:62,rated:'PG-13',studio:'DreamWorks'});
+MOVIES.push({title:'The Tomorrow War',year:2021,genres:['Action','Sci-Fi'],gross:35,score:51,rated:'PG-13',studio:'Amazon MGM Studios'});
+MOVIES.push({title:'I Am Legend',year:2007,genres:['Action','Sci-Fi'],gross:585,score:68,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'2012',year:2009,genres:['Action','Sci-Fi'],gross:791,score:39,rated:'PG-13',studio:'Columbia Pictures'});
+MOVIES.push({title:'Knowing',year:2009,genres:['Sci-Fi','Thriller'],gross:183,score:32,rated:'PG-13',studio:'Summit Entertainment'});
+MOVIES.push({title:'The Day After Tomorrow',year:2004,genres:['Action','Sci-Fi'],gross:552,score:45,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'Greenland',year:2020,genres:['Action','Thriller'],gross:46,score:74,rated:'PG-13',studio:'STX Entertainment'});
+MOVIES.push({title:'Moonfall',year:2022,genres:['Sci-Fi','Action'],gross:68,score:23,rated:'PG-13',studio:'Lionsgate'});
+MOVIES.push({title:'Deep Impact',year:1998,genres:['Sci-Fi','Drama'],gross:349,score:46,rated:'PG-13',studio:'Paramount'});
+MOVIES.push({title:'The Core',year:2003,genres:['Sci-Fi','Action'],gross:74,score:40,rated:'PG-13',studio:'Paramount'});
+MOVIES.push({title:'Armageddon',year:1998,genres:['Action','Sci-Fi'],gross:554,score:39,rated:'PG-13',studio:'Walt Disney'});
+MOVIES.push({title:'Europa Report',year:2013,genres:['Sci-Fi'],gross:1,score:73,rated:'PG-13',studio:'Magnolia Pictures'});
+MOVIES.push({title:'The Midnight Sky',year:2020,genres:['Sci-Fi','Drama'],gross:6,score:51,rated:'PG-13',studio:'Netflix'});
+MOVIES.push({title:'Underwater',year:2020,genres:['Sci-Fi','Horror'],gross:40,score:55,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'Pandorum',year:2009,genres:['Sci-Fi','Horror'],gross:20,score:44,rated:'R',studio:'Overture Films'});
+MOVIES.push({title:'Event Horizon',year:1997,genres:['Sci-Fi','Horror'],gross:41,score:33,rated:'R',studio:'Paramount'});
+MOVIES.push({title:'The Last Witch Hunter',year:2015,genres:['Fantasy','Action'],gross:146,score:16,rated:'PG-13',studio:'Lionsgate'});
+MOVIES.push({title:'Hansel & Gretel: Witch Hunters',year:2013,genres:['Fantasy','Action'],gross:226,score:15,rated:'R',studio:'Paramount'});
+MOVIES.push({title:'Dracula Untold',year:2014,genres:['Fantasy','Action'],gross:217,score:24,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'Van Helsing',year:2004,genres:['Fantasy','Action'],gross:300,score:23,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'Solomon Kane',year:2012,genres:['Fantasy','Action'],gross:20,score:44,rated:'R',studio:'Davis Films'});
+MOVIES.push({title:'Seventh Son',year:2014,genres:['Fantasy','Action'],gross:114,score:12,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'The Great Wall',year:2016,genres:['Fantasy','Action'],gross:335,score:35,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'The Huntsman: Winter\'s War',year:2016,genres:['Fantasy','Action'],gross:165,score:17,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'Snow White and the Huntsman',year:2012,genres:['Fantasy','Action'],gross:397,score:48,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'Jack the Giant Slayer',year:2013,genres:['Fantasy','Adventure'],gross:198,score:51,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'Oz the Great and Powerful',year:2013,genres:['Fantasy','Adventure'],gross:493,score:59,rated:'PG',studio:'Walt Disney'});
+MOVIES.push({title:'Alice in Wonderland',year:2010,genres:['Fantasy','Adventure'],gross:1025,score:51,rated:'PG',studio:'Walt Disney'});
+MOVIES.push({title:'Alice Through the Looking Glass',year:2016,genres:['Fantasy','Adventure'],gross:299,score:29,rated:'PG',studio:'Walt Disney'});
+MOVIES.push({title:'Maleficent',year:2014,genres:['Fantasy','Adventure'],gross:759,score:54,rated:'PG',studio:'Walt Disney'});
+MOVIES.push({title:'Maleficent: Mistress of Evil',year:2019,genres:['Fantasy','Adventure'],gross:491,score:47,rated:'PG',studio:'Walt Disney'});
+MOVIES.push({title:'The Jungle Book',year:2016,genres:['Adventure','Family'],gross:966,score:94,rated:'PG',studio:'Walt Disney'});
+MOVIES.push({title:'The Legend of Tarzan',year:2016,genres:['Action','Adventure'],gross:356,score:35,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'Pan',year:2015,genres:['Fantasy','Adventure'],gross:128,score:27,rated:'PG',studio:'Warner Bros.'});
+MOVIES.push({title:'The Brothers Grimm',year:2005,genres:['Fantasy','Adventure'],gross:105,score:37,rated:'PG-13',studio:'MGM'});
+MOVIES.push({title:'The Maze Runner',year:2014,genres:['Sci-Fi','Adventure'],gross:348,score:65,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'Maze Runner: The Scorch Trials',year:2015,genres:['Sci-Fi','Adventure'],gross:312,score:47,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'Maze Runner: The Death Cure',year:2018,genres:['Sci-Fi','Adventure'],gross:288,score:47,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'Divergent',year:2014,genres:['Sci-Fi','Adventure'],gross:289,score:40,rated:'PG-13',studio:'Summit Entertainment'});
+MOVIES.push({title:'Insurgent',year:2015,genres:['Sci-Fi','Adventure'],gross:297,score:31,rated:'PG-13',studio:'Summit Entertainment'});
+MOVIES.push({title:'Allegiant',year:2016,genres:['Sci-Fi','Adventure'],gross:179,score:12,rated:'PG-13',studio:'Lionsgate'});
+MOVIES.push({title:'Ender\'s Game',year:2013,genres:['Sci-Fi','Action'],gross:125,score:62,rated:'PG-13',studio:'Summit Entertainment'});
+MOVIES.push({title:'The Giver',year:2014,genres:['Sci-Fi','Drama'],gross:68,score:35,rated:'PG-13',studio:'The Weinstein Company'});
+MOVIES.push({title:'Mortal Engines',year:2018,genres:['Sci-Fi','Adventure'],gross:84,score:27,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'The 5th Wave',year:2016,genres:['Sci-Fi','Action'],gross:110,score:17,rated:'PG-13',studio:'Columbia Pictures'});
+MOVIES.push({title:'I Am Number Four',year:2011,genres:['Sci-Fi','Action'],gross:150,score:32,rated:'PG-13',studio:'DreamWorks'});
+MOVIES.push({title:'Percy Jackson & the Olympians: The Lightning Thief',year:2010,genres:['Fantasy','Adventure'],gross:226,score:49,rated:'PG',studio:'20th Century Fox'});
+MOVIES.push({title:'Percy Jackson: Sea of Monsters',year:2013,genres:['Fantasy','Adventure'],gross:200,score:15,rated:'PG',studio:'20th Century Fox'});
+MOVIES.push({title:'Eragon',year:2006,genres:['Fantasy','Adventure'],gross:249,score:16,rated:'PG',studio:'20th Century Fox'});
+MOVIES.push({title:'The Mortal Instruments: City of Bones',year:2013,genres:['Fantasy','Adventure'],gross:93,score:13,rated:'PG-13',studio:'Screen Gems'});
+MOVIES.push({title:'Beautiful Creatures',year:2013,genres:['Fantasy','Romance'],gross:61,score:46,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'The Darkest Minds',year:2018,genres:['Sci-Fi','Adventure'],gross:15,score:15,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'The Host',year:2013,genres:['Sci-Fi','Romance'],gross:63,score:10,rated:'PG-13',studio:'Open Road Films'});
+MOVIES.push({title:'Warm Bodies',year:2013,genres:['Comedy','Romance'],gross:117,score:81,rated:'PG-13',studio:'Summit Entertainment'});
+MOVIES.push({title:'Chronicle',year:2012,genres:['Sci-Fi','Thriller'],gross:127,score:85,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'The Secret Life of Walter Mitty',year:2013,genres:['Adventure','Comedy'],gross:188,score:51,rated:'PG',studio:'20th Century Fox'});
+MOVIES.push({title:'Yes Man',year:2008,genres:['Comedy'],gross:223,score:45,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'The Intern',year:2015,genres:['Comedy','Drama'],gross:194,score:59,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'Neighbors',year:2014,genres:['Comedy'],gross:271,score:73,rated:'R',studio:'Universal'});
+MOVIES.push({title:'Neighbors 2: Sorority Rising',year:2016,genres:['Comedy'],gross:110,score:66,rated:'R',studio:'Universal'});
+MOVIES.push({title:'The Campaign',year:2012,genres:['Comedy'],gross:104,score:65,rated:'R',studio:'Warner Bros.'});
+MOVIES.push({title:'The Interview',year:2014,genres:['Comedy'],gross:40,score:52,rated:'R',studio:'Columbia Pictures'});
+MOVIES.push({title:'The Dictator',year:2012,genres:['Comedy'],gross:180,score:61,rated:'R',studio:'Paramount'});
+MOVIES.push({title:'Borat',year:2006,genres:['Comedy'],gross:262,score:91,rated:'R',studio:'20th Century Fox'});
+MOVIES.push({title:'Borat Subsequent Moviefilm',year:2020,genres:['Comedy'],gross:5,score:82,rated:'R',studio:'Amazon MGM Studios'});
+MOVIES.push({title:'Bruno',year:2009,genres:['Comedy'],gross:138,score:67,rated:'R',studio:'Universal'});
+MOVIES.push({title:'Ted',year:2012,genres:['Comedy'],gross:549,score:69,rated:'R',studio:'Universal'});
+MOVIES.push({title:'Ted 2',year:2015,genres:['Comedy'],gross:217,score:46,rated:'R',studio:'Universal'});
+MOVIES.push({title:'The Heat',year:2013,genres:['Comedy','Crime'],gross:230,score:65,rated:'R',studio:'20th Century Fox'});
+MOVIES.push({title:'The Greatest Showman',year:2017,genres:['Musical','Drama'],gross:435,score:56,rated:'PG',studio:'20th Century Fox'});
+MOVIES.push({title:'Bohemian Rhapsody',year:2018,genres:['Biography','Musical'],gross:911,score:61,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'Rocketman',year:2019,genres:['Biography','Musical'],gross:195,score:89,rated:'R',studio:'Paramount'});
+MOVIES.push({title:'Elvis',year:2022,genres:['Biography','Musical'],gross:288,score:78,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'Walk the Line',year:2005,genres:['Biography','Musical'],gross:186,score:82,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'Ray',year:2004,genres:['Biography','Musical'],gross:124,score:79,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'Straight Outta Compton',year:2015,genres:['Biography','Music'],gross:201,score:89,rated:'R',studio:'Universal'});
+MOVIES.push({title:'Steve Jobs',year:2015,genres:['Biography','Drama'],gross:34,score:85,rated:'R',studio:'Universal'});
+MOVIES.push({title:'Air',year:2023,genres:['Biography','Sport'],gross:90,score:92,rated:'R',studio:'Amazon MGM Studios'});
+MOVIES.push({title:'The Fast and the Furious',year:2001,genres:['Action','Crime'],gross:207,score:53,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'Fast Five',year:2011,genres:['Action','Crime'],gross:626,score:78,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'Furious 7',year:2015,genres:['Action','Crime'],gross:1516,score:81,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'F9',year:2021,genres:['Action','Crime'],gross:726,score:58,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'Fast X',year:2023,genres:['Action','Crime'],gross:714,score:56,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'Top Gun',year:1986,genres:['Action','Drama'],gross:357,score:57,rated:'PG',studio:'Paramount'});
+MOVIES.push({title:'The Mummy',year:1999,genres:['Action','Adventure'],gross:416,score:61,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'The Mummy Returns',year:2001,genres:['Action','Adventure'],gross:433,score:46,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'Independence Day: Resurgence',year:2016,genres:['Action','Sci-Fi'],gross:389,score:32,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'The Meg',year:2018,genres:['Action','Sci-Fi'],gross:530,score:46,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'The Meg 2: The Trench',year:2023,genres:['Action','Sci-Fi'],gross:397,score:33,rated:'PG-13',studio:'Warner Bros.'});
+MOVIES.push({title:'National Treasure',year:2004,genres:['Action','Adventure'],gross:347,score:44,rated:'PG',studio:'Walt Disney'});
+MOVIES.push({title:'National Treasure: Book of Secrets',year:2007,genres:['Action','Adventure'],gross:457,score:34,rated:'PG',studio:'Walt Disney'});
+MOVIES.push({title:'Hancock',year:2008,genres:['Action','Superhero'],gross:624,score:40,rated:'PG-13',studio:'Sony Pictures'});
+MOVIES.push({title:'King Kong',year:2005,genres:['Adventure','Fantasy'],gross:550,score:84,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'Sin City: A Dame to Kill For',year:2014,genres:['Crime','Thriller'],gross:39,score:47,rated:'R',studio:'The Weinstein Company'});
+MOVIES.push({title:'The Crow',year:1994,genres:['Action','Fantasy'],gross:50,score:79,rated:'R',studio:'Miramax'});
+MOVIES.push({title:'Dredd',year:2012,genres:['Action','Sci-Fi'],gross:41,score:78,rated:'R',studio:'Lionsgate'});
+MOVIES.push({title:'Minority Report',year:2002,genres:['Sci-Fi','Action'],gross:358,score:90,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'I, Robot',year:2004,genres:['Sci-Fi','Action'],gross:353,score:57,rated:'PG-13',studio:'20th Century Fox'});
+MOVIES.push({title:'Heat',year:1995,genres:['Crime','Drama'],gross:187,score:86,rated:'R',studio:'Warner Bros.'});
+MOVIES.push({title:'A Simple Favor',year:2018,genres:['Thriller','Comedy'],gross:98,score:89,rated:'R',studio:'Lionsgate'});
+MOVIES.push({title:'The Girl on the Train',year:2016,genres:['Thriller','Mystery'],gross:173,score:44,rated:'R',studio:'Universal'});
+MOVIES.push({title:'Sinister',year:2012,genres:['Horror'],gross:87,score:63,rated:'R',studio:'Summit Entertainment'});
+MOVIES.push({title:'Insidious',year:2010,genres:['Horror'],gross:99,score:66,rated:'PG-13',studio:'Sony Pictures'});
+MOVIES.push({title:'Insidious: Chapter 2',year:2013,genres:['Horror'],gross:161,score:40,rated:'PG-13',studio:'Sony Pictures'});
+MOVIES.push({title:'It Follows',year:2014,genres:['Horror'],gross:23,score:96,rated:'R',studio:'The Weinstein Company'});
+MOVIES.push({title:'The Exorcism of Emily Rose',year:2005,genres:['Horror','Drama'],gross:145,score:46,rated:'PG-13',studio:'Sony Pictures'});
+MOVIES.push({title:'The Strangers',year:2008,genres:['Horror'],gross:82,score:46,rated:'R',studio:'Rogue Pictures'});
+MOVIES.push({title:'Saw',year:2004,genres:['Horror'],gross:103,score:50,rated:'R',studio:'Lionsgate'});
+MOVIES.push({title:'Saw II',year:2005,genres:['Horror'],gross:147,score:40,rated:'R',studio:'Lionsgate'});
+MOVIES.push({title:'Scream 4',year:2011,genres:['Horror'],gross:97,score:60,rated:'R',studio:'The Weinstein Company'});
+MOVIES.push({title:'Scream',year:1996,genres:['Horror'],gross:173,score:79,rated:'R',studio:'Dimension Films'});
+MOVIES.push({title:'Monsters University',year:2013,genres:['Animation','Comedy'],gross:744,score:79,rated:'G',studio:'Pixar'});
+MOVIES.push({title:'Toy Story 4',year:2019,genres:['Animation','Comedy'],gross:1073,score:97,rated:'G',studio:'Pixar'});
+MOVIES.push({title:'Ralph Breaks the Internet',year:2018,genres:['Animation','Comedy'],gross:530,score:88,rated:'PG',studio:'Walt Disney'});
+MOVIES.push({title:'The Croods',year:2013,genres:['Animation','Adventure'],gross:587,score:71,rated:'PG',studio:'DreamWorks Animation'});
+MOVIES.push({title:'The Croods: A New Age',year:2020,genres:['Animation','Adventure'],gross:217,score:82,rated:'PG',studio:'DreamWorks Animation'});
+MOVIES.push({title:'Rio',year:2011,genres:['Animation','Adventure'],gross:484,score:80,rated:'G',studio:'20th Century Fox'});
+MOVIES.push({title:'Sing',year:2016,genres:['Animation','Comedy'],gross:634,score:73,rated:'PG',studio:'Universal'});
+MOVIES.push({title:'Sing 2',year:2021,genres:['Animation','Comedy'],gross:408,score:82,rated:'PG',studio:'Universal'});
+MOVIES.push({title:'Despicable Me 3',year:2017,genres:['Animation','Comedy'],gross:1034,score:59,rated:'PG',studio:'Universal'});
+MOVIES.push({title:'Despicable Me 4',year:2024,genres:['Animation','Comedy'],gross:969,score:57,rated:'PG',studio:'Universal'});
+MOVIES.push({title:'How to Train Your Dragon: The Hidden World',year:2019,genres:['Animation','Adventure'],gross:521,score:91,rated:'PG',studio:'DreamWorks Animation'});
+MOVIES.push({title:'Puss in Boots',year:2011,genres:['Animation','Adventure'],gross:554,score:78,rated:'PG',studio:'DreamWorks Animation'});
+
 
 // ---------- Shared helpers (ported from Cartridge) ----------
 const THEME_KEY = 'cartridgeTheme_v1';
@@ -2325,8 +2561,23 @@ movieSoundOnBtn.addEventListener('click', ()=>{
   setMovieSfxMuted(false);
   getAudioCtx(); // unlock audio on this user gesture, then confirm with a blip
   playSfx('correct');
+  soundOffClickStreak = 0; // any other click breaks the secret streak
 });
-movieSoundOffBtn.addEventListener('click', ()=> setMovieSfxMuted(true));
+// Secret unlock: pressing "Off" 10 times in a row reveals Cinema Code, which
+// is otherwise hidden (menu item, home carousel slot, and stats) until found.
+let soundOffClickStreak = 0;
+movieSoundOffBtn.addEventListener('click', ()=>{
+  setMovieSfxMuted(true);
+  soundOffClickStreak++;
+  if(soundOffClickStreak >= 10){
+    soundOffClickStreak = 0;
+    if(!isCodeUnlocked()){
+      unlockCinemaCode();
+      movieSettingsModal.classList.remove('show');
+      alert('🎬 Secret unlocked: Cinema Code is now playable!');
+    }
+  }
+});
 renderMovieSoundToggle();
 
 const movieThemeDarkBtn = document.getElementById('movieThemeDarkBtn');
@@ -2639,7 +2890,9 @@ function checkTripleFeatureAchievement(){
 function renderMovieAchievements(){
   const grid = document.getElementById('movieAchvGrid');
   if(!grid) return;
-  grid.innerHTML = MOVIE_ACHIEVEMENTS.map(a=>{
+  const codeUnlocked = typeof isCodeUnlocked === 'function' ? isCodeUnlocked() : false;
+  const visibleAchievements = codeUnlocked ? MOVIE_ACHIEVEMENTS : MOVIE_ACHIEVEMENTS.filter(a => a.id !== 'code_breaker' && a.id !== 'code_streak');
+  grid.innerHTML = visibleAchievements.map(a=>{
     const unlocked = !!movieAchievementState.unlocked[a.id];
     return `<div class="achv-badge${unlocked ? ' unlocked' : ''}" title="${a.name} — ${a.hint}">
       <div class="achv-icon">${a.icon}</div>
@@ -4138,6 +4391,27 @@ chaosPlayAgainBtn.addEventListener('click', startChaosGame);
 chaosCloseBtn.addEventListener('click', showHomeScreen);
 document.getElementById('chaosPageMarquee').addEventListener('click', showHomeScreen);
 
+// ---------- Cinema Code unlock ----------
+// Cinema Code is hidden (side menu item, home carousel slot, and its Stats
+// section) until it's found via a secret: pressing the Settings "Sound: Off"
+// button 10 times in a row (see movieSoundOffBtn's listener above).
+const CODE_UNLOCK_KEY = 'cinemaCodeUnlocked_v1';
+function isCodeUnlocked(){
+  try{ return localStorage.getItem(CODE_UNLOCK_KEY) === '1'; }catch(e){ return false; }
+}
+function unlockCinemaCode(){
+  try{ localStorage.setItem(CODE_UNLOCK_KEY, '1'); }catch(e){}
+  applyCodeUnlockState();
+}
+function applyCodeUnlockState(){
+  const unlocked = isCodeUnlocked();
+  if(typeof movieMenuCodeBtn !== 'undefined') movieMenuCodeBtn.style.display = unlocked ? '' : 'none';
+  const statsSection = document.getElementById('movieStatsCodeSection');
+  if(statsSection) statsSection.style.display = unlocked ? '' : 'none';
+  if(typeof renderMovieHomeSelector === 'function') renderMovieHomeSelector();
+  if(typeof renderMovieAchievements === 'function') renderMovieAchievements();
+}
+
 // ---------- Cinema Code (deduction game — guess the mystery movie in 6 tries,
 // each guess scored on year/genre/studio/rated/score/box office like a
 // Wordle-style deduction game) ----------
@@ -4431,10 +4705,53 @@ const CUP_CATEGORIES = [
   { key: 'starwars',    label: 'Star Wars',   filter: m => /star wars/i.test(m.title) },
   { key: 'animated',    label: 'Animated',    filter: m => m.genres.includes('Animation') },
   { key: 'action',      label: 'Action',      filter: m => m.genres.includes('Action') },
+  { key: 'comedy',      label: 'Comedy',      filter: m => m.genres.includes('Comedy') },
+  { key: 'scifi',       label: 'Sci-Fi',      filter: m => m.genres.includes('Sci-Fi') },
+  { key: 'horror',      label: 'Horror',      filter: m => m.genres.includes('Horror') },
+  { key: 'crimethriller', label: 'Crime & Thriller', filter: m => m.genres.includes('Crime') || m.genres.includes('Thriller') },
 ];
 function cupCategoryPool(catKey){
   const cat = CUP_CATEGORIES.find(c => c.key === catKey);
   return cat ? MOVIES.filter(cat.filter) : [];
+}
+// Films by Year — a second drill-down level (Categories -> Films by Year ->
+// a specific year, or merged range of years), mirroring Cartridge Cup's
+// Games by Year feature. Single years often don't have 32 films yet, so
+// thin years are merged with their chronological neighbors — walking
+// forward from the oldest year and closing a bucket once its pool reaches
+// the 32-film cap — until every bucket has (or is as close as possible to)
+// a full bracket. A short leftover at the newest end folds into the
+// previous bucket rather than standing alone as a tiny bracket.
+const CUP_YEAR_RANGE = { min: 2000, max: 2025 };
+function buildCupYearBuckets(){
+  const buckets = [];
+  let current = { years: [], count: 0 };
+  for(let y = CUP_YEAR_RANGE.min; y <= CUP_YEAR_RANGE.max; y++){
+    const n = MOVIES.filter(m => m.year === y).length;
+    current.years.push(y);
+    current.count += n;
+    if(current.count >= CUP_BRACKET_SIZE){
+      buckets.push(current);
+      current = { years: [], count: 0 };
+    }
+  }
+  if(current.years.length){
+    if(buckets.length){
+      const prev = buckets[buckets.length - 1];
+      prev.years = prev.years.concat(current.years);
+      prev.count += current.count;
+    } else {
+      buckets.push(current);
+    }
+  }
+  return buckets.map(b => ({
+    years: b.years,
+    label: b.years.length === 1 ? String(b.years[0]) : `${b.years[0]}–${b.years[b.years.length - 1]}`,
+    count: b.count,
+  }));
+}
+function cupYearBucketPool(bucket){
+  return MOVIES.filter(m => bucket.years.includes(m.year));
 }
 // Largest power of two entrant count that fits the pool, capped at 32.
 function cupSizeForPool(poolSize){
@@ -4458,6 +4775,9 @@ const cupModal = document.getElementById('cupModal');
 const cupHomeArea = document.getElementById('cupHomeArea');
 const cupCategoriesArea = document.getElementById('cupCategoriesArea');
 const cupCategoryList = document.getElementById('cupCategoryList');
+const cupYearsArea = document.getElementById('cupYearsArea');
+const cupYearList = document.getElementById('cupYearList');
+const cupYearsBackBtn = document.getElementById('cupYearsBackBtn');
 const cupHomePlayBtn = document.getElementById('cupHomePlayBtn');
 const cupHomeFreeplayBtn = document.getElementById('cupHomeFreeplayBtn');
 const cupHomeCategoriesBtn = document.getElementById('cupHomeCategoriesBtn');
@@ -4481,6 +4801,7 @@ const cupCloseBtn = document.getElementById('cupCloseBtn');
 let cupMode = 'daily';
 let cupDailyDate = null;
 let cupCategoryKey = null;
+let cupSelectedYear = null;
 let cupRounds = [];
 let cupRoundIndex = 0;
 let cupMatchIndex = 0;
@@ -4560,7 +4881,8 @@ function renderCupMatch(){
   const match = round[cupMatchIndex];
   const cupCat = CUP_CATEGORIES.find(c => c.key === cupCategoryKey);
   cupModeLabel.textContent = cupMode === 'daily' ? `DAILY #${dailyNumberLabel(cupDailyDate)}` :
-    cupMode === 'category' ? (cupCat ? cupCat.label.toUpperCase() : 'CATEGORY') : 'FREE PLAY';
+    cupMode === 'category' ? (cupCat ? cupCat.label.toUpperCase() : 'CATEGORY') :
+    cupMode === 'year' ? `YEAR ${cupSelectedYear ? cupSelectedYear.label : ''}` : 'FREE PLAY';
   cupRoundLabel.textContent = `${cupRoundLabels[cupRoundIndex]} — Match ${cupMatchIndex + 1}/${round.length}`;
   cupProgressFill.style.width = `${Math.round((cupPickedWinnerTitles().length / cupTotalPicks) * 100)}%`;
 
@@ -4611,6 +4933,7 @@ cupCardRight.addEventListener('click', ()=> handleCupPick('right'));
 function hideAllCupAreas(){
   cupHomeArea.style.display = 'none';
   cupCategoriesArea.style.display = 'none';
+  cupYearsArea.style.display = 'none';
   cupPlayArea.style.display = 'none';
   cupResultsArea.style.display = 'none';
 }
@@ -4620,6 +4943,11 @@ function showCupHome(){
 }
 function renderCupCategoryList(){
   cupCategoryList.innerHTML = '';
+  const yearItem = document.createElement('div');
+  yearItem.className = 'cup-category-item cup-category-special';
+  yearItem.innerHTML = `<span>Films by Year</span><span class="cup-category-count">2000–2025</span>`;
+  yearItem.addEventListener('click', showCupYearsList);
+  cupCategoryList.appendChild(yearItem);
   CUP_CATEGORIES.forEach(cat => {
     const count = cupCategoryPool(cat.key).length;
     const size = cupSizeForPool(count);
@@ -4634,6 +4962,22 @@ function showCupCategoriesList(){
   hideAllCupAreas();
   renderCupCategoryList();
   cupCategoriesArea.style.display = '';
+}
+function renderCupYearList(){
+  cupYearList.innerHTML = '';
+  buildCupYearBuckets().forEach(bucket => {
+    if(bucket.count < 2) return;
+    const item = document.createElement('div');
+    item.className = 'cup-year-item';
+    item.textContent = bucket.label;
+    item.addEventListener('click', ()=> startCupYear(bucket));
+    cupYearList.appendChild(item);
+  });
+}
+function showCupYearsList(){
+  hideAllCupAreas();
+  renderCupYearList();
+  cupYearsArea.style.display = '';
 }
 function showCupResults(){
   hideAllCupAreas();
@@ -4659,6 +5003,7 @@ function startCupDaily(){
   const date = todayKey();
   cupMode = 'daily';
   cupCategoryKey = null;
+  cupSelectedYear = null;
   cupDailyDate = date;
   let stored = loadCupDailyState();
   if(!stored || stored.date !== date){
@@ -4674,6 +5019,7 @@ function startCupDaily(){
 function startCupFreeplay(){
   cupMode = 'freeplay';
   cupCategoryKey = null;
+  cupSelectedYear = null;
   const entrants = seededShuffle(MOVIES, Math.random).slice(0, CUP_BRACKET_SIZE);
   cupRoundLabels = cupRoundLabelsForSize(entrants.length);
   cupTotalPicks = entrants.length - 1;
@@ -4690,6 +5036,24 @@ function startCupCategory(catKey){
   const size = cupSizeForPool(pool.length);
   cupMode = 'category';
   cupCategoryKey = catKey;
+  cupSelectedYear = null;
+  const entrants = seededShuffle(pool, Math.random).slice(0, size);
+  cupRoundLabels = cupRoundLabelsForSize(entrants.length);
+  cupTotalPicks = entrants.length - 1;
+  cupRounds = [buildCupRoundFromEntrants(entrants)];
+  cupRoundIndex = 0;
+  cupMatchIndex = 0;
+  cupChampion = null;
+  hideCupResults();
+  renderCupMatch();
+}
+
+function startCupYear(bucket){
+  const pool = cupYearBucketPool(bucket);
+  const size = cupSizeForPool(pool.length);
+  cupMode = 'year';
+  cupSelectedYear = bucket;
+  cupCategoryKey = null;
   const entrants = seededShuffle(pool, Math.random).slice(0, size);
   cupRoundLabels = cupRoundLabelsForSize(entrants.length);
   cupTotalPicks = entrants.length - 1;
@@ -4704,13 +5068,15 @@ function startCupCategory(catKey){
 function buildCupShareText(){
   const cupCat = CUP_CATEGORIES.find(c => c.key === cupCategoryKey);
   const label = cupMode === 'daily' ? `CINEMA CUP Daily #${dailyNumberLabel(cupDailyDate)}` :
-    cupMode === 'category' ? `CINEMA CUP — ${cupCat ? cupCat.label : 'Category'}` : 'CINEMA CUP — Free Play';
+    cupMode === 'category' ? `CINEMA CUP — ${cupCat ? cupCat.label : 'Category'}` :
+    cupMode === 'year' ? `CINEMA CUP — ${cupSelectedYear ? cupSelectedYear.label : ''}` : 'CINEMA CUP — Free Play';
   return `${label}\n🏆 Champion: ${cupChampion.title}`;
 }
 cupShareBtn.addEventListener('click', ()=> shareOrCopy(buildCupShareText(), cupShareBtn));
 cupFreeplayBtn.addEventListener('click', startCupFreeplay);
 cupPlayAgainBtn.addEventListener('click', ()=> {
-  if(cupMode === 'category') startCupCategory(cupCategoryKey);
+  if(cupMode === 'category' && cupCategoryKey) startCupCategory(cupCategoryKey);
+  else if(cupMode === 'year' && cupSelectedYear) startCupYear(cupSelectedYear);
   else startCupFreeplay();
 });
 cupCloseBtn.addEventListener('click', showCupHome);
@@ -4718,6 +5084,7 @@ cupHomePlayBtn.addEventListener('click', startCupDaily);
 cupHomeFreeplayBtn.addEventListener('click', startCupFreeplay);
 cupHomeCategoriesBtn.addEventListener('click', showCupCategoriesList);
 cupCategoriesBackBtn.addEventListener('click', showCupHome);
+cupYearsBackBtn.addEventListener('click', showCupCategoriesList);
 document.getElementById('cupPageMarquee').addEventListener('click', showHomeScreen);
 
 // ---------- Home screen ----------
@@ -4762,13 +5129,18 @@ function showCupPage(){
 // The games cyclable from the home screen hero, each with the colour its
 // name is shown in — the arrow that leads to a feature is tinted to match.
 // Cup isn't in this cycle: it lives only in the side menu's "Extras" section.
-const MOVIE_HOME_GAMES = [
+const MOVIE_HOME_GAMES_ALL = [
   { key: 'clash',     label: 'CINEMA CLASH',     color: 'var(--amber)',  tagline: 'Pick a side. Trust the numbers.<br><b>Survive the streak.</b>' },
   { key: 'connect',   label: 'CINEMA CONNECT',   color: 'var(--green)',  tagline: 'Sixteen movies. Four hidden groups.<br><b>Find the connections.</b>' },
   { key: 'chronicle', label: 'CINEMA CHRONICLE', color: 'var(--orange)', tagline: 'Five movies. Three stats to sort by.<br><b>Put them in order.</b>' },
   { key: 'chaos',     label: 'CINEMA CHAOS',     color: 'var(--violet)', tagline: 'Fast questions. No mercy.<br><b>Beat the clock.</b>' },
   { key: 'code',      label: 'CINEMA CODE',      color: 'var(--cyan)',   tagline: 'One mystery movie. Six guesses.<br><b>Every guess gives you clues.</b>' },
 ];
+// Cinema Code stays out of the cycle until unlocked (see the Cinema Code
+// unlock section) — recomputed live so unlocking mid-session updates it.
+function movieHomeGames(){
+  return isCodeUnlocked() ? MOVIE_HOME_GAMES_ALL : MOVIE_HOME_GAMES_ALL.filter(g => g.key !== 'code');
+}
 let movieHomeSelectedIndex = 0;
 const homeMarquee = document.getElementById('homeMarquee');
 const homeTagline = document.getElementById('homeTagline');
@@ -4778,10 +5150,12 @@ const homePlayBtn = document.getElementById('homePlayBtn');
 const homeFreeplayBtn = document.getElementById('homeFreeplayBtn');
 
 function renderMovieHomeSelector(){
-  const n = MOVIE_HOME_GAMES.length;
-  const current = MOVIE_HOME_GAMES[movieHomeSelectedIndex];
-  const nextGame = MOVIE_HOME_GAMES[(movieHomeSelectedIndex + 1) % n];
-  const prevGame = MOVIE_HOME_GAMES[(movieHomeSelectedIndex - 1 + n) % n];
+  const games = movieHomeGames();
+  if(movieHomeSelectedIndex >= games.length) movieHomeSelectedIndex = 0;
+  const n = games.length;
+  const current = games[movieHomeSelectedIndex];
+  const nextGame = games[(movieHomeSelectedIndex + 1) % n];
+  const prevGame = games[(movieHomeSelectedIndex - 1 + n) % n];
   homeMarquee.textContent = current.label;
   homeMarquee.style.color = current.color;
   homeTagline.innerHTML = current.tagline;
@@ -4792,17 +5166,19 @@ function renderMovieHomeSelector(){
   homePlayBtn.style.display = current.key === 'chaos' ? 'none' : '';
 }
 homeArrowRight.addEventListener('click', ()=>{
-  movieHomeSelectedIndex = (movieHomeSelectedIndex + 1) % MOVIE_HOME_GAMES.length;
+  const games = movieHomeGames();
+  movieHomeSelectedIndex = (movieHomeSelectedIndex + 1) % games.length;
   renderMovieHomeSelector();
 });
 homeArrowLeft.addEventListener('click', ()=>{
-  movieHomeSelectedIndex = (movieHomeSelectedIndex - 1 + MOVIE_HOME_GAMES.length) % MOVIE_HOME_GAMES.length;
+  const games = movieHomeGames();
+  movieHomeSelectedIndex = (movieHomeSelectedIndex - 1 + games.length) % games.length;
   renderMovieHomeSelector();
 });
 renderMovieHomeSelector();
 
 homePlayBtn.addEventListener('click', ()=>{
-  const key = MOVIE_HOME_GAMES[movieHomeSelectedIndex].key;
+  const key = movieHomeGames()[movieHomeSelectedIndex].key;
   if(key === 'clash'){ showClashPage(); startClashDaily(); }
   else if(key === 'connect'){ showGridPage(); startGridDaily(); }
   else if(key === 'chronicle'){ showChroniclePage(); startChronicleDaily(); }
@@ -4810,7 +5186,7 @@ homePlayBtn.addEventListener('click', ()=>{
   else if(key === 'code'){ showCodePage(); startCodeDaily(); }
 });
 homeFreeplayBtn.addEventListener('click', ()=>{
-  const key = MOVIE_HOME_GAMES[movieHomeSelectedIndex].key;
+  const key = movieHomeGames()[movieHomeSelectedIndex].key;
   if(key === 'clash'){ showClashPage(); startClashFreeplay(); }
   else if(key === 'connect'){ showGridPage(); startGridFreeplay(); }
   else if(key === 'chronicle'){ showChroniclePage(); startChronicleFreeplay(); }
@@ -4917,6 +5293,7 @@ movieMenuCartridgeBtn.addEventListener('click', ()=>{
   window.location.href = 'index.html';
 });
 
+applyCodeUnlockState();
 showHomeScreen();
 </script>
 </body>
