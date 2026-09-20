@@ -25,6 +25,7 @@
     --orange: #ff8c42;
     --teal: #2dd4bf;
     --gold: #ffd23f;
+    --coral: #ff6b5b;
     --text: #f1f3fa;
     --text-dim: #8890b5;
     /* Text/message colour for elements that sit directly on the page's own
@@ -363,6 +364,35 @@
   #charadesGuessBtn:hover { box-shadow: 0 0 18px rgba(255,46,99,0.55); }
   #charadesGuessBtn:active { transform: scale(0.97); }
   #charadesGuessBtn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow:none; }
+
+  /* One-Star Reviews' and Double Feature's guess input/button follow the
+     exact same shape as Charades', just recolored to each game's own accent
+     (gold for Reviews, coral for Double Feature) instead of hardcoding the
+     Cartridge magenta everywhere. */
+  #reviewInput, #dfInput {
+    width: 100%; padding: 14px 16px; background: var(--panel); border: 2px solid var(--line);
+    border-radius: 8px; color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 15px;
+    outline: none; transition: border-color .15s;
+  }
+  #reviewInput:focus { border-color: var(--gold); }
+  #dfInput:focus { border-color: var(--coral); }
+  #reviewInput:disabled, #dfInput:disabled { opacity: 0.5; }
+  #reviewGuessBtn {
+    padding: 14px 22px; background: var(--gold); border: none; border-radius: 8px; color: #241a12;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; letter-spacing: 0.5px; cursor: pointer;
+    transition: transform .1s, box-shadow .15s; box-shadow: 0 0 0 rgba(255,210,63,0);
+  }
+  #reviewGuessBtn:hover { box-shadow: 0 0 18px rgba(255,210,63,0.55); }
+  #reviewGuessBtn:active { transform: scale(0.97); }
+  #reviewGuessBtn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow:none; }
+  #dfSubmitBtn {
+    padding: 14px 22px; background: var(--coral); border: none; border-radius: 8px; color: #fff;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; letter-spacing: 0.5px; cursor: pointer;
+    transition: transform .1s, box-shadow .15s; box-shadow: 0 0 0 rgba(255,107,91,0);
+  }
+  #dfSubmitBtn:hover { box-shadow: 0 0 18px rgba(255,107,91,0.55); }
+  #dfSubmitBtn:active { transform: scale(0.97); }
+  #dfSubmitBtn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow:none; }
   .cover-panel {
     flex: 0 0 auto; width: 76px; height: 102px; border-radius: 8px; overflow: hidden;
     position: relative; background: var(--panel-2); border: 2px solid var(--line);
@@ -394,7 +424,7 @@
   @media (max-width: 640px) {
     .search-row, .charades-guess-row { justify-content: center; }
     .search-box { order: 3; flex: 1 1 100%; min-width: 0; }
-    #guessBtn, #charadesGuessBtn { order: 1; }
+    #guessBtn, #charadesGuessBtn, #reviewGuessBtn, #dfSubmitBtn { order: 1; }
     .cover-panel { order: 2; }
   }
 
@@ -981,6 +1011,42 @@
     font-size: 11px; text-decoration: line-through;
   }
 
+  /* ---------- Cinema One-Star Reviews ---------- */
+  .review-hint-chip {
+    border: 1px solid var(--gold); color: var(--gold); text-decoration: none;
+  }
+  .review-card {
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 20px; margin: 14px 0; text-align: center;
+  }
+  .review-stars { font-size: 20px; letter-spacing: 4px; margin-bottom: 8px; }
+  .review-text {
+    font-family: 'Space Grotesk', sans-serif; font-style: italic; font-size: 16px;
+    line-height: 1.5; color: #ffffff;
+  }
+
+  /* ---------- Cinema Double Feature ---------- */
+  .clash-or.df-or { border-color: var(--coral); color: var(--coral); }
+  .df-prompt {
+    text-align: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px;
+    color: #ffffff; margin: 14px 4px 10px;
+  }
+  .df-mc-btn {
+    display: block; width: 100%; text-align: left; padding: 12px 16px; margin-bottom: 8px;
+    border-radius: 8px; border: 2px solid var(--line); background: var(--panel-2); color: var(--text);
+    font-family: 'IBM Plex Mono', monospace; font-size: 13px; cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .df-mc-btn:hover:not(:disabled) { border-color: var(--coral); }
+  .df-mc-btn:disabled { cursor: not-allowed; }
+  .df-mc-btn.correct { border-color: var(--green); background: rgba(57,255,136,0.12); color: var(--green); }
+  .df-mc-btn.wrong { border-color: var(--magenta); background: rgba(255,46,99,0.12); color: var(--magenta); text-decoration: line-through; }
+  .df-category-chip { border: 1px solid var(--coral); color: var(--coral); text-decoration: none; }
+  .df-connection-reveal {
+    text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 13px;
+    color: var(--text-on-photo-dim); margin: 4px 0 0;
+  }
+
   /* ---------- Cartridge Chronicle ---------- */
   .chronicle-hint {
     text-align: left; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px;
@@ -1425,6 +1491,14 @@
       <span class="side-menu-icon">🏆</span>
       <span class="side-menu-label">Cinema Cup</span>
     </button>
+    <button class="side-menu-item" id="movieMenuReviewBtn">
+      <span class="side-menu-icon">⭐</span>
+      <span class="side-menu-label">One-Star Reviews</span>
+    </button>
+    <button class="side-menu-item" id="movieMenuDfBtn">
+      <span class="side-menu-icon">🔗</span>
+      <span class="side-menu-label">Double Feature</span>
+    </button>
     <hr class="side-menu-divider">
     <button class="side-menu-item" id="movieMenuCartridgeBtn">
       <span class="side-menu-icon">🎮</span>
@@ -1494,6 +1568,16 @@
     <div class="archive-game-section" id="movieStatsCodeSection" style="display:none;">
       <div class="archive-game-heading" style="color:var(--cyan);">Cinema Code</div>
       <div class="archive-stats" id="movieStatsCode"></div>
+    </div>
+
+    <div class="archive-game-section">
+      <div class="archive-game-heading" style="color:var(--gold);">One-Star Reviews</div>
+      <div class="archive-stats" id="movieStatsReview"></div>
+    </div>
+
+    <div class="archive-game-section">
+      <div class="archive-game-heading" style="color:var(--coral);">Double Feature</div>
+      <div class="archive-stats" id="movieStatsDf"></div>
     </div>
 
     <div class="achievements-section">
@@ -1921,6 +2005,117 @@
         <button class="ghost-btn" id="cupFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="cupPlayAgainBtn" style="display:none;">New Bracket</button>
         <button class="ghost-btn" id="cupCloseBtn">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay page-mode" id="reviewModal">
+  <div class="wrap" style="max-width:640px;">
+    <header>
+      <div class="marquee" id="reviewPageMarquee" style="color:var(--gold);" title="Back to home">ONE-STAR REVIEWS</div>
+      <div class="tagline">A scathing, spoiler-free review. <b>Guess the movie it's trashing.</b></div>
+    </header>
+
+    <div id="reviewHomeArea">
+      <div class="gamepad-row cup-gamepad-row">
+        <button class="gamepad gamepad-play" id="reviewHomePlayBtn" aria-label="Daily Play">
+          <span class="gamepad-label sr-only">DAILY<br>PLAY</span>
+        </button>
+        <button class="gamepad gamepad-freeplay" id="reviewHomeFreeplayBtn" aria-label="Free Play">
+          <span class="gamepad-label sr-only">FREE<br>PLAY</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="reviewPlayArea" style="display:none;">
+      <div class="grid-top-row">
+        <span id="reviewModeLabel">DAILY</span>
+        <span id="reviewGuessLabel">Guess 1/6</span>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">⭐</div>
+        <div class="review-text" id="reviewText"></div>
+      </div>
+      <div class="charades-guess-history" id="reviewHintRow"></div>
+      <div class="charades-guess-row">
+        <div class="search-box">
+          <input type="text" id="reviewInput" placeholder="Type a movie title…" autocomplete="off">
+          <div class="dropdown hidden" id="reviewDropdown"></div>
+        </div>
+        <button id="reviewGuessBtn">GUESS</button>
+      </div>
+      <div class="charades-guess-history" id="reviewGuessHistory"></div>
+      <div class="msg" id="reviewMsg"></div>
+      <div class="btn-row">
+        <button class="ghost-btn" id="reviewGiveUpBtn">Give up😭</button>
+      </div>
+    </div>
+
+    <div id="reviewResultsArea" class="clash-results" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid var(--line);">
+      <div class="clash-heading" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700;" id="reviewFinalMessage">Nailed it!</div>
+      <div class="clash-final-score" id="reviewFinalScore"></div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn" id="reviewShareBtn">📋 Share Results</button>
+        <button class="ghost-btn" id="reviewFreeplayBtn">Play Free Play</button>
+        <button class="ghost-btn" id="reviewPlayAgainBtn" style="display:none;">New Puzzle</button>
+        <button class="ghost-btn" id="reviewCloseBtn">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay page-mode" id="dfModal">
+  <div class="wrap" style="max-width:640px;">
+    <header>
+      <div class="marquee" id="dfPageMarquee" style="color:var(--coral);" title="Back to home">DOUBLE FEATURE</div>
+      <div class="tagline">Two movies, one hidden link. <b>Figure out what connects them.</b></div>
+    </header>
+
+    <div id="dfHomeArea">
+      <div class="gamepad-row cup-gamepad-row">
+        <button class="gamepad gamepad-play" id="dfHomePlayBtn" aria-label="Daily Play">
+          <span class="gamepad-label sr-only">DAILY<br>PLAY</span>
+        </button>
+        <button class="gamepad gamepad-freeplay" id="dfHomeFreeplayBtn" aria-label="Free Play">
+          <span class="gamepad-label sr-only">FREE<br>PLAY</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="dfPlayArea" style="display:none;">
+      <div class="grid-top-row">
+        <span id="dfModeLabel">DAILY</span>
+        <span id="dfGuessLabel">Guess 1/4</span>
+      </div>
+      <div class="clash-arena" id="dfArena"></div>
+      <div class="df-prompt">What connects these two movies?</div>
+      <div class="charades-guess-row">
+        <div class="search-box">
+          <input type="text" id="dfInput" placeholder="Type the connection…" autocomplete="off">
+        </div>
+        <button id="dfSubmitBtn">GUESS</button>
+      </div>
+      <div class="charades-guess-history" id="dfGuessHistory"></div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn" id="dfMcToggleBtn">🔀 Multiple Choice</button>
+      </div>
+      <div id="dfMcOptions" style="display:none; margin-top:10px;"></div>
+      <div class="msg" id="dfMsg"></div>
+      <div class="btn-row">
+        <button class="ghost-btn" id="dfGiveUpBtn">Give up😭</button>
+      </div>
+    </div>
+
+    <div id="dfResultsArea" class="clash-results" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid var(--line);">
+      <div class="clash-heading" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700;" id="dfFinalMessage">Nailed it!</div>
+      <div class="clash-final-score" id="dfFinalScore"></div>
+      <div id="dfConnectionReveal" style="margin:10px 0 4px;"></div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn" id="dfShareBtn">📋 Share Results</button>
+        <button class="ghost-btn" id="dfFreeplayBtn">Play Free Play</button>
+        <button class="ghost-btn" id="dfPlayAgainBtn" style="display:none;">New Puzzle</button>
+        <button class="ghost-btn" id="dfCloseBtn">Close</button>
       </div>
     </div>
   </div>
@@ -2787,6 +2982,22 @@ function renderMovieStats(){
     <div class="archive-stat"><div class="num">${Object.keys(codeHist).length}</div><div class="lbl">Dailies played</div></div>
   `;
 
+  const reviewHist = loadReviewHistory();
+  const reviewBest = loadReviewBest();
+  document.getElementById('movieStatsReview').innerHTML = `
+    <div class="archive-stat"><div class="num">${reviewBest ? reviewBest + '/6' : '—'}</div><div class="lbl">Best (fewest guesses)</div></div>
+    <div class="archive-stat"><div class="num">${movieDailyStreak(reviewHist, v => typeof v === 'number')}</div><div class="lbl">Current streak</div></div>
+    <div class="archive-stat"><div class="num">${Object.keys(reviewHist).length}</div><div class="lbl">Dailies played</div></div>
+  `;
+
+  const dfHist = loadDfHistory();
+  const dfBest = loadDfBest();
+  document.getElementById('movieStatsDf').innerHTML = `
+    <div class="archive-stat"><div class="num">${dfBest ? dfBest + '/4' : '—'}</div><div class="lbl">Best (fewest guesses)</div></div>
+    <div class="archive-stat"><div class="num">${movieDailyStreak(dfHist, v => typeof v === 'number')}</div><div class="lbl">Current streak</div></div>
+    <div class="archive-stat"><div class="num">${Object.keys(dfHist).length}</div><div class="lbl">Dailies played</div></div>
+  `;
+
 }
 const movieStatsBtn = document.getElementById('movieStatsBtn');
 const movieStatsPanel = document.getElementById('movieStatsPanel');
@@ -2956,10 +3167,14 @@ const MOVIE_ACHIEVEMENTS = [
   { id: 'charades_streak',  name: 'Charades Streak',  icon: '🔥', hint: 'Reach a 3-day Cinema Charades Daily streak.' },
   { id: 'crossword_gold',   name: 'Gold Standard',    icon: '🥇', hint: 'Earn a Gold medal in Cinema Crossword by solving in 1:30 or less.' },
   { id: 'crossword_streak', name: 'Crossword Streak', icon: '🔥', hint: 'Reach a 3-day Cinema Crossword Daily win streak.' },
-  { id: 'silver_screen',    name: 'Silver Screen',    icon: '🎞️', hint: 'Play all seven Cinema games at least once.' },
+  { id: 'silver_screen',    name: 'Silver Screen',    icon: '🎞️', hint: 'Play all nine Cinema games at least once.' },
   { id: 'reel_explorer',    name: 'Reel Explorer',    icon: '🗺️', hint: 'Play a Free Play round in any Cinema game.' },
   { id: 'code_breaker',     name: 'Code Breaker',     icon: '🔓', hint: 'Solve Cinema Code in 3 guesses or fewer.' },
   { id: 'code_streak',      name: 'Code Streak',      icon: '🔥', hint: 'Reach a 3-day Cinema Code Daily streak.' },
+  { id: 'review_critic',    name: 'One-Star Genius',  icon: '🌟', hint: 'Solve One-Star Reviews in a single guess.' },
+  { id: 'review_streak',    name: 'Review Streak',    icon: '🔥', hint: 'Reach a 3-day One-Star Reviews Daily streak.' },
+  { id: 'df_scholar',       name: 'Film Scholar',     icon: '🎓', hint: 'Solve Double Feature with a typed answer, not multiple choice.' },
+  { id: 'df_streak',        name: 'Double Feature Streak', icon: '🔥', hint: 'Reach a 3-day Double Feature Daily streak.' },
 ];
 
 const MOVIE_ACHV_KEY = 'moviesAchievements_v1';
@@ -3002,7 +3217,7 @@ function recordMovieGamePlayed(key){
 }
 function checkMovieMetaAchievements(mode){
   const ids = [];
-  if(loadMoviePlayedGames().length >= 7) ids.push('silver_screen');
+  if(loadMoviePlayedGames().length >= 9) ids.push('silver_screen');
   if(mode === 'freeplay') ids.push('reel_explorer');
   unlockMovieAchievements(ids);
 }
@@ -6076,6 +6291,795 @@ window.addEventListener('resize', ()=>{
 
 
 
+// ---------- Cinema One-Star Reviews (a new Extras game, unique to movies —
+// guess the film from a snarky, spoiler-free one-star review; each wrong
+// guess reveals one more real fact — Year, then Genre, then Studio, then
+// Rated — up to 6 guesses total). Lives in the side menu's Extras section
+// alongside Cinema Cup, not in the home carousel cycle. ----------
+const REVIEW_MAX_GUESSES = 6;
+const MOVIE_REVIEW_CLUES = {
+  'Avatar': 'Blue people. Blue people everywhere. My retinas needed a vacation after this three-hour nature documentary cosplaying as a war movie.',
+  'Avengers: Endgame': 'Forty people stood in a field and I still don\'t understand who most of them were. Bring tissues, bring snacks, bring a legal pad.',
+  'Avatar: The Way of Water': 'More blue people, now with gills. Beautiful ocean, forgettable plot, three hours I\'ll never get back — again.',
+  'Star Wars: The Force Awakens': 'Felt like watching a cover band play all the old hits. Great cover band, though.',
+  'Avengers: Infinity War': 'Just when I liked a character, poof, they turned to dust. Emotionally exhausting homework disguised as a blockbuster.',
+  'Spider-Man: No Way Home': 'Too many spider-people, not enough actual spider-ing. My brain hurt trying to keep the multiverse straight.',
+  'Inside Out 2': 'A cartoon gave my inner child an anxiety attack. Thanks, I guess.',
+  'Jurassic World': 'Dinosaurs eating tourists in a theme park — groundbreaking twenty years ago, a rerun now.',
+  'The Avengers': 'A bunch of guys in costumes bicker for two hours before teaming up. Sound familiar? It should.',
+  'Furious 7': 'Cars fly out of buildings and nobody questions the laws of physics. Family, apparently, means never explaining anything.',
+  'Top Gun: Maverick': 'Men squinting at the sun in fighter jets for two hours. My dad loved it, which tells you everything.',
+  'Frozen II': 'More singing, less plot, and a horse made of water that nobody asked for.',
+  'Avengers: Age of Ultron': 'A robot has an existential crisis and somehow it\'s still less interesting than the toaster in my kitchen.',
+  'The Super Mario Bros. Movie': 'A plumber falls down a pipe and suddenly it\'s a 90-minute toy commercial with a soundtrack I can\'t stop humming.',
+  'Black Panther': 'A guy in a cat suit fights his cousin over a chair. The chair is a country, apparently.',
+  'Harry Potter and the Deathly Hallows – Part 2': 'The kids finally graduate wizard school by blowing everything up. Took them eight movies to turn in their homework.',
+  'Deadpool & Wolverine': 'Two men in tight suits insult each other for two hours. I laughed twice and my ears are still ringing.',
+  'Star Wars: The Last Jedi': 'Someone drove a spaceship really, really slowly and called it a chase scene. A milk carton had more tension.',
+  'Jurassic World: Fallen Kingdom': 'A volcano tries to solve the dinosaur problem and honestly, I was rooting for the volcano.',
+  'Frozen': 'A princess sings about her feelings for four straight minutes and now I can\'t get it out of my head. Assault on the ears.',
+  'The Incredibles 2': 'The dad stays home with the baby while mom saves the world. Groundbreaking twenty years ago, now it\'s just a nice nap.',
+  'Iron Man 3': 'The hero spends most of the movie without his suit. Great, I paid to watch a guy build gadgets in a shed.',
+  'Minions': 'Yellow pill-shaped creatures babble gibberish for ninety minutes and somehow it made more money than my entire career.',
+  'Captain America: Civil War': 'Superheroes argue about paperwork for two and a half hours. Riveting stuff if you enjoy jury duty.',
+  'Aquaman': 'A man talks to fish and rules an underwater kingdom with terrible lighting. My eyes needed a snorkel.',
+  'The Lord of the Rings: The Return of the King': 'The movie had, and I counted, SEVEN endings. Just end already, my legs fell asleep an hour ago.',
+  'Spider-Man: Far From Home': 'A teenager fights a guy in a fishbowl helmet made of drones. Somehow still more mature than my last relationship.',
+  'Captain Marvel': 'A woman punches an old lady in space and it\'s supposed to be empowering. I just found it confusing.',
+  'Transformers: Dark of the Moon': 'Robots that turn into cars fight for two and a half hours and I still couldn\'t tell you why.',
+  'Skyfall': 'A spy loses his gun, his girlfriend, and his childhood home in one movie. Rough month for this guy.',
+  'The Dark Knight Rises': 'A man in a cape fights a guy with a weird voice and a worse mask. Also there\'s a stock exchange subplot nobody wanted.',
+  'Joker': 'A sad clown has a very bad day and somehow it won an Oscar. My therapist would have a field day.',
+  'Star Wars: The Rise of Skywalker': 'Somebody remembered a character existed and just... brought them back. Storytelling by shrug emoji.',
+  'Toy Story 4': 'A spork with googly eyes has an existential crisis. I felt that on a spiritual level, unfortunately.',
+  'Toy Story 3': 'Toys nearly get incinerated and I sobbed like an absolute baby in a theater full of children. Rude.',
+  'Pirates of the Caribbean: Dead Man\'s Chest': 'A man with an octopus for a face plays the organ. Also there\'s a plot in here somewhere, allegedly.',
+  'Rogue One: A Star Wars Story': 'Everybody dies at the end. Great way to build a franchise, really inspires the sequels.',
+  'Despicable Me 3': 'The villain gets a twin brother nobody asked for. The yellow gibberish creatures remain the real main characters.',
+  'Finding Dory': 'A fish with short-term memory loss goes on an adventure she immediately forgets. Relatable, honestly, after this plot.',
+  'Harry Potter and the Sorcerer\'s Stone': 'A boy finds out he\'s magic and spends the whole movie playing a board game that could kill him. Sounds like my family Christmas.',
+  'Star Wars: The Phantom Menace': 'A trade dispute somehow requires an entire war. There\'s also a kid who says \'yippee\' unironically.',
+  'Zootopia': 'Talking animals solve a crime better than most human detectives. Mildly insulting to actual detectives.',
+  'Alice in Wonderland': 'A girl falls down a hole and everyone she meets needs serious psychiatric evaluation. So do I, after watching this.',
+  'The Hobbit: An Unexpected Journey': 'One small book somehow became three long movies about walking. My back hurt just from sitting still.',
+  'The Dark Knight': 'A man dresses as a bat to fight crime and somehow the clown makes more sense than he does.',
+  'Harry Potter and the Deathly Hallows – Part 1': 'The kids go camping in a tent for what feels like the entire runtime. Nothing happens. Beautiful cinematography of nothing happening.',
+  'Oppenheimer': 'Three hours of men in rooms talking about physics and then feeling bad about it. I needed the bomb just to stay awake.',
+  'Despicable Me 2': 'The villain falls in love and somehow that\'s the whole plot. The yellow creatures are still doing all the heavy lifting.',
+  'Despicable Me 4': 'Yet another sequel about a bald man and his yellow minions. At this point just give the minions their own franchise and be done.',
+  'The Lion King': 'A lion\'s uncle murders his dad and somehow it\'s a kids\' movie. Therapy bills incoming for an entire generation.',
+  'The Jungle Book': 'A boy raised by wolves refuses to leave the jungle despite an actual tiger trying to kill him repeatedly. Not the brightest kid.',
+  'Pirates of the Caribbean: At World\'s End': 'The plot has more knots than the ship\'s rigging. I gave up trying to follow it around minute ninety.',
+  'The Hobbit: The Desolation of Smaug': 'A dragon talks for twenty minutes straight. Great voice acting, terrible pacing, worse runtime.',
+  'Doctor Strange in the Multiverse of Madness': 'A wizard fights alternate versions of his friends across dimensions. My head hurt trying to keep track of who was evil this time.',
+  'The Hobbit: The Battle of the Five Armies': 'Ninety minutes of a single battle. I\'ve had shorter arguments with my in-laws.',
+  'The Lord of the Rings: The Two Towers': 'Talking trees decide to go to war. Slowest recruitment drive in cinema history.',
+  'Harry Potter and the Order of the Phoenix': 'A toad-obsessed woman in pink makes children write in their own blood. Somehow still rated fine for kids.',
+  'Finding Nemo': 'A father fish crosses an entire ocean because his son wandered off. Overprotective parenting at its finest.',
+  'Harry Potter and the Half-Blood Prince': 'The kids spend most of the movie kissing instead of fighting evil. Wrong movie for that, honestly.',
+  'Bohemian Rhapsody': 'A band gets famous, has some drama, plays a concert. I\'ve seen this exact plot in every music biopic ever made.',
+};
+const REVIEW_POOL = MOVIES.filter(m => MOVIE_REVIEW_CLUES.hasOwnProperty(m.title));
+
+const reviewModal = document.getElementById('reviewModal');
+const reviewHomeArea = document.getElementById('reviewHomeArea');
+const reviewPlayArea = document.getElementById('reviewPlayArea');
+const reviewResultsArea = document.getElementById('reviewResultsArea');
+const reviewHomePlayBtn = document.getElementById('reviewHomePlayBtn');
+const reviewHomeFreeplayBtn = document.getElementById('reviewHomeFreeplayBtn');
+const reviewModeLabel = document.getElementById('reviewModeLabel');
+const reviewGuessLabel = document.getElementById('reviewGuessLabel');
+const reviewText = document.getElementById('reviewText');
+const reviewHintRow = document.getElementById('reviewHintRow');
+const reviewInput = document.getElementById('reviewInput');
+const reviewDropdown = document.getElementById('reviewDropdown');
+const reviewGuessBtn = document.getElementById('reviewGuessBtn');
+const reviewGuessHistory = document.getElementById('reviewGuessHistory');
+const reviewMsg = document.getElementById('reviewMsg');
+const reviewGiveUpBtn = document.getElementById('reviewGiveUpBtn');
+const reviewFinalMessage = document.getElementById('reviewFinalMessage');
+const reviewFinalScore = document.getElementById('reviewFinalScore');
+const reviewShareBtn = document.getElementById('reviewShareBtn');
+const reviewFreeplayBtn = document.getElementById('reviewFreeplayBtn');
+const reviewPlayAgainBtn = document.getElementById('reviewPlayAgainBtn');
+const reviewCloseBtn = document.getElementById('reviewCloseBtn');
+
+let reviewMode = 'daily'; // 'daily' | 'freeplay'
+let reviewDailyDate = null;
+let reviewTarget = null;
+let reviewGuessedTitles = [];
+let reviewGameOver = false;
+let reviewWon = false;
+
+function hideAllReviewAreas(){
+  reviewHomeArea.style.display = 'none';
+  reviewPlayArea.style.display = 'none';
+  reviewResultsArea.style.display = 'none';
+}
+function showReviewHome(){
+  hideAllReviewAreas();
+  reviewHomeArea.style.display = '';
+}
+function showReviewPage(){
+  hideAllTopScreens();
+  reviewModal.classList.add('show');
+  showReviewHome();
+}
+
+function getReviewTargetFor(dateStr){
+  const rng = mulberry32(hashStr('moviereview-' + dateStr));
+  return REVIEW_POOL[Math.floor(rng() * REVIEW_POOL.length)];
+}
+
+const REVIEW_DAILY_KEY = 'moviesReviewDaily_v1';
+function loadReviewDailyState(){
+  try{ const raw = localStorage.getItem(REVIEW_DAILY_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+}
+function saveReviewDailyState(state){
+  try{ localStorage.setItem(REVIEW_DAILY_KEY, JSON.stringify(state)); }catch(e){}
+}
+function persistReviewDaily(){
+  if(reviewMode !== 'daily') return;
+  saveReviewDailyState({
+    date: reviewDailyDate, guessedTitles: reviewGuessedTitles.slice(),
+    gameOver: reviewGameOver, won: reviewWon,
+  });
+}
+
+const REVIEW_HISTORY_KEY = 'moviesReviewHistory_v1';
+function loadReviewHistory(){
+  try{ const raw = localStorage.getItem(REVIEW_HISTORY_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; }
+}
+function saveReviewHistory(hist){
+  try{ localStorage.setItem(REVIEW_HISTORY_KEY, JSON.stringify(hist)); }catch(e){}
+}
+function recordReviewDailyResult(dateStr, value){
+  const hist = loadReviewHistory();
+  hist[dateStr] = value; // number of guesses if solved, 'lost' if not
+  saveReviewHistory(hist);
+}
+const REVIEW_BEST_KEY = 'moviesReviewBest_v1';
+function loadReviewBest(){
+  try{ return parseInt(localStorage.getItem(REVIEW_BEST_KEY), 10) || 0; }catch(e){ return 0; }
+}
+function saveReviewBest(guesses){
+  try{ localStorage.setItem(REVIEW_BEST_KEY, String(guesses)); }catch(e){}
+}
+
+// Wrong guesses peel back one more real fact about the movie, in a fixed
+// order — Year, then Genre, then Studio, then Rated — capped at 4 hints
+// even though there are up to 6 guesses, so the last two guesses lean on
+// the review itself and whatever's already been revealed.
+const REVIEW_HINT_ORDER = ['year', 'genre', 'studio', 'rated'];
+function reviewHintLabel(kind, movie){
+  if(kind === 'year') return `📅 ${movie.year}`;
+  if(kind === 'genre') return `🎞️ ${movie.genres[0]}`;
+  if(kind === 'studio') return `🏢 ${movie.studio}`;
+  if(kind === 'rated') return `🔞 Rated ${movie.rated}`;
+  return '';
+}
+function renderReviewRound(){
+  reviewModeLabel.textContent = reviewMode === 'daily' ? `DAILY #${dailyNumberLabel(reviewDailyDate)}` : 'FREE PLAY';
+  const guessCount = reviewGuessedTitles.length;
+  reviewGuessLabel.textContent = `Guess ${Math.min(guessCount + 1, REVIEW_MAX_GUESSES)}/${REVIEW_MAX_GUESSES}`;
+  reviewText.textContent = `“${MOVIE_REVIEW_CLUES[reviewTarget.title]}”`;
+
+  const hintCount = Math.min(guessCount, REVIEW_HINT_ORDER.length);
+  reviewHintRow.innerHTML = REVIEW_HINT_ORDER.slice(0, hintCount)
+    .map(kind => `<span class="charades-chip review-hint-chip">${reviewHintLabel(kind, reviewTarget)}</span>`).join('');
+
+  reviewGuessHistory.innerHTML = reviewGuessedTitles.map(t => `<span class="charades-chip">${t}</span>`).join('');
+  reviewMsg.textContent = '';
+  reviewInput.value = '';
+  reviewInput.disabled = reviewGameOver;
+  reviewGuessBtn.disabled = reviewGameOver;
+}
+
+function renderReviewDropdown(query){
+  const q = query.trim().toLowerCase();
+  if(!q){ reviewDropdown.classList.add('hidden'); reviewDropdown.innerHTML = ''; return; }
+  const guessedSet = new Set(reviewGuessedTitles);
+  const matches = REVIEW_POOL.filter(m => m.title.toLowerCase().includes(q)).slice(0, 8);
+  if(!matches.length){ reviewDropdown.classList.add('hidden'); reviewDropdown.innerHTML = ''; return; }
+  reviewDropdown.innerHTML = matches.map(m => {
+    const already = guessedSet.has(m.title);
+    return `<div class="dropdown-item${already ? ' disabled' : ''}" data-title="${m.title.replace(/"/g,'&quot;')}">${m.title}${already ? ' (already guessed)' : ''}</div>`;
+  }).join('');
+  reviewDropdown.classList.remove('hidden');
+}
+function hideReviewDropdown(){ reviewDropdown.classList.add('hidden'); reviewDropdown.innerHTML = ''; }
+
+function showReviewResults(){
+  reviewPlayArea.style.display = 'none';
+  reviewResultsArea.style.display = '';
+  const guessCount = reviewGuessedTitles.length + (reviewWon ? 1 : 0);
+  reviewFinalMessage.textContent = reviewWon ? 'Nailed it! 🌟' : 'Out of guesses!';
+  reviewFinalScore.textContent = reviewWon
+    ? `Solved in ${guessCount}/${REVIEW_MAX_GUESSES}`
+    : `The answer was ${reviewTarget.title}`;
+  reviewFreeplayBtn.style.display = reviewMode === 'daily' ? '' : 'none';
+  reviewPlayAgainBtn.style.display = reviewMode === 'freeplay' ? '' : 'none';
+}
+function hideReviewResults(){
+  reviewResultsArea.style.display = 'none';
+  reviewPlayArea.style.display = '';
+}
+
+function endReviewRound(){
+  persistReviewDaily();
+  const guessCount = reviewGuessedTitles.length + (reviewWon ? 1 : 0);
+  if(reviewMode === 'daily') recordReviewDailyResult(reviewDailyDate, reviewWon ? guessCount : 'lost');
+  renderReviewRound();
+  showReviewResults();
+  playSfx(reviewWon ? 'win' : 'lose');
+
+  if(reviewWon){
+    const best = loadReviewBest();
+    if(!best || guessCount < best) saveReviewBest(guessCount);
+    const ids = [];
+    if(guessCount === 1) ids.push('review_critic');
+    if(reviewMode === 'daily' && movieDailyStreak(loadReviewHistory(), v => typeof v === 'number') >= 3) ids.push('review_streak');
+    unlockMovieAchievements(ids);
+  }
+}
+
+function submitReviewGuess(){
+  if(reviewGameOver) return;
+  const val = reviewInput.value.trim();
+  if(!val) return;
+  const match = REVIEW_POOL.find(m => m.title.toLowerCase() === val.toLowerCase());
+  if(!match){ reviewMsg.textContent = 'Not in the pool — pick from the dropdown.'; return; }
+  if(reviewGuessedTitles.includes(match.title)){ reviewMsg.textContent = 'Already tried that one.'; hideReviewDropdown(); return; }
+
+  hideReviewDropdown();
+
+  if(match.title === reviewTarget.title){
+    reviewWon = true;
+    reviewGameOver = true;
+    endReviewRound();
+    return;
+  }
+
+  reviewGuessedTitles.push(match.title);
+  playSfx('incorrect');
+  if(reviewGuessedTitles.length >= REVIEW_MAX_GUESSES){
+    reviewGameOver = true;
+    reviewWon = false;
+    endReviewRound();
+    return;
+  }
+  persistReviewDaily();
+  renderReviewRound();
+}
+
+function giveUpReview(){
+  if(reviewGameOver) return;
+  reviewGameOver = true;
+  reviewWon = false;
+  endReviewRound();
+}
+reviewGiveUpBtn.addEventListener('click', ()=>{
+  if(reviewGameOver) return;
+  askGiveUpConfirm(giveUpReview);
+});
+
+function startReviewRound(target){
+  reviewTarget = target;
+  reviewGuessedTitles = [];
+  reviewGameOver = false;
+  reviewWon = false;
+  hideReviewDropdown();
+  hideAllReviewAreas();
+  reviewPlayArea.style.display = '';
+  renderReviewRound();
+}
+
+function startReviewDaily(){
+  recordMovieGamePlayed('reviews');
+  checkMovieMetaAchievements('daily');
+  const date = todayKey();
+  reviewMode = 'daily';
+  reviewDailyDate = date;
+  let stored = loadReviewDailyState();
+  if(!stored || stored.date !== date){
+    stored = { date, guessedTitles: [], gameOver: false, won: false };
+    saveReviewDailyState(stored);
+  }
+  reviewTarget = getReviewTargetFor(date);
+  reviewGuessedTitles = stored.guessedTitles.slice();
+  reviewGameOver = stored.gameOver;
+  reviewWon = stored.won;
+  hideReviewDropdown();
+  hideAllReviewAreas();
+  reviewPlayArea.style.display = '';
+  renderReviewRound();
+  if(reviewGameOver) showReviewResults();
+  else hideReviewResults();
+}
+
+function startReviewFreeplay(){
+  recordMovieGamePlayed('reviews');
+  checkMovieMetaAchievements('freeplay');
+  reviewMode = 'freeplay';
+  startReviewRound(REVIEW_POOL[Math.floor(Math.random() * REVIEW_POOL.length)]);
+}
+
+function buildReviewShareText(){
+  const label = reviewMode === 'daily' ? `CINEMA ONE-STAR REVIEWS Daily #${dailyNumberLabel(reviewDailyDate)}` : 'CINEMA ONE-STAR REVIEWS — Free Play';
+  const guessCount = reviewGuessedTitles.length + (reviewWon ? 1 : 0);
+  return reviewWon
+    ? `${label}\nSolved in ${guessCount}/${REVIEW_MAX_GUESSES} ⭐`
+    : `${label}\nStumped! ⭐`;
+}
+
+reviewInput.addEventListener('input', ()=> renderReviewDropdown(reviewInput.value));
+reviewInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); submitReviewGuess(); }
+  if(e.key === 'Escape'){ hideReviewDropdown(); }
+});
+reviewDropdown.addEventListener('click', (e)=>{
+  const item = e.target.closest('.dropdown-item');
+  if(!item || item.classList.contains('disabled')) return;
+  reviewInput.value = item.dataset.title;
+  hideReviewDropdown();
+  submitReviewGuess();
+});
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('#reviewModal .search-box')) hideReviewDropdown();
+});
+reviewGuessBtn.addEventListener('click', submitReviewGuess);
+
+reviewShareBtn.addEventListener('click', ()=> shareOrCopy(buildReviewShareText(), reviewShareBtn));
+reviewFreeplayBtn.addEventListener('click', startReviewFreeplay);
+reviewPlayAgainBtn.addEventListener('click', startReviewFreeplay);
+reviewCloseBtn.addEventListener('click', showReviewHome);
+document.getElementById('reviewPageMarquee').addEventListener('click', showHomeScreen);
+reviewHomePlayBtn.addEventListener('click', startReviewDaily);
+reviewHomeFreeplayBtn.addEventListener('click', startReviewFreeplay);
+
+
+// ---------- Cinema Double Feature (a new Extras game — two movie posters,
+// one hidden connection between them: same composer, same director, same
+// lead actor, a shared but non-obvious universe, the same release year, or
+// some other real fun fact. Free-text answers are graded loosely — mentioning
+// the right name or the right idea is enough, it never has to be word for
+// word — and a Multiple Choice button is always available as a fallback,
+// showing 4 options with exactly one correct. Lives in the side menu's
+// Extras section alongside Cinema Cup and One-Star Reviews, not in the home
+// carousel cycle. ----------
+const DF_MAX_GUESSES = 4;
+const MOVIE_DOUBLE_FEATURE_POOL = [
+  { a:{title:'The Lion King',year:1994}, b:{title:'Gladiator',year:2000}, category:'Composer',
+    connection:'Both were scored by Hans Zimmer.', keywords:['hans','zimmer','composer','score'],
+    options:['Same composer (Hans Zimmer)','Same director','Same lead actor','Both won Best Picture'], correctIndex:0 },
+  { a:{title:'Saving Private Ryan',year:1998}, b:{title:'Star Wars: The Force Awakens',year:2015}, category:'Composer',
+    connection:'Both were scored by John Williams.', keywords:['john williams','williams','composer','score'],
+    options:['Same director','Same composer (John Williams)','Same release year','Same studio'], correctIndex:1 },
+  { a:{title:'Up',year:2009}, b:{title:'Jurassic World',year:2015}, category:'Composer',
+    connection:'Both were scored by Michael Giacchino.', keywords:['giacchino','composer','score'],
+    options:['Both are Pixar films','Same director','Same composer (Michael Giacchino)','Same lead voice actor'], correctIndex:2 },
+  { a:{title:'The Prestige',year:2006}, b:{title:'Interstellar',year:2014}, category:'Director',
+    connection:'Both were directed by Christopher Nolan.', keywords:['nolan','christopher','director','caine','michael caine'],
+    options:['Same lead actor (Matthew McConaughey)','Same director (Christopher Nolan)','Same composer','Same studio'], correctIndex:1 },
+  { a:{title:'Arrival',year:2016}, b:{title:'Blade Runner 2049',year:2017}, category:'Director',
+    connection:'Both were directed by Denis Villeneuve.', keywords:['villeneuve','denis','director'],
+    options:['Same director (Denis Villeneuve)','Same composer','Same lead actor','Sequel to each other'], correctIndex:0 },
+  { a:{title:'Memories of Murder',year:2003}, b:{title:'Parasite',year:2019}, category:'Director',
+    connection:'Both were directed by Bong Joon-ho.', keywords:['bong','joon','director','song kang','kang-ho'],
+    options:['Same director (Bong Joon-ho)','Same composer','Same studio','Same release year'], correctIndex:0 },
+  { a:{title:'Thor: Ragnarok',year:2017}, b:{title:'Jojo Rabbit',year:2019}, category:'Director',
+    connection:'Both were directed by Taika Waititi.', keywords:['waititi','taika','director'],
+    options:['Same director (Taika Waititi)','Same studio','Same composer','Same lead actor'], correctIndex:0 },
+  { a:{title:'Dawn of the Planet of the Apes',year:2014}, b:{title:'The Batman',year:2022}, category:'Director',
+    connection:'Both were directed by Matt Reeves.', keywords:['matt reeves','reeves','director','giacchino'],
+    options:['Same director (Matt Reeves)','Same lead actor','Same release year','Same studio'], correctIndex:0 },
+  { a:{title:'Inception',year:2010}, b:{title:'Mad Max: Fury Road',year:2015}, category:'Actor',
+    connection:'Both star Tom Hardy.', keywords:['tom hardy','hardy','actor'],
+    options:['Same actor (Tom Hardy)','Same director','Same composer','Same release year'], correctIndex:0 },
+  { a:{title:'Avengers: Endgame',year:2019}, b:{title:'Jojo Rabbit',year:2019}, category:'Actor',
+    connection:'Both star Scarlett Johansson.', keywords:['scarlett','johansson','actor'],
+    options:['Same actor (Scarlett Johansson)','Same director','Same studio','Same composer'], correctIndex:0 },
+  { a:{title:'The Dark Knight',year:2008}, b:{title:'The Big Short',year:2015}, category:'Actor',
+    connection:'Both star Christian Bale.', keywords:['christian bale','bale','actor'],
+    options:['Same actor (Christian Bale)','Same director','Same release year','Same studio'], correctIndex:0 },
+  { a:{title:'Inception',year:2010}, b:{title:'The Wolf of Wall Street',year:2013}, category:'Actor',
+    connection:'Both star Leonardo DiCaprio.', keywords:['dicaprio','leonardo','leo','actor'],
+    options:['Same actor (Leonardo DiCaprio)','Same director','Same composer','Same studio'], correctIndex:0 },
+  { a:{title:'Once Upon a Time in Hollywood',year:2019}, b:{title:'The Big Short',year:2015}, category:'Actor',
+    connection:'Both star Brad Pitt.', keywords:['brad pitt','pitt','actor'],
+    options:['Same actor (Brad Pitt)','Same director','Same release year','Same studio'], correctIndex:0 },
+  { a:{title:'Fantastic Beasts and Where to Find Them',year:2016}, b:{title:'Harry Potter and the Deathly Hallows – Part 2',year:2011}, category:'Universe',
+    connection:'Both are set in the Wizarding World.', keywords:['wizarding world','wizarding','universe','harry potter universe'],
+    options:['Same fictional universe (Wizarding World)','Same lead actor','Same composer','Same release year'], correctIndex:0 },
+  { a:{title:'Parasite',year:2019}, b:{title:'Avengers: Endgame',year:2019}, category:'Year',
+    connection:'Both were released in 2019.', keywords:['2019','same year','release year'],
+    options:['Same release year (2019)','Same director','Same studio','Same composer'], correctIndex:0 },
+  { a:{title:'The Dark Knight',year:2008}, b:{title:'WALL-E',year:2008}, category:'Year',
+    connection:'Both were released in 2008.', keywords:['2008','same year','release year'],
+    options:['Same release year (2008)','Same studio','Same director','Same lead actor'], correctIndex:0 },
+  { a:{title:'Parasite',year:2019}, b:{title:'Green Book',year:2018}, category:'Fun Fact',
+    connection:'Both won the Best Picture Oscar.', keywords:['best picture','oscar','academy award'],
+    options:['Both won the Best Picture Oscar','Same director','Same composer','Same lead actor'], correctIndex:0 },
+  { a:{title:'Spirited Away',year:2001}, b:{title:'Coco',year:2017}, category:'Fun Fact',
+    connection:'Both won the Best Animated Feature Oscar.', keywords:['best animated feature','animated feature','oscar','academy award'],
+    options:['Both won the Best Animated Feature Oscar','Same director','Same composer','Same studio'], correctIndex:0 },
+  { a:{title:'The Big Short',year:2015}, b:{title:'Spotlight',year:2015}, category:'Fun Fact',
+    connection:'Both are based on true events.', keywords:['true story','true events','based on a true story','biopic','real events'],
+    options:['Both are based on true events','Same director','Same lead actor','Same composer'], correctIndex:0 },
+  { a:{title:'La La Land',year:2016}, b:{title:'Poor Things',year:2023}, category:'Actor',
+    connection:'Both star Emma Stone.', keywords:['emma stone','stone','actor'],
+    options:['Same actor (Emma Stone)','Same director','Same composer','Same studio'], correctIndex:0 },
+  { a:{title:'The Grand Budapest Hotel',year:2014}, b:{title:'The Shape of Water',year:2017}, category:'Composer',
+    connection:'Both were scored by Alexandre Desplat.', keywords:['desplat','alexandre','composer'],
+    options:['Same composer (Alexandre Desplat)','Same director','Same lead actor','Same release year'], correctIndex:0 },
+  { a:{title:'La La Land',year:2016}, b:{title:'Blade Runner 2049',year:2017}, category:'Actor',
+    connection:'Both star Ryan Gosling.', keywords:['ryan gosling','gosling','actor'],
+    options:['Same actor (Ryan Gosling)','Same director','Same composer','Same release year'], correctIndex:0 },
+  { a:{title:'Se7en',year:1995}, b:{title:'Gone Girl',year:2014}, category:'Director',
+    connection:'Both were directed by David Fincher.', keywords:['fincher','david fincher','director'],
+    options:['Same director (David Fincher)','Same lead actor','Same composer','Same release year'], correctIndex:0 },
+  { a:{title:'Nightcrawler',year:2014}, b:{title:'Zodiac',year:2007}, category:'Actor',
+    connection:'Both star Jake Gyllenhaal.', keywords:['gyllenhaal','jake','actor'],
+    options:['Same actor (Jake Gyllenhaal)','Same director','Same composer','Same release year'], correctIndex:0 },
+  { a:{title:'Skyfall',year:2012}, b:{title:'WALL-E',year:2008}, category:'Composer',
+    connection:'Both were scored by Thomas Newman.', keywords:['thomas newman','newman','composer'],
+    options:['Same composer (Thomas Newman)','Same director','Same lead actor','Same studio'], correctIndex:0 },
+  { a:{title:'Black Panther',year:2018}, b:{title:'Oppenheimer',year:2023}, category:'Composer',
+    connection:'Both were scored by Ludwig Göransson.', keywords:['goransson','göransson','ludwig','composer'],
+    options:['Same composer (Ludwig Göransson)','Same director','Same lead actor','Same release year'], correctIndex:0 },
+  { a:{title:'La La Land',year:2016}, b:{title:'Whiplash',year:2014}, category:'Composer',
+    connection:'Both were scored by Justin Hurwitz.', keywords:['justin hurwitz','hurwitz','composer'],
+    options:['Same composer (Justin Hurwitz)','Same lead actor','Same release year','Same studio'], correctIndex:0 },
+  { a:{title:'Forrest Gump',year:1994}, b:{title:'Ready Player One',year:2018}, category:'Composer',
+    connection:'Both were scored by Alan Silvestri.', keywords:['alan silvestri','silvestri','composer'],
+    options:['Same composer (Alan Silvestri)','Same director','Same lead actor','Same release year'], correctIndex:0 },
+  { a:{title:'Top Gun: Maverick',year:2022}, b:{title:'Mission: Impossible – Fallout',year:2018}, category:'Actor',
+    connection:'Both star Tom Cruise.', keywords:['tom cruise','cruise','actor'],
+    options:['Same actor (Tom Cruise)','Same director','Same release year','Same genre'], correctIndex:0 }
+];
+
+
+const dfModal = document.getElementById('dfModal');
+const dfHomeArea = document.getElementById('dfHomeArea');
+const dfPlayArea = document.getElementById('dfPlayArea');
+const dfResultsArea = document.getElementById('dfResultsArea');
+const dfHomePlayBtn = document.getElementById('dfHomePlayBtn');
+const dfHomeFreeplayBtn = document.getElementById('dfHomeFreeplayBtn');
+const dfModeLabel = document.getElementById('dfModeLabel');
+const dfGuessLabel = document.getElementById('dfGuessLabel');
+const dfArena = document.getElementById('dfArena');
+const dfInput = document.getElementById('dfInput');
+const dfSubmitBtn = document.getElementById('dfSubmitBtn');
+const dfGuessHistory = document.getElementById('dfGuessHistory');
+const dfMsg = document.getElementById('dfMsg');
+const dfMcToggleBtn = document.getElementById('dfMcToggleBtn');
+const dfMcOptionsEl = document.getElementById('dfMcOptions');
+const dfGiveUpBtn = document.getElementById('dfGiveUpBtn');
+const dfFinalMessage = document.getElementById('dfFinalMessage');
+const dfFinalScore = document.getElementById('dfFinalScore');
+const dfConnectionReveal = document.getElementById('dfConnectionReveal');
+const dfShareBtn = document.getElementById('dfShareBtn');
+const dfFreeplayBtn = document.getElementById('dfFreeplayBtn');
+const dfPlayAgainBtn = document.getElementById('dfPlayAgainBtn');
+const dfCloseBtn = document.getElementById('dfCloseBtn');
+
+let dfMode = 'daily'; // 'daily' | 'freeplay'
+let dfDailyDate = null;
+let dfTarget = null;
+let dfGuessCount = 0;
+let dfGuessedTexts = [];
+let dfGameOver = false;
+let dfWon = false;
+let dfSolvedViaMc = false;
+let dfMcOpened = false;
+let dfMcOrder = [0, 1, 2, 3];
+let dfMcWrongIndices = [];
+
+function hideAllDfAreas(){
+  dfHomeArea.style.display = 'none';
+  dfPlayArea.style.display = 'none';
+  dfResultsArea.style.display = 'none';
+}
+function showDfHome(){
+  hideAllDfAreas();
+  dfHomeArea.style.display = '';
+}
+function showDfPage(){
+  hideAllTopScreens();
+  dfModal.classList.add('show');
+  showDfHome();
+}
+
+function getDfTargetIndexFor(dateStr){
+  const rng = mulberry32(hashStr('doublefeature-' + dateStr));
+  return Math.floor(rng() * MOVIE_DOUBLE_FEATURE_POOL.length);
+}
+
+const DF_DAILY_KEY = 'moviesDfDaily_v1';
+function loadDfDailyState(){ try{ const raw = localStorage.getItem(DF_DAILY_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } }
+function saveDfDailyState(state){ try{ localStorage.setItem(DF_DAILY_KEY, JSON.stringify(state)); }catch(e){} }
+function persistDfDaily(){
+  if(dfMode !== 'daily') return;
+  saveDfDailyState({
+    date: dfDailyDate,
+    puzzleIndex: MOVIE_DOUBLE_FEATURE_POOL.indexOf(dfTarget),
+    guessCount: dfGuessCount,
+    guessedTexts: dfGuessedTexts.slice(),
+    gameOver: dfGameOver,
+    won: dfWon,
+    solvedViaMc: dfSolvedViaMc,
+    mcOpened: dfMcOpened,
+    mcOrder: dfMcOrder.slice(),
+    mcWrongIndices: dfMcWrongIndices.slice()
+  });
+}
+
+const DF_HISTORY_KEY = 'moviesDfHistory_v1';
+function loadDfHistory(){ try{ const raw = localStorage.getItem(DF_HISTORY_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; } }
+function saveDfHistory(hist){ try{ localStorage.setItem(DF_HISTORY_KEY, JSON.stringify(hist)); }catch(e){} }
+function recordDfDailyResult(dateStr, value){ const hist = loadDfHistory(); hist[dateStr] = value; saveDfHistory(hist); }
+const DF_BEST_KEY = 'moviesDfBest_v1';
+function loadDfBest(){ try{ return parseInt(localStorage.getItem(DF_BEST_KEY), 10) || 0; }catch(e){ return 0; } }
+function saveDfBest(guesses){ try{ localStorage.setItem(DF_BEST_KEY, String(guesses)); }catch(e){} }
+
+// Loose, forgiving grading: strip punctuation/case, then check whether ANY
+// of the puzzle's accepted keywords shows up anywhere in what was typed —
+// so "Hans does the music for both" matches just as well as "Hans Zimmer".
+function dfNormalize(s){
+  return (s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function dfCheckAnswer(input, puzzle){
+  const norm = dfNormalize(input);
+  if(!norm) return false;
+  return puzzle.keywords.some(k => norm.includes(k));
+}
+
+function dfCategoryIcon(cat){
+  if(cat === 'Composer') return '🎼';
+  if(cat === 'Director') return '🎬';
+  if(cat === 'Actor') return '🎭';
+  if(cat === 'Universe') return '🌌';
+  if(cat === 'Year') return '📅';
+  return '🔗';
+}
+
+function renderDfMcOptions(){
+  if(!dfMcOpened){
+    dfMcOptionsEl.style.display = 'none';
+    dfMcOptionsEl.innerHTML = '';
+    return;
+  }
+  dfMcOptionsEl.style.display = '';
+  dfMcOptionsEl.innerHTML = dfMcOrder.map(optIdx=>{
+    const isWrong = dfMcWrongIndices.includes(optIdx);
+    const isCorrectRevealed = dfGameOver && optIdx === dfTarget.correctIndex;
+    let cls = 'df-mc-btn';
+    if(isWrong) cls += ' wrong';
+    if(isCorrectRevealed) cls += ' correct';
+    const disabled = dfGameOver || isWrong;
+    return `<button class="${cls}" data-opt-idx="${optIdx}" ${disabled ? 'disabled' : ''}>${dfTarget.options[optIdx]}</button>`;
+  }).join('');
+  dfMcOptionsEl.querySelectorAll('.df-mc-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> dfSelectMcOption(parseInt(btn.dataset.optIdx, 10)));
+  });
+}
+
+function renderDfRound(){
+  dfModeLabel.textContent = dfMode === 'daily' ? `DAILY #${dailyNumberLabel(dfDailyDate)}` : 'FREE PLAY';
+  dfGuessLabel.textContent = `Guess ${Math.min(dfGuessCount + 1, DF_MAX_GUESSES)}/${DF_MAX_GUESSES}`;
+
+  const a = dfTarget.a, b = dfTarget.b;
+  dfArena.innerHTML = `
+    <div class="clash-card locked" data-side="left" data-current-title="${a.title.replace(/"/g,'&quot;')}">
+      <div class="clash-card-loading"><span class="clash-card-emoji">🎬</span></div>
+      <div class="clash-card-title"><div class="ct-name">${a.title}</div></div>
+    </div>
+    <div class="clash-or df-or">+</div>
+    <div class="clash-card locked" data-side="right" data-current-title="${b.title.replace(/"/g,'&quot;')}">
+      <div class="clash-card-loading"><span class="clash-card-emoji">🎬</span></div>
+      <div class="clash-card-title"><div class="ct-name">${b.title}</div></div>
+    </div>
+  `;
+  loadMoviePosterArt(dfArena.querySelector('[data-side="left"]'), a);
+  loadMoviePosterArt(dfArena.querySelector('[data-side="right"]'), b);
+
+  dfGuessHistory.innerHTML = dfGuessedTexts.map(t => `<span class="charades-chip">${t}</span>`).join('');
+  dfMsg.textContent = '';
+  dfInput.value = '';
+  dfInput.disabled = dfGameOver;
+  dfSubmitBtn.disabled = dfGameOver;
+  dfMcToggleBtn.disabled = dfGameOver || dfMcOpened;
+  renderDfMcOptions();
+}
+
+function showDfResults(){
+  dfPlayArea.style.display = 'none';
+  dfResultsArea.style.display = '';
+  const guessCount = dfGuessCount + (dfWon ? 1 : 0);
+  dfFinalMessage.textContent = dfWon ? (dfSolvedViaMc ? 'Nailed it! 🔗' : 'Nailed it! 🔗') : 'Stumped!';
+  dfFinalScore.textContent = dfWon
+    ? `Solved in ${guessCount}/${DF_MAX_GUESSES}${dfSolvedViaMc ? ' (multiple choice)' : ''}`
+    : 'Out of guesses!';
+  dfConnectionReveal.innerHTML = `
+    <span class="charades-chip df-category-chip">${dfCategoryIcon(dfTarget.category)} ${dfTarget.category}</span>
+    <div class="df-connection-reveal">${dfTarget.connection}</div>
+  `;
+  dfFreeplayBtn.style.display = dfMode === 'daily' ? '' : 'none';
+  dfPlayAgainBtn.style.display = dfMode === 'freeplay' ? '' : 'none';
+}
+function hideDfResults(){
+  dfResultsArea.style.display = 'none';
+  dfPlayArea.style.display = '';
+}
+
+function endDfRound(){
+  persistDfDaily();
+  const guessCount = dfGuessCount + (dfWon ? 1 : 0);
+  if(dfMode === 'daily') recordDfDailyResult(dfDailyDate, dfWon ? guessCount : 'lost');
+  renderDfRound();
+  showDfResults();
+  playSfx(dfWon ? 'win' : 'lose');
+
+  if(dfWon){
+    const best = loadDfBest();
+    if(!best || guessCount < best) saveDfBest(guessCount);
+    const ids = [];
+    if(!dfSolvedViaMc) ids.push('df_scholar');
+    if(dfMode === 'daily' && movieDailyStreak(loadDfHistory(), v => typeof v === 'number') >= 3) ids.push('df_streak');
+    unlockMovieAchievements(ids);
+  }
+}
+
+function submitDfGuess(){
+  if(dfGameOver) return;
+  const val = dfInput.value.trim();
+  if(!val) return;
+
+  if(dfCheckAnswer(val, dfTarget)){
+    dfWon = true;
+    dfGameOver = true;
+    dfSolvedViaMc = false;
+    endDfRound();
+    return;
+  }
+
+  dfGuessedTexts.push(val);
+  dfInput.value = '';
+  playSfx('incorrect');
+  dfGuessCount++;
+  if(dfGuessCount >= DF_MAX_GUESSES){
+    dfGameOver = true;
+    dfWon = false;
+    endDfRound();
+    return;
+  }
+  persistDfDaily();
+  renderDfRound();
+}
+
+function dfOpenMc(){
+  if(dfGameOver || dfMcOpened) return;
+  dfMcOpened = true;
+  persistDfDaily();
+  renderDfRound();
+}
+
+function dfSelectMcOption(idx){
+  if(dfGameOver) return;
+  if(idx === dfTarget.correctIndex){
+    dfWon = true;
+    dfGameOver = true;
+    dfSolvedViaMc = true;
+    endDfRound();
+    return;
+  }
+  if(!dfMcWrongIndices.includes(idx)) dfMcWrongIndices.push(idx);
+  playSfx('incorrect');
+  dfGuessCount++;
+  if(dfGuessCount >= DF_MAX_GUESSES){
+    dfGameOver = true;
+    dfWon = false;
+    endDfRound();
+    return;
+  }
+  persistDfDaily();
+  renderDfRound();
+}
+
+function giveUpDf(){
+  if(dfGameOver) return;
+  dfGameOver = true;
+  dfWon = false;
+  endDfRound();
+}
+dfGiveUpBtn.addEventListener('click', ()=>{
+  if(dfGameOver) return;
+  askGiveUpConfirm(giveUpDf);
+});
+
+function startDfRound(target){
+  dfTarget = target;
+  dfGuessCount = 0;
+  dfGuessedTexts = [];
+  dfGameOver = false;
+  dfWon = false;
+  dfSolvedViaMc = false;
+  dfMcOpened = false;
+  dfMcWrongIndices = [];
+  dfMcOrder = seededShuffle([0, 1, 2, 3], Math.random);
+  hideAllDfAreas();
+  dfPlayArea.style.display = '';
+  renderDfRound();
+}
+
+function startDfDaily(){
+  recordMovieGamePlayed('doublefeature');
+  checkMovieMetaAchievements('daily');
+  const date = todayKey();
+  dfMode = 'daily';
+  dfDailyDate = date;
+  let stored = loadDfDailyState();
+  if(!stored || stored.date !== date){
+    stored = {
+      date,
+      puzzleIndex: getDfTargetIndexFor(date),
+      guessCount: 0,
+      guessedTexts: [],
+      gameOver: false,
+      won: false,
+      solvedViaMc: false,
+      mcOpened: false,
+      mcOrder: seededShuffle([0, 1, 2, 3], Math.random),
+      mcWrongIndices: []
+    };
+    saveDfDailyState(stored);
+  }
+  dfTarget = MOVIE_DOUBLE_FEATURE_POOL[stored.puzzleIndex];
+  dfGuessCount = stored.guessCount;
+  dfGuessedTexts = stored.guessedTexts.slice();
+  dfGameOver = stored.gameOver;
+  dfWon = stored.won;
+  dfSolvedViaMc = stored.solvedViaMc;
+  dfMcOpened = stored.mcOpened;
+  dfMcOrder = stored.mcOrder.slice();
+  dfMcWrongIndices = stored.mcWrongIndices.slice();
+  hideAllDfAreas();
+  dfPlayArea.style.display = '';
+  renderDfRound();
+  if(dfGameOver) showDfResults();
+  else hideDfResults();
+}
+
+function startDfFreeplay(){
+  recordMovieGamePlayed('doublefeature');
+  checkMovieMetaAchievements('freeplay');
+  dfMode = 'freeplay';
+  startDfRound(MOVIE_DOUBLE_FEATURE_POOL[Math.floor(Math.random() * MOVIE_DOUBLE_FEATURE_POOL.length)]);
+}
+
+function buildDfShareText(){
+  const label = dfMode === 'daily' ? `CINEMA DOUBLE FEATURE Daily #${dailyNumberLabel(dfDailyDate)}` : 'CINEMA DOUBLE FEATURE — Free Play';
+  const guessCount = dfGuessCount + (dfWon ? 1 : 0);
+  return dfWon
+    ? `${label}\nSolved in ${guessCount}/${DF_MAX_GUESSES} (${dfTarget.category}) 🔗`
+    : `${label}\nStumped! 🔗`;
+}
+
+dfInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); submitDfGuess(); }
+});
+dfSubmitBtn.addEventListener('click', submitDfGuess);
+dfMcToggleBtn.addEventListener('click', dfOpenMc);
+
+dfShareBtn.addEventListener('click', ()=> shareOrCopy(buildDfShareText(), dfShareBtn));
+dfFreeplayBtn.addEventListener('click', startDfFreeplay);
+dfPlayAgainBtn.addEventListener('click', startDfFreeplay);
+dfCloseBtn.addEventListener('click', showDfHome);
+document.getElementById('dfPageMarquee').addEventListener('click', showHomeScreen);
+dfHomePlayBtn.addEventListener('click', startDfDaily);
+dfHomeFreeplayBtn.addEventListener('click', startDfFreeplay);
+
+
 // ---------- Cinema Cup (movie preference bracket — pick a favorite each
 // round, single elimination up to Round of 32 -> ... -> Final -> Champion).
 // Daily/Free Play draw from all movies at the max 32-entrant size; a
@@ -6485,6 +7489,8 @@ function hideAllTopScreens(){
   charadesModal.classList.remove('show');
   crosswordModal.classList.remove('show');
   cupModal.classList.remove('show');
+  reviewModal.classList.remove('show');
+  dfModal.classList.remove('show');
   if(typeof closeGiveUpConfirm === 'function') closeGiveUpConfirm();
 }
 function showHomeScreen(){
@@ -6626,6 +7632,8 @@ const movieMenuChronicleBtn = document.getElementById('movieMenuChronicleBtn');
 const movieMenuChaosBtn = document.getElementById('movieMenuChaosBtn');
 const movieMenuCodeBtn = document.getElementById('movieMenuCodeBtn');
 const movieMenuCupBtn = document.getElementById('movieMenuCupBtn');
+const movieMenuReviewBtn = document.getElementById('movieMenuReviewBtn');
+const movieMenuDfBtn = document.getElementById('movieMenuDfBtn');
 const movieMenuCartridgeBtn = document.getElementById('movieMenuCartridgeBtn');
 
 function openMovieSideMenu(){
@@ -6637,6 +7645,8 @@ function openMovieSideMenu(){
   const chaosOpen = chaosModal.classList.contains('show');
   const codeOpen = codeModal.classList.contains('show');
   const cupOpen = cupModal.classList.contains('show');
+  const reviewOpen = reviewModal.classList.contains('show');
+  const dfOpen = dfModal.classList.contains('show');
   movieMenuClashBtn.classList.toggle('active', clashOpen);
   movieMenuConnectBtn.classList.toggle('active', gridOpen);
   movieMenuCharadesBtn.classList.toggle('active', charadesOpen);
@@ -6645,6 +7655,8 @@ function openMovieSideMenu(){
   movieMenuChaosBtn.classList.toggle('active', chaosOpen);
   movieMenuCodeBtn.classList.toggle('active', codeOpen);
   movieMenuCupBtn.classList.toggle('active', cupOpen);
+  movieMenuReviewBtn.classList.toggle('active', reviewOpen);
+  movieMenuDfBtn.classList.toggle('active', dfOpen);
   movieSideMenu.classList.add('show');
   movieSideMenuOverlay.classList.add('show');
 }
@@ -6694,6 +7706,14 @@ movieMenuCodeBtn.addEventListener('click', ()=>{
 movieMenuCupBtn.addEventListener('click', ()=>{
   closeMovieSideMenu();
   showCupPage();
+});
+movieMenuReviewBtn.addEventListener('click', ()=>{
+  closeMovieSideMenu();
+  showReviewPage();
+});
+movieMenuDfBtn.addEventListener('click', ()=>{
+  closeMovieSideMenu();
+  showDfPage();
 });
 // Cartridge is a separate site (its own HTML page, own game database), not
 // another modal on this page — so unlike every other menu item, this one
