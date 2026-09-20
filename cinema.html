@@ -1011,6 +1011,48 @@
     border: 1px solid var(--magenta); color: var(--magenta); font-family: 'IBM Plex Mono', monospace;
     font-size: 11px; text-decoration: line-through;
   }
+  .charades-chip.chip-close {
+    border-color: var(--amber); color: var(--amber); text-decoration: none; font-weight: 600;
+  }
+
+  /* ---------- Win celebration banner treatment ---------- */
+  @keyframes resultBannerPulse {
+    0%, 100% { text-shadow: 0 0 8px currentColor, 0 0 22px currentColor; transform: scale(1); }
+    50% { text-shadow: 0 0 16px currentColor, 0 0 40px currentColor; transform: scale(1.045); }
+  }
+  @keyframes aceShimmer { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+  .result-banner-win {
+    display: inline-block; padding: 8px 18px; margin-bottom: 4px; border-radius: 10px;
+    border: 2px solid var(--gold); color: var(--gold);
+    background: linear-gradient(180deg, rgba(23,28,61,0.9), rgba(15,19,48,0.9));
+    animation: resultBannerPulse 1.3s ease-in-out infinite;
+  }
+  .result-banner-win.result-banner-ace {
+    border-color: transparent;
+    background-image: linear-gradient(180deg, rgba(23,28,61,0.92), rgba(15,19,48,0.92)),
+      linear-gradient(90deg, #ffd54a, #ff8bd0, #7bffb0, #6ecbff, #ffd54a);
+    background-origin: border-box; background-clip: padding-box, border-box;
+    background-size: 100% 100%, 300% 100%;
+    animation: resultBannerPulse 1.05s ease-in-out infinite, aceShimmer 1.6s linear infinite;
+  }
+
+  /* ---------- Movie reveal poster + info card ---------- */
+  .movie-reveal-card {
+    display: flex; gap: 14px; align-items: stretch; background: var(--panel-2);
+    border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin: 12px 0;
+    text-align: left; animation: revealCardIn 0.4s ease-out;
+  }
+  @keyframes revealCardIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .movie-reveal-poster {
+    flex: 0 0 auto; width: 84px; height: 126px; border-radius: 8px; overflow: hidden;
+    background: var(--panel); display: flex; align-items: center; justify-content: center;
+    font-size: 32px; border: 1px solid var(--line);
+  }
+  .movie-reveal-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .movie-reveal-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+  .movie-reveal-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; color: var(--text); }
+  .movie-reveal-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--text-dim); line-height: 1.5; }
+  .movie-reveal-meta span { display: inline-block; margin-right: 8px; }
 
   /* ---------- Cinema One-Star Reviews ---------- */
   .review-hint-chip {
@@ -1520,7 +1562,7 @@
       <span class="side-menu-icon">🎥</span>
       <span class="side-menu-label">Cinema Chronicle</span>
     </button>
-    <button class="side-menu-item" id="movieMenuChaosBtn">
+    <button class="side-menu-item" id="movieMenuChaosBtn" style="display:none;">
       <span class="side-menu-icon">🍿</span>
       <span class="side-menu-label">Cinema Chaos</span>
     </button>
@@ -1607,7 +1649,7 @@
       <div class="archive-stats" id="movieStatsChronicle"></div>
     </div>
 
-    <div class="archive-game-section">
+    <div class="archive-game-section" id="movieStatsChaosSection" style="display:none;">
       <div class="archive-game-heading" style="color:var(--violet);">Cinema Chaos</div>
       <div class="archive-stats" id="movieStatsChaos"></div>
     </div>
@@ -1898,6 +1940,7 @@
     <div id="charadesResultsArea" class="clash-results" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid var(--line);">
       <div class="clash-heading" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700;" id="charadesFinalMessage">Solved it!</div>
       <div class="clash-final-score" id="charadesFinalScore"></div>
+      <div id="charadesPosterCard"></div>
       <div class="btn-row" style="justify-content:center;">
         <button class="ghost-btn" id="charadesShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="charadesFreeplayBtn">Play Free Play</button>
@@ -2107,6 +2150,7 @@
     <div id="reviewResultsArea" class="clash-results" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid var(--line);">
       <div class="clash-heading" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700;" id="reviewFinalMessage">Nailed it!</div>
       <div class="clash-final-score" id="reviewFinalScore"></div>
+      <div id="reviewPosterCard"></div>
       <div class="btn-row" style="justify-content:center;">
         <button class="ghost-btn" id="reviewShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="reviewFreeplayBtn">Play Free Play</button>
@@ -2211,7 +2255,9 @@
       </div>
       <div class="btn-row" style="justify-content:center;">
         <button class="ghost-btn" id="stSkipBtn">⏭ Skip</button>
+        <button class="ghost-btn" id="stMcToggleBtn">🔀 Multiple Choice</button>
       </div>
+      <div id="stMcOptions" style="display:none; margin-top:10px;"></div>
       <div class="charades-guess-history" id="stGuessHistory"></div>
       <div class="msg" id="stMsg"></div>
       <div class="btn-row">
@@ -2223,6 +2269,7 @@
       <div class="clash-heading" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700;" id="stFinalMessage">Nailed it!</div>
       <div class="clash-final-score" id="stFinalScore"></div>
       <div id="stTrackReveal" style="margin:10px 0 4px;"></div>
+      <div id="stPosterCard"></div>
       <div class="btn-row" style="justify-content:center;">
         <button class="ghost-btn" id="stShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="stFreeplayBtn">Play Free Play</button>
@@ -2958,6 +3005,113 @@ function playTone(ctx, freq, startTime, duration, opts){
   osc.start(startTime);
   osc.stop(startTime + duration + 0.03);
 }
+// ---------- Win celebration (confetti / fireworks / sparkle burst) ----------
+// A lightweight, dependency-free canvas overlay fired whenever a game is
+// actually won. One of three effects is picked at random each time so
+// repeat wins don't feel identical. `applyResultBanner` is the one call
+// each game's results-render function makes: it toggles the glowing
+// `.result-banner-win` treatment on the final-message element and, for an
+// exceptional win (e.g. a 1-second Name That Score solve), the extra
+// `.result-banner-ace` shimmer on top.
+function launchWinCelebration(){
+  try{
+    const effects = ['confetti', 'fireworks', 'sparkle'];
+    const effect = effects[Math.floor(Math.random() * effects.length)];
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:500;';
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    const colors = ['#ffd54a','#ff8bd0','#7bffb0','#6ecbff','#ff9f5a','#c68bff'];
+    let particles = [];
+    const duration = effect === 'fireworks' ? 2200 : 1800;
+    const start = performance.now();
+    let fireworkTimer = 0;
+
+    function spawnConfetti(){
+      for(let i=0;i<120;i++){
+        particles.push({
+          x: Math.random()*canvas.width, y: -20 - Math.random()*canvas.height*0.3,
+          vx: (Math.random()-0.5)*2, vy: 2+Math.random()*3,
+          size: 4+Math.random()*5, color: colors[Math.floor(Math.random()*colors.length)],
+          rot: Math.random()*Math.PI*2, vr: (Math.random()-0.5)*0.3
+        });
+      }
+    }
+    function spawnFireworkBurst(cx, cy){
+      const n = 40;
+      for(let i=0;i<n;i++){
+        const angle = (Math.PI*2*i)/n;
+        const speed = 2+Math.random()*3;
+        particles.push({
+          x: cx, y: cy, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed,
+          size: 2+Math.random()*2, color: colors[Math.floor(Math.random()*colors.length)],
+          life: 1, decay: 0.012+Math.random()*0.01
+        });
+      }
+    }
+    function spawnSparkle(){
+      for(let i=0;i<60;i++){
+        particles.push({
+          x: Math.random()*canvas.width, y: Math.random()*canvas.height*0.6+canvas.height*0.15,
+          vx: (Math.random()-0.5)*0.6, vy: (Math.random()-0.5)*0.6,
+          size: 1+Math.random()*3, color: colors[Math.floor(Math.random()*colors.length)],
+          life: 1, decay: 0.01+Math.random()*0.015
+        });
+      }
+    }
+
+    if(effect === 'confetti') spawnConfetti();
+    else if(effect === 'sparkle') spawnSparkle();
+
+    function frame(now){
+      const elapsed = now - start;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      if(effect === 'fireworks'){
+        fireworkTimer -= 16;
+        if(fireworkTimer <= 0 && elapsed < duration - 400){
+          spawnFireworkBurst(canvas.width*(0.2+Math.random()*0.6), canvas.height*(0.2+Math.random()*0.4));
+          fireworkTimer = 260 + Math.random()*200;
+        }
+      }
+
+      particles.forEach(p=>{
+        p.x += p.vx; p.y += p.vy;
+        if(effect === 'confetti'){
+          p.vy += 0.03; p.rot += p.vr;
+          ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+          ctx.fillStyle = p.color; ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6);
+          ctx.restore();
+        } else {
+          if(effect === 'fireworks') p.vy += 0.02;
+          p.life -= p.decay;
+          ctx.globalAlpha = Math.max(p.life,0);
+          ctx.fillStyle = p.color;
+          ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+      });
+      particles = (effect === 'confetti')
+        ? particles.filter(p => p.y < canvas.height + 20)
+        : particles.filter(p => p.life > 0);
+
+      if(elapsed < duration) requestAnimationFrame(frame);
+      else canvas.remove();
+    }
+    requestAnimationFrame(frame);
+  }catch(e){ /* celebration is decorative — never let it break a game */ }
+}
+function applyResultBanner(el, won, ace){
+  if(!el) return;
+  el.classList.remove('result-banner-win', 'result-banner-ace');
+  if(won){
+    el.classList.add('result-banner-win');
+    if(ace) el.classList.add('result-banner-ace');
+    launchWinCelebration();
+  }
+}
+
 function playSfx(name){
   if(sfxMuted) return;
   try{
@@ -3272,6 +3426,40 @@ function loadMoviePosterArt(cardEl, movie){
   });
 }
 
+// ---------- Movie reveal poster + info card (Reviews / Charades / Name That Score results) ----------
+function renderMovieRevealCard(containerId, movieTitle){
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  const movie = MOVIES.find(m => m.title === movieTitle);
+  if(!movie){ container.innerHTML = ''; return; }
+  container.dataset.currentTitle = movieTitle;
+  const genreText = (movie.genres || []).join(' / ');
+  container.innerHTML = `
+    <div class="movie-reveal-card">
+      <div class="movie-reveal-poster"><span class="reveal-poster-emoji">🎬</span></div>
+      <div class="movie-reveal-info">
+        <div class="movie-reveal-title">${movie.title}</div>
+        <div class="movie-reveal-meta">
+          <span>📅 ${movie.year}</span>${movie.rated ? `<span>🎟️ ${movie.rated}</span>` : ''}${movie.score != null ? `<span>⭐ ${movie.score}%</span>` : ''}
+        </div>
+        <div class="movie-reveal-meta">${genreText ? `<span>🎭 ${genreText}</span>` : ''}${movie.studio ? `<span>🏢 ${movie.studio}</span>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+  const posterEl = container.querySelector('.movie-reveal-poster');
+  fetchMoviePoster(movie.title, movie.year).then(url=>{
+    if(container.dataset.currentTitle !== movieTitle) return;
+    if(url && posterEl){
+      const img = document.createElement('img');
+      img.alt = movie.title;
+      img.src = url;
+      posterEl.innerHTML = '';
+      posterEl.appendChild(img);
+    }
+  });
+}
+
 // ---------- Movie Achievements (a slimmed-down, 10-achievement version of
 // Cartridge's own achievement system) ----------
 const MOVIE_ACHIEVEMENTS = [
@@ -3320,6 +3508,7 @@ function unlockMovieAchievements(ids){
   });
   if(newlyUnlocked.length) saveMovieAchievementState();
   if(typeof renderMovieAchievements === 'function') renderMovieAchievements();
+  if(typeof applyChaosUnlockState === 'function') applyChaosUnlockState();
   return newlyUnlocked;
 }
 
@@ -3606,6 +3795,7 @@ function showClashResults(){
   const total = CLASH_STAGES.length * CLASH_ROUNDS_PER_STAGE;
   clashFinalMessage.textContent = `${clashScore}/${total} — ${clashResultMessage(clashScore, total)}`;
   clashFinalScore.textContent = `${clashScore}/${total}`;
+  applyResultBanner(clashFinalMessage, clashScore === total);
   const best = loadClashBest();
   if(clashScore > best){
     saveClashBest(clashScore);
@@ -3998,6 +4188,7 @@ function handleGridTileClick(title){
 function showGridResults(won){
   gridResultsArea.style.display = '';
   gridFinalMessage.textContent = won ? 'Solved it! 🎉' : 'Out of lives!';
+  applyResultBanner(gridFinalMessage, won, won && gridLives === 3);
   const unsolved = gridPuzzle.categories.filter(c=>!gridSolvedIds.includes(c.id));
   gridRevealList.innerHTML = unsolved.map(c=>`
     <div class="grid-solved-bar" style="background:var(--${c.color}); color:#06210f;">
@@ -4434,6 +4625,7 @@ function showChronicleResults(){
   chronicleResultsArea.style.display = '';
   chronicleFinalMessage.textContent = `${chronicleScore}/${CHRONICLE_MAX_SCORE} — ${chronicleResultMessage(chronicleScore)}`;
   chronicleFinalScore.textContent = `${chronicleScore}/${CHRONICLE_MAX_SCORE}`;
+  applyResultBanner(chronicleFinalMessage, chronicleScore === CHRONICLE_MAX_SCORE);
   const best = loadChronicleBest();
   if(chronicleScore > best){
     saveChronicleBest(chronicleScore);
@@ -4859,6 +5051,7 @@ function endChaosGame(){
   chaosFinalScore.textContent = String(chaosScore);
   recordChaosRun(chaosScore);
   const best = loadChaosBest();
+  applyResultBanner(chaosFinalMessage, chaosScore > best || chaosScore >= 20, chaosScore > best && chaosScore >= 20);
   if(chaosScore > best){
     saveChaosBest(chaosScore);
     chaosBestScoreText.textContent = `New best: ${chaosScore}!`;
@@ -4897,6 +5090,23 @@ function applyCodeUnlockState(){
   if(statsSection) statsSection.style.display = unlocked ? '' : 'none';
   if(typeof renderMovieHomeSelector === 'function') renderMovieHomeSelector();
   if(typeof renderMovieAchievements === 'function') renderMovieAchievements();
+}
+
+// ---------- Cinema Chaos unlock ----------
+// Cinema Chaos (side menu item, home carousel slot, and its Stats section)
+// stays hidden until every OTHER Cinema achievement has been unlocked — its
+// own achievement (chaos_incarnate) is excluded from that check, since it
+// can only be earned by playing Chaos itself.
+function isChaosUnlocked(){
+  return MOVIE_ACHIEVEMENTS.filter(a => a.id !== 'chaos_incarnate')
+    .every(a => !!movieAchievementState.unlocked[a.id]);
+}
+function applyChaosUnlockState(){
+  const unlocked = isChaosUnlocked();
+  if(typeof movieMenuChaosBtn !== 'undefined') movieMenuChaosBtn.style.display = unlocked ? '' : 'none';
+  const statsSection = document.getElementById('movieStatsChaosSection');
+  if(statsSection) statsSection.style.display = unlocked ? '' : 'none';
+  if(typeof renderMovieHomeSelector === 'function') renderMovieHomeSelector();
 }
 
 // ---------- Cinema Code (deduction game — guess the mystery movie in 6 tries,
@@ -5409,6 +5619,8 @@ function showCharadesResults(){
   charadesFinalScore.textContent = charadesWon
     ? `Solved in ${guessCount}/${CHARADES_MAX_GUESSES}`
     : `The answer was ${charadesTarget.title}`;
+  applyResultBanner(charadesFinalMessage, charadesWon, charadesWon && guessCount === 1);
+  renderMovieRevealCard('charadesPosterCard', charadesTarget.title);
   charadesFreeplayBtn.style.display = charadesMode === 'daily' ? '' : 'none';
   charadesPlayAgainBtn.style.display = charadesMode === 'freeplay' ? '' : 'none';
 }
@@ -6204,6 +6416,7 @@ function showCrosswordResults(gaveUp){
     crosswordFinalMessage.textContent = 'Solved!';
     crosswordFinalTime.textContent = cwFormatTime(elapsed);
   }
+  applyResultBanner(crosswordFinalMessage, !gaveUp, !gaveUp && crosswordGrade(elapsed) === 'gold');
   if(!gaveUp){
     const grade = crosswordGrade(elapsed);
     crosswordBestTime.innerHTML = `<span class="cw-medal ${grade}">${crosswordGradeLabel(grade)}</span>`;
@@ -6619,6 +6832,8 @@ function showReviewResults(){
   reviewFinalScore.textContent = reviewWon
     ? `Solved in ${guessCount}/${REVIEW_MAX_GUESSES}`
     : `The answer was ${reviewTarget.title}`;
+  applyResultBanner(reviewFinalMessage, reviewWon, reviewWon && guessCount === 1);
+  renderMovieRevealCard('reviewPosterCard', reviewTarget.title);
   reviewFreeplayBtn.style.display = reviewMode === 'daily' ? '' : 'none';
   reviewPlayAgainBtn.style.display = reviewMode === 'freeplay' ? '' : 'none';
 }
@@ -7022,6 +7237,7 @@ function showDfResults(){
   dfFinalScore.textContent = dfWon
     ? `Solved in ${guessCount}/${DF_MAX_GUESSES}${dfSolvedViaMc ? ' (multiple choice)' : ''}`
     : 'Out of guesses!';
+  applyResultBanner(dfFinalMessage, dfWon, dfWon && guessCount === 1 && !dfSolvedViaMc);
   dfConnectionReveal.innerHTML = `
     <span class="charades-chip df-category-chip">${dfCategoryIcon(dfTarget.category)} ${dfTarget.category}</span>
     <div class="df-connection-reveal">${dfTarget.connection}</div>
@@ -7213,6 +7429,41 @@ dfHomeFreeplayBtn.addEventListener('click', startDfFreeplay);
 // cycle. ----------
 const ST_CLIP_LENGTHS = [1, 2, 4, 8, 16];
 const ST_MAX_ATTEMPTS = ST_CLIP_LENGTHS.length;
+
+// Franchise grouping for the "close guess" hint (see franchiseKey() below):
+// a wrong guess from the SAME franchise as the target shows amber with an
+// up/down arrow toward the right entry, instead of a plain red cross-out.
+const ST_FRANCHISE_PREFIXES = [
+  'Harry Potter', 'Star Wars', 'The Lord of the Rings', 'The Hobbit',
+  'Pirates of the Caribbean', 'Avengers', 'Captain America', 'Spider-Man',
+  'Mission: Impossible', 'Dune', 'Frozen', 'Fantastic Beasts', 'Toy Story',
+  'The Dark Knight', 'Batman Begins', 'Thor', 'Iron Man'
+];
+function stFranchiseKey(title){
+  for(const p of ST_FRANCHISE_PREFIXES){
+    if(title === p || title.startsWith(p)) return p;
+  }
+  return title;
+}
+// Returns 'up' if the correct answer is a NEWER entry in the same franchise
+// than the guess, 'down' if OLDER, or null if the guess isn't a same-
+// franchise miss (i.e. a plain wrong guess with no relational hint to give).
+function stCloseGuessArrow(guessEntry, targetEntry){
+  if(!guessEntry || !targetEntry || guessEntry.title === targetEntry.title) return null;
+  if(stFranchiseKey(guessEntry.title) !== stFranchiseKey(targetEntry.title)) return null;
+  if(targetEntry.year === guessEntry.year) return null;
+  return targetEntry.year > guessEntry.year ? 'up' : 'down';
+}
+function stRenderGuessChip(g){
+  const entry = (typeof g === 'string') ? { title: g, arrow: null } : g;
+  if(entry.arrow){
+    const arrowChar = entry.arrow === 'up' ? '▲' : '▼';
+    const label = entry.arrow === 'up' ? 'correct answer is newer' : 'correct answer is older';
+    return `<span class="charades-chip chip-close" title="${label}">${entry.title} ${arrowChar}</span>`;
+  }
+  return `<span class="charades-chip">${entry.title}</span>`;
+}
+
 const MOVIE_SOUNDTRACK_POOL = [
   { title:'The Dark Knight', year:2008, searchTerm:'Why So Serious The Dark Knight Hans Zimmer', trackHint:'why so serious', reveal:'"Why So Serious?" — Hans Zimmer & James Newton Howard' },
   { title:'Inception', year:2010, searchTerm:'Time Hans Zimmer Inception', trackHint:'time', reveal:'"Time" — Hans Zimmer' },
@@ -7365,6 +7616,8 @@ const stSkipBtn = document.getElementById('stSkipBtn');
 const stGuessHistory = document.getElementById('stGuessHistory');
 const stMsg = document.getElementById('stMsg');
 const stGiveUpBtn = document.getElementById('stGiveUpBtn');
+const stMcToggleBtn = document.getElementById('stMcToggleBtn');
+const stMcOptionsEl = document.getElementById('stMcOptions');
 const stAudio = document.getElementById('stAudioEl');
 const stFinalMessage = document.getElementById('stFinalMessage');
 const stFinalScore = document.getElementById('stFinalScore');
@@ -7384,6 +7637,9 @@ let stGuessedTitles = [];
 let stGameOver = false;
 let stWon = false;
 let stPlayTimer = null;
+let stMcOpened = false;
+let stMcTitleOptions = [];
+let stMcWrongTitles = [];
 
 function hideAllStAreas(){
   stHomeArea.style.display = 'none';
@@ -7417,8 +7673,20 @@ function persistStDaily(){
     attempt: stAttempt,
     guessedTitles: stGuessedTitles.slice(),
     gameOver: stGameOver,
-    won: stWon
+    won: stWon,
+    mcOpened: stMcOpened,
+    mcTitleOptions: stMcTitleOptions.slice(),
+    mcWrongTitles: stMcWrongTitles.slice()
   });
+}
+
+// Builds 4 shuffled multiple-choice options (the correct title plus 3 random
+// distractors from the rest of the pool) for a given target entry.
+function buildMcTitleOptions(pool, target, rng){
+  const others = pool.filter(e => e.title !== target.title).map(e => e.title);
+  const shuffledOthers = seededShuffle(others, rng || Math.random);
+  const distractors = shuffledOthers.slice(0, 3);
+  return seededShuffle([target.title, ...distractors], rng || Math.random);
 }
 
 const ST_HISTORY_KEY = 'moviesStHistory_v1';
@@ -7541,6 +7809,27 @@ function renderStLives(){
   }).join('');
 }
 
+function renderStMcOptions(){
+  if(!stMcOpened){
+    stMcOptionsEl.style.display = 'none';
+    stMcOptionsEl.innerHTML = '';
+    return;
+  }
+  stMcOptionsEl.style.display = '';
+  stMcOptionsEl.innerHTML = stMcTitleOptions.map(title=>{
+    const isWrong = stMcWrongTitles.includes(title);
+    const isCorrectRevealed = stGameOver && title === stTarget.title;
+    let cls = 'df-mc-btn';
+    if(isWrong) cls += ' wrong';
+    if(isCorrectRevealed) cls += ' correct';
+    const disabled = stGameOver || isWrong;
+    return `<button class="${cls}" data-title="${title.replace(/"/g,'&quot;')}" ${disabled ? 'disabled' : ''}>${title}</button>`;
+  }).join('');
+  stMcOptionsEl.querySelectorAll('.df-mc-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> stSelectMcOption(btn.dataset.title));
+  });
+}
+
 function renderStRound(){
   stModeLabel.textContent = stMode === 'daily' ? `DAILY #${dailyNumberLabel(stDailyDate)}` : 'FREE PLAY';
   stAttemptLabel.textContent = `Attempt ${Math.min(stAttempt + 1, ST_MAX_ATTEMPTS)}/${ST_MAX_ATTEMPTS}`;
@@ -7552,12 +7841,14 @@ function renderStRound(){
     : `▶ Play ${seconds}s clip`;
   stPlayClipBtn.disabled = stGameOver || stLoadState !== 'ready';
 
-  stGuessHistory.innerHTML = stGuessedTitles.map(t => `<span class="charades-chip">${t}</span>`).join('');
+  stGuessHistory.innerHTML = stGuessedTitles.map(stRenderGuessChip).join('');
   stMsg.textContent = '';
   stInput.value = '';
   stInput.disabled = stGameOver;
   stGuessBtn.disabled = stGameOver;
   stSkipBtn.disabled = stGameOver;
+  stMcToggleBtn.disabled = stGameOver || stMcOpened;
+  renderStMcOptions();
 }
 
 function renderStDropdown(query){
@@ -7577,11 +7868,14 @@ function showStResults(){
   stPlayArea.style.display = 'none';
   stResultsArea.style.display = '';
   const attemptsUsed = stAttempt + (stWon ? 1 : 0);
-  stFinalMessage.textContent = stWon ? 'Nailed it! 🎧' : 'Stumped!';
+  const stIsAce = stWon && attemptsUsed === 1;
+  stFinalMessage.textContent = stIsAce ? '⚡ ACE! Perfect Pitch! ⚡' : (stWon ? 'Nailed it! 🎧' : 'Stumped!');
   stFinalScore.textContent = stWon
     ? `Solved in ${attemptsUsed}/${ST_MAX_ATTEMPTS} (${ST_CLIP_LENGTHS[Math.min(attemptsUsed - 1, ST_CLIP_LENGTHS.length - 1)]}s clip)`
     : `The answer was ${stTarget.title}`;
+  applyResultBanner(stFinalMessage, stWon, stIsAce);
   stTrackReveal.innerHTML = `<div class="st-track-reveal">${stTarget.reveal}</div>`;
+  renderMovieRevealCard('stPosterCard', stTarget.title);
   stFreeplayBtn.style.display = stMode === 'daily' ? '' : 'none';
   stPlayAgainBtn.style.display = stMode === 'freeplay' ? '' : 'none';
 }
@@ -7614,7 +7908,7 @@ function submitStGuess(){
   if(!val) return;
   const match = MOVIE_SOUNDTRACK_POOL.find(m => m.title.toLowerCase() === val.toLowerCase());
   if(!match){ stMsg.textContent = 'Not in the pool — pick from the dropdown.'; return; }
-  if(stGuessedTitles.includes(match.title)){ stMsg.textContent = 'Already tried that one.'; hideStDropdown(); return; }
+  if(stGuessedTitles.some(g => (typeof g === 'string' ? g : g.title) === match.title)){ stMsg.textContent = 'Already tried that one.'; hideStDropdown(); return; }
 
   hideStDropdown();
 
@@ -7625,7 +7919,7 @@ function submitStGuess(){
     return;
   }
 
-  stGuessedTitles.push(match.title);
+  stGuessedTitles.push({ title: match.title, arrow: stCloseGuessArrow(match, stTarget) });
   playSfx('incorrect');
   stAttempt++;
   if(stAttempt >= ST_MAX_ATTEMPTS){
@@ -7641,6 +7935,37 @@ function submitStGuess(){
 
 function skipStRound(){
   if(stGameOver) return;
+  playSfx('incorrect');
+  stAttempt++;
+  if(stAttempt >= ST_MAX_ATTEMPTS){
+    stGameOver = true;
+    stWon = false;
+    endStRound();
+    return;
+  }
+  persistStDaily();
+  renderStRound();
+  stPlayCurrentClip();
+}
+
+function stOpenMc(){
+  if(stGameOver || stMcOpened) return;
+  stMcOpened = true;
+  stMcTitleOptions = buildMcTitleOptions(MOVIE_SOUNDTRACK_POOL, stTarget);
+  stMcWrongTitles = [];
+  persistStDaily();
+  renderStRound();
+}
+
+function stSelectMcOption(title){
+  if(stGameOver) return;
+  if(title === stTarget.title){
+    stWon = true;
+    stGameOver = true;
+    endStRound();
+    return;
+  }
+  if(!stMcWrongTitles.includes(title)) stMcWrongTitles.push(title);
   playSfx('incorrect');
   stAttempt++;
   if(stAttempt >= ST_MAX_ATTEMPTS){
@@ -7688,6 +8013,9 @@ function startStRoundFresh(startIndex){
   stGuessedTitles = [];
   stGameOver = false;
   stWon = false;
+  stMcOpened = false;
+  stMcTitleOptions = [];
+  stMcWrongTitles = [];
   hideStDropdown();
   hideAllStAreas();
   stPlayArea.style.display = '';
@@ -7702,13 +8030,16 @@ async function startStDaily(){
   stDailyDate = date;
   let stored = loadStDailyState();
   if(!stored || stored.date !== date){
-    stored = { date, puzzleIndex: getStTargetIndexFor(date), attempt: 0, guessedTitles: [], gameOver: false, won: false };
+    stored = { date, puzzleIndex: getStTargetIndexFor(date), attempt: 0, guessedTitles: [], gameOver: false, won: false, mcOpened: false, mcTitleOptions: [], mcWrongTitles: [] };
     saveStDailyState(stored);
   }
   stAttempt = stored.attempt;
   stGuessedTitles = stored.guessedTitles.slice();
   stGameOver = stored.gameOver;
   stWon = stored.won;
+  stMcOpened = !!stored.mcOpened;
+  stMcTitleOptions = (stored.mcTitleOptions || []).slice();
+  stMcWrongTitles = (stored.mcWrongTitles || []).slice();
   hideStDropdown();
   hideAllStAreas();
   stPlayArea.style.display = '';
@@ -7745,6 +8076,7 @@ stDropdown.addEventListener('click', (e)=>{
   hideStDropdown();
   submitStGuess();
 });
+stMcToggleBtn.addEventListener('click', stOpenMc);
 document.addEventListener('click', (e)=>{
   if(!e.target.closest('#stModal .search-box')) hideStDropdown();
 });
@@ -8055,6 +8387,7 @@ function showCupResults(){
   cupChampionName.textContent = cupChampion.title;
   cupChampionCard.dataset.currentTitle = cupChampion.title;
   loadMoviePosterArt(cupChampionCard, cupChampion);
+  applyResultBanner(cupChampionName, true);
   cupFreeplayBtn.style.display = cupMode === 'daily' ? '' : 'none';
   cupPlayAgainBtn.style.display = cupMode !== 'daily' ? '' : 'none';
 }
@@ -8214,10 +8547,15 @@ const MOVIE_HOME_GAMES_ALL = [
   { key: 'chaos',     label: 'CINEMA CHAOS',     color: 'var(--violet)', tagline: 'Fast questions. No mercy.<br><b>Beat the clock.</b>' },
   { key: 'code',      label: 'CINEMA CODE',      color: 'var(--cyan)',   tagline: 'One mystery movie. Six guesses.<br><b>Every guess gives you clues.</b>' },
 ];
-// Cinema Code stays out of the cycle until unlocked (see the Cinema Code
-// unlock section) — recomputed live so unlocking mid-session updates it.
+// Cinema Code and Cinema Chaos stay out of the cycle until unlocked (see
+// their respective unlock sections) — recomputed live so unlocking mid-
+// session updates the carousel immediately.
 function movieHomeGames(){
-  return isCodeUnlocked() ? MOVIE_HOME_GAMES_ALL : MOVIE_HOME_GAMES_ALL.filter(g => g.key !== 'code');
+  return MOVIE_HOME_GAMES_ALL.filter(g => {
+    if(g.key === 'code') return isCodeUnlocked();
+    if(g.key === 'chaos') return isChaosUnlocked();
+    return true;
+  });
 }
 let movieHomeSelectedIndex = 0;
 const homeMarquee = document.getElementById('homeMarquee');
@@ -8413,6 +8751,7 @@ movieMenuCartridgeBtn.addEventListener('click', ()=>{
 });
 
 applyCodeUnlockState();
+applyChaosUnlockState();
 showHomeScreen();
 </script>
 </body>
