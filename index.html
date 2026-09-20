@@ -67,6 +67,7 @@
     --orange: #ff8c42;
     --teal: #2dd4bf;
     --gold: #ffd23f;
+    --lime: #a8ff3e;
     --text: #f1f3fa;
     --text-dim: #8890b5;
     /* Text/message colour for elements that sit directly on the page's own
@@ -418,8 +419,50 @@
   @media (max-width: 640px) {
     .search-row, .charades-guess-row { justify-content: center; }
     .search-box { order: 3; flex: 1 1 100%; min-width: 0; }
-    #guessBtn, #charadesGuessBtn { order: 1; }
+    #guessBtn, #charadesGuessBtn, #cassetteGuessBtn { order: 1; }
     .cover-panel { order: 2; }
+  }
+
+  /* ---------- Cartridge Cassette ---------- */
+  .cass-lives-row { display: flex; justify-content: center; gap: 8px; margin: 4px 0 16px; }
+  .cass-life {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 38px; padding: 5px 8px;
+    border-radius: 8px; border: 2px solid var(--line); background: var(--panel-2); color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600;
+  }
+  .cass-life.used { border-color: var(--magenta); color: var(--magenta); opacity: 0.5; text-decoration: line-through; }
+  .cass-life.current { border-color: var(--lime); color: var(--lime); box-shadow: 0 0 12px rgba(168,255,62,0.4); }
+  .cass-play-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 10px 0 18px; }
+  #cassettePlayClipBtn {
+    width: 88px; height: 88px; border-radius: 50%; border: 3px solid var(--lime); background: var(--panel-2);
+    color: var(--lime); font-size: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: box-shadow .15s, transform .1s;
+  }
+  #cassettePlayClipBtn:hover:not(:disabled) { box-shadow: 0 0 22px rgba(168,255,62,0.5); }
+  #cassettePlayClipBtn:active:not(:disabled) { transform: scale(0.96); }
+  #cassettePlayClipBtn:disabled { opacity: 0.4; cursor: not-allowed; border-color: var(--line); color: var(--text-dim); }
+  #cassetteClipLengthLabel { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--text-dim); }
+  #cassetteInput {
+    width: 100%; padding: 14px 16px; background: var(--panel); border: 2px solid var(--line);
+    border-radius: 8px; color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 15px;
+    outline: none; transition: border-color .15s;
+  }
+  #cassetteInput:focus { border-color: var(--lime); }
+  #cassetteInput:disabled { opacity: 0.5; }
+  #cassetteGuessBtn {
+    padding: 14px 22px; background: var(--lime); border: none; border-radius: 8px; color: #0f1a03;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; letter-spacing: 0.5px; cursor: pointer;
+    transition: transform .1s, box-shadow .15s; box-shadow: 0 0 0 rgba(168,255,62,0);
+  }
+  #cassetteGuessBtn:hover { box-shadow: 0 0 18px rgba(168,255,62,0.55); }
+  #cassetteGuessBtn:active { transform: scale(0.97); }
+  #cassetteGuessBtn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow:none; }
+  .cass-track-reveal {
+    text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 13px;
+    color: var(--text-dim); margin: 4px 0 0;
+  }
+  @media (max-width: 640px) {
+    #cassetteModal .charades-guess-row { justify-content: center; }
   }
 
   .board-head, .cart-row {
@@ -1262,6 +1305,10 @@
       <span class="side-menu-icon">🔤</span>
       <span class="side-menu-label">Cartridge Crossword</span>
     </button>
+    <button class="side-menu-item" id="menuCassetteBtn">
+      <span class="side-menu-icon">📼</span>
+      <span class="side-menu-label">Cartridge Cassette</span>
+    </button>
     <button class="side-menu-item" id="menuChaosBtn" style="display:none;">
       <span class="side-menu-icon">💥</span>
       <span class="side-menu-label">Cartridge Chaos</span>
@@ -1335,6 +1382,10 @@
       <div class="help-section">
         <div class="help-heading">🔤 Cartridge Crossword</div>
         <p>A crossword built entirely from game titles — click a clue (or a cell) to select a word, then type the answer either letter-by-letter in the grid or all at once in the box above it. Daily is a compact 4-across/4-down grid; Free Play steps up to 5-and-5 with a fresh random layout every time. A timer tracks every solve — finish within 1:30 for Gold, 2:30 for Silver, or you'll still walk away with Bronze.</p>
+      </div>
+      <div class="help-section">
+        <div class="help-heading">📼 Cartridge Cassette</div>
+        <p>One second of a real game soundtrack plays — guess the game before it plays out. A wrong guess or a Skip doubles the clip length (1s → 2s → 4s → 8s → 16s) across 5 total attempts. Same puzzle for everyone each day; finish it to unlock Free Play for endless fresh tracks.</p>
       </div>
       <div class="help-section">
         <div class="help-heading">Notes</div>
@@ -1650,6 +1701,57 @@
   </div>
 </div>
 
+<div class="modal-overlay page-mode" id="cassetteModal">
+  <div class="wrap" style="max-width:640px;">
+    <header>
+      <div class="marquee" id="cassettePageMarquee" style="color:var(--lime);" title="Back to home">CARTRIDGE CASSETTE</div>
+      <div class="tagline">One second of the soundtrack. <b>Guess the game before it plays out.</b></div>
+    </header>
+
+    <div id="cassettePlayArea">
+      <div class="grid-top-row">
+        <span id="cassetteModeLabel">DAILY</span>
+        <span id="cassetteAttemptLabel">Attempt 1/5</span>
+      </div>
+      <div class="cass-lives-row" id="cassetteLivesRow"></div>
+      <div class="cass-play-wrap">
+        <button id="cassettePlayClipBtn" aria-label="Play clip">▶</button>
+        <div id="cassetteClipLengthLabel">Loading clip…</div>
+      </div>
+      <audio id="cassetteAudioEl" preload="none" style="display:none;"></audio>
+      <div class="charades-guess-row">
+        <div class="search-box">
+          <input type="text" id="cassetteInput" placeholder="Type a game title…" autocomplete="off">
+          <div class="dropdown hidden" id="cassetteDropdown"></div>
+        </div>
+        <button id="cassetteGuessBtn">GUESS</button>
+      </div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn" id="cassetteSkipBtn">⏭ Skip</button>
+      </div>
+      <div class="charades-guess-history" id="cassetteGuessHistory"></div>
+      <div class="msg" id="cassetteMsg"></div>
+      <div class="btn-row">
+        <button class="ghost-btn" id="cassetteGiveUpBtn">Give up😭</button>
+      </div>
+    </div>
+
+    <div id="cassetteResultsArea" class="clash-results" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid var(--line);">
+      <div class="clash-heading" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700;" id="cassetteFinalMessage">Nailed it!</div>
+      <div class="clash-final-score" id="cassetteFinalScore"></div>
+      <div id="cassetteTrackReveal" style="margin:10px 0 4px;"></div>
+      <div class="achv-toast-list" id="cassetteAchvToastList"></div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn" id="cassetteShareBtn">📋 Share Results</button>
+        <button class="ghost-btn" id="cassetteFreeplayBtn">Play Free Play</button>
+        <button class="ghost-btn" id="cassettePlayAgainBtn" style="display:none;">New Puzzle</button>
+        <button class="ghost-btn" id="cassetteNextDailyBtn" style="display:none;"></button>
+        <button class="ghost-btn" id="cassetteCloseBtn">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay page-mode" id="countdownModal">
   <div class="wrap" style="max-width:640px;">
     <header>
@@ -1887,6 +1989,12 @@
       <div class="archive-game-heading" style="color:var(--teal);">Cartridge Crossword</div>
       <div class="archive-stats" id="archiveStatsCrossword"></div>
       <div class="archive-grid" id="archiveGridCrossword"></div>
+    </div>
+
+    <div class="archive-game-section" id="archiveSectionCassette">
+      <div class="archive-game-heading" style="color:var(--lime);">Cartridge Cassette</div>
+      <div class="archive-stats" id="archiveStatsCassette"></div>
+      <div class="archive-grid" id="archiveGridCassette"></div>
     </div>
 
     <div class="archive-game-section" id="archiveSectionChaos" style="display:none;">
@@ -2861,6 +2969,17 @@ function renderCountdownArchive(){
   }, statsDays);
 }
 
+function cassetteDayInfo(dateStr){
+  const e = loadCassetteHistory()[dateStr];
+  if(!e) return {played:false, won:false, label:null};
+  return {played:true, won: e.status === 'won', label: e.status === 'won' ? String(e.attempts) : 'X'};
+}
+function renderCassetteArchive(){
+  const days = buildLastNDays(7, cassetteDayInfo);
+  const statsDays = buildLastNDays(365, cassetteDayInfo);
+  renderGameArchiveRow(days, document.getElementById('archiveStatsCassette'), document.getElementById('archiveGridCassette'), {playable: true}, statsDays);
+}
+
 // No 7-day grid here — Chaos is a repeatable arcade high-score chase, not a
 // daily puzzle, so "played today" doesn't mean anything for it.
 function renderChaosArchive(){
@@ -2883,6 +3002,7 @@ function openArchivePanel(){
   renderCharadesArchive();
   renderChronicleArchive();
   renderCrosswordArchive();
+  renderCassetteArchive();
   const countdownSection = document.getElementById('archiveSectionCountdown');
   const countdownUnlocked = countdownIsUnlocked();
   countdownSection.style.display = countdownUnlocked ? '' : 'none';
@@ -3849,6 +3969,10 @@ const ACHIEVEMENTS = [
   {id:'countdown_bullseye', name:'Bullseye',             icon:'🎯', hint:'Land an exact guess (0 off) in Cartridge Countdown.'},
   {id:'countdown_streak',  name:'Countdown Streak',      icon:'🔥', hint:'Reach a 3-day Cartridge Countdown Daily streak.'},
   {id:'countdown_veteran', name:'Seasoned Guesser',      icon:'🎲', hint:'Complete 10 Cartridge Countdowns, lifetime, in any mode.'},
+  {id:'cassette_perfect_pitch', name:'Perfect Pitch',    icon:'🎧', hint:'Guess Cartridge Cassette from just the 1-second clip.'},
+  {id:'cassette_encore',   name:'Encore',                icon:'📼', hint:'Win a Cartridge Cassette round only after the full 16-second clip plays.'},
+  {id:'cassette_streak',   name:'Cassette Streak',       icon:'🔥', hint:'Reach a 3-day Cartridge Cassette Daily win streak.'},
+  {id:'cassette_completionist', name:'Mixtape Master',   icon:'🏅', hint:'Win 10 Cartridge Cassette Dailies, lifetime.'},
   {id:'cartridge_master',  name:'Cartridge Master',      icon:'🏅', hint:'Unlock every other achievement.'},
 ];
 const ACHIEVEMENTS_BY_ID = Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, a]));
@@ -4089,9 +4213,14 @@ function charadesGreenOn(dateStr){
 function chronicleGreenOn(dateStr){
   return loadChronicleHistory()[dateStr] === 15;
 }
+function cassetteGreenOn(dateStr){
+  const hist = loadCassetteHistory();
+  return !!(hist[dateStr] && hist[dateStr].status === 'won');
+}
 function allGamesGreenOn(dateStr){
   return cartridgeGreenOn(dateStr) && clashGreenOn(dateStr) && connectGreenOn(dateStr)
-    && charadesGreenOn(dateStr) && chronicleGreenOn(dateStr) && countdownGreenOn(dateStr) && crosswordGreenOn(dateStr);
+    && charadesGreenOn(dateStr) && chronicleGreenOn(dateStr) && countdownGreenOn(dateStr) && crosswordGreenOn(dateStr)
+    && cassetteGreenOn(dateStr);
 }
 
 // Call after any of the 7 games finishes its DAILY round — safe to call from
@@ -5021,6 +5150,8 @@ function hideAllTopScreens(){
   crosswordModal.classList.remove('show');
   countdownModal.classList.remove('show');
   cupModal.classList.remove('show');
+  cassetteModal.classList.remove('show');
+  if(typeof cassetteAudioStop === 'function') cassetteAudioStop();
   if(typeof closeGiveUpConfirm === 'function') closeGiveUpConfirm();
 }
 function showHomeScreen(){
@@ -5044,6 +5175,10 @@ function showCupPage(){
   cupModal.classList.add('show');
   showCupHome();
 }
+function showCassettePage(){
+  hideAllTopScreens();
+  cassetteModal.classList.add('show');
+}
 
 // dd/mm/yy — set once, doesn't change per game like the marquee/tagline do.
 {
@@ -5064,6 +5199,7 @@ const HOME_GAMES_BASE = [
   { key: 'charades',  label: 'CARTRIDGE CHARADES', color: 'var(--pink)',  tagline: 'Emoji only. No words.<br><b>Guess the game.</b>' },
   { key: 'chronicle', label: 'CARTRIDGE CHRONICLE', color: 'var(--orange)', tagline: 'Five games. Three stats to sort by.<br><b>Put them in order.</b>' },
   { key: 'crossword', label: 'CARTRIDGE CROSSWORD', color: 'var(--teal)', tagline: 'Games hidden in a grid.<br><b>Fill in the blanks.</b>' },
+  { key: 'cassette',  label: 'CARTRIDGE CASSETTE',  color: 'var(--lime)', tagline: 'One second of the soundtrack.<br><b>Guess the game before it plays out.</b>' },
 ];
 // Countdown stays out of the cycle until half of all achievements are
 // earned — see countdownIsUnlocked() below.
@@ -5132,6 +5268,9 @@ homePlayBtn.addEventListener('click', ()=>{
   } else if(key === 'crossword'){
     showCrosswordPage();
     startCrosswordDaily();
+  } else if(key === 'cassette'){
+    showCassettePage();
+    startCassetteDaily();
   } else if(key === 'chaos'){
     showChaosPage();
     startChaosGame();
@@ -5160,6 +5299,9 @@ homeFreeplayBtn.addEventListener('click', ()=>{
   } else if(key === 'crossword'){
     showCrosswordPage();
     startCrosswordFreeplay();
+  } else if(key === 'cassette'){
+    showCassettePage();
+    startCassetteFreeplay();
   } else if(key === 'chaos'){
     showChaosPage();
     startChaosGame();
@@ -6194,6 +6336,7 @@ const DAILY_GAME_SEQUENCE = [
   { key: 'chronicle', label: 'Cartridge Chronicle' },
   { key: 'countdown', label: 'Cartridge Countdown' },
   { key: 'crossword', label: 'Cartridge Crossword' },
+  { key: 'cassette', label: 'Cartridge Cassette' },
 ];
 
 function isDailyGameCompletedToday(key){
@@ -6205,6 +6348,7 @@ function isDailyGameCompletedToday(key){
   if(key === 'chronicle') return typeof loadChronicleHistory()[date] === 'number';
   if(key === 'countdown') return countdownGreenOn(date);
   if(key === 'crossword'){ const e = loadCrosswordHistory()[date]; return !!(e && e.completed === true); }
+  if(key === 'cassette') return !!loadCassetteHistory()[date];
   return false;
 }
 
@@ -6228,6 +6372,7 @@ function goToDailyGame(key){
   else if(key === 'chronicle'){ showChroniclePage(); startChronicleDaily(); }
   else if(key === 'countdown'){ showCountdownPage(); startCountdownDaily(); }
   else if(key === 'crossword'){ showCrosswordPage(); startCrosswordDaily(); }
+  else if(key === 'cassette'){ showCassettePage(); startCassetteDaily(); }
   else { showGameScreen(); enterDailyMode(); }
 }
 
@@ -8665,6 +8810,598 @@ countdownPlayAgainBtn.addEventListener('click', startCountdownFreeplay);
 countdownCloseBtn.addEventListener('click', showHomeScreen);
 document.getElementById('countdownPageMarquee').addEventListener('click', showHomeScreen);
 
+// ---------- Cartridge Cassette (guess the game from its soundtrack) ----------
+const CASS_CLIP_LENGTHS = [1, 2, 4, 8, 16];
+const CASS_MAX_ATTEMPTS = CASS_CLIP_LENGTHS.length;
+
+const GAME_SOUNDTRACK_POOL = [
+  { title:'Minecraft', year:2011, searchTerm:'Sweden C418 Minecraft', trackHint:'sweden', reveal:'"Sweden" — C418' },
+  { title:'The Legend of Zelda: Ocarina of Time', year:1998, searchTerm:'Gerudo Valley Legend of Zelda Ocarina of Time Koji Kondo', trackHint:'gerudo valley', reveal:'"Gerudo Valley" — Koji Kondo' },
+  { title:'The Legend of Zelda: Breath of the Wild', year:2017, searchTerm:'Breath of the Wild Main Theme Manaka Kataoka', trackHint:'main theme', reveal:'"Main Theme" — Manaka Kataoka' },
+  { title:'The Witcher 3: Wild Hunt', year:2015, searchTerm:'Wolven Storm Priscilla\'s Song Witcher 3', trackHint:'wolven storm', reveal:'"The Wolven Storm" — Marcin Przybyłowicz / Percival' },
+  { title:'Red Dead Redemption 2', year:2018, searchTerm:'Unshaken Red Dead Redemption 2 Woody Jackson', trackHint:'unshaken', reveal:'"Unshaken" — Woody Jackson' },
+  { title:'Red Dead Redemption', year:2010, searchTerm:'Far Away Jose Gonzalez Red Dead Redemption', trackHint:'far away', reveal:'"Far Away" — José González' },
+  { title:'God of War (2018)', year:2018, searchTerm:'Memories of Mother God of War Bear McCreary', trackHint:'memories of mother', reveal:'"Memories of Mother" — Bear McCreary' },
+  { title:'Halo: Combat Evolved', year:2001, searchTerm:'Halo Theme Martin O\'Donnell', trackHint:'halo', reveal:'"Halo Theme" — Martin O\'Donnell & Michael Salvatori' },
+  { title:'Portal 2', year:2011, searchTerm:'Want You Gone Jonathan Coulton Portal 2', trackHint:'want you gone', reveal:'"Want You Gone" — Jonathan Coulton' },
+  { title:'Portal', year:2007, searchTerm:'Still Alive Jonathan Coulton Portal', trackHint:'still alive', reveal:'"Still Alive" — Jonathan Coulton' },
+  { title:'The Elder Scrolls V: Skyrim', year:2011, searchTerm:'Dragonborn Skyrim Theme Jeremy Soule', trackHint:'dragonborn', reveal:'"Dragonborn" — Jeremy Soule' },
+  { title:'Fallout 4', year:2015, searchTerm:'Fallout 4 Main Theme Inon Zur', trackHint:null, reveal:'Main Theme — Inon Zur' },
+  { title:'Cyberpunk 2077', year:2020, searchTerm:'I Really Want to Stay At Your House Rosa Walton Cyberpunk 2077', trackHint:'stay at your house', reveal:'"I Really Want to Stay at Your House" — Rosa Walton & Hallie Coggins' },
+  { title:'Undertale', year:2015, searchTerm:'Megalovania Toby Fox Undertale', trackHint:'megalovania', reveal:'"Megalovania" — Toby Fox' },
+  { title:'Stardew Valley', year:2016, searchTerm:'Stardew Valley Overture ConcernedApe', trackHint:'overture', reveal:'"Stardew Valley Overture" — ConcernedApe' },
+  { title:'Hollow Knight', year:2017, searchTerm:'Hollow Knight Main Theme Christopher Larkin', trackHint:null, reveal:'Main Theme — Christopher Larkin' },
+  { title:'Celeste', year:2018, searchTerm:'First Steps Celeste Lena Raine', trackHint:'first steps', reveal:'"First Steps" — Lena Raine' },
+  { title:'Super Mario 64', year:1996, searchTerm:'Bob-omb Battlefield Super Mario 64 Koji Kondo', trackHint:'bob-omb', reveal:'"Bob-omb Battlefield" — Koji Kondo' },
+  { title:'Super Mario Odyssey', year:2017, searchTerm:'Jump Up Super Star Mario Odyssey', trackHint:'jump up', reveal:'"Jump Up, Super Star!" — Kate Higgins & Aramaki' },
+  { title:'Animal Crossing: New Horizons', year:2020, searchTerm:'Animal Crossing New Horizons Main Theme Kazumi Totaka', trackHint:null, reveal:'Main Theme — Kazumi Totaka' },
+  { title:'Splatoon 2', year:2017, searchTerm:'Ink Me Up Splatoon 2 Squid Sisters', trackHint:'ink me up', reveal:'"Ink Me Up" — Squid Sisters (Toru Minegishi)' },
+  { title:'Doom (2016)', year:2016, searchTerm:'BFG Division Mick Gordon Doom', trackHint:'bfg division', reveal:'"BFG Division" — Mick Gordon' },
+  { title:'BioShock', year:2007, searchTerm:'Beyond the Sea Bobby Darin BioShock', trackHint:'beyond the sea', reveal:'"Beyond the Sea" — Bobby Darin (BioShock intro)' },
+  { title:'Diablo III', year:2012, searchTerm:'Diablo III Main Theme Russell Brower', trackHint:null, reveal:'Main Theme — Russell Brower' },
+  { title:'Assassin\'s Creed II', year:2009, searchTerm:'Ezio\'s Family Assassin\'s Creed II Jesper Kyd', trackHint:'ezio', reveal:'"Ezio\'s Family" — Jesper Kyd' },
+  { title:'Far Cry 3', year:2012, searchTerm:'Far Cry 3 Main Theme Brian Tyler', trackHint:null, reveal:'Main Theme — Brian Tyler' },
+  { title:'Mass Effect 2', year:2010, searchTerm:'Suicide Mission Mass Effect 2 Jack Wall', trackHint:'suicide mission', reveal:'"Suicide Mission" — Jack Wall' },
+  { title:'Kingdom Hearts', year:2002, searchTerm:'Dearly Beloved Kingdom Hearts Yoko Shimomura', trackHint:'dearly beloved', reveal:'"Dearly Beloved" — Yoko Shimomura' },
+  { title:'Final Fantasy VII', year:1997, searchTerm:'One-Winged Angel Final Fantasy VII Nobuo Uematsu', trackHint:'one-winged angel', reveal:'"One-Winged Angel" — Nobuo Uematsu' },
+  { title:'Sonic the Hedgehog', year:1991, searchTerm:'Green Hill Zone Sonic the Hedgehog Masato Nakamura', trackHint:'green hill zone', reveal:'"Green Hill Zone" — Masato Nakamura' },
+  { title:'The Legend of Zelda: Majora\'s Mask', year:2000, searchTerm:'Song of Healing Koji Kondo Majoras Mask', trackHint:'song of healing', reveal:'"Song of Healing" — Koji Kondo' },
+  { title:'The Legend of Zelda: The Wind Waker', year:2002, searchTerm:'Dragon Roost Island Legend of Zelda Wind Waker', trackHint:'dragon roost', reveal:'"Dragon Roost Island" — Kenta Nagata' },
+  { title:'The Legend of Zelda: Twilight Princess', year:2006, searchTerm:'Hyrule Field Theme Legend of Zelda Twilight Princess', trackHint:'hyrule field', reveal:'"Hyrule Field Theme" — Toru Minegishi' },
+  { title:'The Legend of Zelda: Skyward Sword', year:2011, searchTerm:'Ballad of the Goddess Legend of Zelda Skyward Sword', trackHint:'ballad of the goddess', reveal:'"Ballad of the Goddess" — Hajime Wakai' },
+  { title:'The Legend of Zelda: A Link to the Past', year:1991, searchTerm:'Hyrule Castle Legend of Zelda Link to the Past Koji Kondo', trackHint:'hyrule castle', reveal:'"Hyrule Castle" — Koji Kondo' },
+  { title:'The Legend of Zelda', year:1986, searchTerm:'Legend of Zelda Overworld Theme Koji Kondo', trackHint:'overworld', reveal:'Overworld Theme — Koji Kondo' },
+  { title:'Metroid Prime', year:2002, searchTerm:'Tallon Overworld Metroid Prime Kenji Yamamoto', trackHint:'tallon overworld', reveal:'"Tallon Overworld" — Kenji Yamamoto' },
+  { title:'Super Metroid', year:1994, searchTerm:'Brinstar Super Metroid Kenji Yamamoto', trackHint:'brinstar', reveal:'"Brinstar" — Kenji Yamamoto & Minako Hamano' },
+  { title:'Super Smash Bros. Ultimate', year:2018, searchTerm:'Lifelight Super Smash Bros Ultimate', trackHint:'lifelight', reveal:'"Lifelight" — Super Smash Bros. Ultimate Sound Team' },
+  { title:'Super Smash Bros. Brawl', year:2008, searchTerm:'Super Smash Bros Brawl Main Theme Nobuo Uematsu', trackHint:null, reveal:'Main Theme — Nobuo Uematsu' },
+  { title:'Mario Kart 8 Deluxe', year:2017, searchTerm:'Rainbow Road Mario Kart 8', trackHint:'rainbow road', reveal:'"Rainbow Road" — Mario Kart 8 Sound Team' },
+  { title:'Mario Kart 64', year:1996, searchTerm:'Rainbow Road Mario Kart 64 Kenta Nagata', trackHint:'rainbow road', reveal:'"Rainbow Road" — Kenta Nagata' },
+  { title:'Donkey Kong Country', year:1994, searchTerm:'Aquatic Ambiance Donkey Kong Country David Wise', trackHint:'aquatic ambiance', reveal:'"Aquatic Ambiance" — David Wise' },
+  { title:'Mega Man 2', year:1988, searchTerm:'Dr Wily Stage 1 Mega Man 2 Takashi Tateishi', trackHint:'wily', reveal:'"Dr. Wily Stage 1" — Takashi Tateishi' },
+  { title:'Street Fighter II', year:1991, searchTerm:'Guile\'s Theme Street Fighter II Yoko Shimomura', trackHint:'guile', reveal:'"Guile\'s Theme" — Yoko Shimomura' },
+  { title:'Mortal Kombat (1992)', year:1992, searchTerm:'Mortal Kombat Theme Dan Forden', trackHint:'mortal kombat', reveal:'"Mortal Kombat Theme" — Dan Forden' },
+  { title:'Metal Gear Solid 3: Snake Eater', year:2004, searchTerm:'Snake Eater Theme Cynthia Harrell Metal Gear Solid 3', trackHint:'snake eater', reveal:'"Snake Eater" — Cynthia Harrell (Norihiko Hibino)' },
+  { title:'Metal Gear Solid 2: Sons of Liberty', year:2001, searchTerm:'Can\'t Say Goodbye to Yesterday Rika Muranaka Metal Gear Solid 2', trackHint:'goodbye to yesterday', reveal:'"Can\'t Say Goodbye to Yesterday" — Rika Muranaka' },
+  { title:'Dark Souls', year:2011, searchTerm:'Gwyn Lord of Cinder Dark Souls Motoi Sakuraba', trackHint:'gwyn', reveal:'"Gwyn, Lord of Cinder" — Motoi Sakuraba' },
+  { title:'Bloodborne', year:2015, searchTerm:'Hunter\'s Dream Bloodborne Tsukasa Saitoh', trackHint:'hunter', reveal:'"Hunter\'s Dream" — Tsukasa Saitoh' },
+  { title:'Sekiro: Shadows Die Twice', year:2019, searchTerm:'Genichiro Ashina Castle Sekiro', trackHint:'genichiro', reveal:'"Genichiro, Ashina Castle" — Yuka Kitamura' },
+  { title:'Elden Ring', year:2022, searchTerm:'Radagon and the Elden Beast Elden Ring', trackHint:'radagon', reveal:'"Radagon and the Elden Beast" — Tsukasa Saitoh & Yuka Kitamura' },
+  { title:'Persona 5', year:2016, searchTerm:'Last Surprise Persona 5 Lyn', trackHint:'last surprise', reveal:'"Last Surprise" — Lyn (Shoji Meguro)' },
+  { title:'Persona 4', year:2008, searchTerm:'Reach Out to the Truth Persona 4', trackHint:'reach out to the truth', reveal:'"Reach Out to the Truth" — Shoji Meguro' },
+  { title:'Persona 3', year:2006, searchTerm:'Burn My Dread Persona 3', trackHint:'burn my dread', reveal:'"Burn My Dread" — Shoji Meguro' },
+  { title:'NieR: Automata', year:2017, searchTerm:'Weight of the World NieR Automata', trackHint:'weight of the world', reveal:'"Weight of the World" — Keiichi Okabe' },
+  { title:'Hades', year:2020, searchTerm:'In the Blood Darren Korb Hades', trackHint:'in the blood', reveal:'"In the Blood" — Darren Korb' },
+  { title:'Cuphead', year:2017, searchTerm:'Floral Fury Cuphead Kristofer Maddigan', trackHint:'floral fury', reveal:'"Floral Fury" — Kristofer Maddigan' },
+  { title:'Ori and the Blind Forest', year:2015, searchTerm:'Spirit Tree Ori and the Blind Forest Gareth Coker', trackHint:'spirit tree', reveal:'"Spirit Tree" — Gareth Coker' },
+  { title:'Disco Elysium', year:2019, searchTerm:'Whirling-in-Rags Disco Elysium', trackHint:'whirling', reveal:'"Whirling-in-Rags" — British Council' },
+  { title:'Death Stranding', year:2019, searchTerm:'I\'ll Keep Coming Low Roar Death Stranding', trackHint:'keep coming', reveal:'"I\'ll Keep Coming" — Low Roar' },
+  { title:'Control', year:2019, searchTerm:'Take Control Old Gods of Asgard Control', trackHint:'take control', reveal:'"Take Control" — Old Gods of Asgard' },
+  { title:'Bayonetta', year:2009, searchTerm:'Fly Me to the Moon Bayonetta', trackHint:'fly me to the moon', reveal:'"Fly Me to the Moon" (Bayonetta arrangement)' },
+  { title:'God of War Ragnarök', year:2022, searchTerm:'Blood Upon the Snow Bear McCreary God of War Ragnarok', trackHint:'blood upon the snow', reveal:'"Blood Upon the Snow" — Bear McCreary' },
+  { title:'Uncharted: Drake\'s Fortune', year:2007, searchTerm:'Nate\'s Theme Greg Edmonson Uncharted', trackHint:'nate\'s theme', reveal:'"Nate\'s Theme" — Greg Edmonson' },
+  { title:'Uncharted 2: Among Thieves', year:2009, searchTerm:'Nate\'s Theme 2.0 Greg Edmonson Uncharted 2', trackHint:'nate\'s theme', reveal:'"Nate\'s Theme 2.0" — Greg Edmonson' },
+  { title:'The Last of Us', year:2013, searchTerm:'The Last of Us Main Theme Gustavo Santaolalla', trackHint:null, reveal:'Main Theme — Gustavo Santaolalla' },
+  { title:'The Last of Us Part II', year:2020, searchTerm:'The Last of Us Part II Main Theme Gustavo Santaolalla', trackHint:null, reveal:'Main Theme — Gustavo Santaolalla' },
+  { title:'Horizon Zero Dawn', year:2017, searchTerm:'The Prophecy Rises Horizon Zero Dawn', trackHint:'prophecy rises', reveal:'"The Prophecy Rises" — Joris de Man, The Flight & Niels van der Leest' },
+  { title:'Marvel\'s Spider-Man', year:2018, searchTerm:'Spider-Man PS4 Main Theme John Paesano', trackHint:null, reveal:'Main Theme — John Paesano' },
+  { title:'BioShock Infinite', year:2013, searchTerm:'Will the Circle Be Unbroken BioShock Infinite', trackHint:'circle be unbroken', reveal:'"Will the Circle Be Unbroken" (BioShock Infinite cover)' },
+  { title:'Dishonored', year:2012, searchTerm:'Honor for All Daniel Licht Dishonored', trackHint:'honor for all', reveal:'"Honor for All" — Daniel Licht' },
+  { title:'Deus Ex: Human Revolution', year:2011, searchTerm:'Icarus Michael McCann Deus Ex Human Revolution', trackHint:'icarus', reveal:'"Icarus" — Michael McCann' },
+  { title:'Halo 3', year:2007, searchTerm:'One Final Effort Halo 3 Martin O\'Donnell', trackHint:'one final effort', reveal:'"One Final Effort" — Martin O\'Donnell & Michael Salvatori' },
+  { title:'Halo: Reach', year:2010, searchTerm:'Tip of the Spear Halo Reach Martin O\'Donnell', trackHint:'tip of the spear', reveal:'"Tip of the Spear" — Martin O\'Donnell & Michael Salvatori' },
+  { title:'World of Warcraft', year:2004, searchTerm:'Legends of Azeroth World of Warcraft Jason Hayes', trackHint:'legends of azeroth', reveal:'"Legends of Azeroth" — Jason Hayes' },
+  { title:'Diablo', year:1997, searchTerm:'Tristram Theme Diablo Matt Uelmen', trackHint:'tristram', reveal:'"Tristram" — Matt Uelmen' },
+  { title:'Diablo II', year:2000, searchTerm:'Diablo II Main Theme Matt Uelmen', trackHint:null, reveal:'Main Theme — Matt Uelmen' },
+  { title:'Fallout 3', year:2008, searchTerm:'I Don\'t Want to Set the World on Fire Ink Spots Fallout 3', trackHint:'set the world on fire', reveal:'"I Don\'t Want to Set the World on Fire" — The Ink Spots' },
+  { title:'Fallout: New Vegas', year:2010, searchTerm:'Big Iron Marty Robbins Fallout New Vegas', trackHint:'big iron', reveal:'"Big Iron" — Marty Robbins' },
+  { title:'Borderlands', year:2009, searchTerm:'Ain\'t No Rest for the Wicked Cage the Elephant Borderlands', trackHint:'rest for the wicked', reveal:'"Ain\'t No Rest for the Wicked" — Cage the Elephant' },
+  { title:'Sid Meier\'s Civilization IV', year:2005, searchTerm:'Baba Yetu Christopher Tin Civilization IV', trackHint:'baba yetu', reveal:'"Baba Yetu" — Christopher Tin' },
+  { title:'Sid Meier\'s Civilization VI', year:2016, searchTerm:'Sogno di Volare Christopher Tin Civilization VI', trackHint:'sogno di volare', reveal:'"Sogno di Volare" — Christopher Tin' },
+  { title:'Max Payne 2: The Fall of Max Payne', year:2003, searchTerm:'Late Goodbye Poets of the Fall Max Payne 2', trackHint:'late goodbye', reveal:'"Late Goodbye" — Poets of the Fall' },
+  { title:'Grand Theft Auto V', year:2013, searchTerm:'GTA V Theme Woody Jackson', trackHint:null, reveal:'Main Theme — Woody Jackson' },
+  { title:'Tomb Raider (2013)', year:2013, searchTerm:'Tomb Raider Main Theme Jason Graves', trackHint:null, reveal:'Main Theme — Jason Graves' },
+  { title:'Doom Eternal', year:2020, searchTerm:'The Only Thing They Fear Is You Mick Gordon Doom Eternal', trackHint:'fear is you', reveal:'"The Only Thing They Fear Is You" — Mick Gordon' },
+  { title:'Doom (1993)', year:1993, searchTerm:'At Doom\'s Gate E1M1 Bobby Prince', trackHint:'doom\'s gate', reveal:'"At Doom\'s Gate" (E1M1) — Bobby Prince' },
+  { title:'No Man\'s Sky', year:2016, searchTerm:'Supermoon 65daysofstatic No Man\'s Sky', trackHint:'supermoon', reveal:'"Supermoon" — 65daysofstatic' },
+  { title:'Outer Wilds', year:2019, searchTerm:'Outer Wilds Main Theme Andrew Prahlow', trackHint:null, reveal:'Main Theme — Andrew Prahlow' },
+  { title:'Final Fantasy XIV', year:2010, searchTerm:'Answers Nobuo Uematsu Final Fantasy XIV', trackHint:'answers', reveal:'"Answers" — Nobuo Uematsu' },
+  { title:'Final Fantasy XV', year:2016, searchTerm:'Stand By Me Florence and the Machine Final Fantasy XV', trackHint:'stand by me', reveal:'"Stand By Me" — Florence + the Machine' },
+  { title:'Yakuza 0', year:2015, searchTerm:'Baka Mitai Yakuza 0', trackHint:'baka mitai', reveal:'"Baka Mitai" — Yakuza 0' },
+  { title:'Monster Hunter: World', year:2018, searchTerm:'Proof of a Hero Monster Hunter World', trackHint:'proof of a hero', reveal:'"Proof of a Hero" — Monster Hunter series theme' },
+  { title:'Pokémon Red/Blue', year:1996, searchTerm:'Pallet Town Theme Pokemon Red Blue Junichi Masuda', trackHint:'pallet town', reveal:'"Pallet Town Theme" — Junichi Masuda' },
+  { title:'Tetris', year:1984, searchTerm:'Korobeiniki Tetris Theme A', trackHint:'korobeiniki', reveal:'"Korobeiniki" (Tetris Theme A)' },
+  { title:'Plants vs. Zombies', year:2009, searchTerm:'Watch Out for Zombies Laura Shigihara Plants vs Zombies', trackHint:'watch out for zombies', reveal:'"Watch Out for Zombies!" — Laura Shigihara' },
+  { title:'Splatoon', year:2015, searchTerm:'Ink or Sink Squid Sisters Splatoon', trackHint:'ink or sink', reveal:'"Ink or Sink" — Squid Sisters (Toru Minegishi)' },
+  { title:'Alan Wake 2', year:2023, searchTerm:'Herald of Darkness Poets of the Fall Alan Wake 2', trackHint:'herald of darkness', reveal:'"Herald of Darkness" — Poets of the Fall' },
+  { title:'Metal Gear Solid V: The Phantom Pain', year:2015, searchTerm:'Sins of the Father Low Roar Metal Gear Solid V', trackHint:'sins of the father', reveal:'"Sins of the Father" — Low Roar' },
+  { title:'Overwatch', year:2016, searchTerm:'Overwatch Trailer Theme Laura Platt Pascal Michael Stiefel', trackHint:'overwatch', reveal:'"Overwatch Trailer Theme" — Laura Platt & Pascal Michael Stiefel' },
+  { title:'Crysis 2', year:2011, searchTerm:'Crysis 2 Intro Theme Hans Zimmer', trackHint:null, reveal:'Intro Theme — Hans Zimmer' },
+  { title:'Battlefield 4', year:2013, searchTerm:'Battlefield 4 Warsaw Theme', trackHint:'warsaw', reveal:'"Warsaw" Theme — Battlefield 4' },
+  { title:'Dragon Age: Inquisition', year:2014, searchTerm:'Dragon Age Inquisition Theme Trevor Morris', trackHint:null, reveal:'Main Theme — Trevor Morris' },
+  { title:'Battlefield 3', year:2011, searchTerm:'Battlefield 3 Main Theme Johan Skugge Jukka Rintamaki', trackHint:null, reveal:'Main Theme — Johan Skugge & Jukka Rintamäki' },
+  { title:'Grand Theft Auto IV', year:2008, searchTerm:'Soviet Connection Theme from Grand Theft Auto IV Michael Hunter', trackHint:'soviet connection', reveal:'"Soviet Connection" — Michael Hunter' },
+  { title:'Assassin\'s Creed Rogue', year:2014, searchTerm:'Assassin\'s Creed Rogue Main Theme Elitsa Alexandrova Jesper Kyd', trackHint:null, reveal:'Main Theme — Elitsa Alexandrova & Jesper Kyd' },
+  { title:'Batman: Arkham City', year:2011, searchTerm:'Arkham City Main Theme Nick Arundel Batman', trackHint:null, reveal:'Main Theme — Nick Arundel' },
+  { title:'Call of Duty: Modern Warfare 2', year:2009, searchTerm:'Call of Duty Modern Warfare 2 Theme Hans Zimmer', trackHint:null, reveal:'Theme — Hans Zimmer' },
+  { title:'Uncharted 4: A Thief\'s End', year:2016, searchTerm:'A Thief\'s End Henry Jackman Uncharted 4', trackHint:null, reveal:'"A Thief\'s End" — Henry Jackman' },
+  { title:'Ghost Recon Wildlands', year:2017, searchTerm:'Wildlands Alain Johannes Ghost Recon Wildlands', trackHint:'wildlands', reveal:'"Wildlands" — Alain Johannes' },
+  { title:'Mass Effect 3', year:2012, searchTerm:'An End Once and For All Sam Hulick Mass Effect 3', trackHint:'end once and for all', reveal:'"An End Once and For All" — Sam Hulick' },
+  { title:'Mass Effect', year:2007, searchTerm:'Mass Effect Theme Jack Wall Sam Hulick', trackHint:null, reveal:'Main Theme — Jack Wall & Sam Hulick' },
+  { title:'Assassin\'s Creed Revelations', year:2011, searchTerm:'Assassin\'s Creed Revelations Main Theme Lorne Balfe', trackHint:null, reveal:'Main Theme — Lorne Balfe' },
+  { title:'Dragon Age: Origins', year:2009, searchTerm:'Dragon Age Origins Main Theme Inon Zur', trackHint:null, reveal:'Main Theme — Inon Zur' },
+  { title:'Assassin\'s Creed Origins', year:2017, searchTerm:'Assassin\'s Creed Origins Main Theme Sarah Schachner', trackHint:null, reveal:'Main Theme — Sarah Schachner' },
+  { title:'Dishonored 2', year:2016, searchTerm:'Dishonored 2 Main Theme Daniel Licht', trackHint:null, reveal:'Main Theme — Daniel Licht' },
+  { title:'Assassin\'s Creed IV: Black Flag', year:2013, searchTerm:'Assassin\'s Creed IV Black Flag Main Theme Brian Tyler', trackHint:null, reveal:'Main Theme — Brian Tyler' },
+  { title:'Ghost of Tsushima', year:2020, searchTerm:'The Way of the Ghost Ilan Eshkeri Ghost of Tsushima', trackHint:'way of the ghost', reveal:'"The Way of the Ghost" — Ilan Eshkeri' },
+  { title:'Destiny', year:2014, searchTerm:'The Traveler Destiny Michael Salvatori Paul McCartney', trackHint:'traveler', reveal:'"The Traveler" — Michael Salvatori, Paul McCartney & C. Paul Johnson' },
+  { title:'Final Fantasy VIII', year:1999, searchTerm:'Liberi Fatali Final Fantasy VIII Nobuo Uematsu', trackHint:'liberi fatali', reveal:'"Liberi Fatali" — Nobuo Uematsu' },
+  { title:'Chrono Trigger', year:1995, searchTerm:'Secret of the Forest Chrono Trigger Yasunori Mitsuda', trackHint:'secret of the forest', reveal:'"Secret of the Forest" — Yasunori Mitsuda' },
+  { title:'Journey', year:2012, searchTerm:'Apotheosis Austin Wintory Journey', trackHint:'apotheosis', reveal:'"Apotheosis" — Austin Wintory' },
+  { title:'The Division', year:2016, searchTerm:'We Are the Division Ola Strandh Tom Clancy\'s The Division', trackHint:'division', reveal:'"We Are the Division" — Ola Strandh' },
+  { title:'Bastion', year:2011, searchTerm:'In Circles Darren Korb Ashley Barrett Bastion', trackHint:'in circles', reveal:'"In Circles" — Darren Korb feat. Ashley Barrett' },
+  { title:'Dead Island', year:2011, searchTerm:'Dead Island Trailer Theme Giles Lamb', trackHint:null, reveal:'Trailer Theme — Giles Lamb' },
+  { title:'GRIS', year:2018, searchTerm:'Gris Berlinist soundtrack', trackHint:null, reveal:'"Gris, Pt. 1" — Berlinist' }
+];
+
+const cassetteModal = document.getElementById('cassetteModal');
+const cassettePlayArea = document.getElementById('cassettePlayArea');
+const cassetteResultsArea = document.getElementById('cassetteResultsArea');
+const cassetteModeLabel = document.getElementById('cassetteModeLabel');
+const cassetteAttemptLabel = document.getElementById('cassetteAttemptLabel');
+const cassetteLivesRow = document.getElementById('cassetteLivesRow');
+const cassettePlayClipBtn = document.getElementById('cassettePlayClipBtn');
+const cassetteClipLengthLabel = document.getElementById('cassetteClipLengthLabel');
+const cassetteInput = document.getElementById('cassetteInput');
+const cassetteDropdown = document.getElementById('cassetteDropdown');
+const cassetteGuessBtn = document.getElementById('cassetteGuessBtn');
+const cassetteSkipBtn = document.getElementById('cassetteSkipBtn');
+const cassetteGuessHistory = document.getElementById('cassetteGuessHistory');
+const cassetteMsg = document.getElementById('cassetteMsg');
+const cassetteGiveUpBtn = document.getElementById('cassetteGiveUpBtn');
+const cassetteAudio = document.getElementById('cassetteAudioEl');
+const cassetteFinalMessage = document.getElementById('cassetteFinalMessage');
+const cassetteFinalScore = document.getElementById('cassetteFinalScore');
+const cassetteTrackReveal = document.getElementById('cassetteTrackReveal');
+const cassetteShareBtn = document.getElementById('cassetteShareBtn');
+const cassetteFreeplayBtn = document.getElementById('cassetteFreeplayBtn');
+const cassettePlayAgainBtn = document.getElementById('cassettePlayAgainBtn');
+const cassetteNextDailyBtn = document.getElementById('cassetteNextDailyBtn');
+const cassetteCloseBtn = document.getElementById('cassetteCloseBtn');
+
+let cassetteMode = 'daily'; // 'daily' | 'freeplay' | 'archive'
+let cassetteDailyDate = null;
+let cassetteArchiveDate = null;
+let cassetteTarget = null;
+let cassettePreviewUrl = null;
+let cassetteLoadState = 'idle'; // 'idle' | 'loading' | 'ready' | 'unavailable'
+let cassetteAttempt = 0;
+let cassetteGuessedTitles = [];
+let cassetteGameOver = false;
+let cassetteWon = false;
+let cassettePlayTimer = null;
+
+function cassettePool(){ return GAME_SOUNDTRACK_POOL; }
+
+function getCassetteTargetIndexFor(dateStr){
+  const rng = mulberry32(hashStr('cassette-' + dateStr));
+  return Math.floor(rng() * GAME_SOUNDTRACK_POOL.length);
+}
+
+const CASSETTE_STATE_KEY = 'cartridgeCassetteDailyState_v1';
+function loadCassetteDailyState(){
+  try{ const raw = localStorage.getItem(CASSETTE_STATE_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+}
+function saveCassetteDailyState(state){
+  try{ localStorage.setItem(CASSETTE_STATE_KEY, JSON.stringify(state)); }catch(e){}
+}
+function persistCassetteDaily(){
+  if(cassetteMode !== 'daily') return;
+  saveCassetteDailyState({
+    date: cassetteDailyDate,
+    puzzleIndex: GAME_SOUNDTRACK_POOL.indexOf(cassetteTarget),
+    attempt: cassetteAttempt,
+    guessedTitles: cassetteGuessedTitles.slice(),
+    gameOver: cassetteGameOver,
+    won: cassetteWon,
+  });
+}
+
+const CASSETTE_HISTORY_KEY = 'cartridgeCassetteHistory_v1';
+function loadCassetteHistory(){
+  try{ const raw = localStorage.getItem(CASSETTE_HISTORY_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; }
+}
+function saveCassetteHistory(hist){
+  try{ localStorage.setItem(CASSETTE_HISTORY_KEY, JSON.stringify(hist)); }catch(e){}
+}
+function recordCassetteDailyResult(dateStr, won, attempts){
+  const hist = loadCassetteHistory();
+  hist[dateStr] = { status: won ? 'won' : 'lost', attempts };
+  saveCassetteHistory(hist);
+}
+const CASSETTE_BEST_KEY = 'cartridgeCassetteBest_v1';
+function loadCassetteBest(){ try{ return parseInt(localStorage.getItem(CASSETTE_BEST_KEY), 10) || 0; }catch(e){ return 0; } }
+function saveCassetteBest(attempts){ try{ localStorage.setItem(CASSETTE_BEST_KEY, String(attempts)); }catch(e){} }
+
+function currentCassetteStreak(){
+  const days = buildLastNDays(30, cassetteDayInfo);
+  let streak = 0;
+  for(let i=days.length-1;i>=0;i--){
+    const d = days[i];
+    if(d.isToday && !d.played) continue;
+    if(d.played && d.won){ streak++; }
+    else break;
+  }
+  return streak;
+}
+
+// Cartridge (and Cartridge Cinema) are single HTML files opened directly
+// (file://), which sends Origin: null on every request. iTunes' search
+// endpoint doesn't grant CORS to a null origin, so a plain fetch() is
+// silently blocked there even though it works fine on a real server.
+// Apple's own docs call out JSONP (a dynamic <script> tag + callback param)
+// as the supported cross-domain method, and script tags aren't subject to
+// CORS/Origin checks at all, so that's what we use here instead of fetch().
+let cassetteJsonpCounter = 0;
+function cassetteJsonpSearch(term, timeoutMs){
+  return new Promise((resolve) => {
+    const cbName = '__cassJsonpCb' + (cassetteJsonpCounter++) + '_' + Date.now();
+    const script = document.createElement('script');
+    let settled = false;
+    let timer = null;
+    function cleanup(){
+      delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+      if(timer) clearTimeout(timer);
+    }
+    window[cbName] = function(data){
+      if(settled) return;
+      settled = true;
+      cleanup();
+      resolve(data);
+    };
+    timer = setTimeout(()=>{
+      if(settled) return;
+      settled = true;
+      cleanup();
+      resolve(null);
+    }, timeoutMs || 8000);
+    script.onerror = function(){
+      if(settled) return;
+      settled = true;
+      cleanup();
+      resolve(null);
+    };
+    script.src = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&limit=10&callback=${cbName}`;
+    document.head.appendChild(script);
+  });
+}
+
+const CASSETTE_PREVIEW_CACHE_KEY = 'cartridge_cassette_preview_cache_v1';
+let cassettePreviewCache = {};
+try{ cassettePreviewCache = JSON.parse(localStorage.getItem(CASSETTE_PREVIEW_CACHE_KEY) || '{}'); }catch(e){ cassettePreviewCache = {}; }
+
+async function fetchGameSoundtrackPreview(entry){
+  const cacheKey = entry.title;
+  if(Object.prototype.hasOwnProperty.call(cassettePreviewCache, cacheKey)) return cassettePreviewCache[cacheKey];
+  try{
+    const data = await cassetteJsonpSearch(entry.searchTerm);
+    if(!data) throw new Error('iTunes JSONP request failed or timed out');
+    const results = (data.results || []).filter(r => r.previewUrl);
+    let match = null;
+    if(entry.trackHint){
+      match = results.find(r => (r.trackName || '').toLowerCase().includes(entry.trackHint.toLowerCase()));
+    }
+    if(!match) match = results[0] || null;
+    const previewUrl = match ? match.previewUrl : null;
+    cassettePreviewCache[cacheKey] = previewUrl;
+    try{ localStorage.setItem(CASSETTE_PREVIEW_CACHE_KEY, JSON.stringify(cassettePreviewCache)); }catch(e){}
+    return previewUrl;
+  }catch(e){
+    console.error('Soundtrack preview fetch failed for', entry.title, e);
+    return null;
+  }
+}
+
+// Tries the requested pool index first, then walks forward through the rest
+// of the pool (wrapping around) until it finds an entry whose preview
+// actually resolves — so a single missing iTunes listing can't strand a
+// Daily puzzle on dead air.
+async function resolveCassetteTarget(startIndex){
+  for(let i = 0; i < GAME_SOUNDTRACK_POOL.length; i++){
+    const idx = (startIndex + i) % GAME_SOUNDTRACK_POOL.length;
+    const entry = GAME_SOUNDTRACK_POOL[idx];
+    const url = await fetchGameSoundtrackPreview(entry);
+    if(url) return { index: idx, entry, url };
+  }
+  return null;
+}
+
+function cassetteAudioStop(){
+  if(cassettePlayTimer){ clearTimeout(cassettePlayTimer); cassettePlayTimer = null; }
+  try{ cassetteAudio.pause(); }catch(e){}
+}
+function cassettePlayCurrentClip(){
+  if(cassetteLoadState !== 'ready' || !cassettePreviewUrl) return;
+  const seconds = CASS_CLIP_LENGTHS[Math.min(cassetteAttempt, CASS_CLIP_LENGTHS.length - 1)];
+  cassetteAudioStop();
+  if(cassetteAudio.src !== cassettePreviewUrl) cassetteAudio.src = cassettePreviewUrl;
+  cassetteAudio.currentTime = 0;
+  const playPromise = cassetteAudio.play();
+  if(playPromise && playPromise.catch) playPromise.catch(()=>{});
+  cassettePlayTimer = setTimeout(()=> cassetteAudio.pause(), seconds * 1000);
+}
+
+function renderCassetteLives(){
+  cassetteLivesRow.innerHTML = CASS_CLIP_LENGTHS.map((secs, i) => {
+    let cls = 'cass-life';
+    if(i < cassetteAttempt) cls += ' used';
+    else if(i === cassetteAttempt) cls += ' current';
+    return `<span class="${cls}">${secs}s</span>`;
+  }).join('');
+}
+
+function renderCassetteRound(){
+  cassetteModeLabel.textContent = cassetteMode === 'daily' ? `DAILY #${dailyNumberLabel(cassetteDailyDate)}`
+    : cassetteMode === 'archive' ? `REPLAY #${dailyNumberLabel(cassetteArchiveDate)} (${formatUKDate(cassetteArchiveDate)})`
+    : 'FREE PLAY';
+  cassetteAttemptLabel.textContent = `Attempt ${Math.min(cassetteAttempt + 1, CASS_MAX_ATTEMPTS)}/${CASS_MAX_ATTEMPTS}`;
+  renderCassetteLives();
+
+  if(cassetteLoadState === 'loading'){
+    cassetteClipLengthLabel.textContent = 'Loading clip…';
+    cassettePlayClipBtn.disabled = true;
+  } else if(cassetteLoadState === 'unavailable'){
+    cassetteClipLengthLabel.textContent = 'Audio unavailable';
+    cassettePlayClipBtn.disabled = true;
+  } else {
+    const secs = CASS_CLIP_LENGTHS[Math.min(cassetteAttempt, CASS_CLIP_LENGTHS.length - 1)];
+    cassetteClipLengthLabel.textContent = `▶ Play ${secs}s clip`;
+    cassettePlayClipBtn.disabled = cassetteGameOver;
+  }
+
+  cassetteGuessHistory.innerHTML = cassetteGuessedTitles.map(t => `<span class="charades-chip">${t}</span>`).join('');
+  cassetteMsg.textContent = '';
+  cassetteInput.value = '';
+  cassetteInput.disabled = cassetteGameOver;
+  cassetteGuessBtn.disabled = cassetteGameOver;
+  cassetteSkipBtn.disabled = cassetteGameOver;
+}
+
+function renderCassetteDropdown(query){
+  const q = query.trim().toLowerCase();
+  if(!q){ hideCassetteDropdown(); return; }
+  const guessedSet = new Set(cassetteGuessedTitles);
+  const matches = rankTitleMatches(cassettePool(), q).slice(0, 8);
+  if(!matches.length){ hideCassetteDropdown(); return; }
+  cassetteDropdown.innerHTML = matches.map(g => {
+    const already = guessedSet.has(g.title);
+    return `<div class="dropdown-item${already ? ' disabled' : ''}" data-title="${g.title.replace(/"/g,'&quot;')}">${g.title}${already ? ' (already guessed)' : ''}</div>`;
+  }).join('');
+  cassetteDropdown.classList.remove('hidden');
+}
+function hideCassetteDropdown(){ cassetteDropdown.classList.add('hidden'); cassetteDropdown.innerHTML = ''; }
+
+function cassetteResultMessage(){
+  return cassetteWon ? 'Nailed it! 🎧' : 'Stumped!';
+}
+
+function showCassetteResults(){
+  cassettePlayArea.style.display = 'none';
+  cassetteResultsArea.style.display = '';
+  const attemptsUsed = cassetteAttempt + 1;
+  cassetteFinalMessage.textContent = cassetteResultMessage();
+  cassetteFinalScore.textContent = cassetteWon
+    ? `Solved in ${attemptsUsed}/${CASS_MAX_ATTEMPTS} (${CASS_CLIP_LENGTHS[Math.min(attemptsUsed - 1, CASS_CLIP_LENGTHS.length - 1)]}s clip)`
+    : `The answer was ${cassetteTarget.title}`;
+  cassetteTrackReveal.innerHTML = `<div class="cass-track-reveal">${cassetteTarget.reveal}</div>`;
+  cassetteFreeplayBtn.style.display = cassetteMode === 'daily' ? '' : 'none';
+  cassettePlayAgainBtn.style.display = cassetteMode === 'freeplay' ? '' : 'none';
+  if(cassetteMode === 'daily') updateNextDailyButton(cassetteNextDailyBtn, 'cassette');
+  else cassetteNextDailyBtn.style.display = 'none';
+}
+function hideCassetteResults(){
+  cassetteResultsArea.style.display = 'none';
+  cassettePlayArea.style.display = '';
+}
+
+function endCassetteRound(){
+  cassetteAudioStop();
+  persistCassetteDaily();
+  const attemptsUsed = cassetteAttempt + 1;
+  if(cassetteMode === 'daily') recordCassetteDailyResult(cassetteDailyDate, cassetteWon, attemptsUsed);
+  else if(cassetteMode === 'archive') recordCassetteDailyResult(cassetteArchiveDate, cassetteWon, attemptsUsed);
+  renderCassetteRound();
+  showCassetteResults();
+
+  const ids = [];
+  if(cassetteWon){
+    const best = loadCassetteBest();
+    if(!best || attemptsUsed < best) saveCassetteBest(attemptsUsed);
+    if(attemptsUsed === 1) ids.push('cassette_perfect_pitch');
+    if(attemptsUsed === CASS_MAX_ATTEMPTS) ids.push('cassette_encore');
+  }
+  if(cassetteMode === 'daily' || cassetteMode === 'archive'){
+    if(cassetteWon && currentCassetteStreak() >= 3) ids.push('cassette_streak');
+    const winCount = Object.values(loadCassetteHistory()).filter(e => e.status === 'won').length;
+    if(winCount >= 10) ids.push('cassette_completionist');
+  }
+  const unlocked = checkNightOwl()
+    .concat(unlockAchievements(ids))
+    .concat(cassetteMode !== 'freeplay' ? checkCrossGameAchievements() : []);
+  renderAchievementToasts(unlocked, 'cassetteAchvToastList');
+}
+
+function submitCassetteGuess(){
+  if(cassetteGameOver) return;
+  const val = cassetteInput.value.trim();
+  if(!val) return;
+  const match = GAME_SOUNDTRACK_POOL.find(g => g.title.toLowerCase() === val.toLowerCase());
+  if(!match){ cassetteMsg.textContent = 'Not in the pool — pick from the dropdown.'; return; }
+  if(cassetteGuessedTitles.includes(match.title)){ cassetteMsg.textContent = 'Already tried that one.'; hideCassetteDropdown(); return; }
+
+  hideCassetteDropdown();
+
+  if(match.title === cassetteTarget.title){
+    cassetteWon = true;
+    cassetteGameOver = true;
+    playSfx('win');
+    endCassetteRound();
+    return;
+  }
+
+  cassetteGuessedTitles.push(match.title);
+  playSfx('incorrect');
+  cassetteAttempt++;
+  if(cassetteAttempt >= CASS_MAX_ATTEMPTS){
+    cassetteGameOver = true;
+    cassetteWon = false;
+    playSfx('lose');
+    endCassetteRound();
+    return;
+  }
+  persistCassetteDaily();
+  renderCassetteRound();
+  cassettePlayCurrentClip();
+}
+
+function skipCassetteRound(){
+  if(cassetteGameOver) return;
+  playSfx('incorrect');
+  cassetteAttempt++;
+  if(cassetteAttempt >= CASS_MAX_ATTEMPTS){
+    cassetteGameOver = true;
+    cassetteWon = false;
+    playSfx('lose');
+    endCassetteRound();
+    return;
+  }
+  persistCassetteDaily();
+  renderCassetteRound();
+  cassettePlayCurrentClip();
+}
+
+function giveUpCassette(){
+  if(cassetteGameOver) return;
+  cassetteGameOver = true;
+  cassetteWon = false;
+  playSfx('lose');
+  endCassetteRound();
+}
+cassetteGiveUpBtn.addEventListener('click', ()=>{
+  if(cassetteGameOver) return;
+  askGiveUpConfirm(giveUpCassette);
+});
+
+async function beginCassetteRound(startIndex){
+  cassetteLoadState = 'loading';
+  cassettePreviewUrl = null;
+  renderCassetteRound();
+  const resolved = await resolveCassetteTarget(startIndex);
+  if(!resolved){
+    cassetteLoadState = 'unavailable';
+    renderCassetteRound();
+    return;
+  }
+  cassetteTarget = resolved.entry;
+  cassettePreviewUrl = resolved.url;
+  cassetteLoadState = 'ready';
+  renderCassetteRound();
+  if(!cassetteGameOver) cassettePlayCurrentClip();
+}
+
+function startCassetteDaily(){
+  const date = todayKey();
+  cassetteMode = 'daily';
+  cassetteDailyDate = date;
+  let stored = loadCassetteDailyState();
+  if(!stored || stored.date !== date){
+    stored = { date, puzzleIndex: null, attempt: 0, guessedTitles: [], gameOver: false, won: false };
+    saveCassetteDailyState(stored);
+  }
+  cassetteAttempt = stored.attempt;
+  cassetteGuessedTitles = stored.guessedTitles.slice();
+  cassetteGameOver = stored.gameOver;
+  cassetteWon = stored.won;
+  hideCassetteDropdown();
+  hideCassetteResults();
+  const startIndex = typeof stored.puzzleIndex === 'number' ? stored.puzzleIndex : getCassetteTargetIndexFor(date);
+  beginCassetteRound(startIndex).then(()=>{
+    if(cassetteGameOver) showCassetteResults();
+  });
+}
+
+function startCassetteFreeplay(){
+  cassetteMode = 'freeplay';
+  cassetteAttempt = 0;
+  cassetteGuessedTitles = [];
+  cassetteGameOver = false;
+  cassetteWon = false;
+  hideCassetteDropdown();
+  hideCassetteResults();
+  beginCassetteRound(Math.floor(Math.random() * GAME_SOUNDTRACK_POOL.length));
+}
+
+function startCassetteArchive(dateStr){
+  cassetteMode = 'archive';
+  cassetteArchiveDate = dateStr;
+  cassetteAttempt = 0;
+  cassetteGuessedTitles = [];
+  cassetteGameOver = false;
+  cassetteWon = false;
+  hideCassetteDropdown();
+  hideCassetteResults();
+  beginCassetteRound(getCassetteTargetIndexFor(dateStr));
+}
+
+function buildCassetteShareText(){
+  const label = cassetteMode === 'daily' ? `CARTRIDGE CASSETTE Daily #${dailyNumberLabel(cassetteDailyDate)}`
+    : cassetteMode === 'archive' ? `CARTRIDGE CASSETTE Replay #${dailyNumberLabel(cassetteArchiveDate)}`
+    : 'CARTRIDGE CASSETTE — Free Play';
+  const attemptsUsed = cassetteAttempt + 1;
+  const pips = CASS_CLIP_LENGTHS.map((secs, i) => {
+    if(!cassetteWon && i === CASS_MAX_ATTEMPTS - 1) return '🟥';
+    if(i < attemptsUsed - 1) return '🟥';
+    if(i === attemptsUsed - 1) return cassetteWon ? '🟩' : '🟥';
+    return '⬜';
+  }).join('');
+  return cassetteWon
+    ? `${label}\n${pips}\nSolved in ${attemptsUsed}/${CASS_MAX_ATTEMPTS} 🎧`
+    : `${label}\n${pips}\nStumped! 🎧`;
+}
+
+cassetteInput.addEventListener('input', ()=> renderCassetteDropdown(cassetteInput.value));
+cassetteInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); submitCassetteGuess(); }
+  if(e.key === 'Escape'){ hideCassetteDropdown(); }
+});
+cassetteDropdown.addEventListener('click', (e)=>{
+  const item = e.target.closest('.dropdown-item');
+  if(!item || item.classList.contains('disabled')) return;
+  cassetteInput.value = item.dataset.title;
+  hideCassetteDropdown();
+  submitCassetteGuess();
+});
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('#cassetteModal .search-box')) hideCassetteDropdown();
+});
+cassetteGuessBtn.addEventListener('click', submitCassetteGuess);
+cassetteSkipBtn.addEventListener('click', skipCassetteRound);
+cassettePlayClipBtn.addEventListener('click', cassettePlayCurrentClip);
+cassetteShareBtn.addEventListener('click', ()=> shareOrCopy(buildCassetteShareText(), cassetteShareBtn));
+cassetteFreeplayBtn.addEventListener('click', startCassetteFreeplay);
+cassettePlayAgainBtn.addEventListener('click', startCassetteFreeplay);
+cassetteCloseBtn.addEventListener('click', showHomeScreen);
+document.getElementById('cassettePageMarquee').addEventListener('click', showHomeScreen);
+
+document.getElementById('archiveGridCassette').addEventListener('click', (e)=>{
+  const cell = e.target.closest('.archive-cell.playable');
+  if(!cell) return;
+  closeArchivePanel();
+  showCassettePage();
+  startCassetteArchive(cell.dataset.date);
+});
+
 // ---------- Cartridge Cup (16-game preference bracket — pick a favorite each
 // round, single elimination: Round of 16 -> Quarterfinals -> Semifinals ->
 // Final -> Champion) ----------
@@ -9070,6 +9807,7 @@ const menuCharadesBtn = document.getElementById('menuCharadesBtn');
 const menuChronicleBtn = document.getElementById('menuChronicleBtn');
 const menuCountdownBtn = document.getElementById('menuCountdownBtn');
 const menuCrosswordBtn = document.getElementById('menuCrosswordBtn');
+const menuCassetteBtn = document.getElementById('menuCassetteBtn');
 const menuCupBtn = document.getElementById('menuCupBtn');
 const menuChaosBtn = document.getElementById('menuChaosBtn');
 const menuMoviesBtn = document.getElementById('menuMoviesBtn');
@@ -9084,6 +9822,7 @@ function openSideMenu(){
   const countdownOpen = countdownModal.classList.contains('show');
   const chaosOpen = chaosModal.classList.contains('show');
   const cupOpen = cupModal.classList.contains('show');
+  const cassetteOpen = cassetteModal.classList.contains('show');
   menuChaosBtn.style.display = chaosIsUnlocked() ? '' : 'none';
   menuCountdownBtn.style.display = countdownIsUnlocked() ? '' : 'none';
   menuMoviesBtn.style.display = secretIsUnlocked() ? '' : 'none';
@@ -9093,9 +9832,10 @@ function openSideMenu(){
   menuChronicleBtn.classList.toggle('active', chronicleOpen);
   menuCountdownBtn.classList.toggle('active', countdownOpen);
   menuCrosswordBtn.classList.toggle('active', crosswordOpen);
+  menuCassetteBtn.classList.toggle('active', cassetteOpen);
   menuCupBtn.classList.toggle('active', cupOpen);
   menuChaosBtn.classList.toggle('active', chaosOpen);
-  menuCartridgeBtn.classList.toggle('active', !clashOpen && !gridOpen && !charadesOpen && !chronicleOpen && !countdownOpen && !crosswordOpen && !chaosOpen && !cupOpen);
+  menuCartridgeBtn.classList.toggle('active', !clashOpen && !gridOpen && !charadesOpen && !chronicleOpen && !countdownOpen && !crosswordOpen && !cassetteOpen && !chaosOpen && !cupOpen);
   sideMenu.classList.add('show');
   sideMenuOverlay.classList.add('show');
 }
@@ -9140,6 +9880,11 @@ menuCrosswordBtn.addEventListener('click', ()=>{
   closeSideMenu();
   showCrosswordPage();
   startCrosswordDaily();
+});
+menuCassetteBtn.addEventListener('click', ()=>{
+  closeSideMenu();
+  showCassettePage();
+  startCassetteDaily();
 });
 menuCupBtn.addEventListener('click', ()=>{
   closeSideMenu();
