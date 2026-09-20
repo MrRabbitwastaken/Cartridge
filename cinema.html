@@ -1399,6 +1399,14 @@
       <span class="side-menu-icon">🎞️</span>
       <span class="side-menu-label">Cinema Connect</span>
     </button>
+    <button class="side-menu-item" id="movieMenuCharadesBtn">
+      <span class="side-menu-icon">🎭</span>
+      <span class="side-menu-label">Cinema Charades</span>
+    </button>
+    <button class="side-menu-item" id="movieMenuCrosswordBtn">
+      <span class="side-menu-icon">🔤</span>
+      <span class="side-menu-label">Cinema Crossword</span>
+    </button>
     <button class="side-menu-item" id="movieMenuChronicleBtn">
       <span class="side-menu-icon">🎥</span>
       <span class="side-menu-label">Cinema Chronicle</span>
@@ -1461,6 +1469,16 @@
     <div class="archive-game-section">
       <div class="archive-game-heading" style="color:var(--green);">Cinema Connect</div>
       <div class="archive-stats" id="movieStatsConnect"></div>
+    </div>
+
+    <div class="archive-game-section">
+      <div class="archive-game-heading" style="color:var(--pink);">Cinema Charades</div>
+      <div class="archive-stats" id="movieStatsCharades"></div>
+    </div>
+
+    <div class="archive-game-section">
+      <div class="archive-game-heading" style="color:var(--teal);">Cinema Crossword</div>
+      <div class="archive-stats" id="movieStatsCrossword"></div>
     </div>
 
     <div class="archive-game-section">
@@ -1709,6 +1727,118 @@
         <button class="ghost-btn" id="codeFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="codePlayAgainBtn" style="display:none;">New Puzzle</button>
         <button class="ghost-btn" id="codeCloseBtn">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay page-mode" id="charadesModal">
+  <div class="wrap" style="max-width:640px;">
+    <header>
+      <div class="marquee" id="charadesPageMarquee" style="color:var(--pink);" title="Back to home">CINEMA CHARADES</div>
+      <div class="tagline">Emoji only. No words. <b>Guess the movie.</b></div>
+    </header>
+
+    <div id="charadesPlayArea">
+      <div class="grid-top-row">
+        <span id="charadesModeLabel">DAILY</span>
+        <span id="charadesGuessLabel">Guess 1/6</span>
+      </div>
+      <div class="charades-emoji-display" id="charadesEmojiDisplay">❔ ❔ ❔ ❔</div>
+      <div class="charades-guess-row">
+        <div class="search-box">
+          <input type="text" id="charadesInput" placeholder="Type a movie title…" autocomplete="off">
+          <div class="dropdown hidden" id="charadesDropdown"></div>
+        </div>
+        <button id="charadesGuessBtn">GUESS</button>
+      </div>
+      <div class="charades-guess-history" id="charadesGuessHistory"></div>
+      <div class="msg" id="charadesMsg"></div>
+      <div class="btn-row">
+        <button class="ghost-btn" id="charadesGiveUpBtn">Give up😭</button>
+      </div>
+    </div>
+
+    <div id="charadesResultsArea" class="clash-results" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid var(--line);">
+      <div class="clash-heading" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700;" id="charadesFinalMessage">Solved it!</div>
+      <div class="clash-final-score" id="charadesFinalScore"></div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn" id="charadesShareBtn">📋 Share Results</button>
+        <button class="ghost-btn" id="charadesFreeplayBtn">Play Free Play</button>
+        <button class="ghost-btn" id="charadesPlayAgainBtn" style="display:none;">New Puzzle</button>
+        <button class="ghost-btn" id="charadesCloseBtn">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay page-mode" id="crosswordModal">
+  <div class="wrap" style="max-width:660px;">
+    <header>
+      <div class="marquee" id="crosswordPageMarquee" style="color:var(--teal);" title="Back to home">CINEMA CROSSWORD</div>
+      <div class="tagline">Movies hidden in a grid. <b>Fill in the blanks.</b></div>
+    </header>
+
+    <div id="crosswordPlayArea" style="position:relative;">
+      <div class="grid-top-row">
+        <span id="crosswordModeLabel">DAILY</span>
+        <span id="crosswordTimerLabel">0:00</span>
+      </div>
+
+      <div class="active-clue-bar" id="crosswordActiveClueBar">
+        <div class="active-clue-text" id="crosswordActiveClueText"></div>
+        <div class="active-clue-input-row">
+          <input type="text" id="crosswordWholeWordInput" placeholder="Type the whole word here…" autocomplete="off" autocapitalize="characters">
+        </div>
+        <div class="active-clue-nav-row">
+          <button id="crosswordClueBtn" type="button">🔎 Reveal a letter</button>
+          <button id="crosswordPrevWordBtn" type="button">&larr; Prev</button>
+          <button id="crosswordNextWordBtn" type="button">Next &rarr;</button>
+        </div>
+      </div>
+
+      <div class="btn-row" style="justify-content:center; margin-bottom:10px;">
+        <button class="ghost-btn" id="crosswordStartTopBtn" type="button">⤒ Start from the top</button>
+      </div>
+
+      <div class="crossword-grid-scroll"><div id="crosswordGrid"></div></div>
+
+      <div class="cw-clue-cols">
+        <div>
+          <div class="cw-clue-heading">ACROSS</div>
+          <div class="cw-clue-list" id="crosswordAcrossList"></div>
+        </div>
+        <div>
+          <div class="cw-clue-heading">DOWN</div>
+          <div class="cw-clue-list" id="crosswordDownList"></div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="ghost-btn" id="crosswordCheckBtn">Check letters</button>
+        <button class="ghost-btn" id="crosswordRevealBtn">Reveal word</button>
+        <button class="ghost-btn" id="crosswordGiveUpBtn">Give up😭</button>
+      </div>
+
+      <div class="win-overlay" id="crosswordWinOverlay">
+        <div class="win-card">
+          <div class="win-trophy" id="crosswordWinTrophy">🏆</div>
+          <div class="win-title" id="crosswordWinTitle">CROSSWORD<br>COMPLETE!</div>
+          <div class="win-sub" id="crosswordWinSub">Solved in <b id="crosswordWinTime">0:00</b></div>
+          <button id="crosswordWinContinueBtn" type="button">Continue</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="crosswordResultsArea" class="clash-results" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid var(--line);">
+      <div class="clash-heading" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700;" id="crosswordFinalMessage">Solved!</div>
+      <div class="clash-final-score" id="crosswordFinalTime">1:23</div>
+      <div class="clash-best-score" id="crosswordBestTime">Best: 1:10</div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn" id="crosswordShareBtn">📋 Share Results</button>
+        <button class="ghost-btn" id="crosswordFreeplayBtn">Play Free Play</button>
+        <button class="ghost-btn" id="crosswordPlayAgainBtn" style="display:none;">New Puzzle</button>
+        <button class="ghost-btn" id="crosswordCloseBtn">Close</button>
       </div>
     </div>
   </div>
@@ -2618,6 +2748,22 @@ function renderMovieStats(){
     <div class="archive-stat"><div class="num">${Object.keys(gridHist).length}</div><div class="lbl">Dailies played</div></div>
   `;
 
+  const charadesHist = loadCharadesHistory();
+  const charadesBest = loadCharadesBest();
+  document.getElementById('movieStatsCharades').innerHTML = `
+    <div class="archive-stat"><div class="num">${charadesBest ? charadesBest + '/6' : '—'}</div><div class="lbl">Best (fewest guesses)</div></div>
+    <div class="archive-stat"><div class="num">${movieDailyStreak(charadesHist, v => typeof v === 'number')}</div><div class="lbl">Current streak</div></div>
+    <div class="archive-stat"><div class="num">${Object.keys(charadesHist).length}</div><div class="lbl">Dailies played</div></div>
+  `;
+
+  const crosswordHist = loadCrosswordHistory();
+  const crosswordBest = loadCrosswordBest();
+  document.getElementById('movieStatsCrossword').innerHTML = `
+    <div class="archive-stat"><div class="num">${crosswordBest != null ? cwFormatTime(crosswordBest) : '—'}</div><div class="lbl">Best Free Play time</div></div>
+    <div class="archive-stat"><div class="num">${movieDailyStreak(crosswordHist, v => v && v.completed === true)}</div><div class="lbl">Current streak</div></div>
+    <div class="archive-stat"><div class="num">${loadCrosswordCompletions()}</div><div class="lbl">Completions, lifetime</div></div>
+  `;
+
   const chronicleHist = loadChronicleHistory();
   document.getElementById('movieStatsChronicle').innerHTML = `
     <div class="archive-stat"><div class="num">${loadChronicleBest()}/15</div><div class="lbl">Best score</div></div>
@@ -2806,7 +2952,11 @@ const MOVIE_ACHIEVEMENTS = [
   { id: 'clash_streak',     name: 'Clash Streak',     icon: '🔥', hint: 'Reach a 3-day Cinema Clash Daily streak.' },
   { id: 'connect_streak',   name: 'Connect Streak',   icon: '🔥', hint: 'Reach a 3-day Cinema Connect Daily win streak.' },
   { id: 'chronicle_streak', name: 'Chronicle Streak', icon: '🔥', hint: 'Reach a 3-day Cinema Chronicle Daily streak.' },
-  { id: 'silver_screen',    name: 'Silver Screen',    icon: '🎞️', hint: 'Play all five Cinema games at least once.' },
+  { id: 'charades_flawless',name: 'Emoji Expert',     icon: '🎭', hint: 'Solve Cinema Charades in 2 guesses or fewer.' },
+  { id: 'charades_streak',  name: 'Charades Streak',  icon: '🔥', hint: 'Reach a 3-day Cinema Charades Daily streak.' },
+  { id: 'crossword_gold',   name: 'Gold Standard',    icon: '🥇', hint: 'Earn a Gold medal in Cinema Crossword by solving in 1:30 or less.' },
+  { id: 'crossword_streak', name: 'Crossword Streak', icon: '🔥', hint: 'Reach a 3-day Cinema Crossword Daily win streak.' },
+  { id: 'silver_screen',    name: 'Silver Screen',    icon: '🎞️', hint: 'Play all seven Cinema games at least once.' },
   { id: 'reel_explorer',    name: 'Reel Explorer',    icon: '🗺️', hint: 'Play a Free Play round in any Cinema game.' },
   { id: 'code_breaker',     name: 'Code Breaker',     icon: '🔓', hint: 'Solve Cinema Code in 3 guesses or fewer.' },
   { id: 'code_streak',      name: 'Code Streak',      icon: '🔥', hint: 'Reach a 3-day Cinema Code Daily streak.' },
@@ -2852,7 +3002,7 @@ function recordMovieGamePlayed(key){
 }
 function checkMovieMetaAchievements(mode){
   const ids = [];
-  if(loadMoviePlayedGames().length >= 5) ids.push('silver_screen');
+  if(loadMoviePlayedGames().length >= 7) ids.push('silver_screen');
   if(mode === 'freeplay') ids.push('reel_explorer');
   unlockMovieAchievements(ids);
 }
@@ -4691,6 +4841,1241 @@ codePlayAgainBtn.addEventListener('click', startCodeFreeplay);
 codeCloseBtn.addEventListener('click', showHomeScreen);
 document.getElementById('codePageMarquee').addEventListener('click', showHomeScreen);
 
+// ---------- Cinema Charades (emoji guessing, ported 1:1 from Cartridge
+// Charades) — guess the movie from a 4-emoji clue. Two emoji show to start
+// the round; each wrong guess reveals one more, up to 6 guesses total. ----------
+const CHARADES_MAX_GUESSES = 6;
+const MOVIE_CHARADES_CLUES = {
+  '2012': '🌍💥🌊🚗',
+  'Avatar': '🌳💙👽🪐',
+  'Avengers: Endgame': '🦸‍♂️🧤💥⏳',
+  'Avatar: The Way of Water': '🌊🐋💙🪸',
+  'Star Wars: The Force Awakens': '⚔️🤖🌌👧',
+  'Avengers: Infinity War': '🦸‍♂️💎🧤😱',
+  'Spider-Man: No Way Home': '🕷️🌀🎭👥',
+  'Inside Out 2': '😀😢😡😰',
+  'Jurassic World': '🦖🏝️🚙😱',
+  'The Avengers': '🦸‍♂️🛡️⚡🔨',
+  'Furious 7': '🏎️💨👨‍👩‍👧‍👦🔧',
+  'Top Gun: Maverick': '✈️🕶️🎖️🔥',
+  'Frozen II': '❄️👑🌊🍂',
+  'Avengers: Age of Ultron': '🤖🧠⚡💥',
+  'The Super Mario Bros. Movie': '🍄🔧👨‍🔧🏰',
+  'Black Panther': '🐆👑🌍⚡',
+  'Harry Potter and the Deathly Hallows – Part 2': '⚡🧙‍♂️🏰☠️',
+  'Deadpool & Wolverine': '🗡️🩸😂🦴',
+  'Star Wars: The Last Jedi': '⚔️🌌👴🔴',
+  'Jurassic World: Fallen Kingdom': '🦖🌋🏝️😱',
+  'Frozen': '❄️👑⛄👭',
+  'The Incredibles 2': '🦸‍♀️👶💥🦸‍♂️',
+  'Iron Man 3': '🤖🔥🎭🧨',
+  'Minions': '🍌👓😂💛',
+  'Captain America: Civil War': '🛡️🦸‍♂️⚔️🇺🇸',
+  'Aquaman': '🔱🌊👑🦈',
+  'The Lord of the Rings: The Return of the King': '💍👑⚔️🌋',
+  'Spider-Man: Far From Home': '🕷️🌍🎭💧',
+  'Captain Marvel': '✊💥🐱🚀',
+  'Transformers: Dark of the Moon': '🤖🌕🚗💥',
+  'Skyfall': '🕶️🔫🏴‍☠️💣',
+  'The Dark Knight Rises': '🦇🎭💣🏙️',
+  'Joker': '🤡🎭😂🩸',
+  'Star Wars: The Rise of Skywalker': '⚔️🌌👑💀',
+  'Toy Story 4': '🤠🍴👦🧸',
+  'Toy Story 3': '🤠🧸🔥📦',
+  'Pirates of the Caribbean: Dead Man\'s Chest': '🏴‍☠️🐙⚓💀',
+  'Rogue One: A Star Wars Story': '⚔️🌌🕶️💾',
+  'Despicable Me 3': '💛👨‍🦲🤖👧',
+  'Finding Dory': '🐟🔵🌊❓',
+  'Harry Potter and the Sorcerer\'s Stone': '⚡🧙‍♂️🦉🏰',
+  'Star Wars: The Phantom Menace': '⚔️🌌👦🤖',
+  'Zootopia': '🐰🦊🏙️🚔',
+  'Alice in Wonderland': '🐰⏰🎩🍄',
+  'The Hobbit: An Unexpected Journey': '💍🧙‍♂️⛏️🐉',
+  'The Dark Knight': '🦇🎭💰🃏',
+  'Harry Potter and the Deathly Hallows – Part 1': '⚡🧙‍♂️🏕️🐍',
+  'Oppenheimer': '💣☢️🧑‍🔬🌅',
+  'Despicable Me 2': '💛🕵️‍♂️💗👨‍🦲',
+  'Despicable Me 4': '💛👶👨‍🦲🤖',
+  'The Lion King': '🦁👑🌅🐗',
+  'The Jungle Book': '🐯🐻🐍👦',
+  'Pirates of the Caribbean: At World\'s End': '🏴‍☠️⚓🌊👑',
+  'The Hobbit: The Desolation of Smaug': '🐉💰🔥⛰️',
+  'Doctor Strange in the Multiverse of Madness': '🧙‍♂️🌀✋🕸️',
+  'The Hobbit: The Battle of the Five Armies': '🐉⚔️🏔️🛡️',
+  'The Lord of the Rings: The Two Towers': '💍🗼⚔️🌳',
+  'Harry Potter and the Order of the Phoenix': '⚡🧙‍♂️🔥🦅',
+  'Finding Nemo': '🐠🌊👨‍👦🦈',
+  'Harry Potter and the Half-Blood Prince': '⚡🧙‍♂️📗💚',
+  'Bohemian Rhapsody': '🎤🎸🕺🇬🇧',
+  'Harry Potter and the Goblet of Fire': '⚡🧙‍♂️🔥🏆',
+  'Spider-Man 3': '🕷️🖤😈🎷',
+  'The Lord of the Rings: The Fellowship of the Ring': '💍🧙‍♂️⚔️🚶‍♂️',
+  'Spider-Man: Homecoming': '🕷️🏫🧑‍🎓🕸️',
+  'Harry Potter and the Chamber of Secrets': '⚡🧙‍♂️🐍📖',
+  'Batman v Superman: Dawn of Justice': '🦇🦸‍♂️⚔️🌃',
+  'Star Wars: Revenge of the Sith': '⚔️🌋😈🤖',
+  'The Hunger Games: Catching Fire': '🏹🔥👧🕊️',
+  'Guardians of the Galaxy Vol. 2': '🚀🦝🌌🎶',
+  'Black Panther: Wakanda Forever': '🐆👑🌊⚫',
+  'Inside Out': '😀😢😡😨',
+  'Venom': '🖤👅😈🕷️',
+  'Thor: Ragnarok': '⚡🔨🌈💥',
+  'Guardians of the Galaxy Vol. 3': '🚀🦝🐶🌌',
+  'Inception': '🌀💭🏙️🎭',
+  'Transformers: Revenge of the Fallen': '🤖⚔️🌕💥',
+  'Wonder Woman': '🛡️⚔️👸🕊️',
+  'Coco': '💀🎸🌼🎶',
+  'Fantastic Beasts and Where to Find Them': '🧳🦄🧙‍♂️🗽',
+  'Harry Potter and the Prisoner of Azkaban': '⚡🧙‍♂️🐕⏳',
+  'Mission: Impossible – Fallout': '🕶️💣🪂🏍️',
+  'Deadpool 2': '🗡️😂🩸👨‍👩‍👦',
+  'Deadpool': '🗡️😂🩸❤️',
+  'Star Wars: A New Hope': '⚔️🌌🤖👧',
+  'Guardians of the Galaxy': '🚀🦝🌳🎶',
+  'The Batman': '🦇🕵️‍♂️🌃❓',
+  'Thor: Love and Thunder': '⚡🔨❤️🐐',
+  'Maleficent': '🧝‍♀️🖤🌹🐦',
+  'The Amazing Spider-Man': '🕷️🕸️🏙️🦎',
+  'The Hunger Games: Mockingjay – Part 1': '🏹🕊️📺👧',
+  'X-Men: Days of Future Past': '🧬⏳⚔️🤖',
+  'Suicide Squad': '🃏💣👥😈',
+  'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe': '🦁❄️🚪🗡️',
+  'Monsters University': '👁️🎓😱🏫',
+  'Up': '🎈🏠👴🐕',
+  'F9': '🏎️👨‍👩‍👧‍👦🚀',
+  'Gravity': '🌌👩‍🚀🛰️😱',
+  'Dune: Part Two': '🏜️🐛👑⚔️',
+  'Captain America: The Winter Soldier': '🛡️❄️🕵️‍♂️🔫',
+};
+const CHARADES_POOL = MOVIES.filter(m => MOVIE_CHARADES_CLUES.hasOwnProperty(m.title));
+
+// Grapheme-aware splitting so multi-codepoint emoji (ZWJ sequences, flags)
+// each count as one clue "piece" instead of being torn into fragments.
+function splitEmoji(str){
+  if(typeof Intl !== 'undefined' && Intl.Segmenter){
+    return Array.from(new Intl.Segmenter('en', {granularity:'grapheme'}).segment(str), s => s.segment);
+  }
+  return Array.from(str);
+}
+
+const charadesModal = document.getElementById('charadesModal');
+const charadesPlayArea = document.getElementById('charadesPlayArea');
+const charadesResultsArea = document.getElementById('charadesResultsArea');
+const charadesModeLabel = document.getElementById('charadesModeLabel');
+const charadesGuessLabel = document.getElementById('charadesGuessLabel');
+const charadesEmojiDisplay = document.getElementById('charadesEmojiDisplay');
+const charadesInput = document.getElementById('charadesInput');
+const charadesDropdown = document.getElementById('charadesDropdown');
+const charadesGuessBtn = document.getElementById('charadesGuessBtn');
+const charadesGuessHistory = document.getElementById('charadesGuessHistory');
+const charadesMsg = document.getElementById('charadesMsg');
+const charadesGiveUpBtn = document.getElementById('charadesGiveUpBtn');
+const charadesFinalMessage = document.getElementById('charadesFinalMessage');
+const charadesFinalScore = document.getElementById('charadesFinalScore');
+const charadesShareBtn = document.getElementById('charadesShareBtn');
+const charadesFreeplayBtn = document.getElementById('charadesFreeplayBtn');
+const charadesPlayAgainBtn = document.getElementById('charadesPlayAgainBtn');
+const charadesCloseBtn = document.getElementById('charadesCloseBtn');
+
+let charadesMode = 'daily'; // 'daily' | 'freeplay'
+let charadesDailyDate = null;
+let charadesTarget = null;
+let charadesGuessedTitles = [];
+let charadesGameOver = false;
+let charadesWon = false;
+
+function showCharadesPage(){
+  hideAllTopScreens();
+  charadesModal.classList.add('show');
+}
+
+function getCharadesTargetFor(dateStr){
+  const rng = mulberry32(hashStr('moviecharades-' + dateStr));
+  return CHARADES_POOL[Math.floor(rng() * CHARADES_POOL.length)];
+}
+
+const CHARADES_DAILY_KEY = 'moviesCharadesDaily_v1';
+function loadCharadesDailyState(){
+  try{ const raw = localStorage.getItem(CHARADES_DAILY_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+}
+function saveCharadesDailyState(state){
+  try{ localStorage.setItem(CHARADES_DAILY_KEY, JSON.stringify(state)); }catch(e){}
+}
+function persistCharadesDaily(){
+  if(charadesMode !== 'daily') return;
+  saveCharadesDailyState({
+    date: charadesDailyDate, guessedTitles: charadesGuessedTitles.slice(),
+    gameOver: charadesGameOver, won: charadesWon,
+  });
+}
+
+const CHARADES_HISTORY_KEY = 'moviesCharadesHistory_v1';
+function loadCharadesHistory(){
+  try{ const raw = localStorage.getItem(CHARADES_HISTORY_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; }
+}
+function saveCharadesHistory(hist){
+  try{ localStorage.setItem(CHARADES_HISTORY_KEY, JSON.stringify(hist)); }catch(e){}
+}
+function recordCharadesDailyResult(dateStr, value){
+  const hist = loadCharadesHistory();
+  hist[dateStr] = value; // number of guesses if solved, 'lost' if not
+  saveCharadesHistory(hist);
+}
+const CHARADES_BEST_KEY = 'moviesCharadesBest_v1';
+function loadCharadesBest(){
+  try{ return parseInt(localStorage.getItem(CHARADES_BEST_KEY), 10) || 0; }catch(e){ return 0; }
+}
+function saveCharadesBest(guesses){
+  try{ localStorage.setItem(CHARADES_BEST_KEY, String(guesses)); }catch(e){}
+}
+
+function renderCharadesRound(){
+  charadesModeLabel.textContent = charadesMode === 'daily' ? `DAILY #${dailyNumberLabel(charadesDailyDate)}` : 'FREE PLAY';
+  const guessCount = charadesGuessedTitles.length;
+  charadesGuessLabel.textContent = `Guess ${Math.min(guessCount + 1, CHARADES_MAX_GUESSES)}/${CHARADES_MAX_GUESSES}`;
+
+  const allEmoji = splitEmoji(MOVIE_CHARADES_CLUES[charadesTarget.title] || '❔');
+  const revealCount = Math.min(allEmoji.length, 2 + guessCount);
+  const hidden = Math.max(0, allEmoji.length - revealCount);
+  charadesEmojiDisplay.textContent = allEmoji.slice(0, revealCount).join(' ') + (hidden ? ' ' + '❔'.repeat(hidden) : '');
+
+  charadesGuessHistory.innerHTML = charadesGuessedTitles.map(t => `<span class="charades-chip">${t}</span>`).join('');
+  charadesMsg.textContent = '';
+  charadesInput.value = '';
+  charadesInput.disabled = charadesGameOver;
+  charadesGuessBtn.disabled = charadesGameOver;
+}
+
+function renderCharadesDropdown(query){
+  const q = query.trim().toLowerCase();
+  if(!q){ charadesDropdown.classList.add('hidden'); charadesDropdown.innerHTML = ''; return; }
+  const guessedSet = new Set(charadesGuessedTitles);
+  const matches = CHARADES_POOL.filter(m => m.title.toLowerCase().includes(q)).slice(0, 8);
+  if(!matches.length){ charadesDropdown.classList.add('hidden'); charadesDropdown.innerHTML = ''; return; }
+  charadesDropdown.innerHTML = matches.map(m => {
+    const already = guessedSet.has(m.title);
+    return `<div class="dropdown-item${already ? ' disabled' : ''}" data-title="${m.title.replace(/"/g,'&quot;')}">${m.title}${already ? ' (already guessed)' : ''}</div>`;
+  }).join('');
+  charadesDropdown.classList.remove('hidden');
+}
+function hideCharadesDropdown(){ charadesDropdown.classList.add('hidden'); charadesDropdown.innerHTML = ''; }
+
+function charadesResultMessage(){
+  return charadesWon ? 'Solved it! 🎉' : 'Out of guesses!';
+}
+
+function showCharadesResults(){
+  charadesPlayArea.style.display = 'none';
+  charadesResultsArea.style.display = '';
+  const guessCount = charadesGuessedTitles.length + (charadesWon ? 1 : 0);
+  charadesFinalMessage.textContent = charadesResultMessage();
+  charadesFinalScore.textContent = charadesWon
+    ? `Solved in ${guessCount}/${CHARADES_MAX_GUESSES}`
+    : `The answer was ${charadesTarget.title}`;
+  charadesFreeplayBtn.style.display = charadesMode === 'daily' ? '' : 'none';
+  charadesPlayAgainBtn.style.display = charadesMode === 'freeplay' ? '' : 'none';
+}
+function hideCharadesResults(){
+  charadesResultsArea.style.display = 'none';
+  charadesPlayArea.style.display = '';
+}
+
+function endCharadesRound(){
+  persistCharadesDaily();
+  const guessCount = charadesGuessedTitles.length + (charadesWon ? 1 : 0);
+  if(charadesMode === 'daily') recordCharadesDailyResult(charadesDailyDate, charadesWon ? guessCount : 'lost');
+  renderCharadesRound();
+  showCharadesResults();
+  playSfx(charadesWon ? 'win' : 'lose');
+
+  if(charadesWon){
+    const best = loadCharadesBest();
+    if(!best || guessCount < best) saveCharadesBest(guessCount);
+    const ids = [];
+    if(guessCount <= 2) ids.push('charades_flawless');
+    if(charadesMode === 'daily' && movieDailyStreak(loadCharadesHistory(), v => typeof v === 'number') >= 3) ids.push('charades_streak');
+    unlockMovieAchievements(ids);
+  }
+}
+
+function submitCharadesGuess(){
+  if(charadesGameOver) return;
+  const val = charadesInput.value.trim();
+  if(!val) return;
+  const match = CHARADES_POOL.find(m => m.title.toLowerCase() === val.toLowerCase());
+  if(!match){ charadesMsg.textContent = 'Not in the pool — pick from the dropdown.'; return; }
+  if(charadesGuessedTitles.includes(match.title)){ charadesMsg.textContent = 'Already tried that one.'; hideCharadesDropdown(); return; }
+
+  hideCharadesDropdown();
+
+  if(match.title === charadesTarget.title){
+    charadesWon = true;
+    charadesGameOver = true;
+    endCharadesRound();
+    return;
+  }
+
+  charadesGuessedTitles.push(match.title);
+  playSfx('incorrect');
+  if(charadesGuessedTitles.length >= CHARADES_MAX_GUESSES){
+    charadesGameOver = true;
+    charadesWon = false;
+    endCharadesRound();
+    return;
+  }
+  persistCharadesDaily();
+  renderCharadesRound();
+}
+
+function giveUpCharades(){
+  if(charadesGameOver) return;
+  charadesGameOver = true;
+  charadesWon = false;
+  endCharadesRound();
+}
+charadesGiveUpBtn.addEventListener('click', ()=>{
+  if(charadesGameOver) return;
+  askGiveUpConfirm(giveUpCharades);
+});
+
+function startCharadesRound(target){
+  charadesTarget = target;
+  charadesGuessedTitles = [];
+  charadesGameOver = false;
+  charadesWon = false;
+  hideCharadesDropdown();
+  hideCharadesResults();
+  renderCharadesRound();
+}
+
+function startCharadesDaily(){
+  recordMovieGamePlayed('charades');
+  checkMovieMetaAchievements('daily');
+  const date = todayKey();
+  charadesMode = 'daily';
+  charadesDailyDate = date;
+  let stored = loadCharadesDailyState();
+  if(!stored || stored.date !== date){
+    stored = { date, guessedTitles: [], gameOver: false, won: false };
+    saveCharadesDailyState(stored);
+  }
+  charadesTarget = getCharadesTargetFor(date);
+  charadesGuessedTitles = stored.guessedTitles.slice();
+  charadesGameOver = stored.gameOver;
+  charadesWon = stored.won;
+  hideCharadesDropdown();
+  renderCharadesRound();
+  if(charadesGameOver) showCharadesResults();
+  else hideCharadesResults();
+}
+
+function startCharadesFreeplay(){
+  recordMovieGamePlayed('charades');
+  checkMovieMetaAchievements('freeplay');
+  charadesMode = 'freeplay';
+  startCharadesRound(CHARADES_POOL[Math.floor(Math.random() * CHARADES_POOL.length)]);
+}
+
+function buildCharadesShareText(){
+  const label = charadesMode === 'daily' ? `CINEMA CHARADES Daily #${dailyNumberLabel(charadesDailyDate)}` : 'CINEMA CHARADES — Free Play';
+  const guessCount = charadesGuessedTitles.length + (charadesWon ? 1 : 0);
+  return charadesWon
+    ? `${label}\nSolved in ${guessCount}/${CHARADES_MAX_GUESSES} 🎭`
+    : `${label}\nStumped! 🎭`;
+}
+
+charadesInput.addEventListener('input', ()=> renderCharadesDropdown(charadesInput.value));
+charadesInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); submitCharadesGuess(); }
+  if(e.key === 'Escape'){ hideCharadesDropdown(); }
+});
+charadesDropdown.addEventListener('click', (e)=>{
+  const item = e.target.closest('.dropdown-item');
+  if(!item || item.classList.contains('disabled')) return;
+  charadesInput.value = item.dataset.title;
+  hideCharadesDropdown();
+  submitCharadesGuess();
+});
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('#charadesModal .search-box')) hideCharadesDropdown();
+});
+charadesGuessBtn.addEventListener('click', submitCharadesGuess);
+
+charadesShareBtn.addEventListener('click', ()=> shareOrCopy(buildCharadesShareText(), charadesShareBtn));
+charadesFreeplayBtn.addEventListener('click', startCharadesFreeplay);
+charadesPlayAgainBtn.addEventListener('click', startCharadesFreeplay);
+charadesCloseBtn.addEventListener('click', showHomeScreen);
+document.getElementById('charadesPageMarquee').addEventListener('click', showHomeScreen);
+
+// ---------- Cinema Crossword (100 movies, characters, and places — ported
+// 1:1 from Cartridge Crossword's grid generator, timer, and medal system).
+// Daily is a compact 4-across/4-down grid; Free Play steps up to 5-and-5
+// with a fresh random layout every time. ----------
+const MOVIE_CROSSWORD_POOL = [
+  { word: 'AVATAR', clue: 'Na\'vi warriors defend Pandora from human miners in this James Cameron blockbuster' },
+  { word: 'INCEPTION', clue: 'A team plants an idea deep in someone\'s mind across dreams within dreams in this Nolan thriller' },
+  { word: 'GRAVITY', clue: 'Stranded astronauts fight to survive after debris destroys their shuttle in this Sandra Bullock thriller' },
+  { word: 'JOKER', clue: 'Arthur Fleck\'s descent into chaos turns him into Gotham\'s most infamous clown' },
+  { word: 'COCO', clue: 'A boy crosses into the Land of the Dead to uncover his family\'s forgotten musician in this Pixar film' },
+  { word: 'ZOOTOPIA', clue: 'A rookie rabbit cop teams up with a con-artist fox to solve a mystery in this animal-filled city' },
+  { word: 'MALEFICENT', clue: 'A wronged fairy curses a princess to sleep for a hundred years in this Sleeping Beauty retelling' },
+  { word: 'VENOM', clue: 'A journalist bonds with an alien symbiote and gains monstrous powers in this Marvel spin-off' },
+  { word: 'GLADIATOR', clue: 'A betrayed Roman general seeks revenge in the Colosseum in this Russell Crowe epic' },
+  { word: 'JAWS', clue: 'A great white shark terrorizes a beach town in Spielberg\'s original summer blockbuster' },
+  { word: 'ROCKY', clue: 'An underdog Philadelphia boxer gets his shot at the heavyweight title in this Stallone classic' },
+  { word: 'ALIEN', clue: 'A deep-space crew is hunted by a deadly extraterrestrial in this Ridley Scott horror classic' },
+  { word: 'TITANIC', clue: 'A doomed ocean liner carries a forbidden romance to its icy end in this Cameron epic' },
+  { word: 'PSYCHO', clue: 'A woman checks into the Bates Motel in Hitchcock\'s shower-scene classic' },
+  { word: 'JUMANJI', clue: 'Teenagers get sucked into a video game jungle in this Dwayne Johnson adventure' },
+  { word: 'GREMLINS', clue: 'Don\'t feed them after midnight — mischievous creatures wreak havoc in this holiday horror-comedy' },
+  { word: 'ANACONDA', clue: 'A giant snake terrorizes a documentary crew on the Amazon River in this creature feature' },
+  { word: 'TWISTER', clue: 'Storm chasers pursue tornadoes across Oklahoma in this disaster thriller' },
+  { word: 'OUTBREAK', clue: 'A deadly virus threatens to wipe out a small American town in this pandemic thriller' },
+  { word: 'ARMAGEDDON', clue: 'Oil drillers are sent into space to blow up a planet-killing asteroid in this Bruce Willis blockbuster' },
+  { word: 'INDEPENDENCE', clue: 'Aliens invade Earth on the Fourth of July in ___ Day' },
+  { word: 'PREDATOR', clue: 'An elite commando team is hunted by an invisible alien in the jungle in this Schwarzenegger classic' },
+  { word: 'TERMINATOR', clue: 'A cyborg assassin is sent back in time to kill Sarah Connor in this Cameron classic' },
+  { word: 'MATRIX', clue: 'Neo discovers reality is a simulation in this Wachowski sci-fi classic, The ___' },
+  { word: 'INTERSTELLAR', clue: 'A pilot travels through a wormhole to save humanity in this Nolan space epic' },
+  { word: 'ARRIVAL', clue: 'A linguist must decode an alien language before humanity panics in this first-contact drama' },
+  { word: 'TENET', clue: 'A secret agent manipulates time itself to prevent World War III in this Nolan mind-bender' },
+  { word: 'DUNKIRK', clue: 'Allied soldiers are evacuated from a French beach under fire in this Nolan war epic' },
+  { word: 'BRAVEHEART', clue: 'A Scottish warrior leads a rebellion against English rule in this Mel Gibson epic' },
+  { word: 'SPARTACUS', clue: 'A rebel slave leads an uprising against Rome in this historical epic' },
+  { word: 'TROY', clue: 'Achilles battles for glory during the siege of a legendary city in this Brad Pitt epic' },
+  { word: 'NARNIA', clue: 'Four siblings step through a wardrobe into a magical, snow-covered kingdom called ___' },
+  { word: 'HOGWARTS', clue: 'Witches and wizards study spells at this magical British boarding school in Harry Potter' },
+  { word: 'VOLDEMORT', clue: 'The Dark Lord who must not be named terrorizes the wizarding world in Harry Potter' },
+  { word: 'DUMBLEDORE', clue: 'Hogwarts\' wise, bearded headmaster throughout the Harry Potter series is named ___' },
+  { word: 'HERMIONE', clue: 'The brightest witch of her age and Harry\'s loyal friend is named ___ Granger' },
+  { word: 'GANDALF', clue: 'A wise, grey-robed wizard guides the Fellowship across Middle-earth in Lord of the Rings' },
+  { word: 'MORDOR', clue: 'The One Ring must be destroyed in the fires of Mount Doom, deep within this dark land' },
+  { word: 'HOBBIT', clue: 'A reluctant, small-footed adventurer named Bilbo Baggins sets off on an unexpected journey in The ___' },
+  { word: 'SHIRE', clue: 'Hobbits live in peaceful, round-doored homes in this idyllic region of Middle-earth' },
+  { word: 'WAKANDA', clue: 'A hidden, technologically advanced African nation is ruled by the Black Panther and called ___' },
+  { word: 'ASGARD', clue: 'Thor\'s home realm, ruled by Odin, is called ___' },
+  { word: 'GOTHAM', clue: 'Batman protects this crime-ridden, perpetually rainy fictional city' },
+  { word: 'KRYPTON', clue: 'Superman\'s home planet, destroyed before he was sent to Earth, is called ___' },
+  { word: 'METROPOLIS', clue: 'Superman disguises himself as a mild-mannered reporter in this fictional city' },
+  { word: 'THANOS', clue: 'A purple, gauntlet-wielding titan seeks to wipe out half of all life in the Marvel films' },
+  { word: 'ULTRON', clue: 'A rogue artificial intelligence created by Tony Stark turns against the Avengers in Age of ___' },
+  { word: 'LOKI', clue: 'Thor\'s mischievous, shape-shifting adopted brother and the God of Mischief is named ___' },
+  { word: 'WOLVERINE', clue: 'A clawed mutant with a healing factor and metal skeleton is named ___' },
+  { word: 'DEADPOOL', clue: 'A foul-mouthed, fourth-wall-breaking mercenary in a red suit is known as ___' },
+  { word: 'GROOT', clue: 'A tree-like alien who can only say his own name is a beloved Guardian of the Galaxy named ___' },
+  { word: 'STARLORD', clue: 'Peter Quill leads a rag-tag team of misfits through space as ___' },
+  { word: 'BOND', clue: 'A British spy with a license to kill and a taste for martinis is known as James ___' },
+  { word: 'SKYFALL', clue: 'Bond\'s childhood home is destroyed in a climactic showdown in this 007 film' },
+  { word: 'GOLDENEYE', clue: '007 investigates a stolen satellite weapon in this Pierce Brosnan Bond film' },
+  { word: 'HANNIBAL', clue: 'A brilliant, cannibalistic psychiatrist named Dr. ___ Lecter haunts Clarice Starling\'s nightmares' },
+  { word: 'NORMAN', clue: 'The mother-obsessed motel owner in Psycho is named ___ Bates' },
+  { word: 'TONY', clue: 'A Cuban immigrant rises to the top of Miami\'s cocaine trade in Scarface, named ___ Montana' },
+  { word: 'VITO', clue: 'The aging patriarch of a powerful crime family is named Don ___ Corleone in The Godfather' },
+  { word: 'ROSEBUD', clue: 'A dying newspaper tycoon\'s final, mysterious word is ___ in Citizen Kane' },
+  { word: 'YODA', clue: 'A tiny, wise, 900-year-old Jedi Master who speaks in reversed sentences is named ___' },
+  { word: 'VADER', clue: 'Luke Skywalker\'s masked, heavy-breathing father is Darth ___' },
+  { word: 'SKYWALKER', clue: 'A farm boy from Tatooine discovers he\'s a Jedi in the Star Wars saga, named Luke ___' },
+  { word: 'CHEWBACCA', clue: 'Han Solo\'s loyal, towering Wookiee co-pilot is named ___' },
+  { word: 'LIGHTSABER', clue: 'Jedi and Sith duel with these glowing energy blades throughout Star Wars' },
+  { word: 'TATOOINE', clue: 'Luke Skywalker grows up on this desert planet with two suns in Star Wars' },
+  { word: 'ELSA', clue: 'A princess with the power to freeze anything she touches is named ___ in Frozen' },
+  { word: 'SIMBA', clue: 'A young lion prince flees his kingdom after his father\'s death in The Lion King, named ___' },
+  { word: 'MUFASA', clue: 'Simba\'s wise father, killed by his brother Scar, is named ___' },
+  { word: 'NEMO', clue: 'A clownfish father searches the ocean for his missing son in Finding ___' },
+  { word: 'DORY', clue: 'A forgetful blue tang fish helps search for a missing clownfish in Finding ___' },
+  { word: 'WALLE', clue: 'A lonely trash-compacting robot falls in love among the stars in this Pixar film, ___' },
+  { word: 'WOODY', clue: 'A pull-string cowboy doll leads his fellow toys in the Toy Story series, named ___' },
+  { word: 'BUZZ', clue: 'A space ranger action figure insists he\'s not a toy in Toy Story, named ___ Lightyear' },
+  { word: 'SHREK', clue: 'A grumpy, onion-loving ogre rescues a princess from a tower in this DreamWorks classic' },
+  { word: 'FIONA', clue: 'An enchanted princess who transforms into an ogre at night is named ___ in Shrek' },
+  { word: 'DONKEY', clue: 'Shrek\'s talkative, motor-mouthed sidekick is a chatty ___' },
+  { word: 'MINIONS', clue: 'Yellow, goggle-wearing henchmen who speak gibberish serve a super-villain in Despicable Me, called ___' },
+  { word: 'GRU', clue: 'A reformed super-villain adopts three orphan girls in Despicable Me, named ___' },
+  { word: 'KUNGFU', clue: 'A clumsy panda becomes an unlikely martial arts hero in ___ Panda' },
+  { word: 'MOANA', clue: 'A Polynesian chief\'s daughter sails across the ocean to save her island in this Disney film' },
+  { word: 'MAUI', clue: 'A shape-shifting demigod helps a young wayfinder on her voyage in Moana, named ___' },
+  { word: 'ARIEL', clue: 'A mermaid princess trades her voice for human legs in The Little Mermaid, named ___' },
+  { word: 'ALADDIN', clue: 'A street urchin finds a magic lamp and befriends a wisecracking genie in this Disney classic' },
+  { word: 'GENIE', clue: 'A wish-granting, blue, shape-shifting spirit lives inside a magic lamp in Aladdin' },
+  { word: 'SCAR', clue: 'Mufasa\'s jealous, power-hungry brother and the villain of The Lion King is named ___' },
+  { word: 'PUMBAA', clue: 'A flatulent warthog who lives by \'Hakuna Matata\' alongside Timon is named ___' },
+  { word: 'HAKUNA', clue: '\'___ Matata\' is the carefree philosophy sung by Timon and Pumbaa in The Lion King' },
+  { word: 'KHAN', clue: 'A genetically engineered supervillain seeks revenge on Captain Kirk in Star Trek II' },
+  { word: 'ENTERPRISE', clue: 'The USS ___ boldly goes where no one has gone before in Star Trek' },
+  { word: 'XENOMORPH', clue: 'A parasitic, acid-blooded creature with a second set of jaws terrorizes the crew in Alien' },
+  { word: 'RIPLEY', clue: 'The resourceful survivor who repeatedly battles the Xenomorph in the Alien franchise is named ___' },
+  { word: 'RAMBO', clue: 'A traumatized Vietnam veteran wages a one-man war against a small-town police force, named John ___' },
+  { word: 'APOLLO', clue: 'Rocky\'s charismatic rival-turned-friend, a boxing champion, is named ___ Creed' },
+  { word: 'INDIANA', clue: 'A whip-cracking archaeology professor globe-trots for lost artifacts, named ___ Jones' },
+  { word: 'MARION', clue: 'Indiana Jones\'s fiery love interest in Raiders of the Lost Ark is named ___' },
+  { word: 'HANS', clue: 'A charming Norwegian prince turns out to be the secret villain of Frozen, named ___' },
+  { word: 'OLAF', clue: 'A cheerful, talking snowman who loves warm hugs is named ___ in Frozen' },
+  { word: 'SULLEY', clue: 'A giant, blue, horned monster befriends a human toddler named Boo in Monsters, Inc., named ___' },
+  { word: 'BOO', clue: 'A fearless toddler girl accidentally wanders into the monster world in Monsters, Inc., named ___' },
+];
+
+const MOVIE_CROSSWORD_CATEGORY_POOL = [
+  { word: 'DISNEY', clue: 'Aladdin, Frozen, and The Lion King are all produced by ___' },
+  { word: 'PIXAR', clue: 'Coco, Finding Nemo, and Toy Story are all produced by ___' },
+  { word: 'MARVEL', clue: 'Avengers: Endgame, Black Panther, and Iron Man 3 are all produced by ___ Studios' },
+  { word: 'WARNER', clue: 'The Dark Knight, Wonder Woman, and Harry Potter are all released by ___ Bros.' },
+  { word: 'UNIVERSAL', clue: 'Jurassic World, Despicable Me, and the Fast & Furious films are all released by ___ Pictures' },
+  { word: 'PARAMOUNT', clue: 'Top Gun: Maverick, Mission: Impossible, and The Godfather are all released by ___ Pictures' },
+  { word: 'LUCASFILM', clue: 'Every Star Wars film is produced by George Lucas\'s own studio, ___' },
+  { word: 'DREAMWORKS', clue: 'Shrek, Kung Fu Panda, and How to Train Your Dragon are all produced by ___' },
+  { word: 'SONY', clue: 'Spider-Man: No Way Home and Venom are released by ___ Pictures' },
+  { word: 'ACTION', clue: 'Avengers: Endgame, Top Gun: Maverick, and Furious 7 are all ___ movies' },
+  { word: 'HORROR', clue: 'Joker, The Conjuring, and A Quiet Place are frequently classed as ___ or thriller films' },
+  { word: 'ANIMATION', clue: 'Coco, Zootopia, and Frozen are all ___ films' },
+  { word: 'SUPERHERO', clue: 'Black Panther, Wonder Woman, and Deadpool are all ___ movies' },
+  { word: 'SCIFI', clue: 'Inception, Interstellar, and The Matrix are all ___ films' },
+  { word: 'FANTASY', clue: 'The Lord of the Rings, Harry Potter, and Narnia are all ___ franchises' },
+];
+const CROSSWORD_DAILY_ACROSS = 4, CROSSWORD_DAILY_DOWN = 4;
+const CROSSWORD_FREEPLAY_ACROSS = 5, CROSSWORD_FREEPLAY_DOWN = 5;
+
+// One puzzle's actual pool: every movie word, plus 1 or 2 randomly-chosen
+// studio/genre category clues — returned separately as "priority" so the
+// generator gives them first crack at a spot rather than leaving it to
+// chance alongside ~100 other candidates.
+function buildCrosswordPuzzlePool(rng){
+  const categoryCount = 1 + Math.floor(rng() * 2); // 1 or 2
+  const chosenCategories = seededShuffle(MOVIE_CROSSWORD_CATEGORY_POOL, rng).slice(0, categoryCount);
+  return { pool: [...MOVIE_CROSSWORD_POOL, ...chosenCategories], priority: chosenCategories };
+}
+
+function cwMakeKey(r,c){ return r+','+c; }
+function cwCanPlace(grid, word, row, col, dir){
+  const len = word.length;
+  const beforeR = dir==='A' ? row : row-1, beforeC = dir==='A' ? col-1 : col;
+  if(grid.has(cwMakeKey(beforeR,beforeC))) return false;
+  const afterR = dir==='A' ? row : row+len, afterC = dir==='A' ? col+len : col;
+  if(grid.has(cwMakeKey(afterR,afterC))) return false;
+  let crossings = 0;
+  for(let i=0;i<len;i++){
+    const r = dir==='A' ? row : row+i, c = dir==='A' ? col+i : col;
+    const existing = grid.get(cwMakeKey(r,c));
+    if(existing){
+      if(existing !== word[i]) return false;
+      crossings++;
+    } else {
+      const n1 = dir==='A' ? cwMakeKey(r-1,c) : cwMakeKey(r,c-1);
+      const n2 = dir==='A' ? cwMakeKey(r+1,c) : cwMakeKey(r,c+1);
+      if(grid.has(n1) || grid.has(n2)) return false;
+    }
+  }
+  return crossings;
+}
+function cwCommitWord(grid, entry, row, col, dir){
+  for(let i=0;i<entry.word.length;i++){
+    const r = dir==='A' ? row : row+i, c = dir==='A' ? col+i : col;
+    grid.set(cwMakeKey(r,c), entry.word[i]);
+  }
+}
+// rng defaults to Math.random (Free Play); pass a seeded mulberry32 rng for
+// deterministic Daily puzzles — every seededShuffle call below then draws
+// from that same seeded sequence, keeping the whole generation reproducible
+// for a given seed.
+function generateCrosswordPuzzle(pool, targetAcross, targetDown, rng, maxAttempts, priorityWords){
+  rng = rng || Math.random;
+  maxAttempts = maxAttempts || 500;
+  priorityWords = priorityWords || [];
+  const prioritySet = new Set(priorityWords.map(w => w.word));
+  const restOfPool = pool.filter(w => !prioritySet.has(w.word));
+
+  for(let attempt=0; attempt<maxAttempts; attempt++){
+    const order = [...seededShuffle(priorityWords, rng), ...seededShuffle(restOfPool, rng)];
+    const grid = new Map();
+    const placements = [];
+    let acrossCount=0, downCount=0;
+
+    const first = order[0];
+    const firstDir = rng()<0.5 ? 'A' : 'D';
+    cwCommitWord(grid, first, 0, 0, firstDir);
+    placements.push({...first, row:0, col:0, dir:firstDir});
+    if(firstDir==='A') acrossCount++; else downCount++;
+
+    for(const entry of order.slice(1)){
+      if(acrossCount>=targetAcross && downCount>=targetDown) break;
+      const dirsToTry = acrossCount<targetAcross && downCount<targetDown
+        ? seededShuffle(['A','D'], rng)
+        : (acrossCount<targetAcross ? ['A'] : ['D']);
+      let placed = false;
+      for(const dir of dirsToTry){
+        if(dir==='A' && acrossCount>=targetAcross) continue;
+        if(dir==='D' && downCount>=targetDown) continue;
+        const candidates = [];
+        for(const p of placements){
+          if(p.dir===dir) continue;
+          for(let pi=0; pi<p.word.length; pi++){
+            for(let ei=0; ei<entry.word.length; ei++){
+              if(p.word[pi] !== entry.word[ei]) continue;
+              const pr = p.dir==='A' ? p.row : p.row+pi;
+              const pc = p.dir==='A' ? p.col+pi : p.col;
+              const row = dir==='A' ? pr : pr-ei;
+              const col = dir==='A' ? pc-ei : pc;
+              candidates.push({row,col});
+            }
+          }
+        }
+        for(const cand of seededShuffle(candidates, rng)){
+          if(cwCanPlace(grid, entry.word, cand.row, cand.col, dir)){
+            cwCommitWord(grid, entry, cand.row, cand.col, dir);
+            placements.push({...entry, row:cand.row, col:cand.col, dir});
+            if(dir==='A') acrossCount++; else downCount++;
+            placed = true;
+            break;
+          }
+        }
+        if(placed) break;
+      }
+    }
+    if(acrossCount===targetAcross && downCount===targetDown){
+      return { placements, attempt: attempt+1 };
+    }
+  }
+  return null;
+}
+
+const crosswordModal = document.getElementById('crosswordModal');
+const crosswordPlayArea = document.getElementById('crosswordPlayArea');
+const crosswordResultsArea = document.getElementById('crosswordResultsArea');
+const crosswordModeLabel = document.getElementById('crosswordModeLabel');
+const crosswordTimerLabel = document.getElementById('crosswordTimerLabel');
+const crosswordGrid = document.getElementById('crosswordGrid');
+const crosswordActiveClueBar = document.getElementById('crosswordActiveClueBar');
+const crosswordActiveClueText = document.getElementById('crosswordActiveClueText');
+const crosswordWholeWordInput = document.getElementById('crosswordWholeWordInput');
+const crosswordWinOverlay = document.getElementById('crosswordWinOverlay');
+const crosswordWinTime = document.getElementById('crosswordWinTime');
+const crosswordWinSub = document.getElementById('crosswordWinSub');
+const crosswordFinalMessage = document.getElementById('crosswordFinalMessage');
+const crosswordFinalTime = document.getElementById('crosswordFinalTime');
+const crosswordBestTime = document.getElementById('crosswordBestTime');
+const crosswordShareBtn = document.getElementById('crosswordShareBtn');
+const crosswordFreeplayBtn = document.getElementById('crosswordFreeplayBtn');
+const crosswordPlayAgainBtn = document.getElementById('crosswordPlayAgainBtn');
+const crosswordCloseBtn = document.getElementById('crosswordCloseBtn');
+const crosswordCheckBtn = document.getElementById('crosswordCheckBtn');
+const crosswordRevealBtn = document.getElementById('crosswordRevealBtn');
+const crosswordGiveUpBtn = document.getElementById('crosswordGiveUpBtn');
+
+let crosswordMode = 'daily'; // 'daily' | 'freeplay'
+let crosswordDailyDate = null;
+let crosswordPlacements = [];
+let crosswordCells = {};
+let crosswordActiveWordIdx = null;
+let crosswordGameOver = false;
+const CROSSWORD_MAX_CLUES = 3;
+let crosswordCluesUsed = 0; // "Reveal a letter" uses, capped per game
+let crosswordWordRevealProgress = {}; // idx -> letters revealed so far for that word
+let crosswordStartTimestamp = null;
+let crosswordElapsedBeforePause = 0;
+let crosswordTimerInterval = null;
+
+function showCrosswordPage(){
+  hideAllTopScreens();
+  crosswordModal.classList.add('show');
+}
+
+function cwFormatTime(seconds){
+  seconds = Math.max(0, Math.round(seconds));
+  const m = Math.floor(seconds/60), s = seconds%60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+function crosswordCurrentElapsed(){
+  if(!crosswordStartTimestamp) return crosswordElapsedBeforePause;
+  return crosswordElapsedBeforePause + (Date.now() - crosswordStartTimestamp)/1000;
+}
+function startCrosswordTimer(){
+  crosswordStartTimestamp = Date.now();
+  if(crosswordTimerInterval) clearInterval(crosswordTimerInterval);
+  crosswordTimerInterval = setInterval(()=>{
+    crosswordTimerLabel.textContent = cwFormatTime(crosswordCurrentElapsed());
+  }, 500);
+  crosswordTimerLabel.textContent = cwFormatTime(crosswordCurrentElapsed());
+}
+function stopCrosswordTimer(){
+  crosswordElapsedBeforePause = crosswordCurrentElapsed();
+  crosswordStartTimestamp = null;
+  if(crosswordTimerInterval){ clearInterval(crosswordTimerInterval); crosswordTimerInterval = null; }
+  crosswordTimerLabel.textContent = cwFormatTime(crosswordElapsedBeforePause);
+}
+
+function buildCrosswordCellMap(){
+  crosswordCells = {};
+  crosswordPlacements.forEach((p, idx)=>{
+    for(let i=0;i<p.word.length;i++){
+      const r = p.dir==='A' ? p.row : p.row+i;
+      const c = p.dir==='A' ? p.col+i : p.col;
+      const key = r+','+c;
+      if(!crosswordCells[key]) crosswordCells[key] = { r, c, letter: p.word[i], words: [] };
+      crosswordCells[key].words.push(idx);
+    }
+  });
+  let num = 1;
+  const numbered = {};
+  crosswordPlacements.forEach(p=>{
+    const key = p.row+','+p.col;
+    if(!numbered[key]){ numbered[key] = num++; }
+    p.number = numbered[key];
+  });
+  crosswordPlacements.forEach(p=>{
+    crosswordCells[p.row+','+p.col].number = numbered[p.row+','+p.col];
+  });
+}
+
+function cwFitGridToViewport(cols){
+  const available = Math.min(window.innerWidth - 40, 600);
+  const maxCell = 32, minCell = 15;
+  const size = Math.max(minCell, Math.min(maxCell, Math.floor((available - (cols-1)*2) / cols)));
+  crosswordGrid.style.setProperty('--cw-cell', size+'px');
+}
+
+function renderCrosswordGrid(resumeCellValues){
+  let minR=0,maxR=0,minC=0,maxC=0;
+  Object.values(crosswordCells).forEach(c=>{
+    minR = Math.min(minR, c.r); maxR = Math.max(maxR, c.r);
+    minC = Math.min(minC, c.c); maxC = Math.max(maxC, c.c);
+  });
+  const rows = maxR-minR+1, cols = maxC-minC+1;
+  cwFitGridToViewport(cols);
+  crosswordGrid.style.gridTemplateColumns = `repeat(${cols}, var(--cw-cell))`;
+  crosswordGrid.innerHTML = '';
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const key = (r+minR)+','+(c+minC);
+      const cellData = crosswordCells[key];
+      const div = document.createElement('div');
+      if(!cellData){
+        div.className = 'cw-cell blocked';
+      } else {
+        div.className = 'cw-cell';
+        div.dataset.key = key;
+        if(cellData.number){
+          const numEl = document.createElement('div');
+          numEl.className = 'cw-number';
+          numEl.textContent = cellData.number;
+          div.appendChild(numEl);
+        }
+        const input = document.createElement('input');
+        // No maxLength here on purpose: a native maxlength="1" attribute
+        // blocks a NEW keystroke outright once a cell already holds a
+        // character (from a crossing word or resumed progress), since the
+        // browser won't insert past the cap without the old value being
+        // selected first. onCrosswordCellInput below always keeps just the
+        // latest typed character (.slice(-1)), so leaving length unbounded
+        // here means typing a letter always overwrites whatever was there.
+        input.dataset.key = key;
+        if(resumeCellValues && resumeCellValues[key]) input.value = resumeCellValues[key];
+        input.addEventListener('input', onCrosswordCellInput);
+        input.addEventListener('keydown', onCrosswordCellKeydown);
+        input.addEventListener('focus', ()=> onCrosswordCellFocus(key));
+        div.appendChild(input);
+      }
+      crosswordGrid.appendChild(div);
+    }
+  }
+}
+
+function renderCrosswordClues(){
+  const across = crosswordPlacements.filter(p=>p.dir==='A').sort((a,b)=>a.number-b.number);
+  const down = crosswordPlacements.filter(p=>p.dir==='D').sort((a,b)=>a.number-b.number);
+  const build = (list) => list.map(p=>{
+    const idx = crosswordPlacements.indexOf(p);
+    const solved = isCrosswordWordSolved(idx);
+    return `<div class="cw-clue-item${solved?' solved':''}" data-idx="${idx}">
+      <span class="cw-clue-num">${p.number}${p.dir==='A'?'A':'D'}.</span>${p.clue}
+    </div>`;
+  }).join('');
+  document.getElementById('crosswordAcrossList').innerHTML = build(across);
+  document.getElementById('crosswordDownList').innerHTML = build(down);
+  document.querySelectorAll('#crosswordAcrossList .cw-clue-item, #crosswordDownList .cw-clue-item').forEach(el=>{
+    el.addEventListener('click', ()=> selectCrosswordWord(Number(el.dataset.idx), true));
+  });
+}
+
+function isCrosswordWordSolved(idx){
+  const p = crosswordPlacements[idx];
+  for(let i=0;i<p.word.length;i++){
+    const r = p.dir==='A' ? p.row : p.row+i;
+    const c = p.dir==='A' ? p.col+i : p.col;
+    const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
+    if(!input || input.value.toUpperCase() !== p.word[i]) return false;
+  }
+  return true;
+}
+
+// focusFirstCell: true when the word is being chosen from outside the grid
+// (a clue click, Next/Prev) — jump the keyboard to its first cell so typing
+// immediately lands in the right place. False when a cell was clicked
+// directly (onCrosswordCellFocus): that cell already has focus from the
+// user's own click, so don't yank it back to the start of the word.
+function selectCrosswordWord(idx, focusFirstCell){
+  const wordChanged = idx !== crosswordActiveWordIdx;
+  crosswordActiveWordIdx = idx;
+  const p = crosswordPlacements[idx];
+  document.querySelectorAll('.cw-cell').forEach(c=>c.classList.remove('in-word'));
+  for(let i=0;i<p.word.length;i++){
+    const r = p.dir==='A' ? p.row : p.row+i;
+    const c = p.dir==='A' ? p.col+i : p.col;
+    const cellEl = document.querySelector(`.cw-cell[data-key="${r+','+c}"]`);
+    if(cellEl) cellEl.classList.add('in-word');
+  }
+  document.querySelectorAll('#crosswordAcrossList .cw-clue-item, #crosswordDownList .cw-clue-item').forEach(el=>{
+    el.classList.toggle('active', Number(el.dataset.idx) === idx);
+  });
+
+  crosswordActiveClueBar.classList.add('show');
+  crosswordActiveClueText.innerHTML = `<span class="num">${p.number}${p.dir==='A'?' Across':' Down'}</span> — ${p.clue}`;
+  crosswordWholeWordInput.value = crosswordRevealedPrefix(idx);
+  crosswordWholeWordInput.maxLength = p.word.length;
+
+  if(focusFirstCell){
+    const firstInput = document.querySelector(`#crosswordGrid input[data-key="${p.row+','+p.col}"]`);
+    if(firstInput) firstInput.focus();
+  }
+  if(wordChanged){
+    requestAnimationFrame(()=>{
+      crosswordActiveClueBar.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    });
+  }
+}
+
+function onCrosswordCellFocus(key){
+  if(crosswordGameOver) return;
+  const cellData = crosswordCells[key];
+  if(!cellData) return;
+  const idx = cellData.words.includes(crosswordActiveWordIdx) ? crosswordActiveWordIdx : cellData.words[0];
+  selectCrosswordWord(idx, false);
+}
+function onCrosswordCellInput(e){
+  if(crosswordGameOver){ e.target.value=''; return; }
+  e.target.value = e.target.value.toUpperCase().slice(-1);
+  cwAdvanceFromCell(e.target.dataset.key);
+  updateCrosswordProgress();
+}
+function onCrosswordCellKeydown(e){
+  const key = e.target.dataset.key;
+  const [r,c] = key.split(',').map(Number);
+  const p = crosswordPlacements[crosswordActiveWordIdx];
+  if(e.key === 'Backspace' && !e.target.value){ cwMoveInWord(r,c,p,-1); }
+  else if(e.key === 'ArrowRight'){ cwFocusCell(r,c+1); }
+  else if(e.key === 'ArrowLeft'){ cwFocusCell(r,c-1); }
+  else if(e.key === 'ArrowDown'){ cwFocusCell(r+1,c); }
+  else if(e.key === 'ArrowUp'){ cwFocusCell(r-1,c); }
+}
+function cwFocusCell(r,c){
+  const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
+  if(input) input.focus();
+}
+function cwAdvanceFromCell(key){
+  const [r,c] = key.split(',').map(Number);
+  const p = crosswordPlacements[crosswordActiveWordIdx];
+  if(!p) return;
+  cwMoveInWord(r,c,p,1);
+}
+function cwMoveInWord(r,c,p,dir){
+  const nr = p.dir==='D' ? r+dir : r;
+  const nc = p.dir==='A' ? c+dir : c;
+  cwFocusCell(nr,nc);
+}
+// Types straight into the grid from position 0 of the word every time — the
+// box always starts blank (see selectCrosswordWord), so there's no existing
+// content to merge with or fight over.
+crosswordWholeWordInput.addEventListener('input', (e)=>{
+  if(crosswordActiveWordIdx === null || crosswordGameOver) return;
+  const p = crosswordPlacements[crosswordActiveWordIdx];
+  const value = e.target.value.toUpperCase().slice(0, p.word.length);
+  e.target.value = value;
+  for(let i=0;i<p.word.length;i++){
+    const r = p.dir==='A' ? p.row : p.row+i;
+    const c = p.dir==='A' ? p.col+i : p.col;
+    const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
+    if(input) input.value = value[i] || '';
+  }
+  updateCrosswordProgress();
+});
+
+function cwGetOrderedWordIndices(){
+  const across = crosswordPlacements.map((p,idx)=>({p,idx})).filter(o=>o.p.dir==='A').sort((a,b)=>a.p.number-b.p.number);
+  const down = crosswordPlacements.map((p,idx)=>({p,idx})).filter(o=>o.p.dir==='D').sort((a,b)=>a.p.number-b.p.number);
+  return [...across, ...down].map(o=>o.idx);
+}
+function crosswordGoToNextWord(){
+  if(crosswordActiveWordIdx === null) return;
+  const order = cwGetOrderedWordIndices();
+  const pos = order.indexOf(crosswordActiveWordIdx);
+  for(let step=1; step<=order.length; step++){
+    const idx = order[(pos+step) % order.length];
+    if(!isCrosswordWordSolved(idx)){ selectCrosswordWord(idx, true); return; }
+  }
+  selectCrosswordWord(order[(pos+1) % order.length], true);
+}
+function crosswordGoToPrevWord(){
+  if(crosswordActiveWordIdx === null) return;
+  const order = cwGetOrderedWordIndices();
+  const pos = order.indexOf(crosswordActiveWordIdx);
+  for(let step=1; step<=order.length; step++){
+    const idx = order[(pos-step+order.length) % order.length];
+    if(!isCrosswordWordSolved(idx)){ selectCrosswordWord(idx, true); return; }
+  }
+  selectCrosswordWord(order[(pos-1+order.length) % order.length], true);
+}
+document.getElementById('crosswordNextWordBtn').addEventListener('click', crosswordGoToNextWord);
+document.getElementById('crosswordPrevWordBtn').addEventListener('click', crosswordGoToPrevWord);
+
+// ---------- Reveal a letter: reveals the active word's next letter (the
+// first press reveals letter 1, the next press on that same word reveals
+// letter 2, and so on), capped at CROSSWORD_MAX_CLUES uses total per game
+// (persists across a resumed Daily; resets on every new puzzle). Per-word
+// progress is remembered so switching away and back to a word continues
+// where it left off instead of starting over. ----------
+const crosswordClueBtn = document.getElementById('crosswordClueBtn');
+function updateCrosswordClueBtn(){
+  const left = CROSSWORD_MAX_CLUES - crosswordCluesUsed;
+  crosswordClueBtn.textContent = `🔎 Reveal a letter (${Math.max(left,0)} left)`;
+  crosswordClueBtn.disabled = left <= 0 || crosswordGameOver;
+}
+function crosswordRevealedPrefix(idx){
+  const p = crosswordPlacements[idx];
+  const n = crosswordWordRevealProgress[idx] || 0;
+  return n > 0 ? p.word.slice(0, n) : '';
+}
+crosswordClueBtn.addEventListener('click', ()=>{
+  if(crosswordGameOver || crosswordActiveWordIdx === null) return;
+  if(crosswordCluesUsed >= CROSSWORD_MAX_CLUES) return;
+  const idx = crosswordActiveWordIdx;
+  const p = crosswordPlacements[idx];
+  const progress = crosswordWordRevealProgress[idx] || 0;
+  if(progress >= p.word.length) return; // this word is already fully revealed
+  const r = p.dir==='A' ? p.row : p.row+progress;
+  const c = p.dir==='A' ? p.col+progress : p.col;
+  const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
+  if(input) input.value = p.word[progress];
+  crosswordWordRevealProgress[idx] = progress + 1;
+  crosswordWholeWordInput.value = crosswordRevealedPrefix(idx);
+  crosswordCluesUsed++;
+  updateCrosswordClueBtn();
+  updateCrosswordProgress();
+  if(crosswordMode === 'daily') persistCrosswordDaily();
+});
+document.getElementById('crosswordStartTopBtn').addEventListener('click', function(){
+  if(crosswordGameOver) return;
+  const order = cwGetOrderedWordIndices();
+  if(order.length){
+    selectCrosswordWord(order[0], false);
+    crosswordWholeWordInput.focus();
+  }
+  this.style.display = 'none';
+});
+
+const CROSSWORD_DAILY_KEY = 'moviesCrosswordDaily_v1';
+function loadCrosswordDailyState(){
+  try{ const raw = localStorage.getItem(CROSSWORD_DAILY_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+}
+function saveCrosswordDailyState(state){
+  try{ localStorage.setItem(CROSSWORD_DAILY_KEY, JSON.stringify(state)); }catch(e){}
+}
+function persistCrosswordDaily(){
+  if(crosswordMode !== 'daily') return;
+  const cellValues = {};
+  Object.keys(crosswordCells).forEach(key=>{
+    const input = document.querySelector(`#crosswordGrid input[data-key="${key}"]`);
+    if(input && input.value) cellValues[key] = input.value;
+  });
+  saveCrosswordDailyState({
+    date: crosswordDailyDate, cellValues, elapsed: crosswordCurrentElapsed(), gameOver: crosswordGameOver,
+    portrait: cwWantsPortrait(), // so resuming on a different-shaped device knows not to reuse stale cell positions
+    cluesUsed: crosswordCluesUsed,
+    revealProgress: crosswordWordRevealProgress,
+  });
+}
+
+const CROSSWORD_HISTORY_KEY = 'moviesCrosswordHistory_v1';
+function loadCrosswordHistory(){
+  try{ const raw = localStorage.getItem(CROSSWORD_HISTORY_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; }
+}
+function saveCrosswordHistory(hist){
+  try{ localStorage.setItem(CROSSWORD_HISTORY_KEY, JSON.stringify(hist)); }catch(e){}
+}
+function recordCrosswordDailyResult(dateStr, completed, seconds){
+  const hist = loadCrosswordHistory();
+  hist[dateStr] = { completed, seconds: seconds != null ? Math.round(seconds) : null };
+  saveCrosswordHistory(hist);
+}
+
+const CROSSWORD_BEST_KEY = 'moviesCrosswordBest_v1';
+function loadCrosswordBest(){
+  try{ const v = parseFloat(localStorage.getItem(CROSSWORD_BEST_KEY)); return isNaN(v) ? null : v; }catch(e){ return null; }
+}
+function saveCrosswordBest(seconds){
+  try{ localStorage.setItem(CROSSWORD_BEST_KEY, String(seconds)); }catch(e){}
+}
+
+const CROSSWORD_COMPLETIONS_KEY = 'moviesCrosswordCompletions_v1';
+function incrementCrosswordCompletions(){
+  let n = 0;
+  try{ n = parseInt(localStorage.getItem(CROSSWORD_COMPLETIONS_KEY), 10) || 0; }catch(e){}
+  n++;
+  try{ localStorage.setItem(CROSSWORD_COMPLETIONS_KEY, String(n)); }catch(e){}
+  return n;
+}
+function loadCrosswordCompletions(){
+  try{ return parseInt(localStorage.getItem(CROSSWORD_COMPLETIONS_KEY), 10) || 0; }catch(e){ return 0; }
+}
+
+function crosswordGrade(seconds){
+  if(seconds <= 90) return 'gold';
+  if(seconds <= 150) return 'silver';
+  return 'bronze'; // no time limit — everyone who finishes earns at least Bronze
+}
+function crosswordGradeLabel(grade){
+  return { gold:'🥇 Gold', silver:'🥈 Silver', bronze:'🥉 Bronze' }[grade];
+}
+
+function updateCrosswordProgress(){
+  let solvedCount = 0;
+  crosswordPlacements.forEach((p,idx)=>{ if(isCrosswordWordSolved(idx)) solvedCount++; });
+  document.querySelectorAll('.cw-cell').forEach(el=>el.classList.remove('correct'));
+  crosswordPlacements.forEach((p,idx)=>{
+    if(isCrosswordWordSolved(idx)){
+      for(let i=0;i<p.word.length;i++){
+        const r = p.dir==='A' ? p.row : p.row+i;
+        const c = p.dir==='A' ? p.col+i : p.col;
+        const cellEl = document.querySelector(`.cw-cell[data-key="${r+','+c}"]`);
+        if(cellEl) cellEl.classList.add('correct');
+      }
+    }
+  });
+  renderCrosswordClues();
+  const total = crosswordMode === 'freeplay' ? (CROSSWORD_FREEPLAY_ACROSS + CROSSWORD_FREEPLAY_DOWN) : (CROSSWORD_DAILY_ACROSS + CROSSWORD_DAILY_DOWN);
+  if(!crosswordGameOver) persistCrosswordDaily();
+  if(solvedCount === total && !crosswordGameOver){
+    endCrosswordRound(true);
+  }
+}
+
+function showCrosswordResults(gaveUp){
+  crosswordPlayArea.style.display = 'none';
+  crosswordResultsArea.style.display = '';
+  const elapsed = crosswordElapsedBeforePause;
+  if(gaveUp){
+    crosswordFinalMessage.textContent = 'Gave up — here\'s the answer';
+    crosswordFinalTime.textContent = cwFormatTime(elapsed);
+  } else {
+    crosswordFinalMessage.textContent = 'Solved!';
+    crosswordFinalTime.textContent = cwFormatTime(elapsed);
+  }
+  if(!gaveUp){
+    const grade = crosswordGrade(elapsed);
+    crosswordBestTime.innerHTML = `<span class="cw-medal ${grade}">${crosswordGradeLabel(grade)}</span>`;
+    // "Best time" is tracked for Free Play specifically — Daily puzzles are
+    // a different, smaller size, so comparing them against Free Play's best
+    // wouldn't mean anything.
+    if(crosswordMode === 'freeplay'){
+      const best = loadCrosswordBest();
+      if(best == null || elapsed < best){
+        saveCrosswordBest(elapsed);
+        crosswordBestTime.innerHTML += ` — New best time!`;
+      } else {
+        crosswordBestTime.innerHTML += ` — Best: ${cwFormatTime(best)}`;
+      }
+    }
+  } else {
+    crosswordBestTime.textContent = '';
+  }
+  crosswordFreeplayBtn.style.display = crosswordMode === 'daily' ? '' : 'none';
+  crosswordPlayAgainBtn.style.display = crosswordMode === 'freeplay' ? '' : 'none';
+}
+function hideCrosswordResults(){
+  crosswordResultsArea.style.display = 'none';
+  crosswordPlayArea.style.display = '';
+}
+
+function endCrosswordRound(solved){
+  crosswordGameOver = true;
+  updateCrosswordClueBtn();
+  stopCrosswordTimer();
+  const elapsed = crosswordElapsedBeforePause;
+  persistCrosswordDaily();
+
+  if(solved){
+    if(crosswordMode === 'daily') recordCrosswordDailyResult(crosswordDailyDate, true, elapsed);
+    incrementCrosswordCompletions();
+    crosswordWinTime.textContent = cwFormatTime(elapsed);
+    crosswordWinSub.innerHTML = `Solved in <b>${cwFormatTime(elapsed)}</b> — ${crosswordGradeLabel(crosswordGrade(elapsed))}`;
+    crosswordWinOverlay.classList.add('show');
+  } else {
+    if(crosswordMode === 'daily') recordCrosswordDailyResult(crosswordDailyDate, false, elapsed);
+    showCrosswordResults(true);
+  }
+
+  if(solved){
+    const ids = [];
+    if(crosswordGrade(elapsed) === 'gold') ids.push('crossword_gold');
+    if(crosswordMode === 'daily' && movieDailyStreak(loadCrosswordHistory(), v => v && v.completed === true) >= 3) ids.push('crossword_streak');
+    unlockMovieAchievements(ids);
+  }
+  checkTripleFeatureAchievement();
+}
+document.getElementById('crosswordWinContinueBtn').addEventListener('click', ()=>{
+  crosswordWinOverlay.classList.remove('show');
+  showCrosswordResults(false);
+});
+
+// Forces the grid to a portrait shape (taller than wide) on phones and a
+// landscape shape (wider than tall) on desktop — the crossword generator's
+// natural output shape is essentially random, so rather than fight the
+// placement algorithm to produce a specific shape, we just transpose the
+// finished grid when needed: swapping every word's row/col and flipping its
+// Across/Down direction produces an equally valid crossword, just rotated
+// 90 degrees, with every intersection preserved.
+function cwWantsPortrait(){
+  return window.innerWidth < 700;
+}
+function cwOrientPlacements(placements){
+  let minR=0, maxR=0, minC=0, maxC=0;
+  placements.forEach(p=>{
+    const endR = p.dir==='D' ? p.row + p.word.length - 1 : p.row;
+    const endC = p.dir==='A' ? p.col + p.word.length - 1 : p.col;
+    minR = Math.min(minR, p.row); maxR = Math.max(maxR, endR);
+    minC = Math.min(minC, p.col); maxC = Math.max(maxC, endC);
+  });
+  const rows = maxR - minR + 1, cols = maxC - minC + 1;
+  const isPortrait = rows >= cols;
+  if(isPortrait === cwWantsPortrait()) return placements;
+  return placements.map(p => ({ ...p, row: p.col, col: p.row, dir: p.dir === 'A' ? 'D' : 'A' }));
+}
+
+function startCrosswordRound(result, resumeCellValues){
+  crosswordPlacements = cwOrientPlacements(result.placements);
+  crosswordActiveWordIdx = null;
+  crosswordActiveClueBar.classList.remove('show');
+  crosswordWinOverlay.classList.remove('show');
+  buildCrosswordCellMap();
+  renderCrosswordGrid(resumeCellValues || {});
+  renderCrosswordClues();
+  const startTopBtn = document.getElementById('crosswordStartTopBtn');
+  if(startTopBtn) startTopBtn.style.display = '';
+  crosswordCluesUsed = 0;
+  crosswordWordRevealProgress = {};
+  updateCrosswordClueBtn();
+}
+
+function startCrosswordDaily(){
+  recordMovieGamePlayed('crossword');
+  checkMovieMetaAchievements('daily');
+  const date = todayKey();
+  crosswordMode = 'daily';
+  crosswordDailyDate = date;
+  const rng = mulberry32(hashStr('moviecrossword-' + date));
+  const { pool: cwPool, priority: cwPriority } = buildCrosswordPuzzlePool(rng);
+  const result = generateCrosswordPuzzle(cwPool, CROSSWORD_DAILY_ACROSS, CROSSWORD_DAILY_DOWN, rng, 500, cwPriority);
+  if(!result){ crosswordModeLabel.textContent = 'Could not generate today\'s puzzle'; return; }
+
+  let stored = loadCrosswordDailyState();
+  if(!stored || stored.date !== date){
+    stored = { date, cellValues:{}, elapsed:0, gameOver:false };
+    saveCrosswordDailyState(stored);
+  }
+  crosswordElapsedBeforePause = stored.elapsed || 0;
+  crosswordGameOver = stored.gameOver;
+  crosswordModeLabel.textContent = `DAILY #${dailyNumberLabel(date)}`;
+  // If the grid's orientation differs from when this was saved (e.g. it was
+  // started on a phone and resumed on a desktop), the saved cell coordinates
+  // no longer line up with the transposed grid — start that part visually
+  // fresh rather than show letters in the wrong squares. Elapsed time and
+  // completion status still carry over correctly either way.
+  const orientationMatches = stored.portrait === undefined || stored.portrait === cwWantsPortrait();
+  startCrosswordRound(result, orientationMatches ? stored.cellValues : {});
+  crosswordCluesUsed = stored.cluesUsed || 0;
+  crosswordWordRevealProgress = orientationMatches ? (stored.revealProgress || {}) : {};
+  updateCrosswordClueBtn();
+
+  if(crosswordGameOver){
+    crosswordTimerLabel.textContent = cwFormatTime(crosswordElapsedBeforePause);
+    const hist = loadCrosswordHistory()[date];
+    showCrosswordResults(!(hist && hist.completed));
+  } else {
+    hideCrosswordResults();
+    startCrosswordTimer();
+  }
+}
+
+function startCrosswordFreeplay(){
+  recordMovieGamePlayed('crossword');
+  checkMovieMetaAchievements('freeplay');
+  crosswordMode = 'freeplay';
+  const { pool: cwPool, priority: cwPriority } = buildCrosswordPuzzlePool(Math.random);
+  const result = generateCrosswordPuzzle(cwPool, CROSSWORD_FREEPLAY_ACROSS, CROSSWORD_FREEPLAY_DOWN, Math.random, 500, cwPriority);
+  if(!result){ return; }
+  crosswordElapsedBeforePause = 0;
+  crosswordGameOver = false;
+  crosswordModeLabel.textContent = '';
+  hideCrosswordResults();
+  startCrosswordRound(result, {});
+  startCrosswordTimer();
+}
+
+crosswordCheckBtn.addEventListener('click', ()=>{
+  document.querySelectorAll('#crosswordGrid input').forEach(input=>{
+    const key = input.dataset.key;
+    const cellData = crosswordCells[key];
+    if(input.value && cellData && input.value.toUpperCase() !== cellData.letter){
+      input.style.color = 'var(--magenta)';
+      setTimeout(()=>{ input.style.color = ''; }, 700);
+    }
+  });
+});
+crosswordRevealBtn.addEventListener('click', ()=>{
+  if(crosswordActiveWordIdx === null || crosswordGameOver) return;
+  const p = crosswordPlacements[crosswordActiveWordIdx];
+  for(let i=0;i<p.word.length;i++){
+    const r = p.dir==='A' ? p.row : p.row+i;
+    const c = p.dir==='A' ? p.col+i : p.col;
+    const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
+    if(input) input.value = p.word[i];
+  }
+  updateCrosswordProgress();
+});
+function giveUpCrossword(){
+  if(crosswordGameOver) return;
+  crosswordPlacements.forEach(p=>{
+    for(let i=0;i<p.word.length;i++){
+      const r = p.dir==='A' ? p.row : p.row+i;
+      const c = p.dir==='A' ? p.col+i : p.col;
+      const input = document.querySelector(`#crosswordGrid input[data-key="${r+','+c}"]`);
+      if(input) input.value = p.word[i];
+    }
+  });
+  endCrosswordRound(false);
+}
+crosswordGiveUpBtn.addEventListener('click', ()=>{
+  if(crosswordGameOver) return;
+  askGiveUpConfirm(giveUpCrossword);
+});
+
+function buildCrosswordShareText(){
+  const elapsed = crosswordElapsedBeforePause;
+  const label = crosswordMode === 'daily' ? `CINEMA CROSSWORD Daily #${dailyNumberLabel(crosswordDailyDate)}` : 'CINEMA CROSSWORD — Free Play';
+  const gradeText = crosswordMode === 'freeplay' ? ` — ${crosswordGradeLabel(crosswordGrade(elapsed))}` : '';
+  return `${label}\nSolved in ${cwFormatTime(elapsed)}${gradeText}`;
+}
+crosswordShareBtn.addEventListener('click', ()=> shareOrCopy(buildCrosswordShareText(), crosswordShareBtn));
+crosswordFreeplayBtn.addEventListener('click', startCrosswordFreeplay);
+crosswordPlayAgainBtn.addEventListener('click', startCrosswordFreeplay);
+crosswordCloseBtn.addEventListener('click', showHomeScreen);
+document.getElementById('crosswordPageMarquee').addEventListener('click', showHomeScreen);
+window.addEventListener('resize', ()=>{
+  if(!crosswordPlacements.length) return;
+  let maxC=0, minC=0;
+  Object.values(crosswordCells).forEach(c=>{ minC=Math.min(minC,c.c); maxC=Math.max(maxC,c.c); });
+  cwFitGridToViewport(maxC-minC+1);
+});
+
+
+
 // ---------- Cinema Cup (movie preference bracket — pick a favorite each
 // round, single elimination up to Round of 32 -> ... -> Final -> Champion).
 // Daily/Free Play draw from all movies at the max 32-entrant size; a
@@ -5097,6 +6482,8 @@ function hideAllTopScreens(){
   chronicleModal.classList.remove('show');
   chaosModal.classList.remove('show');
   codeModal.classList.remove('show');
+  charadesModal.classList.remove('show');
+  crosswordModal.classList.remove('show');
   cupModal.classList.remove('show');
   if(typeof closeGiveUpConfirm === 'function') closeGiveUpConfirm();
 }
@@ -5132,6 +6519,8 @@ function showCupPage(){
 const MOVIE_HOME_GAMES_ALL = [
   { key: 'clash',     label: 'CINEMA CLASH',     color: 'var(--amber)',  tagline: 'Pick a side. Trust the numbers.<br><b>Survive the streak.</b>' },
   { key: 'connect',   label: 'CINEMA CONNECT',   color: 'var(--green)',  tagline: 'Sixteen movies. Four hidden groups.<br><b>Find the connections.</b>' },
+  { key: 'charades',  label: 'CINEMA CHARADES',  color: 'var(--pink)',   tagline: 'Emoji only. No words.<br><b>Guess the movie.</b>' },
+  { key: 'crossword', label: 'CINEMA CROSSWORD', color: 'var(--teal)',   tagline: 'Movies hidden in a grid.<br><b>Fill in the blanks.</b>' },
   { key: 'chronicle', label: 'CINEMA CHRONICLE', color: 'var(--orange)', tagline: 'Five movies. Three stats to sort by.<br><b>Put them in order.</b>' },
   { key: 'chaos',     label: 'CINEMA CHAOS',     color: 'var(--violet)', tagline: 'Fast questions. No mercy.<br><b>Beat the clock.</b>' },
   { key: 'code',      label: 'CINEMA CODE',      color: 'var(--cyan)',   tagline: 'One mystery movie. Six guesses.<br><b>Every guess gives you clues.</b>' },
@@ -5181,6 +6570,8 @@ homePlayBtn.addEventListener('click', ()=>{
   const key = movieHomeGames()[movieHomeSelectedIndex].key;
   if(key === 'clash'){ showClashPage(); startClashDaily(); }
   else if(key === 'connect'){ showGridPage(); startGridDaily(); }
+  else if(key === 'charades'){ showCharadesPage(); startCharadesDaily(); }
+  else if(key === 'crossword'){ showCrosswordPage(); startCrosswordDaily(); }
   else if(key === 'chronicle'){ showChroniclePage(); startChronicleDaily(); }
   else if(key === 'chaos'){ showChaosPage(); startChaosGame(); }
   else if(key === 'code'){ showCodePage(); startCodeDaily(); }
@@ -5189,6 +6580,8 @@ homeFreeplayBtn.addEventListener('click', ()=>{
   const key = movieHomeGames()[movieHomeSelectedIndex].key;
   if(key === 'clash'){ showClashPage(); startClashFreeplay(); }
   else if(key === 'connect'){ showGridPage(); startGridFreeplay(); }
+  else if(key === 'charades'){ showCharadesPage(); startCharadesFreeplay(); }
+  else if(key === 'crossword'){ showCrosswordPage(); startCrosswordFreeplay(); }
   else if(key === 'chronicle'){ showChroniclePage(); startChronicleFreeplay(); }
   else if(key === 'chaos'){ showChaosPage(); startChaosGame(); }
   else if(key === 'code'){ showCodePage(); startCodeFreeplay(); }
@@ -5227,6 +6620,8 @@ const movieSideMenuOverlay = document.getElementById('movieSideMenuOverlay');
 const movieSideMenuClose = document.getElementById('movieSideMenuClose');
 const movieMenuClashBtn = document.getElementById('movieMenuClashBtn');
 const movieMenuConnectBtn = document.getElementById('movieMenuConnectBtn');
+const movieMenuCharadesBtn = document.getElementById('movieMenuCharadesBtn');
+const movieMenuCrosswordBtn = document.getElementById('movieMenuCrosswordBtn');
 const movieMenuChronicleBtn = document.getElementById('movieMenuChronicleBtn');
 const movieMenuChaosBtn = document.getElementById('movieMenuChaosBtn');
 const movieMenuCodeBtn = document.getElementById('movieMenuCodeBtn');
@@ -5236,12 +6631,16 @@ const movieMenuCartridgeBtn = document.getElementById('movieMenuCartridgeBtn');
 function openMovieSideMenu(){
   const clashOpen = clashModal.classList.contains('show');
   const gridOpen = gridModal.classList.contains('show');
+  const charadesOpen = charadesModal.classList.contains('show');
+  const crosswordOpen = crosswordModal.classList.contains('show');
   const chronicleOpen = chronicleModal.classList.contains('show');
   const chaosOpen = chaosModal.classList.contains('show');
   const codeOpen = codeModal.classList.contains('show');
   const cupOpen = cupModal.classList.contains('show');
   movieMenuClashBtn.classList.toggle('active', clashOpen);
   movieMenuConnectBtn.classList.toggle('active', gridOpen);
+  movieMenuCharadesBtn.classList.toggle('active', charadesOpen);
+  movieMenuCrosswordBtn.classList.toggle('active', crosswordOpen);
   movieMenuChronicleBtn.classList.toggle('active', chronicleOpen);
   movieMenuChaosBtn.classList.toggle('active', chaosOpen);
   movieMenuCodeBtn.classList.toggle('active', codeOpen);
@@ -5266,6 +6665,16 @@ movieMenuConnectBtn.addEventListener('click', ()=>{
   closeMovieSideMenu();
   showGridPage();
   startGridDaily();
+});
+movieMenuCharadesBtn.addEventListener('click', ()=>{
+  closeMovieSideMenu();
+  showCharadesPage();
+  startCharadesDaily();
+});
+movieMenuCrosswordBtn.addEventListener('click', ()=>{
+  closeMovieSideMenu();
+  showCrosswordPage();
+  startCrosswordDaily();
 });
 movieMenuChronicleBtn.addEventListener('click', ()=>{
   closeMovieSideMenu();
