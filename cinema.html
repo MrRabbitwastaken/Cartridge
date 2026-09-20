@@ -1374,12 +1374,32 @@
   body.light-mode .console-screen {
     left: 19.9%; top: 12.8%; width: 59.5%; height: 59.4%;
   }
-  body.light-mode .gamepad-play {
-    background-image: none;
-  }
+  /* The gamepad-play/gamepad-freeplay graphics are dark-themed art with the
+     "PLAY"/"FREE PLAY" wording baked directly into the image, and their
+     accompanying <span> label is sr-only (screen-reader only) because the
+     image itself carries that text visually. Light mode strips the image
+     since it doesn't read well over the sunlit-room backdrop, so it needs
+     its own visible card + visible label — otherwise the button is blank. */
+  body.light-mode .gamepad-play,
   body.light-mode .gamepad-freeplay {
     background-image: none;
+    background: #f3e9da;
+    border: 2px solid #c9a876;
+    border-radius: 18px;
+    align-items: center;
+    padding: 10px;
   }
+  body.light-mode .gamepad-play:hover,
+  body.light-mode .gamepad-freeplay:hover {
+    border-color: #0891a8;
+  }
+  body.light-mode .gamepad-play .gamepad-label,
+  body.light-mode .gamepad-freeplay .gamepad-label {
+    position: static; width: auto; height: auto; margin: 0; padding: 0;
+    overflow: visible; clip: auto; white-space: normal; top: 0; text-align: center;
+  }
+  body.light-mode .gamepad-play .gamepad-label { color: #8a5a00; text-shadow: none; }
+  body.light-mode .gamepad-freeplay .gamepad-label { color: #a3123a; text-shadow: none; }
   /* Ghost buttons (Shuffle/Give up/Close/etc.) now get an actual solid fill
      rather than relying on the surrounding background for contrast — a light
      fill + dark text always reads clearly, whether the button sits inside a
@@ -1757,6 +1777,7 @@
         <button class="ghost-btn" id="clashShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="clashFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="clashPlayAgainBtn" style="display:none;">Play again</button>
+        <button class="ghost-btn" id="clashNextDailyBtn" style="display:none;"></button>
         <button class="ghost-btn" id="clashCloseBtn">Close</button>
       </div>
     </div>
@@ -1795,6 +1816,7 @@
         <button class="ghost-btn" id="gridShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="gridFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="gridPlayAgainBtn" style="display:none;">New puzzle</button>
+        <button class="ghost-btn" id="gridNextDailyBtn" style="display:none;"></button>
         <button class="ghost-btn" id="gridCloseBtn">Close</button>
       </div>
     </div>
@@ -1831,6 +1853,7 @@
         <button class="ghost-btn" id="chronicleShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="chronicleFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="chroniclePlayAgainBtn" style="display:none;">New Puzzle</button>
+        <button class="ghost-btn" id="chronicleNextDailyBtn" style="display:none;"></button>
         <button class="ghost-btn" id="chronicleCloseBtn">Close</button>
       </div>
     </div>
@@ -1904,6 +1927,7 @@
         <button class="ghost-btn" id="codeShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="codeFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="codePlayAgainBtn" style="display:none;">New Puzzle</button>
+        <button class="ghost-btn" id="codeNextDailyBtn" style="display:none;"></button>
         <button class="ghost-btn" id="codeCloseBtn">Close</button>
       </div>
     </div>
@@ -1945,6 +1969,7 @@
         <button class="ghost-btn" id="charadesShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="charadesFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="charadesPlayAgainBtn" style="display:none;">New Puzzle</button>
+        <button class="ghost-btn" id="charadesNextDailyBtn" style="display:none;"></button>
         <button class="ghost-btn" id="charadesCloseBtn">Close</button>
       </div>
     </div>
@@ -2017,6 +2042,7 @@
         <button class="ghost-btn" id="crosswordShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="crosswordFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="crosswordPlayAgainBtn" style="display:none;">New Puzzle</button>
+        <button class="ghost-btn" id="crosswordNextDailyBtn" style="display:none;"></button>
         <button class="ghost-btn" id="crosswordCloseBtn">Close</button>
       </div>
     </div>
@@ -2155,6 +2181,7 @@
         <button class="ghost-btn" id="reviewShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="reviewFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="reviewPlayAgainBtn" style="display:none;">New Puzzle</button>
+        <button class="ghost-btn" id="reviewNextDailyBtn" style="display:none;"></button>
         <button class="ghost-btn" id="reviewCloseBtn">Close</button>
       </div>
     </div>
@@ -2211,6 +2238,7 @@
         <button class="ghost-btn" id="dfShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="dfFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="dfPlayAgainBtn" style="display:none;">New Puzzle</button>
+        <button class="ghost-btn" id="dfNextDailyBtn" style="display:none;"></button>
         <button class="ghost-btn" id="dfCloseBtn">Close</button>
       </div>
     </div>
@@ -2274,6 +2302,7 @@
         <button class="ghost-btn" id="stShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="stFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="stPlayAgainBtn" style="display:none;">New Puzzle</button>
+        <button class="ghost-btn" id="stNextDailyBtn" style="display:none;"></button>
         <button class="ghost-btn" id="stCloseBtn">Close</button>
       </div>
     </div>
@@ -3563,6 +3592,84 @@ function checkTripleFeatureAchievement(){
   if(clashDone && connectDone && chronicleDone) unlockMovieAchievements(['triple_feature']);
 }
 
+// ---------- "Play Next Daily" chain (mirrors Cartridge's own next-daily
+// button) — after finishing one daily, jump straight to the next uncompleted
+// one instead of returning to the home screen. Cinema Cup (an endless
+// preference bracket, not a single daily solve) and Cinema Chaos (freeplay
+// only, no daily puzzle at all) sit outside the chain, same as how
+// Cartridge Cup stays out of its own equivalent chain. Cinema Code stays in
+// the chain but is skipped while still locked, just like Countdown is in
+// Cartridge.
+const MOVIE_DAILY_GAME_SEQUENCE = [
+  { key: 'clash',     label: 'Cinema Clash' },
+  { key: 'connect',   label: 'Cinema Connect' },
+  { key: 'charades',  label: 'Cinema Charades' },
+  { key: 'crossword', label: 'Cinema Crossword' },
+  { key: 'chronicle', label: 'Cinema Chronicle' },
+  { key: 'code',      label: 'Cinema Code' },
+  { key: 'review',    label: 'One-Star Reviews' },
+  { key: 'df',        label: 'Double Feature' },
+  { key: 'st',        label: 'Name That Score' },
+];
+
+function isMovieDailyGameCompletedToday(key){
+  const date = todayKey();
+  if(key === 'clash') return typeof loadClashHistory()[date] === 'number';
+  if(key === 'connect') return Object.prototype.hasOwnProperty.call(loadGridHistory(), date);
+  if(key === 'charades') return Object.prototype.hasOwnProperty.call(loadCharadesHistory(), date);
+  if(key === 'crossword'){ const e = loadCrosswordHistory()[date]; return !!(e && e.completed === true); }
+  if(key === 'chronicle') return typeof loadChronicleHistory()[date] === 'number';
+  if(key === 'code') return Object.prototype.hasOwnProperty.call(loadCodeHistory(), date);
+  if(key === 'review') return Object.prototype.hasOwnProperty.call(loadReviewHistory(), date);
+  if(key === 'df') return Object.prototype.hasOwnProperty.call(loadDfHistory(), date);
+  if(key === 'st') return Object.prototype.hasOwnProperty.call(loadStHistory(), date);
+  return false;
+}
+
+// Looks forward through the sequence from whichever game you're on, wrapping
+// around, and returns the first one not yet completed today — so it works
+// however you actually play them, not just in a fixed left-to-right order.
+function findNextUncompletedMovieDailyGame(currentKey){
+  const idx = MOVIE_DAILY_GAME_SEQUENCE.findIndex(g => g.key === currentKey);
+  for(let i = 1; i <= MOVIE_DAILY_GAME_SEQUENCE.length; i++){
+    const candidate = MOVIE_DAILY_GAME_SEQUENCE[(idx + i) % MOVIE_DAILY_GAME_SEQUENCE.length];
+    if(candidate.key === 'code' && !isCodeUnlocked()) continue; // stays out of rotation until unlocked
+    if(!isMovieDailyGameCompletedToday(candidate.key)) return candidate;
+  }
+  return null; // every daily is done for today
+}
+
+function goToMovieDailyGame(key){
+  if(key === 'clash'){ showClashPage(); startClashDaily(); }
+  else if(key === 'connect'){ showGridPage(); startGridDaily(); }
+  else if(key === 'charades'){ showCharadesPage(); startCharadesDaily(); }
+  else if(key === 'crossword'){ showCrosswordPage(); startCrosswordDaily(); }
+  else if(key === 'chronicle'){ showChroniclePage(); startChronicleDaily(); }
+  else if(key === 'code'){ showCodePage(); startCodeDaily(); }
+  else if(key === 'review'){ showReviewPage(); startReviewDaily(); }
+  else if(key === 'df'){ showDfPage(); startDfDaily(); }
+  else if(key === 'st'){ showStPage(); startStDaily(); }
+}
+
+// Shared updater for the button on each game's results banner — shows the
+// next uncompleted daily's name, or a greyed "all done" state once every
+// daily has been played today.
+function updateMovieNextDailyButton(btnEl, currentKey){
+  const next = findNextUncompletedMovieDailyGame(currentKey);
+  btnEl.style.display = '';
+  if(next){
+    btnEl.textContent = `Play ${next.label} Daily`;
+    btnEl.disabled = false;
+    btnEl.classList.remove('all-done');
+    btnEl.onclick = ()=> goToMovieDailyGame(next.key);
+  } else {
+    btnEl.textContent = `You've completed today's games! 🎉`;
+    btnEl.disabled = true;
+    btnEl.classList.add('all-done');
+    btnEl.onclick = null;
+  }
+}
+
 function renderMovieAchievements(){
   const grid = document.getElementById('movieAchvGrid');
   if(!grid) return;
@@ -3608,6 +3715,7 @@ const clashBestScore = document.getElementById('clashBestScore');
 const clashFreeplayBtn = document.getElementById('clashFreeplayBtn');
 const clashShareBtn = document.getElementById('clashShareBtn');
 const clashPlayAgainBtn = document.getElementById('clashPlayAgainBtn');
+const clashNextDailyBtn = document.getElementById('clashNextDailyBtn');
 const clashCloseBtn = document.getElementById('clashCloseBtn');
 
 let clashMode = 'daily'; // 'daily' | 'freeplay'
@@ -3805,6 +3913,8 @@ function showClashResults(){
   }
   clashFreeplayBtn.style.display = clashMode === 'daily' ? '' : 'none';
   clashPlayAgainBtn.style.display = clashMode === 'freeplay' ? '' : 'none';
+  if(clashMode === 'daily') updateMovieNextDailyButton(clashNextDailyBtn, 'clash');
+  else clashNextDailyBtn.style.display = 'none';
 }
 
 function endClashGame(){
@@ -4113,6 +4223,7 @@ const gridFinalMessage = document.getElementById('gridFinalMessage');
 const gridRevealList = document.getElementById('gridRevealList');
 const gridFreeplayBtn = document.getElementById('gridFreeplayBtn');
 const gridPlayAgainBtn = document.getElementById('gridPlayAgainBtn');
+const gridNextDailyBtn = document.getElementById('gridNextDailyBtn');
 const gridCloseBtn = document.getElementById('gridCloseBtn');
 const gridShareBtn = document.getElementById('gridShareBtn');
 
@@ -4198,6 +4309,8 @@ function showGridResults(won){
   `).join('');
   gridFreeplayBtn.style.display = gridMode === 'daily' ? '' : 'none';
   gridPlayAgainBtn.style.display = gridMode === 'freeplay' ? '' : 'none';
+  if(gridMode === 'daily') updateMovieNextDailyButton(gridNextDailyBtn, 'connect');
+  else gridNextDailyBtn.style.display = 'none';
 
   if(won && gridLives === 3) unlockMovieAchievements(['connect_flawless']);
   if(gridMode === 'daily') checkTripleFeatureAchievement();
@@ -4366,6 +4479,7 @@ const chronicleRevealList = document.getElementById('chronicleRevealList');
 const chronicleShareBtn = document.getElementById('chronicleShareBtn');
 const chronicleFreeplayBtn = document.getElementById('chronicleFreeplayBtn');
 const chroniclePlayAgainBtn = document.getElementById('chroniclePlayAgainBtn');
+const chronicleNextDailyBtn = document.getElementById('chronicleNextDailyBtn');
 const chronicleCloseBtn = document.getElementById('chronicleCloseBtn');
 
 // 3 stages of 1 round each — order 5 movies by Release Year, then Critic
@@ -4644,6 +4758,8 @@ function showChronicleResults(){
   }).join('');
   chronicleFreeplayBtn.style.display = chronicleMode === 'daily' ? '' : 'none';
   chroniclePlayAgainBtn.style.display = chronicleMode === 'freeplay' ? '' : 'none';
+  if(chronicleMode === 'daily') updateMovieNextDailyButton(chronicleNextDailyBtn, 'chronicle');
+  else chronicleNextDailyBtn.style.display = 'none';
 }
 function hideChronicleResults(){
   chronicleResultsArea.style.display = 'none';
@@ -5130,6 +5246,7 @@ const codeAnswerReveal = document.getElementById('codeAnswerReveal');
 const codeShareBtn = document.getElementById('codeShareBtn');
 const codeFreeplayBtn = document.getElementById('codeFreeplayBtn');
 const codePlayAgainBtn = document.getElementById('codePlayAgainBtn');
+const codeNextDailyBtn = document.getElementById('codeNextDailyBtn');
 const codeCloseBtn = document.getElementById('codeCloseBtn');
 
 let codeMode = 'daily';
@@ -5290,12 +5407,15 @@ function showCodeResults(won){
   codePlayArea.style.display = 'none';
   codeResultsArea.style.display = '';
   codeFinalMessage.textContent = won ? `Cracked it in ${codeGuesses.length}/${CODE_MAX_GUESSES}! 🎉` : "Out of guesses!";
+  applyResultBanner(codeFinalMessage, won, won && codeGuesses.length === 1);
   codeFinalScore.textContent = won ? `${codeGuesses.length}/${CODE_MAX_GUESSES}` : `X/${CODE_MAX_GUESSES}`;
   const best = loadCodeBest();
   codeBestScore.textContent = best ? `Best: ${best}/${CODE_MAX_GUESSES}` : 'Best: —';
   codeAnswerReveal.textContent = `The answer was ${codeAnswer.title} (${codeAnswer.year}).`;
   codeFreeplayBtn.style.display = codeMode === 'daily' ? '' : 'none';
   codePlayAgainBtn.style.display = codeMode === 'freeplay' ? '' : 'none';
+  if(codeMode === 'daily') updateMovieNextDailyButton(codeNextDailyBtn, 'code');
+  else codeNextDailyBtn.style.display = 'none';
 }
 function hideCodeResults(){
   codeResultsArea.style.display = 'none';
@@ -5522,6 +5642,7 @@ const charadesFinalScore = document.getElementById('charadesFinalScore');
 const charadesShareBtn = document.getElementById('charadesShareBtn');
 const charadesFreeplayBtn = document.getElementById('charadesFreeplayBtn');
 const charadesPlayAgainBtn = document.getElementById('charadesPlayAgainBtn');
+const charadesNextDailyBtn = document.getElementById('charadesNextDailyBtn');
 const charadesCloseBtn = document.getElementById('charadesCloseBtn');
 
 let charadesMode = 'daily'; // 'daily' | 'freeplay'
@@ -5623,6 +5744,8 @@ function showCharadesResults(){
   renderMovieRevealCard('charadesPosterCard', charadesTarget.title);
   charadesFreeplayBtn.style.display = charadesMode === 'daily' ? '' : 'none';
   charadesPlayAgainBtn.style.display = charadesMode === 'freeplay' ? '' : 'none';
+  if(charadesMode === 'daily') updateMovieNextDailyButton(charadesNextDailyBtn, 'charades');
+  else charadesNextDailyBtn.style.display = 'none';
 }
 function hideCharadesResults(){
   charadesResultsArea.style.display = 'none';
@@ -6004,6 +6127,7 @@ const crosswordBestTime = document.getElementById('crosswordBestTime');
 const crosswordShareBtn = document.getElementById('crosswordShareBtn');
 const crosswordFreeplayBtn = document.getElementById('crosswordFreeplayBtn');
 const crosswordPlayAgainBtn = document.getElementById('crosswordPlayAgainBtn');
+const crosswordNextDailyBtn = document.getElementById('crosswordNextDailyBtn');
 const crosswordCloseBtn = document.getElementById('crosswordCloseBtn');
 const crosswordCheckBtn = document.getElementById('crosswordCheckBtn');
 const crosswordRevealBtn = document.getElementById('crosswordRevealBtn');
@@ -6437,6 +6561,8 @@ function showCrosswordResults(gaveUp){
   }
   crosswordFreeplayBtn.style.display = crosswordMode === 'daily' ? '' : 'none';
   crosswordPlayAgainBtn.style.display = crosswordMode === 'freeplay' ? '' : 'none';
+  if(crosswordMode === 'daily') updateMovieNextDailyButton(crosswordNextDailyBtn, 'crossword');
+  else crosswordNextDailyBtn.style.display = 'none';
 }
 function hideCrosswordResults(){
   crosswordResultsArea.style.display = 'none';
@@ -6717,6 +6843,7 @@ const reviewFinalScore = document.getElementById('reviewFinalScore');
 const reviewShareBtn = document.getElementById('reviewShareBtn');
 const reviewFreeplayBtn = document.getElementById('reviewFreeplayBtn');
 const reviewPlayAgainBtn = document.getElementById('reviewPlayAgainBtn');
+const reviewNextDailyBtn = document.getElementById('reviewNextDailyBtn');
 const reviewCloseBtn = document.getElementById('reviewCloseBtn');
 
 let reviewMode = 'daily'; // 'daily' | 'freeplay'
@@ -6836,6 +6963,8 @@ function showReviewResults(){
   renderMovieRevealCard('reviewPosterCard', reviewTarget.title);
   reviewFreeplayBtn.style.display = reviewMode === 'daily' ? '' : 'none';
   reviewPlayAgainBtn.style.display = reviewMode === 'freeplay' ? '' : 'none';
+  if(reviewMode === 'daily') updateMovieNextDailyButton(reviewNextDailyBtn, 'review');
+  else reviewNextDailyBtn.style.display = 'none';
 }
 function hideReviewResults(){
   reviewResultsArea.style.display = 'none';
@@ -7098,6 +7227,7 @@ const dfConnectionReveal = document.getElementById('dfConnectionReveal');
 const dfShareBtn = document.getElementById('dfShareBtn');
 const dfFreeplayBtn = document.getElementById('dfFreeplayBtn');
 const dfPlayAgainBtn = document.getElementById('dfPlayAgainBtn');
+const dfNextDailyBtn = document.getElementById('dfNextDailyBtn');
 const dfCloseBtn = document.getElementById('dfCloseBtn');
 
 let dfMode = 'daily'; // 'daily' | 'freeplay'
@@ -7244,6 +7374,8 @@ function showDfResults(){
   `;
   dfFreeplayBtn.style.display = dfMode === 'daily' ? '' : 'none';
   dfPlayAgainBtn.style.display = dfMode === 'freeplay' ? '' : 'none';
+  if(dfMode === 'daily') updateMovieNextDailyButton(dfNextDailyBtn, 'df');
+  else dfNextDailyBtn.style.display = 'none';
 }
 function hideDfResults(){
   dfResultsArea.style.display = 'none';
@@ -7625,6 +7757,7 @@ const stTrackReveal = document.getElementById('stTrackReveal');
 const stShareBtn = document.getElementById('stShareBtn');
 const stFreeplayBtn = document.getElementById('stFreeplayBtn');
 const stPlayAgainBtn = document.getElementById('stPlayAgainBtn');
+const stNextDailyBtn = document.getElementById('stNextDailyBtn');
 const stCloseBtn = document.getElementById('stCloseBtn');
 
 let stMode = 'daily'; // 'daily' | 'freeplay'
@@ -7878,6 +8011,8 @@ function showStResults(){
   renderMovieRevealCard('stPosterCard', stTarget.title);
   stFreeplayBtn.style.display = stMode === 'daily' ? '' : 'none';
   stPlayAgainBtn.style.display = stMode === 'freeplay' ? '' : 'none';
+  if(stMode === 'daily') updateMovieNextDailyButton(stNextDailyBtn, 'st');
+  else stNextDailyBtn.style.display = 'none';
 }
 function hideStResults(){
   stResultsArea.style.display = 'none';
