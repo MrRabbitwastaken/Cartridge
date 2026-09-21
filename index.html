@@ -465,6 +465,26 @@
     #cassetteModal .charades-guess-row { justify-content: center; }
   }
 
+  /* ---------- Shared "reveal" audio player (full preview on the results
+     banner — Cassette here, Name That Score in Cinema) ---------- */
+  .reveal-audio-player {
+    display: flex; align-items: center; gap: 10px; max-width: 320px; margin: 12px auto 0;
+  }
+  .reveal-audio-pause {
+    flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--line);
+    background: var(--panel-2); color: var(--text); font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: border-color .15s, color .15s, box-shadow .15s;
+  }
+  .reveal-audio-pause:hover { border-color: var(--lime); color: var(--lime); box-shadow: 0 0 12px rgba(168,255,62,0.35); }
+  .reveal-progress-track {
+    flex: 1 1 auto; height: 8px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .reveal-progress-fill {
+    height: 100%; width: 0%; background: linear-gradient(90deg, var(--lime), var(--cyan));
+    transition: width .12s linear;
+  }
+
   .board-head, .cart-row {
     display: grid;
     grid-template-columns: 78px 1.2fr 0.6fr 1fr 0.8fr 1.2fr 1.2fr 0.8fr 0.9fr;
@@ -1799,6 +1819,10 @@
       <div class="clash-heading" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700;" id="cassetteFinalMessage">Nailed it!</div>
       <div class="clash-final-score" id="cassetteFinalScore"></div>
       <div id="cassetteTrackReveal" style="margin:10px 0 4px;"></div>
+      <div class="reveal-audio-player" id="cassetteRevealPlayer" style="display:none;">
+        <button class="reveal-audio-pause" id="cassetteRevealPauseBtn" type="button" title="Pause">⏸</button>
+        <div class="reveal-progress-track"><div class="reveal-progress-fill" id="cassetteRevealProgressFill"></div></div>
+      </div>
       <div class="achv-toast-list" id="cassetteAchvToastList"></div>
       <div class="btn-row" style="justify-content:center;">
         <button class="ghost-btn" id="cassetteShareBtn">📋 Share Results</button>
@@ -9222,7 +9246,62 @@ const GAME_SOUNDTRACK_POOL = [
   { title:'The Division', year:2016, searchTerm:'We Are the Division Ola Strandh Tom Clancy\'s The Division', trackHint:'division', reveal:'"We Are the Division" — Ola Strandh' },
   { title:'Bastion', year:2011, searchTerm:'In Circles Darren Korb Ashley Barrett Bastion', trackHint:'in circles', reveal:'"In Circles" — Darren Korb feat. Ashley Barrett' },
   { title:'Dead Island', year:2011, searchTerm:'Dead Island Trailer Theme Giles Lamb', trackHint:null, reveal:'Trailer Theme — Giles Lamb' },
-  { title:'GRIS', year:2018, searchTerm:'Gris Berlinist soundtrack', trackHint:null, reveal:'"Gris, Pt. 1" — Berlinist' }
+  { title:'GRIS', year:2018, searchTerm:'Gris Berlinist soundtrack', trackHint:null, reveal:'"Gris, Pt. 1" — Berlinist' },
+
+  // ---- Second tracks for franchises/games that genuinely have more than
+  // one famous cue — added on request so Zelda, Halo, Final Fantasy, Metal
+  // Gear, Souls games and the rest can come up with a different song each
+  // time, instead of always the same one.
+  { title:'The Legend of Zelda: Ocarina of Time', year:1998, searchTerm:'Song of Storms Ocarina of Time Koji Kondo', trackHint:'song of storms', reveal:'"Song of Storms" — Koji Kondo' },
+  { title:'The Legend of Zelda: Breath of the Wild', year:2017, searchTerm:'Rito Village Breath of the Wild Manaka Kataoka', trackHint:'rito village', reveal:'"Rito Village" — Manaka Kataoka' },
+  { title:'The Legend of Zelda: Majora\'s Mask', year:2000, searchTerm:'Song of Healing Majora\'s Mask Koji Kondo', trackHint:'song of healing', reveal:'"Song of Healing" — Koji Kondo' },
+  { title:'The Legend of Zelda: The Wind Waker', year:2002, searchTerm:'Dragon Roost Island Wind Waker Kenta Nagata', trackHint:'dragon roost', reveal:'"Dragon Roost Island" — Kenta Nagata' },
+  { title:'The Legend of Zelda: Twilight Princess', year:2006, searchTerm:'Midna\'s Lament Twilight Princess Toru Minegishi', trackHint:'midna', reveal:'"Midna\'s Lament" — Toru Minegishi' },
+  { title:'The Legend of Zelda: Skyward Sword', year:2011, searchTerm:'Ballad of the Goddess Skyward Sword Hajime Wakai', trackHint:'ballad of the goddess', reveal:'"Ballad of the Goddess" — Hajime Wakai' },
+  { title:'The Legend of Zelda: A Link to the Past', year:1991, searchTerm:'Dark World Theme Link to the Past Koji Kondo', trackHint:'dark world', reveal:'"Dark World Theme" — Koji Kondo' },
+  { title:'The Legend of Zelda', year:1986, searchTerm:'Overworld Theme The Legend of Zelda Koji Kondo', trackHint:'overworld', reveal:'"Overworld Theme" — Koji Kondo' },
+  { title:'Super Mario 64', year:1996, searchTerm:'Dire Dire Docks Super Mario 64 Koji Kondo', trackHint:'dire', reveal:'"Dire, Dire Docks" — Koji Kondo' },
+  { title:'Super Mario Odyssey', year:2017, searchTerm:'Jump Up Super Star Break Free Lead the Way Mario Odyssey', trackHint:'break free', reveal:'"Break Free (Lead the Way)" — Naoto Kubo' },
+  { title:'Mario Kart 8 Deluxe', year:2017, searchTerm:'Rainbow Road Mario Kart 8 Deluxe', trackHint:'rainbow road', reveal:'"Rainbow Road" — Nintendo Sound Team' },
+  { title:'Mario Kart 64', year:1996, searchTerm:'Choco Mountain Mario Kart 64', trackHint:'choco mountain', reveal:'"Choco Mountain" — Kenta Nagata' },
+  { title:'Super Smash Bros. Ultimate', year:2018, searchTerm:'Lifelight Super Smash Bros Ultimate', trackHint:'lifelight', reveal:'"Lifelight" — Nintendo Sound Team' },
+  { title:'Super Smash Bros. Brawl', year:2008, searchTerm:'Main Theme Super Smash Bros Brawl', trackHint:null, reveal:'Main Theme — Nobuo Uematsu' },
+  { title:'Final Fantasy VII', year:1997, searchTerm:'One-Winged Angel Final Fantasy VII Nobuo Uematsu', trackHint:'one-winged angel', reveal:'"One-Winged Angel" — Nobuo Uematsu' },
+  { title:'Final Fantasy VIII', year:1999, searchTerm:'Liberi Fatali Final Fantasy VIII Nobuo Uematsu', trackHint:'liberi fatali', reveal:'"Liberi Fatali" — Nobuo Uematsu' },
+  { title:'Final Fantasy XIV', year:2010, searchTerm:'Answers Final Fantasy XIV Masayoshi Soken', trackHint:'answers', reveal:'"Answers" — Masayoshi Soken' },
+  { title:'Final Fantasy XV', year:2016, searchTerm:'Somnus Final Fantasy XV Yoko Shimomura', trackHint:'somnus', reveal:'"Somnus" — Yoko Shimomura' },
+  { title:'Halo: Combat Evolved', year:2001, searchTerm:'Truth and Reconciliation Suite Halo Martin O\'Donnell', trackHint:'truth and reconciliation', reveal:'"Truth and Reconciliation Suite" — Martin O\'Donnell & Michael Salvatori' },
+  { title:'Halo 3', year:2007, searchTerm:'One Final Effort Halo 3 Martin O\'Donnell', trackHint:'one final effort', reveal:'"One Final Effort" — Martin O\'Donnell' },
+  { title:'Halo: Reach', year:2010, searchTerm:'Overture Halo Reach Martin O\'Donnell', trackHint:'overture', reveal:'"Overture" — Martin O\'Donnell' },
+  { title:'Assassin\'s Creed II', year:2009, searchTerm:'Ezio\'s Family Assassin\'s Creed II Jesper Kyd', trackHint:'ezio\'s family', reveal:'"Ezio\'s Family" — Jesper Kyd' },
+  { title:'Assassin\'s Creed IV: Black Flag', year:2013, searchTerm:'Sea Shanty A-Rovin Assassin\'s Creed Black Flag', trackHint:'a-rovin', reveal:'"A-Rovin\' (Sea Shanty)" — Sean Dagher' },
+  { title:'Assassin\'s Creed Origins', year:2017, searchTerm:'Juno Assassin\'s Creed Origins Sarah Schachner', trackHint:'juno', reveal:'"Juno" — Sarah Schachner' },
+  { title:'Assassin\'s Creed Rogue', year:2014, searchTerm:'Main Theme Assassin\'s Creed Rogue', trackHint:null, reveal:'Main Theme — Elitsa Alexandrova & Olivier Deriviere' },
+  { title:'Metal Gear Solid 3: Snake Eater', year:2004, searchTerm:'Debriefing Metal Gear Solid 3 Norihiko Hibino', trackHint:'debriefing', reveal:'"Debriefing" — Norihiko Hibino' },
+  { title:'Metal Gear Solid 2: Sons of Liberty', year:2001, searchTerm:'Yell Dead Cell Metal Gear Solid 2 Harry Gregson-Williams', trackHint:'yell', reveal:'"Yell \'Dead Cell\'" — Harry Gregson-Williams' },
+  { title:'Metal Gear Solid V: The Phantom Pain', year:2015, searchTerm:'Sins of the Father Metal Gear Solid V Stefanie Joosten', trackHint:'sins of the father', reveal:'"Sins of the Father" — Ludvig Forssell (feat. Stefanie Joosten)' },
+  { title:'Persona 5', year:2016, searchTerm:'Life Will Change Persona 5 Lyn Inaizumi', trackHint:'life will change', reveal:'"Life Will Change" — Lyn Inaizumi (Shoji Meguro)' },
+  { title:'Persona 4', year:2008, searchTerm:'Reach Out to the Truth Persona 4 Shoji Meguro', trackHint:'reach out to the truth', reveal:'"Reach Out to the Truth" — Shoji Meguro' },
+  { title:'Persona 3', year:2006, searchTerm:'Burn My Dread Persona 3 Yumi Kawamura', trackHint:'burn my dread', reveal:'"Burn My Dread" — Shoji Meguro feat. Yumi Kawamura' },
+  { title:'Mass Effect 2', year:2010, searchTerm:'Suicide Mission Mass Effect 2 Jack Wall', trackHint:'suicide mission', reveal:'"Suicide Mission" — Jack Wall & Sam Hulick' },
+  { title:'Mass Effect 3', year:2012, searchTerm:'An End Once and For All Mass Effect 3', trackHint:'an end', reveal:'"An End, Once and for All" — Sam Hulick, Christopher Lennertz & Clint Mansell' },
+  { title:'Mass Effect', year:2007, searchTerm:'Vigil Mass Effect Jack Wall', trackHint:'vigil', reveal:'"Vigil" — Jack Wall' },
+  { title:'Uncharted: Drake\'s Fortune', year:2007, searchTerm:'Nate\'s Theme Uncharted Drake\'s Fortune Greg Edmonson', trackHint:'nate\'s theme', reveal:'"Nate\'s Theme" — Greg Edmonson' },
+  { title:'Uncharted 2: Among Thieves', year:2009, searchTerm:'Nate\'s Theme 2.0 Uncharted 2 Greg Edmonson', trackHint:'nate\'s theme', reveal:'"Nate\'s Theme 2.0" — Greg Edmonson' },
+  { title:'Uncharted 4: A Thief\'s End', year:2016, searchTerm:'A Thief\'s End Main Theme Henry Jackman', trackHint:null, reveal:'Main Theme — Henry Jackman' },
+  { title:'Dark Souls', year:2011, searchTerm:'Gwyn Lord of Cinder Dark Souls Motoi Sakuraba', trackHint:'gwyn', reveal:'"Gwyn, Lord of Cinder" — Motoi Sakuraba' },
+  { title:'Bloodborne', year:2015, searchTerm:'Oath of Vengeance Bloodborne Tsukasa Saitoh', trackHint:'oath of vengeance', reveal:'"Oath of Vengeance" — Tsukasa Saitoh' },
+  { title:'Sekiro: Shadows Die Twice', year:2019, searchTerm:'Genichiro Way of Tomoe Sekiro Yuka Kitamura', trackHint:'genichiro', reveal:'"Genichiro, Way of Tomoe" — Yuka Kitamura' },
+  { title:'Elden Ring', year:2022, searchTerm:'Radagon and the Elden Beast Elden Ring Tsukasa Saitoh', trackHint:'radagon', reveal:'"Radagon and the Elden Beast" — Tsukasa Saitoh & Yuka Kitamura' },
+  { title:'God of War (2018)', year:2018, searchTerm:'Blades of Chaos God of War Bear McCreary', trackHint:'blades of chaos', reveal:'"Blades of Chaos" — Bear McCreary' },
+  { title:'God of War Ragnarök', year:2022, searchTerm:'For Baldur God of War Ragnarok Bear McCreary', trackHint:'for baldur', reveal:'"For Baldur" — Bear McCreary' },
+  { title:'Diablo III', year:2012, searchTerm:'Diablo III Main Theme Russell Brower', trackHint:null, reveal:'Main Theme — Russell Brower' },
+  { title:'Diablo II', year:2000, searchTerm:'Rogue Encampment Diablo II Matt Uelmen', trackHint:'rogue encampment', reveal:'"Rogue Encampment" — Matt Uelmen' },
+  { title:'Fallout: New Vegas', year:2010, searchTerm:'Big Iron Marty Robbins Fallout New Vegas', trackHint:'big iron', reveal:'"Big Iron" — Marty Robbins' },
+  { title:'Fallout 3', year:2008, searchTerm:'I Don\'t Want to Set the World on Fire Ink Spots Fallout 3', trackHint:'set the world on fire', reveal:'"I Don\'t Want to Set the World on Fire" — The Ink Spots' },
+  { title:'Fallout 4', year:2015, searchTerm:'The Wanderer Dion Fallout 4', trackHint:'wanderer', reveal:'"The Wanderer" — Dion' },
+  { title:'Portal', year:2007, searchTerm:'Reconstructing More Science Portal Kelly Bailey', trackHint:'reconstructing', reveal:'"Reconstructing More Science" — Kelly Bailey' },
+  { title:'Portal 2', year:2011, searchTerm:'Exile Vilify The National Portal 2', trackHint:'exile vilify', reveal:'"Exile Vilify" — The National' }
 ];
 
 const cassetteModal = document.getElementById('cassetteModal');
@@ -9246,6 +9325,9 @@ const cassetteAudio = document.getElementById('cassetteAudioEl');
 const cassetteFinalMessage = document.getElementById('cassetteFinalMessage');
 const cassetteFinalScore = document.getElementById('cassetteFinalScore');
 const cassetteTrackReveal = document.getElementById('cassetteTrackReveal');
+const cassetteRevealPlayer = document.getElementById('cassetteRevealPlayer');
+const cassetteRevealPauseBtn = document.getElementById('cassetteRevealPauseBtn');
+const cassetteRevealProgressFill = document.getElementById('cassetteRevealProgressFill');
 const cassetteShareBtn = document.getElementById('cassetteShareBtn');
 const cassetteFreeplayBtn = document.getElementById('cassetteFreeplayBtn');
 const cassettePlayAgainBtn = document.getElementById('cassettePlayAgainBtn');
@@ -9266,6 +9348,9 @@ let cassettePlayTimer = null;
 let cassetteMcOpened = false;
 let cassetteMcTitleOptions = [];
 let cassetteMcWrongTitles = [];
+let cassetteRevealInterval = null;
+let cassetteRevealPaused = false;
+const CASSETTE_REVEAL_MAX_SECONDS = 25;
 
 function cassettePool(){ return GAME_SOUNDTRACK_POOL; }
 
@@ -9299,7 +9384,7 @@ function persistCassetteDaily(){
 // Builds 4 shuffled multiple-choice options (the correct title plus 3 random
 // distractors from the rest of the pool) for a given target entry.
 function buildCassetteMcOptions(pool, target, rng){
-  const others = pool.filter(e => e.title !== target.title).map(e => e.title);
+  const others = [...new Set(pool.filter(e => e.title !== target.title).map(e => e.title))];
   const shuffledOthers = seededShuffle(others, rng || Math.random);
   const distractors = shuffledOthers.slice(0, 3);
   return seededShuffle([target.title, ...distractors], rng || Math.random);
@@ -9380,7 +9465,10 @@ let cassettePreviewCache = {};
 try{ cassettePreviewCache = JSON.parse(localStorage.getItem(CASSETTE_PREVIEW_CACHE_KEY) || '{}'); }catch(e){ cassettePreviewCache = {}; }
 
 async function fetchGameSoundtrackPreview(entry){
-  const cacheKey = entry.title;
+  // Keyed by title+searchTerm rather than just title, since a franchise
+  // game (Zelda, Halo, Final Fantasy, etc.) can now have more than one pool
+  // entry — each of its songs needs its own cached preview URL.
+  const cacheKey = entry.title + '::' + entry.searchTerm;
   if(Object.prototype.hasOwnProperty.call(cassettePreviewCache, cacheKey)) return cassettePreviewCache[cacheKey];
   try{
     const data = await cassetteJsonpSearch(entry.searchTerm);
@@ -9417,6 +9505,8 @@ async function resolveCassetteTarget(startIndex){
 
 function cassetteAudioStop(){
   if(cassettePlayTimer){ clearTimeout(cassettePlayTimer); cassettePlayTimer = null; }
+  if(cassetteRevealInterval){ clearInterval(cassetteRevealInterval); cassetteRevealInterval = null; }
+  cassetteRevealPaused = false;
   try{ cassetteAudio.pause(); }catch(e){}
 }
 function cassettePlayCurrentClip(){
@@ -9429,6 +9519,60 @@ function cassettePlayCurrentClip(){
   if(playPromise && playPromise.catch) playPromise.catch(()=>{});
   cassettePlayTimer = setTimeout(()=> cassetteAudio.pause(), seconds * 1000);
 }
+
+// ---------- Full-length reveal playback (results banner) ----------
+// After a round ends (win or lose), the results banner plays the actual
+// track from the top — up to CASSETTE_REVEAL_MAX_SECONDS — with a pause
+// button and a live progress bar. It shares cassetteAudio/cassetteAudioStop
+// with the guessing clip above, so leaving the page, closing the modal, or
+// starting a new puzzle (all of which already call cassetteAudioStop) also
+// stops this cleanly.
+function cassetteRevealRuntimeCap(){
+  const d = cassetteAudio.duration;
+  if(d && isFinite(d) && d > 0) return Math.min(d, CASSETTE_REVEAL_MAX_SECONDS);
+  return CASSETTE_REVEAL_MAX_SECONDS;
+}
+function cassetteUpdateRevealPauseIcon(){
+  if(cassetteRevealPauseBtn){
+    cassetteRevealPauseBtn.textContent = cassetteRevealPaused ? '▶' : '⏸';
+    cassetteRevealPauseBtn.title = cassetteRevealPaused ? 'Play' : 'Pause';
+  }
+}
+function cassetteUpdateRevealProgress(){
+  const cap = cassetteRevealRuntimeCap();
+  const pct = Math.max(0, Math.min(100, (cassetteAudio.currentTime / cap) * 100));
+  if(cassetteRevealProgressFill) cassetteRevealProgressFill.style.width = pct + '%';
+  if(cassetteAudio.ended || cassetteAudio.currentTime >= cap) cassetteAudioStop();
+}
+function cassetteStartRevealPlayback(){
+  cassetteAudioStop();
+  if(cassetteLoadState !== 'ready' || !cassettePreviewUrl){
+    if(cassetteRevealPlayer) cassetteRevealPlayer.style.display = 'none';
+    return;
+  }
+  if(cassetteRevealPlayer) cassetteRevealPlayer.style.display = '';
+  if(cassetteRevealProgressFill) cassetteRevealProgressFill.style.width = '0%';
+  cassetteRevealPaused = false;
+  cassetteUpdateRevealPauseIcon();
+  if(cassetteAudio.src !== cassettePreviewUrl) cassetteAudio.src = cassettePreviewUrl;
+  cassetteAudio.currentTime = 0;
+  const playPromise = cassetteAudio.play();
+  if(playPromise && playPromise.catch) playPromise.catch(()=>{});
+  cassetteRevealInterval = setInterval(cassetteUpdateRevealProgress, 100);
+}
+function cassetteToggleRevealPause(){
+  if(cassetteAudio.paused){
+    const p = cassetteAudio.play();
+    if(p && p.catch) p.catch(()=>{});
+    cassetteRevealPaused = false;
+  } else {
+    cassetteAudio.pause();
+    cassetteRevealPaused = true;
+  }
+  cassetteUpdateRevealPauseIcon();
+}
+cassetteAudio.addEventListener('ended', ()=>{ if(cassetteRevealInterval) cassetteAudioStop(); });
+cassetteRevealPauseBtn.addEventListener('click', cassetteToggleRevealPause);
 
 function renderCassetteLives(){
   cassetteLivesRow.innerHTML = CASS_CLIP_LENGTHS.map((secs, i) => {
@@ -9493,7 +9637,13 @@ function renderCassetteDropdown(query){
   const q = query.trim().toLowerCase();
   if(!q){ hideCassetteDropdown(); return; }
   const guessedSet = new Set(cassetteGuessedTitles.map(g => typeof g === 'string' ? g : g.title));
-  const matches = rankTitleMatches(cassettePool(), q).slice(0, 8);
+  // A game can now have more than one pool entry (e.g. two Zelda songs), so
+  // dedupe by title — the guess is about the game, not which specific song
+  // entry happens to be the current target.
+  const seenTitles = new Set();
+  const matches = rankTitleMatches(cassettePool(), q)
+    .filter(g => (seenTitles.has(g.title) ? false : (seenTitles.add(g.title), true)))
+    .slice(0, 8);
   if(!matches.length){ hideCassetteDropdown(); return; }
   cassetteDropdown.innerHTML = matches.map(g => {
     const already = guessedSet.has(g.title);
@@ -9522,8 +9672,11 @@ function showCassetteResults(){
   cassettePlayAgainBtn.style.display = cassetteMode === 'freeplay' ? '' : 'none';
   if(cassetteMode === 'daily') updateNextDailyButton(cassetteNextDailyBtn, 'cassette');
   else cassetteNextDailyBtn.style.display = 'none';
+  cassetteStartRevealPlayback();
 }
 function hideCassetteResults(){
+  cassetteAudioStop();
+  if(cassetteRevealPlayer) cassetteRevealPlayer.style.display = 'none';
   cassetteResultsArea.style.display = 'none';
   cassettePlayArea.style.display = '';
 }

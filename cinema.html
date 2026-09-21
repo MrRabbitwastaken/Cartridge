@@ -1099,6 +1099,11 @@
     text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 13px;
     color: var(--text-on-photo-dim); margin: 4px 0 0;
   }
+  .df-connection-extra {
+    text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+    color: var(--amber); margin: 8px 0 0; opacity: 0.9;
+  }
+  .df-connection-extra .dce-label { color: var(--text-on-photo-dim); }
 
   /* ---------- Cinema Name That Score ---------- */
   .st-lives-row { display: flex; justify-content: center; gap: 8px; margin: 4px 0 16px; }
@@ -1140,6 +1145,26 @@
   }
   @media (max-width: 640px) {
     #stModal .search-row, #stModal .charades-guess-row { justify-content: center; }
+  }
+
+  /* ---------- Shared "reveal" audio player (full preview on the results
+     banner — Name That Score here, Cassette in Cartridge) ---------- */
+  .reveal-audio-player {
+    display: flex; align-items: center; gap: 10px; max-width: 320px; margin: 12px auto 0;
+  }
+  .reveal-audio-pause {
+    flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--line);
+    background: var(--panel-2); color: var(--text-on-photo); font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: border-color .15s, color .15s, box-shadow .15s;
+  }
+  .reveal-audio-pause:hover { border-color: var(--lime); color: var(--lime); box-shadow: 0 0 12px rgba(168,255,62,0.35); }
+  .reveal-progress-track {
+    flex: 1 1 auto; height: 8px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .reveal-progress-fill {
+    height: 100%; width: 0%; background: linear-gradient(90deg, var(--lime), var(--cyan));
+    transition: width .12s linear;
   }
 
   /* ---------- Cartridge Chronicle ---------- */
@@ -2292,6 +2317,10 @@
       <div class="clash-heading" style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700;" id="stFinalMessage">Nailed it!</div>
       <div class="clash-final-score" id="stFinalScore"></div>
       <div id="stTrackReveal" style="margin:10px 0 4px;"></div>
+      <div class="reveal-audio-player" id="stRevealPlayer" style="display:none;">
+        <button class="reveal-audio-pause" id="stRevealPauseBtn" type="button" title="Pause">⏸</button>
+        <div class="reveal-progress-track"><div class="reveal-progress-fill" id="stRevealProgressFill"></div></div>
+      </div>
       <div id="stPosterCard"></div>
       <div class="btn-row" style="justify-content:center;">
         <button class="ghost-btn" id="stShareBtn">📋 Share Results</button>
@@ -8205,6 +8234,50 @@ function dfCategoryIcon(cat){
   return '🔗';
 }
 
+// ----- Multi-connection check (on request): two movies can genuinely share
+// more than one kind of connection (say, the same director AND the same
+// composer) even though a puzzle only ever has one intended answer. This
+// cross-checks the pair against the game's own reference data — the same
+// composer/franchise/lead-actor/award lookups Cinema Connect uses, plus
+// year and studio — and against any OTHER Double Feature entry that happens
+// to use the exact same pair of movies, so a genuine extra match never goes
+// unacknowledged just because the puzzle could only ask about one of them.
+function dfExtraSharedFacts(entry){
+  const facts = [];
+  const seenCategories = new Set([entry.category]);
+  const addOnce = (category, text)=>{ if(!seenCategories.has(category)){ facts.push(text); seenCategories.add(category); } };
+
+  const ca = GRID_COMPOSER[entry.a.title], cb = GRID_COMPOSER[entry.b.title];
+  if(ca && cb && ca === cb) addOnce('Composer', `Same composer (${ca})`);
+
+  const fa = GRID_FRANCHISE[entry.a.title], fb = GRID_FRANCHISE[entry.b.title];
+  if(fa && fb && fa === fb) addOnce('Universe', `Part of ${fa}`);
+
+  const aa = GRID_LEAD_ACTOR[entry.a.title], ab = GRID_LEAD_ACTOR[entry.b.title];
+  if(aa && ab && aa === ab) addOnce('Actor', `Same lead actor (${aa})`);
+
+  if(entry.a.year === entry.b.year) addOnce('Year', `Same release year (${entry.a.year})`);
+
+  if(GRID_BEST_PICTURE_WINNERS.has(entry.a.title) && GRID_BEST_PICTURE_WINNERS.has(entry.b.title)){
+    addOnce('BestPicture', 'Both won the Best Picture Oscar');
+  }
+
+  const ma = MOVIES.find(m=>m.title===entry.a.title), mb = MOVIES.find(m=>m.title===entry.b.title);
+  if(ma && mb && ma.studio === mb.studio) addOnce('Studio', `Same studio (${ma.studio})`);
+
+  // Any other pool entry that happens to pair these exact two movies under a
+  // different category — e.g. the same pair used once for "Composer" and
+  // once for "Director" — contributes its own connection too.
+  const pairKey = [entry.a.title, entry.b.title].slice().sort().join(' :: ');
+  MOVIE_DOUBLE_FEATURE_POOL.forEach(other=>{
+    if(other === entry) return;
+    const otherKey = [other.a.title, other.b.title].slice().sort().join(' :: ');
+    if(otherKey === pairKey) addOnce(other.category, other.connection.replace(/\.$/, ''));
+  });
+
+  return facts;
+}
+
 function renderDfMcOptions(){
   if(!dfMcOpened){
     dfMcOptionsEl.style.display = 'none';
@@ -8263,9 +8336,14 @@ function showDfResults(){
     ? `Solved in ${guessCount}/${DF_MAX_GUESSES}${dfSolvedViaMc ? ' (multiple choice)' : ''}`
     : 'Out of guesses!';
   applyResultBanner(dfFinalMessage, dfWon, dfWon && guessCount === 1 && !dfSolvedViaMc);
+  const dfExtras = dfExtraSharedFacts(dfTarget);
+  const dfExtrasHtml = dfExtras.length
+    ? `<div class="df-connection-extra"><span class="dce-label">${dfExtras.length > 1 ? 'They also share:' : 'They also share:'}</span> ${dfExtras.join(' · ')}</div>`
+    : '';
   dfConnectionReveal.innerHTML = `
     <span class="charades-chip df-category-chip">${dfCategoryIcon(dfTarget.category)} ${dfTarget.category}</span>
     <div class="df-connection-reveal">${dfTarget.connection}</div>
+    ${dfExtrasHtml}
   `;
   dfFreeplayBtn.style.display = dfMode === 'daily' ? '' : 'none';
   dfPlayAgainBtn.style.display = dfMode === 'freeplay' ? '' : 'none';
@@ -8627,15 +8705,70 @@ const MOVIE_SOUNDTRACK_POOL = [
   // ----- Pixar/Disney animation additions (on request) -----
   { title:'Aladdin', year:1992, searchTerm:'A Whole New World Aladdin', trackHint:'whole new world', reveal:'"A Whole New World" — Alan Menken' },
   { title:'Beauty and the Beast', year:1991, searchTerm:'Beauty and the Beast title song Angela Lansbury', trackHint:'beauty and the beast', reveal:'"Beauty and the Beast" — Alan Menken' },
-  { title:'Moana', year:2016, searchTerm:'How Far I\'ll Go Moana Auli\'i Cravalho', trackHint:'how far i\'ll go', reveal:'"How Far I\'ll Go" — Lin-Manuel Miranda' },
-  { title:'Tangled', year:2010, searchTerm:'I See the Light Tangled Mandy Moore Zachary Levi', trackHint:'i see the light', reveal:'"I See the Light" — Alan Menken' },
+  { title:'Moana', year:2016, searchTerm:'You\'re Welcome Dwayne Johnson Moana', trackHint:'you\'re welcome', reveal:'"You\'re Welcome" — Dwayne Johnson' },
+  { title:'Tangled', year:2010, searchTerm:'When Will My Life Begin Mandy Moore Tangled', trackHint:'when will my life begin', reveal:'"When Will My Life Begin?" — Mandy Moore' },
   { title:'Mulan', year:1998, searchTerm:'Reflection Mulan Christina Aguilera', trackHint:'reflection', reveal:'"Reflection" — Matthew Wilder / Christina Aguilera' },
   { title:'Encanto', year:2021, searchTerm:'We Don\'t Talk About Bruno Encanto', trackHint:'bruno', reveal:'"We Don\'t Talk About Bruno" — Lin-Manuel Miranda' },
   { title:'Toy Story', year:1995, searchTerm:'You\'ve Got a Friend in Me Toy Story Randy Newman', trackHint:'friend in me', reveal:'"You\'ve Got a Friend in Me" — Randy Newman' },
   { title:'The Incredibles', year:2004, searchTerm:'The Glory Days The Incredibles Michael Giacchino', trackHint:'glory days', reveal:'Main Theme — Michael Giacchino' },
-  { title:'Ratatouille', year:2007, searchTerm:'Le Festin Ratatouille Camille', trackHint:'le festin', reveal:'"Le Festin" — Michael Giacchino / Camille' },
-  { title:'Zootopia', year:2016, searchTerm:'Try Everything Shakira Zootopia', trackHint:'try everything', reveal:'"Try Everything" — Shakira' },
-  { title:'The Little Mermaid', year:1989, searchTerm:'Under the Sea The Little Mermaid', trackHint:'under the sea', reveal:'"Under the Sea" — Alan Menken' }
+  { title:'Ratatouille', year:2007, searchTerm:'End Creds Michael Giacchino Ratatouille', trackHint:'end creds', reveal:'"End Creds" — Michael Giacchino' },
+  { title:'Zootopia', year:2016, searchTerm:'Zootopia Main Theme Michael Giacchino', trackHint:null, reveal:'Main Theme — Michael Giacchino' },
+  { title:'The Little Mermaid', year:1989, searchTerm:'Under the Sea The Little Mermaid', trackHint:'under the sea', reveal:'"Under the Sea" — Alan Menken' },
+
+  // ---- Second (and third) tracks for franchises/movies that genuinely have
+  // more than one famous cue — added on request so Star Wars, LOTR, Harry
+  // Potter, the MCU, Batman and the big Disney/Pixar musicals can come up
+  // with a different song each time, instead of always the same one.
+  { title:'Star Wars: A New Hope', year:1977, searchTerm:'Cantina Band Star Wars John Williams', trackHint:'cantina', reveal:'"Cantina Band" — John Williams' },
+  { title:'Star Wars: The Empire Strikes Back', year:1980, searchTerm:'Yoda\'s Theme Empire Strikes Back John Williams', trackHint:'yoda', reveal:'"Yoda\'s Theme" — John Williams' },
+  { title:'Star Wars: The Phantom Menace', year:1999, searchTerm:'Anakin\'s Theme Phantom Menace John Williams', trackHint:'anakin', reveal:'"Anakin\'s Theme" — John Williams' },
+  { title:'Star Wars: Revenge of the Sith', year:2005, searchTerm:'Battle of the Heroes Revenge of the Sith John Williams', trackHint:'battle of the heroes', reveal:'"Battle of the Heroes" — John Williams' },
+  { title:'Star Wars: The Force Awakens', year:2015, searchTerm:'March of the Resistance Force Awakens John Williams', trackHint:'march of the resistance', reveal:'"March of the Resistance" — John Williams' },
+  { title:'Star Wars: The Last Jedi', year:2017, searchTerm:'The Spark Last Jedi John Williams', trackHint:'the spark', reveal:'"The Spark" — John Williams' },
+  { title:'Rogue One: A Star Wars Story', year:2016, searchTerm:'Hope Rogue One Michael Giacchino', trackHint:'hope', reveal:'"Hope" — Michael Giacchino' },
+  { title:'Star Wars: The Rise of Skywalker', year:2019, searchTerm:'Reunion Rise of Skywalker John Williams', trackHint:'reunion', reveal:'"Reunion" — John Williams' },
+  { title:'The Lord of the Rings: The Fellowship of the Ring', year:2001, searchTerm:'The Bridge of Khazad-dum Fellowship of the Ring Howard Shore', trackHint:'khazad', reveal:'"The Bridge of Khazad-dûm" — Howard Shore' },
+  { title:'The Lord of the Rings: The Two Towers', year:2002, searchTerm:'Forth Eorlingas Two Towers Howard Shore', trackHint:'forth eorlingas', reveal:'"Forth Eorlingas" — Howard Shore' },
+  { title:'The Lord of the Rings: The Return of the King', year:2003, searchTerm:'The Fields of Pelennor Return of the King Howard Shore', trackHint:'pelennor', reveal:'"The Fields of Pelennor" — Howard Shore' },
+  { title:'The Hobbit: An Unexpected Journey', year:2012, searchTerm:'The Adventure Begins An Unexpected Journey Howard Shore', trackHint:'adventure begins', reveal:'"The Adventure Begins" — Howard Shore' },
+  { title:'The Hobbit: The Desolation of Smaug', year:2013, searchTerm:'Smaug Desolation of Smaug Howard Shore', trackHint:'smaug', reveal:'"Smaug" — Howard Shore' },
+  { title:'The Hobbit: The Battle of the Five Armies', year:2014, searchTerm:'Ravenhill Battle of the Five Armies Howard Shore', trackHint:'ravenhill', reveal:'"Ravenhill" — Howard Shore' },
+  { title:'Harry Potter and the Philosopher\'s Stone', year:2001, searchTerm:'Diagon Alley Philosopher\'s Stone John Williams', trackHint:'diagon alley', reveal:'"Diagon Alley" — John Williams' },
+  { title:'Harry Potter and the Goblet of Fire', year:2005, searchTerm:'Hogwarts Hymn Goblet of Fire Patrick Doyle', trackHint:'hymn', reveal:'"Hogwarts\' Hymn" — Patrick Doyle' },
+  { title:'Harry Potter and the Order of the Phoenix', year:2007, searchTerm:'Dumbledore\'s Army Order of the Phoenix Nicholas Hooper', trackHint:'dumbledore\'s army', reveal:'"Dumbledore\'s Army" — Nicholas Hooper' },
+  { title:'Harry Potter and the Half-Blood Prince', year:2009, searchTerm:'The Story Waits for No One Half-Blood Prince Nicholas Hooper', trackHint:'story waits', reveal:'"The Story Waits for No One" — Nicholas Hooper' },
+  { title:'Harry Potter and the Deathly Hallows – Part 1', year:2010, searchTerm:'Ron Leaves Deathly Hallows Alexandre Desplat', trackHint:'ron leaves', reveal:'"Ron Leaves" — Alexandre Desplat' },
+  { title:'Harry Potter and the Deathly Hallows – Part 2', year:2011, searchTerm:'Statues Deathly Hallows Part 2 Alexandre Desplat', trackHint:'statues', reveal:'"Statues" — Alexandre Desplat' },
+  { title:'Pirates of the Caribbean: The Curse of the Black Pearl', year:2003, searchTerm:'The Medallion Calls Curse of the Black Pearl Klaus Badelt', trackHint:'medallion calls', reveal:'"The Medallion Calls" — Klaus Badelt' },
+  { title:'Pirates of the Caribbean: Dead Man\'s Chest', year:2006, searchTerm:'Davy Jones Dead Man\'s Chest Hans Zimmer', trackHint:'davy jones', reveal:'"Davy Jones" — Hans Zimmer' },
+  { title:'Pirates of the Caribbean: At World\'s End', year:2007, searchTerm:'One Day At World\'s End Hans Zimmer', trackHint:'one day', reveal:'"One Day" — Hans Zimmer' },
+  { title:'Avengers: Endgame', year:2019, searchTerm:'Portals Avengers Endgame Alan Silvestri', trackHint:'portals', reveal:'"Portals" — Alan Silvestri' },
+  { title:'Avengers: Infinity War', year:2018, searchTerm:'Even for You Infinity War Alan Silvestri', trackHint:'even for you', reveal:'"Even for You" — Alan Silvestri' },
+  { title:'The Avengers', year:2012, searchTerm:'A Promise The Avengers Alan Silvestri', trackHint:'a promise', reveal:'"A Promise" — Alan Silvestri' },
+  { title:'Iron Man', year:2008, searchTerm:'Iron Man Theme Ramin Djawadi', trackHint:'iron man', reveal:'"Iron Man" — Ramin Djawadi' },
+  { title:'Thor: Ragnarok', year:2017, searchTerm:'Point Break Thor Ragnarok Mark Mothersbaugh', trackHint:'point break', reveal:'"Point Break" — Mark Mothersbaugh' },
+  { title:'Black Panther', year:2018, searchTerm:'Killmonger Black Panther Ludwig Goransson', trackHint:'killmonger', reveal:'"Killmonger" — Ludwig Göransson' },
+  { title:'Captain America: The First Avenger', year:2011, searchTerm:'The Star Spangled Man First Avenger Alan Silvestri', trackHint:'captain america march', reveal:'"Captain America March" — Alan Silvestri' },
+  { title:'Captain America: Civil War', year:2016, searchTerm:'Airport Battle Civil War Henry Jackman', trackHint:'airport battle', reveal:'"Airport Battle" — Henry Jackman' },
+  { title:'The Dark Knight', year:2008, searchTerm:'A Dark Knight Hans Zimmer James Newton Howard', trackHint:'a dark knight', reveal:'"A Dark Knight" — Hans Zimmer & James Newton Howard' },
+  { title:'The Dark Knight Rises', year:2012, searchTerm:'Gotham\'s Reckoning Dark Knight Rises Hans Zimmer', trackHint:'reckoning', reveal:'"Gotham\'s Reckoning" — Hans Zimmer' },
+  { title:'Batman Begins', year:2005, searchTerm:'Vespertilio Batman Begins Hans Zimmer', trackHint:'vespertilio', reveal:'"Vespertilio" — Hans Zimmer & James Newton Howard' },
+  { title:'The Batman', year:2022, searchTerm:'Something in the Way Nirvana The Batman', trackHint:'something in the way', reveal:'"Something in the Way" — Nirvana' },
+  { title:'Wonder Woman', year:2017, searchTerm:'No Man\'s Land Wonder Woman Rupert Gregson-Williams', trackHint:'no man\'s land', reveal:'"No Man\'s Land" — Rupert Gregson-Williams' },
+  { title:'Spider-Man 2', year:2004, searchTerm:'Doc Ock Spider-Man 2 Danny Elfman', trackHint:'doc ock', reveal:'"Doc Ock\'s Creation" — Danny Elfman' },
+  { title:'Spider-Man: Into the Spider-Verse', year:2018, searchTerm:'What\'s Up Danger Spider-Verse', trackHint:'what\'s up danger', reveal:'"What\'s Up Danger" — Blackway & Black Caviar' },
+  { title:'Spider-Man: Across the Spider-Verse', year:2023, searchTerm:'Self Love Across the Spider-Verse Metro Boomin', trackHint:'self love', reveal:'"Self Love" — Metro Boomin, Coi Leray & A$AP Rocky' },
+  { title:'Frozen', year:2013, searchTerm:'Do You Want to Build a Snowman Frozen Kristen Bell', trackHint:'build a snowman', reveal:'"Do You Want to Build a Snowman?" — Kristen Bell' },
+  { title:'Frozen II', year:2019, searchTerm:'Show Yourself Frozen II Idina Menzel', trackHint:'show yourself', reveal:'"Show Yourself" — Idina Menzel & Evan Rachel Wood' },
+  { title:'Aladdin', year:1992, searchTerm:'Friend Like Me Aladdin Robin Williams', trackHint:'friend like me', reveal:'"Friend Like Me" — Robin Williams' },
+  { title:'Beauty and the Beast', year:1991, searchTerm:'Be Our Guest Beauty and the Beast', trackHint:'be our guest', reveal:'"Be Our Guest" — Angela Lansbury' },
+  { title:'Mulan', year:1998, searchTerm:'I\'ll Make a Man Out of You Mulan Donny Osmond', trackHint:'man out of you', reveal:'"I\'ll Make a Man Out of You" — Donny Osmond' },
+  { title:'Encanto', year:2021, searchTerm:'Surface Pressure Encanto Jessica Darrow', trackHint:'surface pressure', reveal:'"Surface Pressure" — Jessica Darrow' },
+  { title:'The Little Mermaid', year:1989, searchTerm:'Part of Your World The Little Mermaid Jodi Benson', trackHint:'part of your world', reveal:'"Part of Your World" — Jodi Benson' },
+  { title:'The Lion King', year:1994, searchTerm:'Can You Feel the Love Tonight Lion King Elton John', trackHint:'love tonight', reveal:'"Can You Feel the Love Tonight" — Elton John' },
+  { title:'Toy Story', year:1995, searchTerm:'Woody\'s Roundup Toy Story 2 Riders in the Sky', trackHint:'woody\'s roundup', reveal:'"Woody\'s Roundup" — Riders in the Sky' },
+  { title:'Inception', year:2010, searchTerm:'Dream Is Collapsing Inception Hans Zimmer', trackHint:'dream is collapsing', reveal:'"Dream Is Collapsing" — Hans Zimmer' },
+  { title:'Interstellar', year:2014, searchTerm:'No Time for Caution Interstellar Hans Zimmer', trackHint:'no time for caution', reveal:'"No Time for Caution" — Hans Zimmer' }
 ];
 
 
@@ -8663,6 +8796,9 @@ const stAudio = document.getElementById('stAudioEl');
 const stFinalMessage = document.getElementById('stFinalMessage');
 const stFinalScore = document.getElementById('stFinalScore');
 const stTrackReveal = document.getElementById('stTrackReveal');
+const stRevealPlayer = document.getElementById('stRevealPlayer');
+const stRevealPauseBtn = document.getElementById('stRevealPauseBtn');
+const stRevealProgressFill = document.getElementById('stRevealProgressFill');
 const stShareBtn = document.getElementById('stShareBtn');
 const stFreeplayBtn = document.getElementById('stFreeplayBtn');
 const stPlayAgainBtn = document.getElementById('stPlayAgainBtn');
@@ -8682,6 +8818,9 @@ let stPlayTimer = null;
 let stMcOpened = false;
 let stMcTitleOptions = [];
 let stMcWrongTitles = [];
+let stRevealInterval = null;
+let stRevealPaused = false;
+const ST_REVEAL_MAX_SECONDS = 25;
 
 function hideAllStAreas(){
   stHomeArea.style.display = 'none';
@@ -8725,7 +8864,7 @@ function persistStDaily(){
 // Builds 4 shuffled multiple-choice options (the correct title plus 3 random
 // distractors from the rest of the pool) for a given target entry.
 function buildMcTitleOptions(pool, target, rng){
-  const others = pool.filter(e => e.title !== target.title).map(e => e.title);
+  const others = [...new Set(pool.filter(e => e.title !== target.title).map(e => e.title))];
   const shuffledOthers = seededShuffle(others, rng || Math.random);
   const distractors = shuffledOthers.slice(0, 3);
   return seededShuffle([target.title, ...distractors], rng || Math.random);
@@ -8793,7 +8932,10 @@ function itunesJsonpSearch(term, timeoutMs){
 }
 
 async function fetchSoundtrackPreview(entry){
-  const cacheKey = entry.title;
+  // Keyed by title+searchTerm rather than just title, since a franchise
+  // movie (Star Wars, Harry Potter, etc.) can now have more than one pool
+  // entry — each of its songs needs its own cached preview URL.
+  const cacheKey = entry.title + '::' + entry.searchTerm;
   if(Object.prototype.hasOwnProperty.call(stPreviewCache, cacheKey)) return stPreviewCache[cacheKey];
   try{
     const data = await itunesJsonpSearch(entry.searchTerm);
@@ -8830,6 +8972,8 @@ async function resolveStTarget(startIndex){
 
 function stAudioStop(){
   if(stPlayTimer){ clearTimeout(stPlayTimer); stPlayTimer = null; }
+  if(stRevealInterval){ clearInterval(stRevealInterval); stRevealInterval = null; }
+  stRevealPaused = false;
   try{ stAudio.pause(); }catch(e){}
 }
 function stPlayCurrentClip(){
@@ -8842,6 +8986,59 @@ function stPlayCurrentClip(){
   if(playPromise && playPromise.catch) playPromise.catch(()=>{});
   stPlayTimer = setTimeout(()=> stAudio.pause(), seconds * 1000);
 }
+
+// ---------- Full-length reveal playback (results banner) ----------
+// After a round ends (win or lose), the results banner plays the actual
+// track from the top — up to ST_REVEAL_MAX_SECONDS — with a pause button
+// and a live progress bar. It shares stAudio/stAudioStop with the guessing
+// clip above, so leaving the page, closing the modal, or starting a new
+// puzzle (all of which already call stAudioStop) also stops this cleanly.
+function stRevealRuntimeCap(){
+  const d = stAudio.duration;
+  if(d && isFinite(d) && d > 0) return Math.min(d, ST_REVEAL_MAX_SECONDS);
+  return ST_REVEAL_MAX_SECONDS;
+}
+function stUpdateRevealPauseIcon(){
+  if(stRevealPauseBtn){
+    stRevealPauseBtn.textContent = stRevealPaused ? '▶' : '⏸';
+    stRevealPauseBtn.title = stRevealPaused ? 'Play' : 'Pause';
+  }
+}
+function stUpdateRevealProgress(){
+  const cap = stRevealRuntimeCap();
+  const pct = Math.max(0, Math.min(100, (stAudio.currentTime / cap) * 100));
+  if(stRevealProgressFill) stRevealProgressFill.style.width = pct + '%';
+  if(stAudio.ended || stAudio.currentTime >= cap) stAudioStop();
+}
+function stStartRevealPlayback(){
+  stAudioStop();
+  if(stLoadState !== 'ready' || !stPreviewUrl){
+    if(stRevealPlayer) stRevealPlayer.style.display = 'none';
+    return;
+  }
+  if(stRevealPlayer) stRevealPlayer.style.display = '';
+  if(stRevealProgressFill) stRevealProgressFill.style.width = '0%';
+  stRevealPaused = false;
+  stUpdateRevealPauseIcon();
+  if(stAudio.src !== stPreviewUrl) stAudio.src = stPreviewUrl;
+  stAudio.currentTime = 0;
+  const playPromise = stAudio.play();
+  if(playPromise && playPromise.catch) playPromise.catch(()=>{});
+  stRevealInterval = setInterval(stUpdateRevealProgress, 100);
+}
+function stToggleRevealPause(){
+  if(stAudio.paused){
+    const p = stAudio.play();
+    if(p && p.catch) p.catch(()=>{});
+    stRevealPaused = false;
+  } else {
+    stAudio.pause();
+    stRevealPaused = true;
+  }
+  stUpdateRevealPauseIcon();
+}
+stAudio.addEventListener('ended', ()=>{ if(stRevealInterval) stAudioStop(); });
+stRevealPauseBtn.addEventListener('click', stToggleRevealPause);
 
 function renderStLives(){
   stLivesRow.innerHTML = ST_CLIP_LENGTHS.map((secs, i)=>{
@@ -8896,8 +9093,13 @@ function renderStRound(){
 function renderStDropdown(query){
   const q = query.trim().toLowerCase();
   if(!q){ hideStDropdown(); return; }
+  // A movie can now have more than one pool entry (e.g. two Star Wars
+  // songs), so dedupe by title — the guess is about the movie, not which
+  // specific song entry happens to be the current target.
+  const seenTitles = new Set();
   const matches = MOVIE_SOUNDTRACK_POOL
     .filter(m => m.title.toLowerCase().includes(q))
+    .filter(m => (seenTitles.has(m.title) ? false : (seenTitles.add(m.title), true)))
     .slice(0, 8);
   if(!matches.length){ hideStDropdown(); return; }
   stDropdown.innerHTML = matches.map(m => `<div class="dropdown-item" data-title="${m.title.replace(/"/g,'&quot;')}">${m.title}</div>`).join('');
@@ -8922,8 +9124,11 @@ function showStResults(){
   stPlayAgainBtn.style.display = stMode === 'freeplay' ? '' : 'none';
   if(stMode === 'daily') updateMovieNextDailyButton(stNextDailyBtn, 'st');
   else stNextDailyBtn.style.display = 'none';
+  stStartRevealPlayback();
 }
 function hideStResults(){
+  stAudioStop();
+  if(stRevealPlayer) stRevealPlayer.style.display = 'none';
   stResultsArea.style.display = 'none';
   stPlayArea.style.display = '';
 }
