@@ -594,6 +594,16 @@
     text-transform: uppercase; color: var(--text-dim); padding: 2px 12px 6px;
   }
   .side-menu-icon { font-size: 20px; flex: 0 0 auto; }
+  .side-menu-sites { display: flex; align-items: center; gap: 8px; }
+  .site-switch-link {
+    cursor: pointer; padding-bottom: 3px; border-bottom: 2px solid transparent;
+    transition: opacity 0.15s, border-color 0.15s; user-select: none;
+  }
+  .site-switch-link:hover { opacity: 0.75; }
+  .site-switch-link.is-cartridge { color: var(--cyan); }
+  .site-switch-link.is-cinema { color: var(--orange); }
+  .site-switch-link.is-current { border-bottom-color: currentColor; }
+  .side-menu-sites-sep { color: var(--text-dim); font-size: 11px; }
   .icon-btn {
     width: 38px; height: 38px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line);
     color: var(--text-dim); font-size: 16px; display: flex; align-items: center; justify-content: center;
@@ -1308,7 +1318,11 @@
 <div class="side-menu-overlay" id="sideMenuOverlay"></div>
 <nav class="side-menu" id="sideMenu">
   <div class="side-menu-header">
-    <span>GAMES</span>
+    <span class="side-menu-sites">
+      <span class="site-switch-link is-cartridge is-current" id="siteSwitchCartridge" role="link" tabindex="0">CARTRIDGE</span>
+      <span class="side-menu-sites-sep">/</span>
+      <span class="site-switch-link is-cinema" id="siteSwitchCinema" role="link" tabindex="0">CINEMA</span>
+    </span>
     <button class="modal-close" id="sideMenuClose">✕</button>
   </div>
   <div class="side-menu-list">
@@ -1425,6 +1439,10 @@
       <div class="help-section">
         <div class="help-heading">Notes</div>
         <p class="help-note">Sales figures are approximate public lifetime estimates (millions of units/copies/players). Critic scores are approximate review-aggregate consensus. Time to Beat reflects a typical main-story completion estimate in the spirit of community-reported averages (not a live feed), in hours. All figures are meant for gameplay, not precise reporting.</p>
+      </div>
+      <div class="help-section">
+        <div class="help-heading">Disclaimer</div>
+        <p class="help-note">Cartridge is an unofficial, non-commercial fan-made quiz built for fun — it isn't affiliated with, endorsed by, or sponsored by any game publisher, developer, or platform holder named in it. Cover art is fetched live via the RAWG Video Games Database API; audio clips in Cartridge Cassette are official short preview snippets streamed directly from Apple's iTunes Search API. All game titles, publisher names, and other trademarks belong to their respective owners.</p>
       </div>
       <div class="secret-game-trigger" id="secretGameTrigger" title="???">·</div>
     </div>
@@ -1602,6 +1620,10 @@
         </div>
         <button id="charadesGuessBtn">GUESS</button>
       </div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn" id="charadesMcToggleBtn">🔀 Multiple Choice</button>
+      </div>
+      <div id="charadesMcOptions" style="display:none; margin-top:10px;"></div>
       <div class="charades-guess-history" id="charadesGuessHistory"></div>
       <div class="msg" id="charadesMsg"></div>
       <div class="btn-row">
@@ -6678,6 +6700,8 @@ const charadesEmojiDisplay = document.getElementById('charadesEmojiDisplay');
 const charadesInput = document.getElementById('charadesInput');
 const charadesDropdown = document.getElementById('charadesDropdown');
 const charadesGuessBtn = document.getElementById('charadesGuessBtn');
+const charadesMcToggleBtn = document.getElementById('charadesMcToggleBtn');
+const charadesMcOptionsEl = document.getElementById('charadesMcOptions');
 const charadesGuessHistory = document.getElementById('charadesGuessHistory');
 const charadesMsg = document.getElementById('charadesMsg');
 const charadesGiveUpBtn = document.getElementById('charadesGiveUpBtn');
@@ -6696,6 +6720,9 @@ let charadesTarget = null;
 let charadesGuessedTitles = [];
 let charadesGameOver = false;
 let charadesWon = false;
+let charadesMcOpened = false;
+let charadesMcTitleOptions = [];
+let charadesMcWrongTitles = [];
 
 function showCharadesPage(){
   hideAllTopScreens();
@@ -6721,6 +6748,8 @@ function persistCharadesDaily(){
   saveCharadesDailyState({
     date: charadesDailyDate, guessedTitles: charadesGuessedTitles.slice(),
     gameOver: charadesGameOver, won: charadesWon,
+    mcOpened: charadesMcOpened, mcTitleOptions: charadesMcTitleOptions.slice(),
+    mcWrongTitles: charadesMcWrongTitles.slice(),
   });
 }
 
@@ -6750,17 +6779,74 @@ function renderCharadesRound(){
   const hidden = Math.max(0, allEmoji.length - revealCount);
   charadesEmojiDisplay.textContent = allEmoji.slice(0, revealCount).join(' ') + (hidden ? ' ' + '❔'.repeat(hidden) : '');
 
-  charadesGuessHistory.innerHTML = charadesGuessedTitles.map(t => `<span class="charades-chip">${t}</span>`).join('');
+  charadesGuessHistory.innerHTML = charadesGuessedTitles.map(cassRenderGuessChip).join('');
   charadesMsg.textContent = '';
   charadesInput.value = '';
   charadesInput.disabled = charadesGameOver;
   charadesGuessBtn.disabled = charadesGameOver;
+  charadesMcToggleBtn.disabled = charadesGameOver || charadesMcOpened;
+  renderCharadesMcOptions();
 }
+
+function renderCharadesMcOptions(){
+  if(!charadesMcOpened){
+    charadesMcOptionsEl.style.display = 'none';
+    charadesMcOptionsEl.innerHTML = '';
+    return;
+  }
+  charadesMcOptionsEl.style.display = '';
+  charadesMcOptionsEl.innerHTML = charadesMcTitleOptions.map(title=>{
+    const isWrong = charadesMcWrongTitles.includes(title);
+    const isCorrectRevealed = charadesGameOver && title === charadesTarget.title;
+    let cls = 'cass-mc-btn';
+    if(isWrong) cls += ' wrong';
+    if(isCorrectRevealed) cls += ' correct';
+    const disabled = charadesGameOver || isWrong;
+    return `<button class="${cls}" data-title="${title.replace(/"/g,'&quot;')}" ${disabled ? 'disabled' : ''}>${title}</button>`;
+  }).join('');
+  charadesMcOptionsEl.querySelectorAll('.cass-mc-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> charadesSelectMcOption(btn.dataset.title));
+  });
+}
+
+function charadesOpenMc(){
+  if(charadesGameOver || charadesMcOpened) return;
+  charadesMcOpened = true;
+  charadesMcTitleOptions = buildCassetteMcOptions(charadesPool(), charadesTarget);
+  charadesMcWrongTitles = [];
+  persistCharadesDaily();
+  renderCharadesRound();
+}
+
+function charadesSelectMcOption(title){
+  if(charadesGameOver) return;
+  if(title === charadesTarget.title){
+    charadesWon = true;
+    charadesGameOver = true;
+    playSfx('win');
+    endCharadesRound();
+    return;
+  }
+  if(!charadesMcWrongTitles.includes(title)) charadesMcWrongTitles.push(title);
+  const wrongMatch = charadesPool().find(g => g.title === title);
+  charadesGuessedTitles.push({ title, arrow: wrongMatch ? cassCloseGuessArrow(wrongMatch, charadesTarget) : null });
+  playSfx('incorrect');
+  if(charadesGuessedTitles.length >= CHARADES_MAX_GUESSES){
+    charadesGameOver = true;
+    charadesWon = false;
+    playSfx('lose');
+    endCharadesRound();
+    return;
+  }
+  persistCharadesDaily();
+  renderCharadesRound();
+}
+charadesMcToggleBtn.addEventListener('click', charadesOpenMc);
 
 function renderCharadesDropdown(query){
   const q = query.trim().toLowerCase();
   if(!q){ charadesDropdown.classList.add('hidden'); charadesDropdown.innerHTML = ''; return; }
-  const guessedSet = new Set(charadesGuessedTitles);
+  const guessedSet = new Set(charadesGuessedTitles.map(g => g.title));
   const matches = rankTitleMatches(charadesPool(), q).slice(0, 8);
   if(!matches.length){ charadesDropdown.classList.add('hidden'); charadesDropdown.innerHTML = ''; return; }
   charadesDropdown.innerHTML = matches.map(g => {
@@ -6837,7 +6923,7 @@ function submitCharadesGuess(){
   if(!val) return;
   const match = charadesPool().find(g => g.title.toLowerCase() === val.toLowerCase());
   if(!match){ charadesMsg.textContent = 'Not in the pool \u2014 pick from the dropdown.'; return; }
-  if(charadesGuessedTitles.includes(match.title)){ charadesMsg.textContent = 'Already tried that one.'; hideCharadesDropdown(); return; }
+  if(charadesGuessedTitles.some(g => g.title === match.title)){ charadesMsg.textContent = 'Already tried that one.'; hideCharadesDropdown(); return; }
 
   hideCharadesDropdown();
 
@@ -6849,7 +6935,7 @@ function submitCharadesGuess(){
     return;
   }
 
-  charadesGuessedTitles.push(match.title);
+  charadesGuessedTitles.push({ title: match.title, arrow: cassCloseGuessArrow(match, charadesTarget) });
   playSfx('incorrect');
   if(charadesGuessedTitles.length >= CHARADES_MAX_GUESSES){
     charadesGameOver = true;
@@ -6881,6 +6967,9 @@ function startCharadesRound(target){
   charadesGuessedTitles = [];
   charadesGameOver = false;
   charadesWon = false;
+  charadesMcOpened = false;
+  charadesMcTitleOptions = [];
+  charadesMcWrongTitles = [];
   hideCharadesDropdown();
   hideCharadesResults();
   renderCharadesRound();
@@ -6892,13 +6981,16 @@ function startCharadesDaily(){
   charadesDailyDate = date;
   let stored = loadCharadesDailyState();
   if(!stored || stored.date !== date){
-    stored = { date, guessedTitles: [], gameOver: false, won: false };
+    stored = { date, guessedTitles: [], gameOver: false, won: false, mcOpened: false, mcTitleOptions: [], mcWrongTitles: [] };
     saveCharadesDailyState(stored);
   }
   charadesTarget = getCharadesTargetFor(date);
   charadesGuessedTitles = stored.guessedTitles.slice();
   charadesGameOver = stored.gameOver;
   charadesWon = stored.won;
+  charadesMcOpened = !!stored.mcOpened;
+  charadesMcTitleOptions = (stored.mcTitleOptions || []).slice();
+  charadesMcWrongTitles = (stored.mcWrongTitles || []).slice();
   hideCharadesDropdown();
   renderCharadesRound();
   if(charadesGameOver) showCharadesResults();
@@ -8976,7 +9068,7 @@ const CASS_FRANCHISE_PREFIXES = [
   'Dragon Age', 'Metal Gear Solid', 'Super Smash Bros', 'Mario Kart',
   'Doom', 'Fallout', "Sid Meier's Civilization", 'Dishonored',
   'The Last of Us', 'Red Dead Redemption', 'Super Mario', 'Battlefield',
-  'Grand Theft Auto', 'Splatoon', 'Max Payne'
+  'Grand Theft Auto', 'Splatoon', 'Max Payne', 'Gears of War', 'Horizon'
 ];
 function cassFranchiseKey(title){
   for(const p of CASS_FRANCHISE_PREFIXES){
@@ -10086,6 +10178,12 @@ const menuCassetteBtn = document.getElementById('menuCassetteBtn');
 const menuCupBtn = document.getElementById('menuCupBtn');
 const menuChaosBtn = document.getElementById('menuChaosBtn');
 const menuMoviesBtn = document.getElementById('menuMoviesBtn');
+const siteSwitchCartridge = document.getElementById('siteSwitchCartridge');
+const siteSwitchCinema = document.getElementById('siteSwitchCinema');
+if(siteSwitchCinema){
+  siteSwitchCinema.addEventListener('click', ()=>{ window.location.href = 'cinema.html'; });
+  siteSwitchCinema.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); window.location.href = 'cinema.html'; } });
+}
 
 function openSideMenu(){
   // reflect which game is currently on screen so the active one is highlighted

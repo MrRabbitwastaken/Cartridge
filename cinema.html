@@ -553,6 +553,16 @@
   .side-menu-item:hover { background: var(--panel-2); border-color: var(--line); }
   .side-menu-item.active { border-color: var(--cyan); color: var(--cyan); }
   .side-menu-icon { font-size: 20px; flex: 0 0 auto; }
+  .side-menu-sites { display: flex; align-items: center; gap: 8px; }
+  .site-switch-link {
+    cursor: pointer; padding-bottom: 3px; border-bottom: 2px solid transparent;
+    transition: opacity 0.15s, border-color 0.15s; user-select: none;
+  }
+  .site-switch-link:hover { opacity: 0.75; }
+  .site-switch-link.is-cartridge { color: var(--cyan); }
+  .site-switch-link.is-cinema { color: var(--orange); }
+  .site-switch-link.is-current { border-bottom-color: currentColor; }
+  .side-menu-sites-sep { color: var(--text-dim); font-size: 11px; }
   .side-menu-divider { border: none; border-top: 1px solid var(--line); margin: 10px 4px; }
   .side-menu-section-label {
     font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em;
@@ -1374,32 +1384,9 @@
   body.light-mode .console-screen {
     left: 19.9%; top: 12.8%; width: 59.5%; height: 59.4%;
   }
-  /* The gamepad-play/gamepad-freeplay graphics are dark-themed art with the
-     "PLAY"/"FREE PLAY" wording baked directly into the image, and their
-     accompanying <span> label is sr-only (screen-reader only) because the
-     image itself carries that text visually. Light mode strips the image
-     since it doesn't read well over the sunlit-room backdrop, so it needs
-     its own visible card + visible label — otherwise the button is blank. */
-  body.light-mode .gamepad-play,
-  body.light-mode .gamepad-freeplay {
-    background-image: none;
-    background: #f3e9da;
-    border: 2px solid #c9a876;
-    border-radius: 18px;
-    align-items: center;
-    padding: 10px;
-  }
-  body.light-mode .gamepad-play:hover,
-  body.light-mode .gamepad-freeplay:hover {
-    border-color: #0891a8;
-  }
-  body.light-mode .gamepad-play .gamepad-label,
-  body.light-mode .gamepad-freeplay .gamepad-label {
-    position: static; width: auto; height: auto; margin: 0; padding: 0;
-    overflow: visible; clip: auto; white-space: normal; top: 0; text-align: center;
-  }
-  body.light-mode .gamepad-play .gamepad-label { color: #8a5a00; text-shadow: none; }
-  body.light-mode .gamepad-freeplay .gamepad-label { color: #a3123a; text-shadow: none; }
+  /* The gamepad-play/gamepad-freeplay graphics (same popcorn-bucket art used
+     in dark mode) stay as-is in light mode too — no alternate light-mode
+     version needed. */
   /* Ghost buttons (Shuffle/Give up/Close/etc.) now get an actual solid fill
      rather than relying on the surrounding background for contrast — a light
      fill + dark text always reads clearly, whether the button sits inside a
@@ -1558,7 +1545,11 @@
 <div class="side-menu-overlay" id="movieSideMenuOverlay"></div>
 <nav class="side-menu" id="movieSideMenu">
   <div class="side-menu-header">
-    <span>CINEMA</span>
+    <span class="side-menu-sites">
+      <span class="site-switch-link is-cartridge" id="siteSwitchCartridge" role="link" tabindex="0">CARTRIDGE</span>
+      <span class="side-menu-sites-sep">/</span>
+      <span class="site-switch-link is-cinema is-current" id="siteSwitchCinema" role="link" tabindex="0">CINEMA</span>
+    </span>
     <button class="modal-close" id="movieSideMenuClose">✕</button>
   </div>
   <div class="side-menu-list">
@@ -1954,6 +1945,10 @@
         </div>
         <button id="charadesGuessBtn">GUESS</button>
       </div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn" id="charadesMcToggleBtn">🔀 Multiple Choice</button>
+      </div>
+      <div id="charadesMcOptions" style="display:none; margin-top:10px;"></div>
       <div class="charades-guess-history" id="charadesGuessHistory"></div>
       <div class="msg" id="charadesMsg"></div>
       <div class="btn-row">
@@ -2990,6 +2985,27 @@ MOVIES.push({title:'Despicable Me 3',year:2017,genres:['Animation','Comedy'],gro
 MOVIES.push({title:'Despicable Me 4',year:2024,genres:['Animation','Comedy'],gross:969,score:57,rated:'PG',studio:'Universal'});
 MOVIES.push({title:'How to Train Your Dragon: The Hidden World',year:2019,genres:['Animation','Adventure'],gross:521,score:91,rated:'PG',studio:'DreamWorks Animation'});
 MOVIES.push({title:'Puss in Boots',year:2011,genres:['Animation','Adventure'],gross:554,score:78,rated:'PG',studio:'DreamWorks Animation'});
+// ----- Pixar/Disney animation additions (on request) -----
+MOVIES.push({title:"A Bug's Life",year:1998,genres:['Animation','Adventure'],gross:363,score:92,rated:'G',studio:'Pixar'});
+MOVIES.push({title:'Onward',year:2020,genres:['Animation','Fantasy'],gross:142,score:88,rated:'PG',studio:'Pixar'});
+MOVIES.push({title:'Soul',year:2020,genres:['Animation','Fantasy'],gross:121,score:95,rated:'PG',studio:'Pixar'});
+MOVIES.push({title:'Lilo & Stitch',year:2002,genres:['Animation','Comedy'],gross:273,score:86,rated:'PG',studio:'Walt Disney'});
+MOVIES.push({title:'Hercules',year:1997,genres:['Animation','Adventure'],gross:253,score:80,rated:'G',studio:'Walt Disney'});
+MOVIES.push({title:'Tarzan',year:1999,genres:['Animation','Adventure'],gross:448,score:88,rated:'G',studio:'Walt Disney'});
+MOVIES.push({title:'Cinderella',year:1950,genres:['Animation','Fantasy'],gross:263,score:97,rated:'G',studio:'Walt Disney'});
+MOVIES.push({title:'The Princess and the Frog',year:2009,genres:['Animation','Fantasy'],gross:267,score:85,rated:'G',studio:'Walt Disney'});
+MOVIES.push({title:'Sleeping Beauty',year:1959,genres:['Animation','Fantasy'],gross:52,score:87,rated:'G',studio:'Walt Disney'});
+MOVIES.push({title:"The Emperor's New Groove",year:2000,genres:['Animation','Comedy'],gross:169,score:89,rated:'G',studio:'Walt Disney'});
+MOVIES.push({title:'Snow White and the Seven Dwarfs',year:1937,genres:['Animation','Fantasy'],gross:418,score:96,rated:'G',studio:'Walt Disney'});
+MOVIES.push({title:'Peter Pan',year:1953,genres:['Animation','Fantasy'],gross:145,score:90,rated:'G',studio:'Walt Disney'});
+MOVIES.push({title:'101 Dalmatians',year:1961,genres:['Animation','Family'],gross:303,score:98,rated:'G',studio:'Walt Disney'});
+MOVIES.push({title:'Dumbo',year:1941,genres:['Animation','Family'],gross:96,score:98,rated:'G',studio:'Walt Disney'});
+MOVIES.push({title:'Robin Hood (1973)',year:1973,genres:['Animation','Adventure'],gross:32,score:71,rated:'G',studio:'Walt Disney'});
+// ----- Added so Cinema Connect's new actor/composer/franchise categories have full entries to draw on -----
+MOVIES.push({title:'Good Will Hunting',year:1997,genres:['Drama'],gross:226,score:97,rated:'R',studio:'Miramax'});
+MOVIES.push({title:'Marriage Story',year:2019,genres:['Drama'],gross:2,score:95,rated:'R',studio:'Netflix'});
+MOVIES.push({title:'Lost in Translation',year:2003,genres:['Drama','Comedy'],gross:119,score:95,rated:'R',studio:'Focus Features'});
+MOVIES.push({title:'Jurassic Park',year:1993,genres:['Adventure','Sci-Fi'],gross:1029,score:92,rated:'PG-13',studio:'Universal'});
 
 
 // ---------- Shared helpers (ported from Cartridge) ----------
@@ -4063,6 +4079,126 @@ function movieSeriesKeyOf(title){
 }
 
 // ---------- Cinema Connect (Connections-style, ported from Cartridge Connect) ----------
+// ----- Extra category metadata (on request: composer/lead-actor/franchise/
+// award/etc groupings alongside the original studio & genre ones, so
+// publisher-based groups aren't the only kind of category that shows up). -----
+const GRID_COMPOSER = {
+  // Hans Zimmer
+  'The Dark Knight':'Hans Zimmer', 'The Dark Knight Rises':'Hans Zimmer', 'Batman Begins':'Hans Zimmer',
+  'Inception':'Hans Zimmer', 'Interstellar':'Hans Zimmer', 'Gladiator':'Hans Zimmer',
+  'The Lion King':'Hans Zimmer', "Pirates of the Caribbean: Dead Man's Chest":'Hans Zimmer',
+  "Pirates of the Caribbean: At World's End":'Hans Zimmer', 'Blade Runner 2049':'Hans Zimmer',
+  'Dune':'Hans Zimmer', 'Dune: Part Two':'Hans Zimmer', 'Batman v Superman: Dawn of Justice':'Hans Zimmer',
+  'Kung Fu Panda':'Hans Zimmer', 'Sherlock Holmes':'Hans Zimmer',
+  // John Williams
+  'Star Wars: The Force Awakens':'John Williams', 'Star Wars: The Last Jedi':'John Williams',
+  'Star Wars: The Rise of Skywalker':'John Williams', 'Star Wars: A New Hope':'John Williams',
+  'Star Wars: The Empire Strikes Back':'John Williams', 'Star Wars: The Phantom Menace':'John Williams',
+  'Star Wars: Revenge of the Sith':'John Williams', 'Saving Private Ryan':'John Williams',
+  'Jurassic Park':'John Williams', "Harry Potter and the Sorcerer's Stone":'John Williams',
+  // Michael Giacchino
+  'Up':'Michael Giacchino', 'The Incredibles':'Michael Giacchino', 'Ratatouille':'Michael Giacchino',
+  'Coco':'Michael Giacchino', 'Jurassic World':'Michael Giacchino', 'Rogue One: A Star Wars Story':'Michael Giacchino',
+  'The Batman':'Michael Giacchino',
+  // Alan Menken
+  'Beauty and the Beast':'Alan Menken', 'Hercules':'Alan Menken', 'The Little Mermaid':'Alan Menken',
+  'Aladdin':'Alan Menken', 'Tangled':'Alan Menken',
+  // Randy Newman
+  'Toy Story':'Randy Newman', 'Monsters, Inc.':'Randy Newman', "A Bug's Life":'Randy Newman',
+  'Cars':'Randy Newman', 'Toy Story 3':'Randy Newman',
+  // Alexandre Desplat
+  'Harry Potter and the Deathly Hallows – Part 1':'Alexandre Desplat', 'Harry Potter and the Deathly Hallows – Part 2':'Alexandre Desplat',
+  'The Grand Budapest Hotel':'Alexandre Desplat', 'The Imitation Game':'Alexandre Desplat',
+  // Howard Shore
+  'The Lord of the Rings: The Fellowship of the Ring':'Howard Shore', 'The Lord of the Rings: The Two Towers':'Howard Shore',
+  'The Lord of the Rings: The Return of the King':'Howard Shore', 'The Hobbit: An Unexpected Journey':'Howard Shore',
+  'The Hobbit: The Desolation of Smaug':'Howard Shore', 'The Hobbit: The Battle of the Five Armies':'Howard Shore',
+};
+const GRID_LEAD_ACTOR = {
+  'Top Gun: Maverick':'Tom Cruise', 'Mission: Impossible – Fallout':'Tom Cruise', 'Edge of Tomorrow':'Tom Cruise',
+  'Minority Report':'Tom Cruise', 'War of the Worlds':'Tom Cruise', 'Jack Reacher':'Tom Cruise',
+  'Forrest Gump':'Tom Hanks', 'Saving Private Ryan':'Tom Hanks', 'The Green Mile':'Tom Hanks',
+  'Toy Story':'Tom Hanks', 'Toy Story 2':'Tom Hanks', 'Toy Story 3':'Tom Hanks', 'Toy Story 4':'Tom Hanks',
+  'Catch Me If You Can':'Tom Hanks',
+  'Inception':'Leonardo DiCaprio', 'The Wolf of Wall Street':'Leonardo DiCaprio', 'The Revenant':'Leonardo DiCaprio',
+  'Shutter Island':'Leonardo DiCaprio', 'The Departed':'Leonardo DiCaprio',
+  'Once Upon a Time in Hollywood':'Leonardo DiCaprio',
+  'Fight Club':'Brad Pitt', 'Se7en':'Brad Pitt', 'Inglourious Basterds':'Brad Pitt', 'Troy':'Brad Pitt',
+  'World War Z':'Brad Pitt', '12 Years a Slave':'Brad Pitt', 'Moneyball':'Brad Pitt',
+  'The Martian':'Matt Damon', 'Interstellar':'Matt Damon', 'The Bourne Identity':'Matt Damon',
+  'Oppenheimer':'Matt Damon', 'Good Will Hunting':'Matt Damon',
+  'Iron Man':'Robert Downey Jr.', 'Iron Man 2':'Robert Downey Jr.', 'Iron Man 3':'Robert Downey Jr.',
+  'The Avengers':'Robert Downey Jr.', 'Avengers: Age of Ultron':'Robert Downey Jr.',
+  'Avengers: Infinity War':'Robert Downey Jr.', 'Avengers: Endgame':'Robert Downey Jr.', 'Sherlock Holmes':'Robert Downey Jr.',
+  'Thor':'Chris Hemsworth', 'Thor: The Dark World':'Chris Hemsworth', 'Thor: Ragnarok':'Chris Hemsworth',
+  'Thor: Love and Thunder':'Chris Hemsworth', 'Extraction':'Chris Hemsworth',
+  'Captain America: Civil War':'Scarlett Johansson', 'Jojo Rabbit':'Scarlett Johansson', 'Marriage Story':'Scarlett Johansson',
+  'Lost in Translation':'Scarlett Johansson', 'Lucy':'Scarlett Johansson',
+  'Pulp Fiction':'Samuel L. Jackson', 'Jurassic Park':'Samuel L. Jackson', 'Django Unchained':'Samuel L. Jackson',
+  'The Hateful Eight':'Samuel L. Jackson',
+  'Star Wars: A New Hope':'Harrison Ford', 'Star Wars: The Empire Strikes Back':'Harrison Ford',
+  'Star Wars: Return of the Jedi':'Harrison Ford', 'Star Wars: The Force Awakens':'Harrison Ford',
+  'Blade Runner 2049':'Harrison Ford',
+  'Fast Five':'Dwayne Johnson', 'Furious 7':'Dwayne Johnson', 'F9':'Dwayne Johnson', 'Moana':'Dwayne Johnson',
+  'La La Land':'Emma Stone', 'The Amazing Spider-Man':'Emma Stone', 'Zombieland':'Emma Stone',
+  'Birdman':'Emma Stone', 'Poor Things':'Emma Stone',
+  'The Dark Knight':'Christian Bale', 'The Dark Knight Rises':'Christian Bale', 'Batman Begins':'Christian Bale',
+  'Ford v Ferrari':'Christian Bale',
+  'Deadpool':'Ryan Reynolds', 'Deadpool 2':'Ryan Reynolds', 'Deadpool & Wolverine':'Ryan Reynolds', 'Free Guy':'Ryan Reynolds',
+  'Harry Potter and the Chamber of Secrets':'Daniel Radcliffe', 'Harry Potter and the Prisoner of Azkaban':'Daniel Radcliffe',
+  'Harry Potter and the Goblet of Fire':'Daniel Radcliffe', 'Harry Potter and the Order of the Phoenix':'Daniel Radcliffe',
+  'Harry Potter and the Half-Blood Prince':'Daniel Radcliffe', 'Harry Potter and the Deathly Hallows – Part 1':'Daniel Radcliffe',
+  'Harry Potter and the Deathly Hallows – Part 2':'Daniel Radcliffe',
+};
+const GRID_FRANCHISE = {};
+[
+  ['MCU', ['Iron Man','Iron Man 2','Iron Man 3','The Avengers','Avengers: Age of Ultron','Avengers: Infinity War','Avengers: Endgame',
+    'Thor','Thor: The Dark World','Thor: Ragnarok','Thor: Love and Thunder','Captain America: Civil War','Captain America: The Winter Soldier',
+    'Guardians of the Galaxy','Guardians of the Galaxy Vol. 2','Guardians of the Galaxy Vol. 3','Doctor Strange',
+    'Doctor Strange in the Multiverse of Madness','Black Panther','Black Panther: Wakanda Forever','Captain Marvel',
+    'Spider-Man: Homecoming','Spider-Man: Far From Home','Spider-Man: No Way Home','Ant-Man']],
+  ['DCEU', ['Batman v Superman: Dawn of Justice','Man of Steel','Wonder Woman','Wonder Woman 1984','Aquaman','Shazam!',
+    'Black Adam','The Suicide Squad','Suicide Squad','Birds of Prey']],
+  ['Star Wars', ['Star Wars: A New Hope','Star Wars: The Empire Strikes Back','Star Wars: Return of the Jedi',
+    'Star Wars: The Phantom Menace','Star Wars: Attack of the Clones','Star Wars: Revenge of the Sith',
+    'Star Wars: The Force Awakens','Star Wars: The Last Jedi','Star Wars: The Rise of Skywalker','Rogue One: A Star Wars Story']],
+  ['the Wizarding World', ['Harry Potter and the Chamber of Secrets','Harry Potter and the Prisoner of Azkaban',
+    'Harry Potter and the Goblet of Fire','Harry Potter and the Order of the Phoenix','Harry Potter and the Half-Blood Prince',
+    'Harry Potter and the Deathly Hallows – Part 1','Harry Potter and the Deathly Hallows – Part 2',
+    'Fantastic Beasts and Where to Find Them']],
+  ['Middle-earth', ['The Lord of the Rings: The Fellowship of the Ring','The Lord of the Rings: The Two Towers',
+    'The Lord of the Rings: The Return of the King','The Hobbit: An Unexpected Journey','The Hobbit: The Desolation of Smaug',
+    'The Hobbit: The Battle of the Five Armies']],
+  ['the Toy Story universe', ['Toy Story','Toy Story 2','Toy Story 3','Toy Story 4']],
+].forEach(([name, list])=> list.forEach(t=> GRID_FRANCHISE[t] = name));
+
+const GRID_BEST_PICTURE_WINNERS = new Set([
+  'Parasite','The Departed','No Country for Old Men','Gladiator','The Lord of the Rings: The Return of the King',
+  'Green Book','CODA','Everything Everywhere All at Once','Oppenheimer','Spotlight','12 Years a Slave','Birdman',
+  'The Shape of Water','Argo','Slumdog Millionaire','The Hurt Locker',
+]);
+const GRID_TIME_TRAVEL = new Set([
+  'Interstellar','Avengers: Endgame','About Time','X-Men: Days of Future Past',
+  'Doctor Strange in the Multiverse of Madness','Looper','Edge of Tomorrow',
+]);
+const GRID_SET_IN_SPACE = new Set([
+  'Interstellar','Gravity','The Martian','Guardians of the Galaxy','Guardians of the Galaxy Vol. 2',
+  'Guardians of the Galaxy Vol. 3','Star Wars: A New Hope','Ad Astra','Passengers','Star Wars: The Force Awakens',
+]);
+const GRID_WOMAN_DIRECTED = new Set([
+  'Wonder Woman','Frozen','Captain Marvel','Brave','Turning Red','Zero Dark Thirty',
+]);
+// Sequels/numbered entries: title ends in a digit ≥2, a roman numeral ≥II, or
+// has "Part"/"Chapter" plus a number — computed on the fly, not curated.
+function gridIsNumberedSequel(title){
+  return /(?:\s|:\s)(?:[2-9]|1\d)\b/.test(title) || /\b(II|III|IV|V|VI|VII|VIII|IX)\b/.test(title)
+    || /\b(Part|Chapter)\s+\d/i.test(title);
+}
+function gridIsOneWordTitle(title){
+  const core = title.split(':')[0].trim();
+  return /^[A-Za-z0-9'’.\-]+$/.test(core);
+}
+
 const GRID_COLORS = ['cyan', 'amber', 'pink', 'green']; // easiest -> hardest
 const GRID_CRITIC_BRACKETS = [{lo:95, hi:101, label:'Critic score 95+'}];
 const GRID_GROSS_BRACKETS = [{lo:1000, hi:Infinity, label:'Box office $1 billion+'}];
@@ -4124,11 +4260,62 @@ function movieGridCandidateCategories(pool){
     });
   });
 
+  // ----- Fun, non-publisher categories (on request: less reliance on studio/
+  // distributor groupings, more variety like lead actor, composer, franchise,
+  // awards, and a handful of one-off trivia angles). -----
+  const byActor = {};
+  pool.forEach(m=>{
+    const actor = GRID_LEAD_ACTOR[m.title];
+    if(actor){ (byActor[actor] = byActor[actor] || []).push(m); }
+  });
+  Object.keys(byActor).forEach(actor=>{
+    const movies = byActor[actor];
+    if(movies.length >= 4) cands.push({type:'actor', label:`Featuring ${actor}`, movies});
+  });
+
+  const byComposer = {};
+  pool.forEach(m=>{
+    const composer = GRID_COMPOSER[m.title];
+    if(composer){ (byComposer[composer] = byComposer[composer] || []).push(m); }
+  });
+  Object.keys(byComposer).forEach(composer=>{
+    const movies = byComposer[composer];
+    if(movies.length >= 4) cands.push({type:'composer', label:`Scored by ${composer}`, movies});
+  });
+
+  const byFranchise = {};
+  pool.forEach(m=>{
+    const fr = GRID_FRANCHISE[m.title];
+    if(fr){ (byFranchise[fr] = byFranchise[fr] || []).push(m); }
+  });
+  Object.keys(byFranchise).forEach(fr=>{
+    const movies = byFranchise[fr];
+    if(movies.length >= 4) cands.push({type:'franchise', label:`Part of ${fr}`, movies});
+  });
+
+  const bestPictureMovies = pool.filter(m=> GRID_BEST_PICTURE_WINNERS.has(m.title));
+  if(bestPictureMovies.length >= 4) cands.push({type:'award', label:'Won the Best Picture Oscar', movies:bestPictureMovies});
+
+  const timeTravelMovies = pool.filter(m=> GRID_TIME_TRAVEL.has(m.title));
+  if(timeTravelMovies.length >= 4) cands.push({type:'trivia', label:'Involves time travel', movies:timeTravelMovies});
+
+  const spaceMovies = pool.filter(m=> GRID_SET_IN_SPACE.has(m.title));
+  if(spaceMovies.length >= 4) cands.push({type:'trivia', label:'Set mostly in outer space', movies:spaceMovies});
+
+  const womanDirectedMovies = pool.filter(m=> GRID_WOMAN_DIRECTED.has(m.title));
+  if(womanDirectedMovies.length >= 4) cands.push({type:'trivia', label:'Directed (or co-directed) by a woman', movies:womanDirectedMovies});
+
+  const oneWordMovies = pool.filter(m=> gridIsOneWordTitle(m.title));
+  if(oneWordMovies.length >= 4) cands.push({type:'trivia', label:'One-word title', movies:oneWordMovies});
+
+  const sequelMovies = pool.filter(m=> gridIsNumberedSequel(m.title));
+  if(sequelMovies.length >= 4) cands.push({type:'trivia', label:'A numbered sequel', movies:sequelMovies});
+
   return cands;
 }
 
 function finalizeGridPuzzle(chosen, rng){
-  const rank = t => ({critic:0, gross:1, decade:2, genre:3, studio:4, studio_genre:5}[t] ?? 3);
+  const rank = t => ({critic:0, gross:1, award:1, decade:2, genre:3, trivia:3, actor:4, composer:4, franchise:4, studio:5, studio_genre:5}[t] ?? 3);
   const ordered = chosen.slice().sort((a,b)=> rank(a.type) - rank(b.type));
   const categories = ordered.map((c, i)=> ({ id:i, label:c.label, color:GRID_COLORS[i], games:c.games }));
   const tiles = [];
@@ -4149,7 +4336,14 @@ function buildMovieGridPuzzle(seedStr, pool){
     const chosen = [];
     const usedTitles = new Set();
     const usedStudios = new Set();
+    // Publisher/distributor categories (studio & studio_genre) are capped at
+    // one per puzzle on request, so the other three slots go to the more
+    // varied category types (actor, composer, franchise, award, trivia, etc.)
+    // instead of the grid being mostly "Distributed by X" groups.
+    let studioFamilyUsed = false;
     for(const cand of shuffledCands){
+      const isStudioFamily = cand.type === 'studio' || cand.type === 'studio_genre';
+      if(isStudioFamily && studioFamilyUsed) continue;
       if(cand.studio && usedStudios.has(cand.studio)) continue;
       const available = cand.movies.filter(m=>!usedTitles.has(m.title));
       if(available.length >= 4){
@@ -4157,6 +4351,7 @@ function buildMovieGridPuzzle(seedStr, pool){
         if(picked){
           picked.forEach(m=>usedTitles.add(m.title));
           if(cand.studio) usedStudios.add(cand.studio);
+          if(isStudioFamily) studioFamilyUsed = true;
           chosen.push({ type:cand.type, label:cand.label, games: picked.map(m=>m.title) });
           if(chosen.length === 4) break;
         }
@@ -5613,6 +5808,39 @@ const MOVIE_CHARADES_CLUES = {
   'Gravity': '🌌👩‍🚀🛰️😱',
   'Dune: Part Two': '🏜️🐛👑⚔️',
   'Captain America: The Winter Soldier': '🛡️❄️🕵️‍♂️🔫',
+  // ----- Pixar/Disney animation additions (on request) -----
+  'Toy Story': '🤠🚀👦🧸',
+  'The Incredibles': '🦸‍♂️🦸‍♀️👨‍👩‍👧‍👦💥',
+  'WALL-E': '🤖🌍♻️🚀',
+  'Ratatouille': '🐀👨‍🍳🍝🗼',
+  'Monsters, Inc.': '👹🚪😱🔋',
+  'Toy Story 2': '🤠🧸✈️🎯',
+  'Cars': '🏎️🏁🛞🌵',
+  "A Bug's Life": '🐜🍃🦗🎪',
+  'Brave': '🏹👧🐻🌲',
+  'Onward': '🧙‍♂️🐉👬✨',
+  'Soul': '🎹👻🌌🐈',
+  'Beauty and the Beast': '🌹📖👸🐾',
+  'Aladdin': '🧞‍♂️🪔🐒🕌',
+  'Tangled': '👸💇‍♀️🏮🦎',
+  'Mulan': '🐉⚔️👩🎖️',
+  'Moana': '🌊⛵👑🐔',
+  'The Little Mermaid': '🧜‍♀️🐚🌊👑',
+  'Lilo & Stitch': '👽🌺🏄‍♀️👧',
+  'Hercules': '💪⚡🏛️🐴',
+  'Tarzan': '🌴🦍👦🌿',
+  'Cinderella': '👠🎃👗🕛',
+  'Encanto': '🏠✨🕯️👨‍👩‍👧‍👦',
+  'Big Hero 6': '🤖🎈🦸‍♂️🏥',
+  'Wreck-It Ralph': '🕹️👊🍬🏎️',
+  'The Princess and the Frog': '🐸👸💋🎷',
+  'Sleeping Beauty': '😴🌹🧚‍♀️👸',
+  "The Emperor's New Groove": '👑🦙😂🌴',
+  'Snow White and the Seven Dwarfs': '🍎👸⛏️🪞',
+  'Peter Pan': '🧚‍♀️🏴‍☠️✈️👦',
+  '101 Dalmatians': '🐶🐾🖤🤍',
+  'Robin Hood (1973)': '🏹🦊🌲👑',
+  'Dumbo': '🐘🎪🪽🎩',
 };
 const CHARADES_POOL = MOVIES.filter(m => MOVIE_CHARADES_CLUES.hasOwnProperty(m.title));
 
@@ -5634,6 +5862,8 @@ const charadesEmojiDisplay = document.getElementById('charadesEmojiDisplay');
 const charadesInput = document.getElementById('charadesInput');
 const charadesDropdown = document.getElementById('charadesDropdown');
 const charadesGuessBtn = document.getElementById('charadesGuessBtn');
+const charadesMcToggleBtn = document.getElementById('charadesMcToggleBtn');
+const charadesMcOptionsEl = document.getElementById('charadesMcOptions');
 const charadesGuessHistory = document.getElementById('charadesGuessHistory');
 const charadesMsg = document.getElementById('charadesMsg');
 const charadesGiveUpBtn = document.getElementById('charadesGiveUpBtn');
@@ -5651,6 +5881,9 @@ let charadesTarget = null;
 let charadesGuessedTitles = [];
 let charadesGameOver = false;
 let charadesWon = false;
+let charadesMcOpened = false;
+let charadesMcTitleOptions = [];
+let charadesMcWrongTitles = [];
 
 function showCharadesPage(){
   hideAllTopScreens();
@@ -5674,6 +5907,8 @@ function persistCharadesDaily(){
   saveCharadesDailyState({
     date: charadesDailyDate, guessedTitles: charadesGuessedTitles.slice(),
     gameOver: charadesGameOver, won: charadesWon,
+    mcOpened: charadesMcOpened, mcTitleOptions: charadesMcTitleOptions.slice(),
+    mcWrongTitles: charadesMcWrongTitles.slice(),
   });
 }
 
@@ -5707,17 +5942,72 @@ function renderCharadesRound(){
   const hidden = Math.max(0, allEmoji.length - revealCount);
   charadesEmojiDisplay.textContent = allEmoji.slice(0, revealCount).join(' ') + (hidden ? ' ' + '❔'.repeat(hidden) : '');
 
-  charadesGuessHistory.innerHTML = charadesGuessedTitles.map(t => `<span class="charades-chip">${t}</span>`).join('');
+  charadesGuessHistory.innerHTML = charadesGuessedTitles.map(stRenderGuessChip).join('');
   charadesMsg.textContent = '';
   charadesInput.value = '';
   charadesInput.disabled = charadesGameOver;
   charadesGuessBtn.disabled = charadesGameOver;
+  charadesMcToggleBtn.disabled = charadesGameOver || charadesMcOpened;
+  renderCharadesMcOptions();
 }
+
+function renderCharadesMcOptions(){
+  if(!charadesMcOpened){
+    charadesMcOptionsEl.style.display = 'none';
+    charadesMcOptionsEl.innerHTML = '';
+    return;
+  }
+  charadesMcOptionsEl.style.display = '';
+  charadesMcOptionsEl.innerHTML = charadesMcTitleOptions.map(title=>{
+    const isWrong = charadesMcWrongTitles.includes(title);
+    const isCorrectRevealed = charadesGameOver && title === charadesTarget.title;
+    let cls = 'df-mc-btn';
+    if(isWrong) cls += ' wrong';
+    if(isCorrectRevealed) cls += ' correct';
+    const disabled = charadesGameOver || isWrong;
+    return `<button class="${cls}" data-title="${title.replace(/"/g,'&quot;')}" ${disabled ? 'disabled' : ''}>${title}</button>`;
+  }).join('');
+  charadesMcOptionsEl.querySelectorAll('.df-mc-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> charadesSelectMcOption(btn.dataset.title));
+  });
+}
+
+function charadesOpenMc(){
+  if(charadesGameOver || charadesMcOpened) return;
+  charadesMcOpened = true;
+  charadesMcTitleOptions = buildMcTitleOptions(CHARADES_POOL, charadesTarget);
+  charadesMcWrongTitles = [];
+  persistCharadesDaily();
+  renderCharadesRound();
+}
+
+function charadesSelectMcOption(title){
+  if(charadesGameOver) return;
+  if(title === charadesTarget.title){
+    charadesWon = true;
+    charadesGameOver = true;
+    endCharadesRound();
+    return;
+  }
+  if(!charadesMcWrongTitles.includes(title)) charadesMcWrongTitles.push(title);
+  const wrongMatch = CHARADES_POOL.find(m => m.title === title);
+  charadesGuessedTitles.push({ title, arrow: wrongMatch ? stCloseGuessArrow(wrongMatch, charadesTarget) : null });
+  playSfx('incorrect');
+  if(charadesGuessedTitles.length >= CHARADES_MAX_GUESSES){
+    charadesGameOver = true;
+    charadesWon = false;
+    endCharadesRound();
+    return;
+  }
+  persistCharadesDaily();
+  renderCharadesRound();
+}
+charadesMcToggleBtn.addEventListener('click', charadesOpenMc);
 
 function renderCharadesDropdown(query){
   const q = query.trim().toLowerCase();
   if(!q){ charadesDropdown.classList.add('hidden'); charadesDropdown.innerHTML = ''; return; }
-  const guessedSet = new Set(charadesGuessedTitles);
+  const guessedSet = new Set(charadesGuessedTitles.map(g => g.title));
   const matches = CHARADES_POOL.filter(m => m.title.toLowerCase().includes(q)).slice(0, 8);
   if(!matches.length){ charadesDropdown.classList.add('hidden'); charadesDropdown.innerHTML = ''; return; }
   charadesDropdown.innerHTML = matches.map(m => {
@@ -5776,7 +6066,7 @@ function submitCharadesGuess(){
   if(!val) return;
   const match = CHARADES_POOL.find(m => m.title.toLowerCase() === val.toLowerCase());
   if(!match){ charadesMsg.textContent = 'Not in the pool — pick from the dropdown.'; return; }
-  if(charadesGuessedTitles.includes(match.title)){ charadesMsg.textContent = 'Already tried that one.'; hideCharadesDropdown(); return; }
+  if(charadesGuessedTitles.some(g => g.title === match.title)){ charadesMsg.textContent = 'Already tried that one.'; hideCharadesDropdown(); return; }
 
   hideCharadesDropdown();
 
@@ -5787,7 +6077,7 @@ function submitCharadesGuess(){
     return;
   }
 
-  charadesGuessedTitles.push(match.title);
+  charadesGuessedTitles.push({ title: match.title, arrow: stCloseGuessArrow(match, charadesTarget) });
   playSfx('incorrect');
   if(charadesGuessedTitles.length >= CHARADES_MAX_GUESSES){
     charadesGameOver = true;
@@ -5815,6 +6105,9 @@ function startCharadesRound(target){
   charadesGuessedTitles = [];
   charadesGameOver = false;
   charadesWon = false;
+  charadesMcOpened = false;
+  charadesMcTitleOptions = [];
+  charadesMcWrongTitles = [];
   hideCharadesDropdown();
   hideCharadesResults();
   renderCharadesRound();
@@ -5828,13 +6121,16 @@ function startCharadesDaily(){
   charadesDailyDate = date;
   let stored = loadCharadesDailyState();
   if(!stored || stored.date !== date){
-    stored = { date, guessedTitles: [], gameOver: false, won: false };
+    stored = { date, guessedTitles: [], gameOver: false, won: false, mcOpened: false, mcTitleOptions: [], mcWrongTitles: [] };
     saveCharadesDailyState(stored);
   }
   charadesTarget = getCharadesTargetFor(date);
   charadesGuessedTitles = stored.guessedTitles.slice();
   charadesGameOver = stored.gameOver;
   charadesWon = stored.won;
+  charadesMcOpened = !!stored.mcOpened;
+  charadesMcTitleOptions = (stored.mcTitleOptions || []).slice();
+  charadesMcWrongTitles = (stored.mcWrongTitles || []).slice();
   hideCharadesDropdown();
   renderCharadesRound();
   if(charadesGameOver) showCharadesResults();
@@ -5984,6 +6280,20 @@ const MOVIE_CROSSWORD_POOL = [
   { word: 'OLAF', clue: 'A cheerful, talking snowman who loves warm hugs is named ___ in Frozen' },
   { word: 'SULLEY', clue: 'A giant, blue, horned monster befriends a human toddler named Boo in Monsters, Inc., named ___' },
   { word: 'BOO', clue: 'A fearless toddler girl accidentally wanders into the monster world in Monsters, Inc., named ___' },
+  // ----- Pixar/Disney animation additions (on request) -----
+  { word: 'SIMBA', clue: 'A young lion prince flees his kingdom after his father\'s death, named ___, in The Lion King' },
+  { word: 'MOANA', clue: 'A wayfinder sails across the Pacific with a demigod to save her island, named ___' },
+  { word: 'ALADDIN', clue: 'A street urchin finds a magic lamp and a genie in this Agrabah-set Disney classic, ___' },
+  { word: 'JASMINE', clue: 'The headstrong princess of Agrabah who falls for a "diamond in the rough" is named ___' },
+  { word: 'RAPUNZEL', clue: 'A princess with seventy feet of magical, glowing hair is locked in a tower in Tangled, named ___' },
+  { word: 'MULAN', clue: 'A young woman disguises herself as a man to take her father\'s place in the army, named ___' },
+  { word: 'HERCULES', clue: 'A demigod trains to become a true hero and earn his place on Mount Olympus in this Disney film, ___' },
+  { word: 'TARZAN', clue: 'A man raised by gorillas in the jungle discovers he is human in this Disney classic, ___' },
+  { word: 'RATATOUILLE', clue: 'A rat with a gift for cooking sneaks into a Parisian kitchen in this Pixar film, ___' },
+  { word: 'ENCANTO', clue: 'Every member of the magical Madrigal family has a gift except one, in this Disney film, ___' },
+  { word: 'STITCH', clue: 'A destructive blue alien experiment is adopted by a Hawaiian girl in Lilo & Stitch, named ___' },
+  { word: 'CINDERELLA', clue: 'A kind servant girl is transformed by her fairy godmother to attend the royal ball in ___' },
+  { word: 'DUMBO', clue: 'A baby circus elephant with oversized ears learns he can fly in this Disney classic, ___' },
 ];
 
 const MOVIE_CROSSWORD_CATEGORY_POOL = [
@@ -6819,6 +7129,42 @@ const MOVIE_REVIEW_CLUES = {
   'Finding Nemo': 'A father fish crosses an entire ocean because his son wandered off. Overprotective parenting at its finest.',
   'Harry Potter and the Half-Blood Prince': 'The kids spend most of the movie kissing instead of fighting evil. Wrong movie for that, honestly.',
   'Bohemian Rhapsody': 'A band gets famous, has some drama, plays a concert. I\'ve seen this exact plot in every music biopic ever made.',
+  // ----- Pixar/Disney animation additions (on request) -----
+  'Toy Story': 'Toys come alive whenever humans leave the room and nobody thinks to set up a camera. Six sequels of missed evidence.',
+  'The Incredibles': 'A family of superheroes moves to the suburbs to hide their powers and immediately gets to use all of them anyway. Worst secret identity in cinema.',
+  'WALL-E': 'A robot falls in love with a floating iPad for forty minutes with no dialogue. My dog has more range.',
+  'Ratatouille': 'A rat cooks gourmet French food by pulling a grown man\'s hair like a puppet. Health inspector never shows up. Fantasy, apparently.',
+  'Monsters, Inc.': 'Monsters scream at children for electricity instead of just building a wind farm. Renewable energy crisis solved, plot ignored.',
+  'Inside Out': 'Five emotions run a control room in a child\'s brain and somehow Sadness ends up the hero. My own emotions could never organize like that.',
+  'Toy Story 2': 'Woody gets kidnapped by a toy collector and the movie treats it like a hostage thriller. Bold choice for a film about plastic cowboys.',
+  'Coco': 'A boy breaks into the Land of the Dead by stealing a guitar from a mausoleum. Grave robbery played for laughs, apparently.',
+  'Cars': 'Talking automobiles race in circles for ninety minutes and somehow there\'s still a lesson about friendship. Didn\'t need four wheels for that.',
+  "A Bug's Life": 'Ants outsource their revolution to a traveling circus troupe of bugs. Management consulting, but make it insects.',
+  'Monsters University': 'Monsters go to college to learn how to scare children better. My tuition didn\'t even teach me how to do my actual job.',
+  'Brave': 'A princess turns her mother into a bear to avoid an arranged marriage. Extreme, but I respect the commitment to conflict avoidance.',
+  'Onward': 'Two elf brothers spend a road trip resurrecting half a dad. Bring the other half back and maybe I\'ll care.',
+  'Soul': 'A jazz pianist dies, argues about the meaning of life in a cosmic waiting room, and I still don\'t know what a "spark" is.',
+  'Beauty and the Beast': 'A woman falls for a giant, hairy, short-tempered roommate who kidnapped her father. Stockholm syndrome set to an Alan Menken tune.',
+  'Aladdin': 'A street thief lies about his identity to impress a princess and somehow that\'s the romantic one. Also the genie does all the actual work.',
+  'Tangled': 'A girl locked in a tower for eighteen years escapes using her own hair as rope and rappelling gear. OSHA would like a word.',
+  'Mulan': 'A woman disguises herself as a man to join the army and nobody notices for an entire war. Military intelligence, indeed.',
+  'Moana': 'A teenager sails across the ocean to fix a problem a demigod caused a thousand years ago. Sounds like unpaid overtime to me.',
+  'The Little Mermaid': 'A mermaid trades her voice for legs to chase a man she\'s spoken to exactly zero times. Communication is key, apparently not for her.',
+  'Lilo & Stitch': 'An illegal alien experiment poses as a dog and nobody in Hawaii questions the extra ears. Wildlife control, please.',
+  'Hercules': 'A demigod works out his entire childhood to fight a guy with blue fire hair. Also gospel-singing muses narrate the whole thing, no explanation given.',
+  'Tarzan': 'A man raised by gorillas swings into a woman\'s life on vines and somehow that\'s considered a meet-cute.',
+  'Cinderella': 'A woman\'s entire future hinges on a shoe fitting correctly at midnight. Modern dating apps have higher standards.',
+  'Encanto': 'A family with magic powers has one member with none and the whole movie is a group therapy session set to show tunes.',
+  'Big Hero 6': 'A marshmallow robot becomes a superhero after some duct tape and a rocket fist. Insurance would have a field day with this liability.',
+  'Wreck-It Ralph': 'A video game villain has a midlife crisis and wanders into other arcade games uninvited. Corporate trespassing, but for pixels.',
+  'The Princess and the Frog': 'A woman kisses a frog hoping for a prince and instead becomes a frog herself. Read the fine print next time.',
+  'Sleeping Beauty': 'A princess naps for sixteen years and wakes up to marry a stranger who kissed her without asking first. Different times, I guess.',
+  "The Emperor's New Groove": 'An emperor gets turned into a llama by his own advisor and somehow that\'s the least dramatic thing about this movie.',
+  'Snow White and the Seven Dwarfs': 'A woman moves in with seven strangers she just met and does all their housework for free. Terrible labor practices, honestly.',
+  'Peter Pan': 'A boy who refuses to grow up kidnaps children and takes them to an island with a ticking crocodile. Red flags everywhere.',
+  '101 Dalmatians': 'A woman wants to make a coat out of puppies and the movie treats this as a mild inconvenience rather than a crime.',
+  'Robin Hood (1973)': 'A fox robs from the rich to give to the poor and somehow every character in medieval England is also an animal. Ecosystem never explained.',
+  'Dumbo': 'A baby elephant gets bullied for his ears, drinks by accident, and hallucinates pink elephants. Rough childhood, honestly.',
 };
 const REVIEW_POOL = MOVIES.filter(m => MOVIE_REVIEW_CLUES.hasOwnProperty(m.title));
 
@@ -7714,7 +8060,43 @@ const MOVIE_DOUBLE_FEATURE_POOL = [
     options:['Same director (Greta Gerwig)', 'Same lead actor', 'Same composer', 'Same studio'], correctIndex:0 },
   { a:{title:'Knives Out',year:2019}, b:{title:'Star Wars: The Last Jedi',year:2017}, category:'Fun Fact',
     connection:'Both were directed by Rian Johnson.', keywords:['rian johnson', 'johnson', 'director'],
-    options:['Same studio', 'Same director (Rian Johnson)', 'Both won Best Picture', 'Sequel to each other'], correctIndex:1 }
+    options:['Same studio', 'Same director (Rian Johnson)', 'Both won Best Picture', 'Sequel to each other'], correctIndex:1 },
+  { a:{title:'Aladdin',year:1992}, b:{title:'Hercules',year:1997}, category:'Director',
+    connection:'Both were directed by Ron Clements & John Musker.', keywords:['clements','musker','director'],
+    options:['Same composer','Same director (Ron Clements & John Musker)','Sequel to each other','Same lead voice actor'], correctIndex:1 },
+  { a:{title:'The Little Mermaid',year:1989}, b:{title:'Aladdin',year:1992}, category:'Director',
+    connection:'Both were directed by Ron Clements & John Musker.', keywords:['clements','musker','director'],
+    options:['Sequel to each other','Same lead actor','Same director (Ron Clements & John Musker)','Same release year'], correctIndex:2 },
+  { a:{title:'The Princess and the Frog',year:2009}, b:{title:'Moana',year:2016}, category:'Director',
+    connection:'Both were co-directed by Ron Clements & John Musker.', keywords:['clements','musker','director'],
+    options:['Same composer','Same studio only','Both won Best Picture','Same directors (Ron Clements & John Musker)'], correctIndex:3 },
+  { a:{title:'Tarzan',year:1999}, b:{title:'Frozen',year:2013}, category:'Director',
+    connection:'Both were co-directed by Chris Buck.', keywords:['chris buck','director'],
+    options:['Same director (Chris Buck)','Same composer','Sequel to each other','Same lead voice actor'], correctIndex:0 },
+  { a:{title:'Beauty and the Beast',year:1991}, b:{title:'Hercules',year:1997}, category:'Composer',
+    connection:'Both were scored by Alan Menken.', keywords:['alan menken','menken','composer'],
+    options:['Same director','Same composer (Alan Menken)','Same release year','Sequel to each other'], correctIndex:1 },
+  { a:{title:'The Little Mermaid',year:1989}, b:{title:'Tangled',year:2010}, category:'Composer',
+    connection:'Both feature songs composed by Alan Menken.', keywords:['alan menken','menken','composer'],
+    options:['Same composer (Alan Menken)','Same director','Same lead voice actor','Both won Best Picture'], correctIndex:0 },
+  { a:{title:'Encanto',year:2021}, b:{title:'Moana',year:2016}, category:'Fun Fact',
+    connection:'Both feature original songs written by Lin-Manuel Miranda.', keywords:['lin-manuel miranda','miranda','songs'],
+    options:['Same director','Sequel to each other','Original songs written by Lin-Manuel Miranda','Same composer scored the whole film'], correctIndex:2 },
+  { a:{title:'Peter Pan',year:1953}, b:{title:'Cinderella',year:1950}, category:'Director',
+    connection:'Both were directed by the same trio: Clyde Geronimi, Wilfred Jackson & Hamilton Luske.', keywords:['geronimi','jackson','luske','director'],
+    options:['Same composer','Sequel to each other','Same directing trio (Geronimi, Jackson & Luske)','Same release year'], correctIndex:2 },
+  { a:{title:'Snow White and the Seven Dwarfs',year:1937}, b:{title:'Cinderella',year:1950}, category:'Fun Fact',
+    connection:'Snow White was Disney\'s first animated feature, and Cinderella is the film credited with saving the studio financially over a decade later.', keywords:['first animated feature','saved the studio','fun fact'],
+    options:['Same director','Same composer','Landmark films for Disney\'s survival and legacy','Same lead voice actor'], correctIndex:2 },
+  { a:{title:'101 Dalmatians',year:1961}, b:{title:'The Jungle Book',year:1967}, category:'Fun Fact',
+    connection:'Both were among the last animated films personally overseen by Walt Disney before his death in 1966.', keywords:['walt disney','last films','fun fact'],
+    options:['Sequel to each other','Same composer','Last films personally overseen by Walt Disney','Same director'], correctIndex:2 },
+  { a:{title:'Robin Hood (1973)',year:1973}, b:{title:'The Jungle Book',year:1967}, category:'Fun Fact',
+    connection:'Robin Hood famously reused animation footage originally created for The Jungle Book to save costs.', keywords:['recycled animation','reused footage','fun fact'],
+    options:['Same director','Same composer','Reused/recycled animation footage between the two films','Sequel to each other'], correctIndex:2 },
+  { a:{title:'Sleeping Beauty',year:1959}, b:{title:'Snow White and the Seven Dwarfs',year:1937}, category:'Fun Fact',
+    connection:'Both are Disney fairy-tale classics; Sleeping Beauty\'s disappointing box office nearly ended Disney\'s fairy-tale filmmaking for decades.', keywords:['fairy tale','box office','fun fact'],
+    options:['Same director','Both are Disney fairy-tale classics','Sequel to each other','Same composer'], correctIndex:1 }
 ];
 
 
@@ -8082,7 +8464,9 @@ const ST_FRANCHISE_PREFIXES = [
   'Harry Potter', 'Star Wars', 'The Lord of the Rings', 'The Hobbit',
   'Pirates of the Caribbean', 'Avengers', 'Captain America', 'Spider-Man',
   'Mission: Impossible', 'Dune', 'Frozen', 'Fantastic Beasts', 'Toy Story',
-  'The Dark Knight', 'Batman Begins', 'Thor', 'Iron Man'
+  'The Dark Knight', 'Batman Begins', 'Thor', 'Iron Man',
+  'Jurassic World', 'Despicable Me', 'Guardians of the Galaxy', 'Deadpool',
+  'Transformers', 'The Hunger Games', 'Avatar', 'Inside Out', 'The Incredibles'
 ];
 function stFranchiseKey(title){
   for(const p of ST_FRANCHISE_PREFIXES){
@@ -8239,7 +8623,19 @@ const MOVIE_SOUNDTRACK_POOL = [
   { title:'Sherlock Holmes', year:2009, searchTerm:'Discombobulate Hans Zimmer Sherlock Holmes', trackHint:'discombobulate', reveal:'"Discombobulate" — Hans Zimmer' },
   { title:'X-Men: First Class', year:2011, searchTerm:'First Class Henry Jackman X-Men First Class', trackHint:'first class', reveal:'"First Class" — Henry Jackman' },
   { title:'The Imitation Game', year:2014, searchTerm:'The Imitation Game Alexandre Desplat soundtrack', trackHint:null, reveal:'Main Theme — Alexandre Desplat' },
-  { title:'Captain America: Civil War', year:2016, searchTerm:'Civil War Henry Jackman Captain America Civil War', trackHint:'civil war', reveal:'"Civil War" — Henry Jackman' }
+  { title:'Captain America: Civil War', year:2016, searchTerm:'Civil War Henry Jackman Captain America Civil War', trackHint:'civil war', reveal:'"Civil War" — Henry Jackman' },
+  // ----- Pixar/Disney animation additions (on request) -----
+  { title:'Aladdin', year:1992, searchTerm:'A Whole New World Aladdin', trackHint:'whole new world', reveal:'"A Whole New World" — Alan Menken' },
+  { title:'Beauty and the Beast', year:1991, searchTerm:'Beauty and the Beast title song Angela Lansbury', trackHint:'beauty and the beast', reveal:'"Beauty and the Beast" — Alan Menken' },
+  { title:'Moana', year:2016, searchTerm:'How Far I\'ll Go Moana Auli\'i Cravalho', trackHint:'how far i\'ll go', reveal:'"How Far I\'ll Go" — Lin-Manuel Miranda' },
+  { title:'Tangled', year:2010, searchTerm:'I See the Light Tangled Mandy Moore Zachary Levi', trackHint:'i see the light', reveal:'"I See the Light" — Alan Menken' },
+  { title:'Mulan', year:1998, searchTerm:'Reflection Mulan Christina Aguilera', trackHint:'reflection', reveal:'"Reflection" — Matthew Wilder / Christina Aguilera' },
+  { title:'Encanto', year:2021, searchTerm:'We Don\'t Talk About Bruno Encanto', trackHint:'bruno', reveal:'"We Don\'t Talk About Bruno" — Lin-Manuel Miranda' },
+  { title:'Toy Story', year:1995, searchTerm:'You\'ve Got a Friend in Me Toy Story Randy Newman', trackHint:'friend in me', reveal:'"You\'ve Got a Friend in Me" — Randy Newman' },
+  { title:'The Incredibles', year:2004, searchTerm:'The Glory Days The Incredibles Michael Giacchino', trackHint:'glory days', reveal:'Main Theme — Michael Giacchino' },
+  { title:'Ratatouille', year:2007, searchTerm:'Le Festin Ratatouille Camille', trackHint:'le festin', reveal:'"Le Festin" — Michael Giacchino / Camille' },
+  { title:'Zootopia', year:2016, searchTerm:'Try Everything Shakira Zootopia', trackHint:'try everything', reveal:'"Try Everything" — Shakira' },
+  { title:'The Little Mermaid', year:1989, searchTerm:'Under the Sea The Little Mermaid', trackHint:'under the sea', reveal:'"Under the Sea" — Alan Menken' }
 ];
 
 
@@ -9397,6 +9793,11 @@ movieMenuStBtn.addEventListener('click', ()=>{
 movieMenuCartridgeBtn.addEventListener('click', ()=>{
   window.location.href = 'index.html';
 });
+const siteSwitchCartridge = document.getElementById('siteSwitchCartridge');
+if(siteSwitchCartridge){
+  siteSwitchCartridge.addEventListener('click', ()=>{ window.location.href = 'index.html'; });
+  siteSwitchCartridge.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); window.location.href = 'index.html'; } });
+}
 
 applyCodeUnlockState();
 applyChaosUnlockState();
