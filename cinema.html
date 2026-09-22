@@ -3035,6 +3035,12 @@ MOVIES.push({title:'Good Will Hunting',year:1997,genres:['Drama'],gross:226,scor
 MOVIES.push({title:'Marriage Story',year:2019,genres:['Drama'],gross:2,score:95,rated:'R',studio:'Netflix'});
 MOVIES.push({title:'Lost in Translation',year:2003,genres:['Drama','Comedy'],gross:119,score:95,rated:'R',studio:'Focus Features'});
 MOVIES.push({title:'Jurassic Park',year:1993,genres:['Adventure','Sci-Fi'],gross:1029,score:92,rated:'PG-13',studio:'Universal'});
+// ----- Added so Cinema Cassette can include songs the user requested from movies not yet in the pool -----
+MOVIES.push({title:'Dragonheart',year:1996,genres:['Fantasy','Adventure'],gross:104,score:48,rated:'PG-13',studio:'Universal'});
+MOVIES.push({title:'Requiem for a Dream',year:2000,genres:['Drama'],gross:7,score:78,rated:'R',studio:'Artisan Entertainment'});
+MOVIES.push({title:'The Wild Robot',year:2024,genres:['Animation','Family','Sci-Fi'],gross:325,score:98,rated:'PG',studio:'DreamWorks'});
+MOVIES.push({title:'Transformers: Age of Extinction',year:2014,genres:['Sci-Fi','Action'],gross:1104,score:18,rated:'PG-13',studio:'Paramount'});
+MOVIES.push({title:'The Odyssey',year:2026,genres:['Adventure','Fantasy'],gross:1553,score:94,rated:'PG-13',studio:'Universal'});
 
 
 // ---------- Shared helpers (ported from Cartridge) ----------
@@ -8768,7 +8774,31 @@ const MOVIE_SOUNDTRACK_POOL = [
   { title:'The Lion King', year:1994, searchTerm:'Can You Feel the Love Tonight Lion King Elton John', trackHint:'love tonight', reveal:'"Can You Feel the Love Tonight" — Elton John' },
   { title:'Toy Story', year:1995, searchTerm:'Woody\'s Roundup Toy Story 2 Riders in the Sky', trackHint:'woody\'s roundup', reveal:'"Woody\'s Roundup" — Riders in the Sky' },
   { title:'Inception', year:2010, searchTerm:'Dream Is Collapsing Inception Hans Zimmer', trackHint:'dream is collapsing', reveal:'"Dream Is Collapsing" — Hans Zimmer' },
-  { title:'Interstellar', year:2014, searchTerm:'No Time for Caution Interstellar Hans Zimmer', trackHint:'no time for caution', reveal:'"No Time for Caution" — Hans Zimmer' }
+  { title:'Interstellar', year:2014, searchTerm:'No Time for Caution Interstellar Hans Zimmer', trackHint:'no time for caution', reveal:'"No Time for Caution" — Hans Zimmer' },
+
+  // ---- User-requested additions (a few of the requested tracks — Blade
+  // Runner 2049's "Mesa", Gladiator's "Now We Are Free" and Interstellar's
+  // "No Time for Caution" — were already in the pool above, so only the
+  // genuinely new ones are added here) ----
+  { title:'The Batman', year:2022, searchTerm:'The Batman Main Theme Michael Giacchino', trackHint:null, reveal:'"The Batman" — Michael Giacchino' },
+  { title:'Dragonheart', year:1996, searchTerm:'To the Stars Dragonheart Randy Edelman', trackHint:'to the stars', reveal:'"To the Stars" — Randy Edelman' },
+  { title:'Kingdom of Heaven', year:2005, searchTerm:'Swordplay Kingdom of Heaven Harry Gregson-Williams', trackHint:'swordplay', reveal:'"Swordplay" — Harry Gregson-Williams' },
+  { title:'Requiem for a Dream', year:2000, searchTerm:'Lux Aeterna Requiem for a Dream Clint Mansell', trackHint:'lux aeterna', reveal:'"Lux Aeterna" — Clint Mansell' },
+  { title:'The Lord of the Rings: The Return of the King', year:2003, searchTerm:'The Ride of the Rohirrim Return of the King Howard Shore', trackHint:'ride of the rohirrim', reveal:'"The Ride of the Rohirrim" — Howard Shore' },
+  { title:'The Pursuit of Happyness', year:2006, searchTerm:'Pursuit of Happyness Main Theme Andrea Guerra', trackHint:null, reveal:'Opening Theme — Andrea Guerra' },
+  { title:'How to Train Your Dragon', year:2010, searchTerm:'Where No One Goes How to Train Your Dragon John Powell', trackHint:'where no one goes', reveal:'"Where No One Goes" — John Powell' },
+  { title:'How to Train Your Dragon', year:2010, searchTerm:'Sticks and Stones How to Train Your Dragon John Powell', trackHint:'sticks', reveal:'"Sticks & Stones" — John Powell' },
+  { title:'How to Train Your Dragon', year:2010, searchTerm:'This Is Berk How to Train Your Dragon John Powell', trackHint:'this is berk', reveal:'"This Is Berk" — John Powell' },
+  { title:'How to Train Your Dragon', year:2010, searchTerm:'Romantic Flight How to Train Your Dragon John Powell', trackHint:'romantic flight', reveal:'"Romantic Flight" — John Powell' },
+  { title:'La La Land', year:2016, searchTerm:'City of Stars Ryan Gosling Emma Stone La La Land', trackHint:'city of stars', reveal:'"City of Stars" — Ryan Gosling & Emma Stone' },
+  { title:'Avatar', year:2009, searchTerm:'Jake\'s First Flight Avatar James Horner', trackHint:'jake\'s first flight', reveal:'"Jake\'s First Flight" — James Horner' },
+  { title:'Pirates of the Caribbean: The Curse of the Black Pearl', year:2003, searchTerm:'The Black Pearl Klaus Badelt Curse of the Black Pearl', trackHint:'black pearl', reveal:'"The Black Pearl" — Klaus Badelt' },
+  { title:'The Odyssey', year:2026, searchTerm:'Sirens Ludwig Goransson The Odyssey', trackHint:'sirens', reveal:'"Sirens" — Ludwig Göransson' },
+  { title:'Robin Hood', year:2010, searchTerm:'Fate Has Smiled Upon Us Marc Streitenfeld Robin Hood', trackHint:'fate has smiled', reveal:'"Fate Has Smiled Upon Us" — Marc Streitenfeld' },
+  { title:'Transformers', year:2007, searchTerm:'Optimus Steve Jablonsky Transformers', trackHint:'optimus', reveal:'"Optimus" — Steve Jablonsky' },
+  { title:'Transformers: Age of Extinction', year:2014, searchTerm:'Tessa Steve Jablonsky Transformers Age of Extinction', trackHint:'tessa', reveal:'"Tessa" — Steve Jablonsky' },
+  { title:'Luca', year:2021, searchTerm:'Take Me Gravity Dan Romer Luca', trackHint:'take me, gravity', reveal:'"Take Me, Gravity" — Dan Romer' },
+  { title:'The Wild Robot', year:2024, searchTerm:'Kiss the Sky Maren Morris The Wild Robot', trackHint:'kiss the sky', reveal:'"Kiss the Sky" — Maren Morris' }
 ];
 
 
