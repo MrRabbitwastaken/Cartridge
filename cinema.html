@@ -1552,6 +1552,90 @@
   }
   .movie-back-link:hover { border-color: var(--amber); color: var(--amber); }
   .clash-card .clash-card-emoji { font-size: 34px; opacity: 0.5; }
+
+  /* ---------- Cinema Concierge (question-based movie picker, an Extras tool) ---------- */
+  #conciergeModal .modal-box { max-width: 640px; }
+  .concierge-progress {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 6px;
+  }
+  .concierge-dots { display: flex; gap: 6px; margin-bottom: 16px; }
+  .concierge-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--panel-2); border: 1px solid var(--line); transition: background .15s, border-color .15s; }
+  .concierge-dot.done { background: var(--cyan); border-color: var(--cyan); }
+  .concierge-dot.current { background: var(--coral); border-color: var(--coral); }
+  .concierge-question {
+    font-family: 'Space Grotesk', sans-serif; font-size: 19px; font-weight: 700; color: var(--text);
+    margin-bottom: 16px; line-height: 1.35;
+  }
+  .concierge-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+  .concierge-chip {
+    padding: 11px 16px; background: var(--panel-2); border: 2px solid var(--line); border-radius: 10px;
+    color: var(--text); font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: border-color .15s, color .15s, transform .1s, box-shadow .15s;
+  }
+  .concierge-chip:hover { border-color: var(--cyan); color: var(--cyan); transform: translateY(-1px); }
+  .concierge-chip.selected { border-color: var(--lime); color: var(--lime); box-shadow: 0 0 14px rgba(168,255,62,0.35); }
+  .concierge-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 4px; }
+  .concierge-fav-search { position: relative; margin-bottom: 12px; }
+  .concierge-fav-search input {
+    width: 100%; padding: 14px 16px; background: var(--panel); border: 2px solid var(--line);
+    border-radius: 8px; color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 15px; outline: none;
+    transition: border-color .15s;
+  }
+  .concierge-fav-search input:focus { border-color: var(--cyan); }
+  .concierge-fav-search input:disabled { opacity: 0.5; }
+  .concierge-fav-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; min-height: 4px; }
+  .concierge-fav-tag {
+    display: flex; align-items: center; gap: 8px; padding: 7px 8px 7px 12px; background: var(--panel-2);
+    border: 1px solid var(--cyan); color: var(--cyan); border-radius: 999px; font-family: 'IBM Plex Mono', monospace; font-size: 13px;
+  }
+  .concierge-fav-tag button { background: none; border: none; color: var(--cyan); cursor: pointer; font-size: 13px; line-height: 1; padding: 2px; }
+  .concierge-fav-hint { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-dim); margin: -6px 0 14px; }
+  .concierge-hero-card { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 20px; }
+  .concierge-hero-cover {
+    flex: 0 0 auto; width: 150px; height: 220px; border-radius: 10px; overflow: hidden; position: relative;
+    background: var(--panel-2); border: 2px solid var(--lime); box-shadow: 0 0 20px rgba(168,255,62,0.3);
+  }
+  .concierge-hero-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .concierge-hero-cover .cover-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+  .concierge-hero-info { flex: 1 1 auto; min-width: 0; }
+  .concierge-result-label {
+    font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--lime); margin-bottom: 12px;
+    text-shadow: 0 0 8px rgba(168,255,62,0.5);
+  }
+  .concierge-hero-title { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+  .concierge-hero-meta { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-dim); margin-bottom: 10px; }
+  .concierge-hero-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .concierge-hero-pills .pill {
+    padding: 4px 10px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text);
+  }
+  .concierge-hero-stats { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--text); margin-bottom: 10px; line-height: 1.6; }
+  .concierge-hero-blurb { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--text-dim); line-height: 1.6; margin-bottom: 10px; }
+  .concierge-hero-why { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--cyan); margin-bottom: 12px; }
+  .concierge-soundtrack button {
+    padding: 8px 14px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px;
+    color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 12px; cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+  .concierge-soundtrack button:hover { border-color: var(--lime); color: var(--lime); }
+  .concierge-runners-label {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 10px;
+  }
+  .concierge-runners { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+  .concierge-runner-card {
+    display: flex; gap: 12px; align-items: center; padding: 10px; background: var(--panel-2);
+    border: 1px solid var(--line); border-radius: 10px;
+  }
+  .concierge-runner-cover {
+    flex: 0 0 auto; width: 46px; height: 68px; border-radius: 6px; overflow: hidden; background: var(--panel);
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .concierge-runner-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .concierge-runner-info { flex: 1 1 auto; min-width: 0; }
+  .concierge-runner-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; color: var(--text); }
+  .concierge-runner-why { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-dim); margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -1624,6 +1708,10 @@
       <span class="side-menu-icon">⭐</span>
       <span class="side-menu-label">One-Star Reviews</span>
     </button>
+    <button class="side-menu-item" id="movieMenuConciergeBtn">
+      <span class="side-menu-icon">🧭</span>
+      <span class="side-menu-label">Cinema Concierge</span>
+    </button>
     <hr class="side-menu-divider">
     <button class="side-menu-item" id="movieMenuCartridgeBtn">
       <span class="side-menu-icon">🎮</span>
@@ -1631,6 +1719,14 @@
     </button>
   </div>
 </nav>
+
+<div class="modal-overlay" id="conciergeModal">
+  <div class="modal-box">
+    <button class="modal-close" id="conciergeModalClose">✕</button>
+    <div class="modal-title">CINEMA CONCIERGE</div>
+    <div id="conciergeBody"></div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="movieSettingsModal">
   <div class="modal-box">
@@ -10041,6 +10137,355 @@ if(siteSwitchCartridge){
   siteSwitchCartridge.addEventListener('click', ()=>{ window.location.href = 'index.html'; });
   siteSwitchCartridge.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); window.location.href = 'index.html'; } });
 }
+
+// ---------- Cinema Concierge (an Extras tool — a short quiz that
+// recommends a movie to watch next, using the same MOVIES database as the
+// rest of the site). Not a daily/streak game: no archive, no scoring
+// against other players, just a one-off "answer some questions, get a
+// pick" flow that can be replayed instantly with different answers. ----------
+
+const CONCIERGE_GENRE_GROUPS = [
+  { id:'action', label:'Action & Adventure', match:['Action','Adventure','Superhero','War','Spy'] },
+  { id:'comedy', label:'Comedy', match:['Comedy'] },
+  { id:'drama', label:'Drama & Biography', match:['Drama','Biography','History'] },
+  { id:'scifi', label:'Sci-Fi & Fantasy', match:['Sci-Fi','Fantasy'] },
+  { id:'horror', label:'Horror & Thriller', match:['Horror','Thriller','Mystery','Crime'] },
+  { id:'family', label:'Family & Animation', match:['Family','Animation','Musical','Music'] },
+  { id:'romance', label:'Romance', match:['Romance'] },
+  { id:'other', label:'Sport & Western', match:['Sport','Western'] },
+  { id:'any', label:'Surprise me', match:null },
+];
+const CONCIERGE_WATCHING_OPTIONS = [
+  { id:'family', label:'Family movie night', match:['G','PG'] },
+  { id:'friends', label:'With friends', match:['PG-13'] },
+  { id:'solo', label:'Solo / date night', match:['PG-13','R'] },
+  { id:'any', label:"Doesn't matter", match:null },
+];
+const CONCIERGE_VIBE_OPTIONS = [
+  { id:'feelgood', label:'Feel-good & uplifting', match:['Family','Animation','Romance','Comedy','Musical','Music'] },
+  { id:'intense', label:'Intense & thrilling', match:['Action','Thriller','Horror','War','Crime'] },
+  { id:'thoughtful', label:'Thought-provoking', match:['Drama','Biography','History','Mystery'] },
+  { id:'funny', label:'Laugh-out-loud', match:['Comedy'] },
+  { id:'any', label:"Doesn't matter", match:null },
+];
+const CONCIERGE_DECADE_TIERS = [
+  { id:'classic', label:'Classics (pre-1990)', min:-Infinity, max:1989 },
+  { id:'retro', label:'90s & 2000s', min:1990, max:2009 },
+  { id:'modern', label:'2010s', min:2010, max:2019 },
+  { id:'new', label:'This decade (2020+)', min:2020, max:Infinity },
+  { id:'any', label:"Doesn't matter", min:-Infinity, max:Infinity },
+];
+const CONCIERGE_ACCLAIM_TIERS = [
+  { id:'award', label:'Award-worthy (critically acclaimed)', min:85 },
+  { id:'crowd', label:'Crowd-pleaser', min:65 },
+  { id:'any', label:"Doesn't matter", min:0 },
+];
+const CONCIERGE_SCALE_OPTIONS = [
+  { id:'blockbuster', label:'Big blockbuster', test:(m)=>m.gross >= 300 },
+  { id:'gem', label:'Under-the-radar gem', test:(m)=>m.gross <= 80 },
+  { id:'any', label:"Doesn't matter", test:null },
+];
+
+const CONCIERGE_QUESTIONS = [
+  { id:'genre', prompt:'What are you in the mood to watch?', type:'chips', options:CONCIERGE_GENRE_GROUPS },
+  { id:'watching', prompt:"Who's watching?", type:'chips', options:CONCIERGE_WATCHING_OPTIONS },
+  { id:'vibe', prompt:'What kind of vibe are you after?', type:'chips', options:CONCIERGE_VIBE_OPTIONS },
+  { id:'decade', prompt:'Any decade you’re leaning toward?', type:'chips', options:CONCIERGE_DECADE_TIERS },
+  { id:'acclaim', prompt:'Award-worthy, or just a good time?', type:'chips', options:CONCIERGE_ACCLAIM_TIERS },
+  { id:'scale', prompt:'Blockbuster hit, or an under-the-radar gem?', type:'chips', options:CONCIERGE_SCALE_OPTIONS },
+  { id:'favorites', prompt:"Name up to 3 movies you love — we'll use them to fine-tune your pick.", type:'favorites' },
+];
+
+let conciergeStep = 0;
+let conciergeAnswers = {};
+let conciergeFavorites = [];
+let conciergeResult = null;
+let conciergePlaying = false;
+
+const conciergeModal = document.getElementById('conciergeModal');
+const conciergeModalClose = document.getElementById('conciergeModalClose');
+const conciergeBody = document.getElementById('conciergeBody');
+const movieMenuConciergeBtn = document.getElementById('movieMenuConciergeBtn');
+
+function conciergeStopSoundtrack(){
+  conciergePlaying = false;
+  try{ stAudio.pause(); }catch(e){}
+}
+
+function openConciergeModal(){
+  conciergeStep = 0;
+  conciergeAnswers = {};
+  conciergeFavorites = [];
+  conciergeResult = null;
+  conciergeModal.classList.add('show');
+  renderConciergeStep();
+}
+function closeConciergeModal(){
+  conciergeStopSoundtrack();
+  conciergeModal.classList.remove('show');
+}
+conciergeModalClose.addEventListener('click', closeConciergeModal);
+conciergeModal.addEventListener('click', (e)=>{ if(e.target === conciergeModal) closeConciergeModal(); });
+movieMenuConciergeBtn.addEventListener('click', ()=>{
+  closeMovieSideMenu();
+  openConciergeModal();
+});
+
+// Answers are now arrays (multiple picks allowed per question), so every
+// criterion loops over whichever option ids were selected and adds credit
+// for each one the movie satisfies — 'any'/empty means "skip this question".
+function conciergeAnswerIds(qid){
+  const arr = conciergeAnswers[qid];
+  return (arr && arr.length && !arr.includes('any')) ? arr : [];
+}
+
+function scoreMovie(movie){
+  let score = 0;
+  const reasons = [];
+
+  conciergeAnswerIds('genre').forEach(id=>{
+    const grp = CONCIERGE_GENRE_GROUPS.find(o=>o.id===id);
+    if(grp && grp.match.some(m=>movie.genres.includes(m))){ score += 5; reasons.push(grp.label); }
+  });
+
+  conciergeAnswerIds('watching').forEach(id=>{
+    const opt = CONCIERGE_WATCHING_OPTIONS.find(o=>o.id===id);
+    if(opt && opt.match.includes(movie.rated)){ score += 3; reasons.push(opt.label); }
+  });
+
+  conciergeAnswerIds('vibe').forEach(id=>{
+    const opt = CONCIERGE_VIBE_OPTIONS.find(o=>o.id===id);
+    if(opt && opt.match.some(m=>movie.genres.includes(m))){ score += 4; reasons.push(opt.label); }
+  });
+
+  conciergeAnswerIds('decade').forEach(id=>{
+    const tier = CONCIERGE_DECADE_TIERS.find(o=>o.id===id);
+    if(tier && movie.year >= tier.min && movie.year <= tier.max){ score += 3; reasons.push(tier.label); }
+  });
+
+  conciergeAnswerIds('acclaim').forEach(id=>{
+    const tier = CONCIERGE_ACCLAIM_TIERS.find(o=>o.id===id);
+    if(tier && movie.score >= tier.min){ score += 3; }
+  });
+
+  conciergeAnswerIds('scale').forEach(id=>{
+    const opt = CONCIERGE_SCALE_OPTIONS.find(o=>o.id===id);
+    if(opt && opt.test && opt.test(movie)){ score += 3; reasons.push(opt.label); }
+  });
+
+  // Favorites: bonus for sharing genres/decade/rating with any of the up-to-3
+  // movies the person said they already love.
+  conciergeFavorites.forEach(fav=>{
+    if(!fav || fav.title === movie.title) return;
+    const shared = fav.genres.filter(g=>movie.genres.includes(g));
+    if(shared.length) score += Math.min(shared.length, 3) * 2;
+    if(Math.abs(fav.year - movie.year) <= 5) score += 1;
+    if(fav.rated === movie.rated) score += 1;
+  });
+
+  score += Math.random() * 0.01; // tiny jitter to vary near-ties between runs
+  return { movie, score, reasons: [...new Set(reasons)] };
+}
+
+function computeConciergeResult(){
+  const favTitles = new Set(conciergeFavorites.map(f=>f.title));
+  const scored = MOVIES
+    .filter(m=>!favTitles.has(m.title))
+    .map(scoreMovie)
+    .sort((a,b)=>b.score - a.score);
+  return { pick: scored[0], runners: scored.slice(1, 4) };
+}
+
+function conciergeDotsHtml(){
+  return CONCIERGE_QUESTIONS.map((q,i)=>{
+    const cls = i < conciergeStep ? 'done' : (i === conciergeStep ? 'current' : '');
+    return `<span class="concierge-dot ${cls}"></span>`;
+  }).join('');
+}
+
+function renderConciergeStep(){
+  const q = CONCIERGE_QUESTIONS[conciergeStep];
+  if(q.type === 'chips'){
+    const selected = conciergeAnswers[q.id] || [];
+    conciergeBody.innerHTML = `
+      <div class="concierge-progress">Question ${conciergeStep+1} of ${CONCIERGE_QUESTIONS.length}</div>
+      <div class="concierge-dots">${conciergeDotsHtml()}</div>
+      <div class="concierge-question">${q.prompt}</div>
+      <div class="concierge-fav-hint">Pick as many as apply.</div>
+      <div class="concierge-chips">
+        ${q.options.map(o=>`<button class="concierge-chip${selected.includes(o.id)?' selected':''}" data-id="${o.id}">${o.label}</button>`).join('')}
+      </div>
+      <div class="concierge-nav">
+        <button class="ghost-btn" id="conciergeBackBtn" ${conciergeStep===0?'disabled':''}>◀ Back</button>
+        <button class="ghost-btn" id="conciergeNextBtn">Next ▶</button>
+      </div>
+    `;
+    conciergeBody.querySelectorAll('.concierge-chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.dataset.id;
+        let arr = conciergeAnswers[q.id] || [];
+        if(id === 'any'){
+          arr = arr.includes('any') ? [] : ['any'];
+        } else {
+          arr = arr.filter(x=>x!=='any');
+          arr = arr.includes(id) ? arr.filter(x=>x!==id) : [...arr, id];
+        }
+        conciergeAnswers[q.id] = arr;
+        renderConciergeStep();
+      });
+    });
+    const backBtn = document.getElementById('conciergeBackBtn');
+    if(backBtn) backBtn.addEventListener('click', ()=>{ conciergeStep--; renderConciergeStep(); });
+    const nextBtn = document.getElementById('conciergeNextBtn');
+    if(nextBtn) nextBtn.addEventListener('click', ()=>{
+      conciergeStep++;
+      if(conciergeStep >= CONCIERGE_QUESTIONS.length) renderConciergeResults();
+      else renderConciergeStep();
+    });
+  } else if(q.type === 'favorites'){
+    conciergeBody.innerHTML = `
+      <div class="concierge-progress">Question ${conciergeStep+1} of ${CONCIERGE_QUESTIONS.length} (optional)</div>
+      <div class="concierge-dots">${conciergeDotsHtml()}</div>
+      <div class="concierge-question">${q.prompt}</div>
+      <div class="concierge-fav-search">
+        <input type="text" id="conciergeFavInput" placeholder="${conciergeFavorites.length>=3?'Got 3 — nice picks!':'Search for a movie…'}" autocomplete="off" ${conciergeFavorites.length>=3?'disabled':''}>
+        <div class="dropdown hidden" id="conciergeFavDropdown"></div>
+      </div>
+      <div class="concierge-fav-hint">Totally optional — skip ahead if you'd rather not.</div>
+      <div class="concierge-fav-tags" id="conciergeFavTags">${conciergeFavTagsHtml()}</div>
+      <div class="concierge-nav">
+        <button class="ghost-btn" id="conciergeBackBtn">◀ Back</button>
+        <button class="ghost-btn" id="conciergeFinishBtn">See my pick ▶</button>
+      </div>
+    `;
+    const input = document.getElementById('conciergeFavInput');
+    const dropdown = document.getElementById('conciergeFavDropdown');
+    input.addEventListener('input', ()=>{
+      const query = input.value.trim().toLowerCase();
+      if(!query){ dropdown.classList.add('hidden'); dropdown.innerHTML=''; return; }
+      const chosenTitles = new Set(conciergeFavorites.map(f=>f.title));
+      const matches = MOVIES.filter(m=>m.title.toLowerCase().includes(query) && !chosenTitles.has(m.title)).slice(0,8);
+      if(!matches.length){ dropdown.classList.add('hidden'); dropdown.innerHTML=''; return; }
+      dropdown.innerHTML = matches.map(m=>`<div class="dropdown-item" data-title="${m.title.replace(/"/g,'&quot;')}">${m.title} (${m.year})</div>`).join('');
+      dropdown.classList.remove('hidden');
+    });
+    dropdown.addEventListener('click', (e)=>{
+      const item = e.target.closest('.dropdown-item');
+      if(!item) return;
+      if(conciergeFavorites.length >= 3) return;
+      const movie = MOVIES.find(m=>m.title === item.dataset.title);
+      if(movie && !conciergeFavorites.some(f=>f.title===movie.title)) conciergeFavorites.push(movie);
+      input.value = '';
+      dropdown.classList.add('hidden'); dropdown.innerHTML = '';
+      renderConciergeStep();
+    });
+    document.getElementById('conciergeFavTags').addEventListener('click', (e)=>{
+      const btn = e.target.closest('button[data-remove]');
+      if(!btn) return;
+      conciergeFavorites = conciergeFavorites.filter(f=>f.title !== btn.dataset.remove);
+      renderConciergeStep();
+    });
+    document.getElementById('conciergeBackBtn').addEventListener('click', ()=>{ conciergeStep--; renderConciergeStep(); });
+    document.getElementById('conciergeFinishBtn').addEventListener('click', renderConciergeResults);
+  }
+}
+function conciergeFavTagsHtml(){
+  return conciergeFavorites.map(f=>`<span class="concierge-fav-tag">${f.title}<button type="button" data-remove="${f.title.replace(/"/g,'&quot;')}">✕</button></span>`).join('');
+}
+
+function conciergePosterHtml(idAttr, title){
+  return `<img id="${idAttr}" alt="${title.replace(/"/g,'&quot;')}" style="display:none;"><div class="cover-placeholder" id="${idAttr}Placeholder">🎬</div>`;
+}
+function conciergeLoadPoster(imgId, placeholderId, title, year){
+  fetchMoviePoster(title, year).then(url=>{
+    const img = document.getElementById(imgId);
+    const ph = document.getElementById(placeholderId);
+    if(!img) return;
+    if(url){ img.src = url; img.style.display = ''; if(ph) ph.style.display = 'none'; }
+  });
+}
+
+function conciergeMovieSoundtrackEntry(title){
+  return MOVIE_SOUNDTRACK_POOL.find(e=>e.title === title) || null;
+}
+
+function renderConciergeResults(){
+  conciergeStopSoundtrack();
+  conciergeResult = computeConciergeResult();
+  const { pick, runners } = conciergeResult;
+  const p = pick.movie;
+  const soundtrackEntry = conciergeMovieSoundtrackEntry(p.title);
+  conciergeBody.innerHTML = `
+    <div class="concierge-results">
+      <div class="concierge-result-label">🎯 YOUR NEXT WATCH</div>
+      <div class="concierge-hero-card">
+        <div class="concierge-hero-cover">${conciergePosterHtml('conciergeHeroCover', p.title)}</div>
+        <div class="concierge-hero-info">
+          <div class="concierge-hero-title">${p.title}</div>
+          <div class="concierge-hero-meta">${p.year} · ${p.studio} · ${p.rated}</div>
+          <div class="concierge-hero-pills">
+            ${p.genres.map(g=>`<span class="pill">${g}</span>`).join('')}
+          </div>
+          <div class="concierge-hero-stats">⭐ ${p.score}/100 critics score · 💰 $${p.gross}M gross</div>
+          ${pick.reasons.length ? `<div class="concierge-hero-why">Why this pick: ${pick.reasons.join(' · ')}</div>` : ''}
+          <div class="concierge-soundtrack" id="conciergeHeroSoundtrack" style="${soundtrackEntry?'':'display:none;'}">
+            <button type="button" id="conciergeSoundtrackBtn">▶ Preview soundtrack</button>
+          </div>
+        </div>
+      </div>
+      <div class="concierge-runners-label">Also worth a look</div>
+      <div class="concierge-runners">
+        ${runners.map((r,i)=>`
+          <div class="concierge-runner-card">
+            <div class="concierge-runner-cover">${conciergePosterHtml('conciergeRunnerCover'+i, r.movie.title)}</div>
+            <div class="concierge-runner-info">
+              <div class="concierge-runner-title">${r.movie.title}</div>
+              <div class="concierge-runner-why">${r.reasons.length ? 'Matches: ' + r.reasons.join(', ') : r.movie.year + ' · ' + r.movie.genres.join('/')}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="concierge-nav">
+        <button class="ghost-btn" id="conciergeRestartBtn">🔄 Start Over</button>
+        <button class="ghost-btn" id="conciergeCloseResultsBtn">Close</button>
+      </div>
+    </div>
+  `;
+  conciergeLoadPoster('conciergeHeroCover', 'conciergeHeroCoverPlaceholder', p.title, p.year);
+  runners.forEach((r,i)=> conciergeLoadPoster('conciergeRunnerCover'+i, 'conciergeRunnerCover'+i+'Placeholder', r.movie.title, r.movie.year));
+
+  if(soundtrackEntry){
+    const btn = document.getElementById('conciergeSoundtrackBtn');
+    btn.addEventListener('click', ()=> conciergeToggleSoundtrack(soundtrackEntry, btn));
+  }
+  document.getElementById('conciergeRestartBtn').addEventListener('click', openConciergeModal);
+  document.getElementById('conciergeCloseResultsBtn').addEventListener('click', closeConciergeModal);
+}
+
+async function conciergeToggleSoundtrack(entry, btn){
+  if(conciergePlaying){
+    conciergeStopSoundtrack();
+    btn.textContent = '▶ Preview soundtrack';
+    return;
+  }
+  btn.textContent = '⏳ Loading…';
+  stAudioStop();
+  const url = await fetchSoundtrackPreview(entry);
+  if(!url){ btn.textContent = 'Preview unavailable'; return; }
+  stAudio.src = url;
+  stAudio.currentTime = 0;
+  const playPromise = stAudio.play();
+  if(playPromise && playPromise.catch) playPromise.catch(()=>{});
+  conciergePlaying = true;
+  btn.textContent = '⏸ Pause preview';
+}
+stAudio.addEventListener('ended', ()=>{
+  if(conciergePlaying){
+    conciergePlaying = false;
+    const btn = document.getElementById('conciergeSoundtrackBtn');
+    if(btn) btn.textContent = '▶ Preview soundtrack';
+  }
+});
 
 applyCodeUnlockState();
 applyChaosUnlockState();

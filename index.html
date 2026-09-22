@@ -1329,6 +1329,90 @@
      from the other regardless of anything else that might apply to either. */
   #chronicleHintTop, #chronicleHintBottom { color: #ffffff; }
   body.light-mode #chronicleHintTop, body.light-mode #chronicleHintBottom { color: #000000; }
+
+  /* ---------- Cartridge Concierge (question-based game picker, an Extras tool) ---------- */
+  #conciergeModal .modal-box { max-width: 640px; }
+  .concierge-progress {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 6px;
+  }
+  .concierge-dots { display: flex; gap: 6px; margin-bottom: 16px; }
+  .concierge-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--panel-2); border: 1px solid var(--line); transition: background .15s, border-color .15s; }
+  .concierge-dot.done { background: var(--cyan); border-color: var(--cyan); }
+  .concierge-dot.current { background: var(--magenta); border-color: var(--magenta); }
+  .concierge-question {
+    font-family: 'Space Grotesk', sans-serif; font-size: 19px; font-weight: 700; color: var(--text);
+    margin-bottom: 16px; line-height: 1.35;
+  }
+  .concierge-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+  .concierge-chip {
+    padding: 11px 16px; background: var(--panel-2); border: 2px solid var(--line); border-radius: 10px;
+    color: var(--text); font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: border-color .15s, color .15s, transform .1s, box-shadow .15s;
+  }
+  .concierge-chip:hover { border-color: var(--cyan); color: var(--cyan); transform: translateY(-1px); }
+  .concierge-chip.selected { border-color: var(--lime); color: var(--lime); box-shadow: 0 0 14px rgba(168,255,62,0.35); }
+  .concierge-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 4px; }
+  .concierge-fav-search { position: relative; margin-bottom: 12px; }
+  .concierge-fav-search input {
+    width: 100%; padding: 14px 16px; background: var(--panel); border: 2px solid var(--line);
+    border-radius: 8px; color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 15px; outline: none;
+    transition: border-color .15s;
+  }
+  .concierge-fav-search input:focus { border-color: var(--cyan); }
+  .concierge-fav-search input:disabled { opacity: 0.5; }
+  .concierge-fav-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; min-height: 4px; }
+  .concierge-fav-tag {
+    display: flex; align-items: center; gap: 8px; padding: 7px 8px 7px 12px; background: var(--panel-2);
+    border: 1px solid var(--cyan); color: var(--cyan); border-radius: 999px; font-family: 'IBM Plex Mono', monospace; font-size: 13px;
+  }
+  .concierge-fav-tag button { background: none; border: none; color: var(--cyan); cursor: pointer; font-size: 13px; line-height: 1; padding: 2px; }
+  .concierge-fav-hint { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-dim); margin: -6px 0 14px; }
+  .concierge-hero-card { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 20px; }
+  .concierge-hero-cover {
+    flex: 0 0 auto; width: 150px; height: 200px; border-radius: 10px; overflow: hidden; position: relative;
+    background: var(--panel-2); border: 2px solid var(--lime); box-shadow: 0 0 20px rgba(168,255,62,0.3);
+  }
+  .concierge-hero-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .concierge-hero-cover .cover-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+  .concierge-hero-info { flex: 1 1 auto; min-width: 0; }
+  .concierge-result-label {
+    font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--lime); margin-bottom: 12px;
+    text-shadow: 0 0 8px rgba(168,255,62,0.5);
+  }
+  .concierge-hero-title { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+  .concierge-hero-meta { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-dim); margin-bottom: 10px; }
+  .concierge-hero-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .concierge-hero-pills .pill {
+    padding: 4px 10px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text);
+  }
+  .concierge-hero-stats { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--text); margin-bottom: 10px; line-height: 1.6; }
+  .concierge-hero-blurb { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--text-dim); line-height: 1.6; margin-bottom: 10px; }
+  .concierge-hero-why { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--cyan); margin-bottom: 12px; }
+  .concierge-soundtrack button {
+    padding: 8px 14px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px;
+    color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 12px; cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+  .concierge-soundtrack button:hover { border-color: var(--lime); color: var(--lime); }
+  .concierge-runners-label {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 10px;
+  }
+  .concierge-runners { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+  .concierge-runner-card {
+    display: flex; gap: 12px; align-items: center; padding: 10px; background: var(--panel-2);
+    border: 1px solid var(--line); border-radius: 10px;
+  }
+  .concierge-runner-cover {
+    flex: 0 0 auto; width: 46px; height: 62px; border-radius: 6px; overflow: hidden; background: var(--panel);
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .concierge-runner-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .concierge-runner-info { flex: 1 1 auto; min-width: 0; }
+  .concierge-runner-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; color: var(--text); }
+  .concierge-runner-why { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-dim); margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -1387,6 +1471,10 @@
     <button class="side-menu-item" id="menuCupBtn">
       <span class="side-menu-icon">🏆</span>
       <span class="side-menu-label">Cartridge Cup</span>
+    </button>
+    <button class="side-menu-item" id="menuConciergeBtn">
+      <span class="side-menu-icon">🧭</span>
+      <span class="side-menu-label">Cartridge Concierge</span>
     </button>
     <hr class="side-menu-divider">
     <button class="side-menu-item" id="menuMoviesBtn">
@@ -1946,6 +2034,14 @@
         <button class="ghost-btn" id="cupCloseBtn">Close</button>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="conciergeModal">
+  <div class="modal-box">
+    <button class="modal-close" id="conciergeModalClose">✕</button>
+    <div class="modal-title">CARTRIDGE CONCIERGE</div>
+    <div id="conciergeBody"></div>
   </div>
 </div>
 
@@ -10312,7 +10408,392 @@ cupYearsBackBtn.addEventListener('click', showCupCategoriesList);
 cupCloseBtn.addEventListener('click', showCupHome);
 document.getElementById('cupPageMarquee').addEventListener('click', showHomeScreen);
 
+// ---------- Cartridge Concierge (an Extras tool — a short quiz that
+// recommends a game to play next, using the same GAMES database as the
+// rest of the site). Not a daily/streak game: no archive, no scoring
+// against other players, just a one-off "answer some questions, get a
+// pick" flow that can be replayed instantly with different answers. ----------
 
+const CONCIERGE_PLATFORM_OPTIONS = [
+  { id:'PC', label:'PC' },
+  { id:'PlayStation', label:'PlayStation' },
+  { id:'Xbox', label:'Xbox' },
+  { id:'Switch', label:'Switch' },
+  { id:'Mobile', label:'Mobile' },
+  { id:'Handheld', label:'Handheld' },
+  { id:'Wii', label:'Wii / Wii U' },
+  { id:'Retro', label:'Retro' },
+  { id:'any', label:"Doesn't matter" },
+];
+const CONCIERGE_GENRE_GROUPS = [
+  { id:'action', label:'Action & Adventure', match:['Action-Adventure','Action','Adventure','Open World'] },
+  { id:'rpg', label:'RPG', match:['RPG','Action RPG','MMORPG'] },
+  { id:'shooter', label:'Shooter', match:['FPS','Shooter','Battle Royale'] },
+  { id:'strategy', label:'Strategy', match:['Strategy','MOBA'] },
+  { id:'sim', label:'Simulation & Sandbox', match:['Simulation','Sandbox','Farming','Survival'] },
+  { id:'puzzle', label:'Puzzle', match:['Puzzle'] },
+  { id:'horror', label:'Horror & Stealth', match:['Horror','Stealth'] },
+  { id:'sportsracing', label:'Sports & Racing', match:['Sports','Racing'] },
+  { id:'partyfight', label:'Party & Fighting', match:['Party','Fighting','Co-op'] },
+  { id:'any', label:'Surprise me', match:null },
+];
+const CONCIERGE_LENGTH_BUCKETS = [
+  { id:'short', label:'One sitting (under 3 hrs)', min:0, max:3 },
+  { id:'medium', label:'A weekend (3–15 hrs)', min:3, max:15 },
+  { id:'long', label:'A few weeks (15–40 hrs)', min:15, max:40 },
+  { id:'epic', label:'A new obsession (40+ hrs)', min:40, max:Infinity },
+  { id:'any', label:"Doesn't matter", min:null, max:null },
+];
+const CONCIERGE_MODE_OPTIONS = [
+  { id:'solo', label:'Solo', mode:'Single-Player' },
+  { id:'coop', label:'Co-op with a friend', mode:'Co-op' },
+  { id:'competitive', label:'Competitive multiplayer', mode:'Multiplayer' },
+  { id:'any', label:"Doesn't matter", mode:null },
+];
+const CONCIERGE_PERSPECTIVE_OPTIONS = [
+  { id:'first', label:'First-person', match:['First-Person','First/Third-Person','VR'] },
+  { id:'third', label:'Third-person', match:['Third-Person','First/Third-Person'] },
+  { id:'topdown', label:'Top-down / side-scrolling', match:['Top-Down','Side-Scrolling','Side-View','Isometric','Fixed Camera'] },
+  { id:'any', label:"Doesn't matter", match:null },
+];
+const CONCIERGE_QUALITY_TIERS = [
+  { id:'best', label:'Only the best (critically acclaimed)', min:88 },
+  { id:'great', label:'Great is good enough', min:72 },
+  { id:'any', label:"Doesn't matter", min:0 },
+];
+const CONCIERGE_ERA_TIERS = [
+  { id:'retro', label:'Retro classics (pre-2005)', min:-Infinity, max:2004 },
+  { id:'mid', label:'2000s–2010s', min:2005, max:2017 },
+  { id:'recent', label:'Recent (2018+)', min:2018, max:Infinity },
+  { id:'any', label:"Doesn't matter", min:-Infinity, max:Infinity },
+];
+
+const CONCIERGE_QUESTIONS = [
+  { id:'platform', prompt:'What are you playing on?', type:'chips', options:CONCIERGE_PLATFORM_OPTIONS },
+  { id:'genre', prompt:'What genre are you in the mood for?', type:'chips', options:CONCIERGE_GENRE_GROUPS },
+  { id:'length', prompt:'How much time do you want to sink into it?', type:'chips', options:CONCIERGE_LENGTH_BUCKETS },
+  { id:'mode', prompt:"Who's playing?", type:'chips', options:CONCIERGE_MODE_OPTIONS },
+  { id:'perspective', prompt:'How do you like to play?', type:'chips', options:CONCIERGE_PERSPECTIVE_OPTIONS },
+  { id:'quality', prompt:'Critically acclaimed, or open to a hidden gem?', type:'chips', options:CONCIERGE_QUALITY_TIERS },
+  { id:'era', prompt:'Any era you\'re leaning toward?', type:'chips', options:CONCIERGE_ERA_TIERS },
+  { id:'favorites', prompt:"Name up to 3 games you love — we'll use them to fine-tune your pick.", type:'favorites' },
+];
+
+let conciergeStep = 0;
+let conciergeAnswers = {};
+let conciergeFavorites = [];
+let conciergeResult = null;
+let conciergeAudioEntry = null;
+let conciergePlaying = false;
+
+const conciergeModal = document.getElementById('conciergeModal');
+const conciergeModalClose = document.getElementById('conciergeModalClose');
+const conciergeBody = document.getElementById('conciergeBody');
+const menuConciergeBtn = document.getElementById('menuConciergeBtn');
+
+function conciergeStopSoundtrack(){
+  conciergePlaying = false;
+  try{ cassetteAudio.pause(); }catch(e){}
+}
+
+function openConciergeModal(){
+  conciergeStep = 0;
+  conciergeAnswers = {};
+  conciergeFavorites = [];
+  conciergeResult = null;
+  conciergeModal.classList.add('show');
+  renderConciergeStep();
+}
+function closeConciergeModal(){
+  conciergeStopSoundtrack();
+  conciergeModal.classList.remove('show');
+}
+conciergeModalClose.addEventListener('click', closeConciergeModal);
+conciergeModal.addEventListener('click', (e)=>{ if(e.target === conciergeModal) closeConciergeModal(); });
+menuConciergeBtn.addEventListener('click', ()=>{
+  closeSideMenu();
+  openConciergeModal();
+});
+
+function deriveGameModes(game){
+  const g = new Set(game.genres);
+  const modes = new Set(['Single-Player']);
+  const onlineOnly = ['Battle Royale','MOBA','MMORPG'];
+  if(onlineOnly.some(x=>g.has(x))) modes.delete('Single-Player');
+  if(g.has('Co-op') || g.has('Party') || g.has('Sports') || g.has('Racing') || g.has('Fighting')) modes.add('Co-op');
+  if(onlineOnly.some(x=>g.has(x)) || g.has('FPS') || g.has('Shooter')) modes.add('Multiplayer');
+  return modes;
+}
+
+function conciergeMatchesPlatform(game, ans){
+  if(!ans || ans === 'any') return true;
+  if(ans === 'Wii') return game.platforms.includes('Wii') || game.platforms.includes('Wii U');
+  return game.platforms.includes(ans);
+}
+// Answers are now arrays (multiple picks allowed per question), so every
+// criterion loops over whichever option ids were selected and adds credit
+// for each one the game satisfies — 'any'/empty means "skip this question".
+function conciergeAnswerIds(qid){
+  const arr = conciergeAnswers[qid];
+  return (arr && arr.length && !arr.includes('any')) ? arr : [];
+}
+
+function scoreGame(game){
+  let score = 0;
+  const reasons = [];
+  const modes = deriveGameModes(game);
+
+  conciergeAnswerIds('platform').forEach(id=>{
+    if(conciergeMatchesPlatform(game, id)){ score += 4; reasons.push(CONCIERGE_PLATFORM_OPTIONS.find(o=>o.id===id).label); }
+  });
+
+  conciergeAnswerIds('genre').forEach(id=>{
+    const grp = CONCIERGE_GENRE_GROUPS.find(o=>o.id===id);
+    if(grp && grp.match.some(m=>game.genres.includes(m))){ score += 5; reasons.push(grp.label); }
+  });
+
+  conciergeAnswerIds('length').forEach(id=>{
+    const bucket = CONCIERGE_LENGTH_BUCKETS.find(o=>o.id===id);
+    if(bucket && game.hours >= bucket.min && game.hours <= bucket.max){ score += 4; reasons.push(bucket.label); }
+  });
+
+  conciergeAnswerIds('mode').forEach(id=>{
+    const opt = CONCIERGE_MODE_OPTIONS.find(o=>o.id===id);
+    if(opt && modes.has(opt.mode)){ score += 4; reasons.push(opt.label); }
+  });
+
+  conciergeAnswerIds('perspective').forEach(id=>{
+    const opt = CONCIERGE_PERSPECTIVE_OPTIONS.find(o=>o.id===id);
+    if(opt && game.perspective && opt.match.includes(game.perspective)){ score += 3; reasons.push(opt.label); }
+  });
+
+  conciergeAnswerIds('quality').forEach(id=>{
+    const tier = CONCIERGE_QUALITY_TIERS.find(o=>o.id===id);
+    if(tier && game.critic >= tier.min){ score += 3; }
+  });
+
+  conciergeAnswerIds('era').forEach(id=>{
+    const tier = CONCIERGE_ERA_TIERS.find(o=>o.id===id);
+    if(tier && game.year >= tier.min && game.year <= tier.max){ score += 3; reasons.push(tier.label); }
+  });
+
+  // Favorites: bonus for sharing genres/publisher/perspective/platform with
+  // any of the up to-3 games the person said they already love.
+  conciergeFavorites.forEach(fav=>{
+    if(!fav || fav.title === game.title) return;
+    const shared = fav.genres.filter(g=>game.genres.includes(g));
+    if(shared.length) score += Math.min(shared.length, 3) * 2;
+    if(fav.publisher === game.publisher) score += 3;
+    if(fav.perspective && fav.perspective === game.perspective) score += 1;
+    if(fav.platforms.some(p=>game.platforms.includes(p))) score += 1;
+  });
+
+  score += Math.random() * 0.01; // tiny jitter to vary near-ties between runs
+  return { game, score, reasons: [...new Set(reasons)] };
+}
+
+function computeConciergeResult(){
+  const favTitles = new Set(conciergeFavorites.map(f=>f.title));
+  const scored = GAMES
+    .filter(g=>!favTitles.has(g.title))
+    .map(scoreGame)
+    .sort((a,b)=>b.score - a.score);
+  return { pick: scored[0], runners: scored.slice(1, 4) };
+}
+
+function conciergeDotsHtml(){
+  return CONCIERGE_QUESTIONS.map((q,i)=>{
+    const cls = i < conciergeStep ? 'done' : (i === conciergeStep ? 'current' : '');
+    return `<span class="concierge-dot ${cls}"></span>`;
+  }).join('');
+}
+
+function renderConciergeStep(){
+  const q = CONCIERGE_QUESTIONS[conciergeStep];
+  if(q.type === 'chips'){
+    const selected = conciergeAnswers[q.id] || [];
+    conciergeBody.innerHTML = `
+      <div class="concierge-progress">Question ${conciergeStep+1} of ${CONCIERGE_QUESTIONS.length}</div>
+      <div class="concierge-dots">${conciergeDotsHtml()}</div>
+      <div class="concierge-question">${q.prompt}</div>
+      <div class="concierge-fav-hint">Pick as many as apply.</div>
+      <div class="concierge-chips">
+        ${q.options.map(o=>`<button class="concierge-chip${selected.includes(o.id)?' selected':''}" data-id="${o.id}">${o.label}</button>`).join('')}
+      </div>
+      <div class="concierge-nav">
+        <button class="ghost-btn" id="conciergeBackBtn" ${conciergeStep===0?'disabled':''}>◀ Back</button>
+        <button class="ghost-btn" id="conciergeNextBtn">Next ▶</button>
+      </div>
+    `;
+    conciergeBody.querySelectorAll('.concierge-chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.dataset.id;
+        let arr = conciergeAnswers[q.id] || [];
+        if(id === 'any'){
+          arr = arr.includes('any') ? [] : ['any'];
+        } else {
+          arr = arr.filter(x=>x!=='any');
+          arr = arr.includes(id) ? arr.filter(x=>x!==id) : [...arr, id];
+        }
+        conciergeAnswers[q.id] = arr;
+        renderConciergeStep();
+      });
+    });
+    const backBtn = document.getElementById('conciergeBackBtn');
+    if(backBtn) backBtn.addEventListener('click', ()=>{ conciergeStep--; renderConciergeStep(); });
+    const nextBtn = document.getElementById('conciergeNextBtn');
+    if(nextBtn) nextBtn.addEventListener('click', ()=>{
+      conciergeStep++;
+      if(conciergeStep >= CONCIERGE_QUESTIONS.length) renderConciergeResults();
+      else renderConciergeStep();
+    });
+  } else if(q.type === 'favorites'){
+    conciergeBody.innerHTML = `
+      <div class="concierge-progress">Question ${conciergeStep+1} of ${CONCIERGE_QUESTIONS.length} (optional)</div>
+      <div class="concierge-dots">${conciergeDotsHtml()}</div>
+      <div class="concierge-question">${q.prompt}</div>
+      <div class="concierge-fav-search">
+        <input type="text" id="conciergeFavInput" placeholder="${conciergeFavorites.length>=3?'Got 3 — nice picks!':'Search for a game…'}" autocomplete="off" ${conciergeFavorites.length>=3?'disabled':''}>
+        <div class="dropdown hidden" id="conciergeFavDropdown"></div>
+      </div>
+      <div class="concierge-fav-hint">Totally optional — skip ahead if you'd rather not.</div>
+      <div class="concierge-fav-tags" id="conciergeFavTags">${conciergeFavTagsHtml()}</div>
+      <div class="concierge-nav">
+        <button class="ghost-btn" id="conciergeBackBtn">◀ Back</button>
+        <button class="ghost-btn" id="conciergeFinishBtn">See my pick ▶</button>
+      </div>
+    `;
+    const input = document.getElementById('conciergeFavInput');
+    const dropdown = document.getElementById('conciergeFavDropdown');
+    input.addEventListener('input', ()=>{
+      const query = input.value.trim().toLowerCase();
+      if(!query){ dropdown.classList.add('hidden'); dropdown.innerHTML=''; return; }
+      const chosenTitles = new Set(conciergeFavorites.map(f=>f.title));
+      const matches = rankTitleMatches(GAMES, query).filter(g=>!chosenTitles.has(g.title)).slice(0,8);
+      if(!matches.length){ dropdown.classList.add('hidden'); dropdown.innerHTML=''; return; }
+      dropdown.innerHTML = matches.map(g=>`<div class="dropdown-item" data-title="${g.title.replace(/"/g,'&quot;')}">${g.title}</div>`).join('');
+      dropdown.classList.remove('hidden');
+    });
+    dropdown.addEventListener('click', (e)=>{
+      const item = e.target.closest('.dropdown-item');
+      if(!item) return;
+      if(conciergeFavorites.length >= 3) return;
+      const game = GAMES.find(g=>g.title === item.dataset.title);
+      if(game && !conciergeFavorites.some(f=>f.title===game.title)) conciergeFavorites.push(game);
+      input.value = '';
+      dropdown.classList.add('hidden'); dropdown.innerHTML = '';
+      renderConciergeStep();
+    });
+    document.getElementById('conciergeFavTags').addEventListener('click', (e)=>{
+      const btn = e.target.closest('button[data-remove]');
+      if(!btn) return;
+      conciergeFavorites = conciergeFavorites.filter(f=>f.title !== btn.dataset.remove);
+      renderConciergeStep();
+    });
+    document.getElementById('conciergeBackBtn').addEventListener('click', ()=>{ conciergeStep--; renderConciergeStep(); });
+    document.getElementById('conciergeFinishBtn').addEventListener('click', renderConciergeResults);
+  }
+}
+function conciergeFavTagsHtml(){
+  return conciergeFavorites.map(f=>`<span class="concierge-fav-tag">${f.title}<button type="button" data-remove="${f.title.replace(/"/g,'&quot;')}">✕</button></span>`).join('');
+}
+
+function conciergeGameCoverHtml(idAttr, title){
+  return `<img id="${idAttr}" alt="${title.replace(/"/g,'&quot;')}" style="display:none;"><div class="cover-placeholder" id="${idAttr}Placeholder">🎮</div>`;
+}
+function conciergeLoadCover(imgId, placeholderId, title){
+  fetchCoverArt(title).then(url=>{
+    const img = document.getElementById(imgId);
+    const ph = document.getElementById(placeholderId);
+    if(!img) return;
+    if(url){ img.src = url; img.style.display = ''; if(ph) ph.style.display = 'none'; }
+  });
+}
+
+function conciergeGameSoundtrackEntry(title){
+  return GAME_SOUNDTRACK_POOL.find(e=>e.title === title) || null;
+}
+
+function renderConciergeResults(){
+  conciergeStopSoundtrack();
+  conciergeResult = computeConciergeResult();
+  const { pick, runners } = conciergeResult;
+  const p = pick.game;
+  const soundtrackEntry = conciergeGameSoundtrackEntry(p.title);
+  conciergeBody.innerHTML = `
+    <div class="concierge-results">
+      <div class="concierge-result-label">🎯 YOUR NEXT GAME</div>
+      <div class="concierge-hero-card">
+        <div class="concierge-hero-cover">${conciergeGameCoverHtml('conciergeHeroCover', p.title)}</div>
+        <div class="concierge-hero-info">
+          <div class="concierge-hero-title">${p.title}</div>
+          <div class="concierge-hero-meta">${p.year} · ${p.publisher}</div>
+          <div class="concierge-hero-pills">
+            ${p.genres.map(g=>`<span class="pill">${g}</span>`).join('')}
+            ${p.platforms.map(pl=>`<span class="pill">${pl}</span>`).join('')}
+          </div>
+          <div class="concierge-hero-stats">⭐ ${p.critic}/100 critic score · ⏱ ~${p.hours} hrs to beat · 🎮 ${p.perspective || 'Various'}</div>
+          <div class="concierge-hero-blurb">${p.clueText || ''}</div>
+          ${pick.reasons.length ? `<div class="concierge-hero-why">Why this pick: ${pick.reasons.join(' · ')}</div>` : ''}
+          <div class="concierge-soundtrack" id="conciergeHeroSoundtrack" style="${soundtrackEntry?'':'display:none;'}">
+            <button type="button" id="conciergeSoundtrackBtn">▶ Preview soundtrack</button>
+          </div>
+        </div>
+      </div>
+      <div class="concierge-runners-label">Also worth a look</div>
+      <div class="concierge-runners">
+        ${runners.map((r,i)=>`
+          <div class="concierge-runner-card">
+            <div class="concierge-runner-cover">${conciergeGameCoverHtml('conciergeRunnerCover'+i, r.game.title)}</div>
+            <div class="concierge-runner-info">
+              <div class="concierge-runner-title">${r.game.title}</div>
+              <div class="concierge-runner-why">${r.reasons.length ? 'Matches: ' + r.reasons.join(', ') : r.game.year + ' · ' + r.game.genres.join('/')}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="concierge-nav">
+        <button class="ghost-btn" id="conciergeRestartBtn">🔄 Start Over</button>
+        <button class="ghost-btn" id="conciergeCloseResultsBtn">Close</button>
+      </div>
+    </div>
+  `;
+  conciergeLoadCover('conciergeHeroCover', 'conciergeHeroCoverPlaceholder', p.title);
+  runners.forEach((r,i)=> conciergeLoadCover('conciergeRunnerCover'+i, 'conciergeRunnerCover'+i+'Placeholder', r.game.title));
+
+  if(soundtrackEntry){
+    const btn = document.getElementById('conciergeSoundtrackBtn');
+    btn.addEventListener('click', ()=> conciergeToggleSoundtrack(soundtrackEntry, btn));
+  }
+  document.getElementById('conciergeRestartBtn').addEventListener('click', openConciergeModal);
+  document.getElementById('conciergeCloseResultsBtn').addEventListener('click', closeConciergeModal);
+}
+
+async function conciergeToggleSoundtrack(entry, btn){
+  if(conciergePlaying){
+    conciergeStopSoundtrack();
+    btn.textContent = '▶ Preview soundtrack';
+    return;
+  }
+  btn.textContent = '⏳ Loading…';
+  cassetteAudioStop();
+  const url = await fetchGameSoundtrackPreview(entry);
+  if(!url){ btn.textContent = 'Preview unavailable'; return; }
+  cassetteAudio.src = url;
+  cassetteAudio.currentTime = 0;
+  const playPromise = cassetteAudio.play();
+  if(playPromise && playPromise.catch) playPromise.catch(()=>{});
+  conciergePlaying = true;
+  conciergeAudioEntry = entry;
+  btn.textContent = '⏸ Pause preview';
+}
+cassetteAudio.addEventListener('ended', ()=>{
+  if(conciergePlaying){
+    conciergePlaying = false;
+    const btn = document.getElementById('conciergeSoundtrackBtn');
+    if(btn) btn.textContent = '▶ Preview soundtrack';
+  }
+});
 
 // ---------- Games menu (hamburger + side drawer) ----------
 
