@@ -9546,20 +9546,14 @@ const ST_PREVIEW_CACHE_KEY = 'movies_soundtrack_cache_v1';
 let stPreviewCache = {};
 try{ stPreviewCache = JSON.parse(localStorage.getItem(ST_PREVIEW_CACHE_KEY) || '{}'); }catch(e){ stPreviewCache = {}; }
 
-// Apple's iTunes Search API doesn't grant CORS to any origin (not just the
-// "null" origin file:// sends) — Apple's own docs call out JSONP (a dynamic
-// <script> tag + callback param) as the supported cross-domain method
-// instead, and that's confirmed by testing: on gamecartridge.co.uk, a real
-// https:// origin, a plain fetch() to this endpoint still fails everywhere
-// (not just iPhone), so JSONP is the only technique that actually works
-// here and is used directly, with no fetch() attempt first.
+// Cartridge Cinema is a single HTML file opened directly (file://), which
+// sends Origin: null on every request. iTunes' search endpoint doesn't grant
+// CORS to a null origin, so a plain fetch() is silently blocked there even
+// though it works fine on a real server. Apple's own docs call out JSONP
+// (a dynamic <script> tag + callback param) as the supported cross-domain
+// method, and script tags aren't subject to CORS/Origin checks at all, so
+// that's what we use here instead of fetch().
 let stJsonpCounter = 0;
-// Set by the JSONP call below to the most recent failure mode, so the
-// "Audio unavailable" screen can show *why* instead of just *that* — this
-// is the only diagnostic a player without a computer/dev-tools can report
-// back to us, which matters a lot on platforms (iPhone) we can't test on
-// directly ourselves.
-let stLastFailReason = null;
 function itunesJsonpSearch(term, timeoutMs){
   return new Promise((resolve) => {
     const cbName = '__stJsonpCb' + (stJsonpCounter++) + '_' + Date.now();
@@ -9580,14 +9574,12 @@ function itunesJsonpSearch(term, timeoutMs){
     timer = setTimeout(()=>{
       if(settled) return;
       settled = true;
-      stLastFailReason = 'timeout';
       cleanup();
       resolve(null);
     }, timeoutMs || 8000);
     script.onerror = function(){
       if(settled) return;
       settled = true;
-      stLastFailReason = 'script-blocked';
       cleanup();
       resolve(null);
     };
@@ -9603,7 +9595,6 @@ async function fetchSoundtrackPreview(entry){
   const cacheKey = entry.title + '::' + entry.searchTerm;
   if(Object.prototype.hasOwnProperty.call(stPreviewCache, cacheKey)) return stPreviewCache[cacheKey];
   try{
-    stLastFailReason = null;
     const data = await itunesJsonpSearch(entry.searchTerm);
     if(!data) throw new Error('iTunes JSONP request failed or timed out');
     const results = (data.results || []).filter(r => r.previewUrl);
@@ -9613,7 +9604,6 @@ async function fetchSoundtrackPreview(entry){
     }
     if(!match) match = results[0] || null;
     const previewUrl = match ? match.previewUrl : null;
-    if(!previewUrl) stLastFailReason = 'no-preview-in-results';
     stPreviewCache[cacheKey] = previewUrl;
     try{ localStorage.setItem(ST_PREVIEW_CACHE_KEY, JSON.stringify(stPreviewCache)); }catch(e){}
     return previewUrl;
@@ -9743,7 +9733,7 @@ function renderStRound(){
 
   const seconds = ST_CLIP_LENGTHS[Math.min(stAttempt, ST_CLIP_LENGTHS.length - 1)];
   stClipLengthLabel.textContent = stLoadState === 'loading' ? 'Loading clip…'
-    : stLoadState === 'unavailable' ? `Audio unavailable (${stLastFailReason || 'unknown'})`
+    : stLoadState === 'unavailable' ? 'Audio unavailable'
     : `▶ Play ${seconds}s clip`;
   stPlayClipBtn.disabled = stGameOver || stLoadState !== 'ready';
 

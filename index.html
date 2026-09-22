@@ -9514,20 +9514,14 @@ function currentCassetteStreak(){
   return streak;
 }
 
-// Apple's iTunes Search API doesn't grant CORS to any origin (not just the
-// "null" origin file:// sends) — Apple's own docs call out JSONP (a dynamic
-// <script> tag + callback param) as the supported cross-domain method
-// instead, and that's confirmed by testing: on gamecartridge.co.uk, a real
-// https:// origin, a plain fetch() to this endpoint still fails everywhere
-// (not just iPhone), so JSONP is the only technique that actually works
-// here and is used directly, with no fetch() attempt first.
+// Cartridge (and Cartridge Cinema) are single HTML files opened directly
+// (file://), which sends Origin: null on every request. iTunes' search
+// endpoint doesn't grant CORS to a null origin, so a plain fetch() is
+// silently blocked there even though it works fine on a real server.
+// Apple's own docs call out JSONP (a dynamic <script> tag + callback param)
+// as the supported cross-domain method, and script tags aren't subject to
+// CORS/Origin checks at all, so that's what we use here instead of fetch().
 let cassetteJsonpCounter = 0;
-// Set by the JSONP call below to the most recent failure mode, so the
-// "Audio unavailable" screen can show *why* instead of just *that* — this
-// is the only diagnostic a player without a computer/dev-tools can report
-// back to us, which matters a lot on platforms (iPhone) we can't test on
-// directly ourselves.
-let cassetteLastFailReason = null;
 function cassetteJsonpSearch(term, timeoutMs){
   return new Promise((resolve) => {
     const cbName = '__cassJsonpCb' + (cassetteJsonpCounter++) + '_' + Date.now();
@@ -9548,14 +9542,12 @@ function cassetteJsonpSearch(term, timeoutMs){
     timer = setTimeout(()=>{
       if(settled) return;
       settled = true;
-      cassetteLastFailReason = 'timeout';
       cleanup();
       resolve(null);
     }, timeoutMs || 8000);
     script.onerror = function(){
       if(settled) return;
       settled = true;
-      cassetteLastFailReason = 'script-blocked';
       cleanup();
       resolve(null);
     };
@@ -9575,7 +9567,6 @@ async function fetchGameSoundtrackPreview(entry){
   const cacheKey = entry.title + '::' + entry.searchTerm;
   if(Object.prototype.hasOwnProperty.call(cassettePreviewCache, cacheKey)) return cassettePreviewCache[cacheKey];
   try{
-    cassetteLastFailReason = null;
     const data = await cassetteJsonpSearch(entry.searchTerm);
     if(!data) throw new Error('iTunes JSONP request failed or timed out');
     const results = (data.results || []).filter(r => r.previewUrl);
@@ -9585,7 +9576,6 @@ async function fetchGameSoundtrackPreview(entry){
     }
     if(!match) match = results[0] || null;
     const previewUrl = match ? match.previewUrl : null;
-    if(!previewUrl) cassetteLastFailReason = 'no-preview-in-results';
     cassettePreviewCache[cacheKey] = previewUrl;
     try{ localStorage.setItem(CASSETTE_PREVIEW_CACHE_KEY, JSON.stringify(cassettePreviewCache)); }catch(e){}
     return previewUrl;
@@ -9721,7 +9711,7 @@ function renderCassetteRound(){
     cassetteClipLengthLabel.textContent = 'Loading clip…';
     cassettePlayClipBtn.disabled = true;
   } else if(cassetteLoadState === 'unavailable'){
-    cassetteClipLengthLabel.textContent = `Audio unavailable (${cassetteLastFailReason || 'unknown'})`;
+    cassetteClipLengthLabel.textContent = 'Audio unavailable';
     cassettePlayClipBtn.disabled = true;
   } else {
     const secs = CASS_CLIP_LENGTHS[Math.min(cassetteAttempt, CASS_CLIP_LENGTHS.length - 1)];
