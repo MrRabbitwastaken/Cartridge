@@ -1598,6 +1598,14 @@
       <span class="side-menu-icon">🎥</span>
       <span class="side-menu-label">Cinema Chronicle</span>
     </button>
+    <button class="side-menu-item" id="movieMenuDfBtn">
+      <span class="side-menu-icon">🔗</span>
+      <span class="side-menu-label">Cinema Crosscut</span>
+    </button>
+    <button class="side-menu-item" id="movieMenuStBtn">
+      <span class="side-menu-icon">📼</span>
+      <span class="side-menu-label">Cinema Cassette</span>
+    </button>
     <button class="side-menu-item" id="movieMenuChaosBtn" style="display:none;">
       <span class="side-menu-icon">🍿</span>
       <span class="side-menu-label">Cinema Chaos</span>
@@ -1615,14 +1623,6 @@
     <button class="side-menu-item" id="movieMenuReviewBtn">
       <span class="side-menu-icon">⭐</span>
       <span class="side-menu-label">One-Star Reviews</span>
-    </button>
-    <button class="side-menu-item" id="movieMenuDfBtn">
-      <span class="side-menu-icon">🔗</span>
-      <span class="side-menu-label">Double Feature</span>
-    </button>
-    <button class="side-menu-item" id="movieMenuStBtn">
-      <span class="side-menu-icon">🎧</span>
-      <span class="side-menu-label">Name That Score</span>
     </button>
     <hr class="side-menu-divider">
     <button class="side-menu-item" id="movieMenuCartridgeBtn">
@@ -1701,12 +1701,12 @@
     </div>
 
     <div class="archive-game-section">
-      <div class="archive-game-heading" style="color:var(--coral);">Double Feature</div>
+      <div class="archive-game-heading" style="color:var(--coral);">Cinema Crosscut</div>
       <div class="archive-stats" id="movieStatsDf"></div>
     </div>
 
     <div class="archive-game-section">
-      <div class="archive-game-heading" style="color:var(--lime);">Name That Score</div>
+      <div class="archive-game-heading" style="color:var(--lime);">Cinema Cassette</div>
       <div class="archive-stats" id="movieStatsSt"></div>
     </div>
 
@@ -1744,7 +1744,7 @@
       </button>
     </div>
 
-    <div class="movie-hero-note">🎬 5 features playing now — flip with the arrows</div>
+    <div class="movie-hero-note" id="movieHeroNote">🎬 features playing now — flip with the arrows</div>
   </div>
 </div>
 
@@ -2211,7 +2211,7 @@
 <div class="modal-overlay page-mode" id="dfModal">
   <div class="wrap" style="max-width:640px;">
     <header>
-      <div class="marquee" id="dfPageMarquee" style="color:var(--coral);" title="Back to home">DOUBLE FEATURE</div>
+      <div class="marquee" id="dfPageMarquee" style="color:var(--coral);" title="Back to home">CINEMA CROSSCUT</div>
       <div class="tagline">Two movies, one hidden link. <b>Figure out what connects them.</b></div>
     </header>
 
@@ -2268,7 +2268,7 @@
 <div class="modal-overlay page-mode" id="stModal">
   <div class="wrap" style="max-width:640px;">
     <header>
-      <div class="marquee" id="stPageMarquee" style="color:var(--lime);" title="Back to home">NAME THAT SCORE</div>
+      <div class="marquee" id="stPageMarquee" style="color:var(--lime);" title="Back to home">CINEMA CASSETTE</div>
       <div class="tagline">One second of the score. <b>Guess the movie before it plays out.</b></div>
     </header>
 
@@ -2301,12 +2301,12 @@
         </div>
         <button id="stGuessBtn">GUESS</button>
       </div>
-      <div class="btn-row" style="justify-content:center;">
+      <div class="btn-row" style="justify-content:center; margin-bottom:14px;">
         <button class="ghost-btn" id="stSkipBtn">⏭ Skip</button>
         <button class="ghost-btn" id="stMcToggleBtn">🔀 Multiple Choice</button>
       </div>
-      <div id="stMcOptions" style="display:none; margin-top:10px;"></div>
-      <div class="charades-guess-history" id="stGuessHistory"></div>
+      <div id="stMcOptions" style="display:none; margin-bottom:14px;"></div>
+      <div class="charades-guess-history" id="stGuessHistory" style="margin-top:4px;"></div>
       <div class="msg" id="stMsg"></div>
       <div class="btn-row">
         <button class="ghost-btn" id="stGiveUpBtn">Give up😭</button>
@@ -3555,10 +3555,10 @@ const MOVIE_ACHIEVEMENTS = [
   { id: 'code_streak',      name: 'Code Streak',      icon: '🔥', hint: 'Reach a 3-day Cinema Code Daily streak.' },
   { id: 'review_critic',    name: 'One-Star Genius',  icon: '🌟', hint: 'Solve One-Star Reviews in a single guess.' },
   { id: 'review_streak',    name: 'Review Streak',    icon: '🔥', hint: 'Reach a 3-day One-Star Reviews Daily streak.' },
-  { id: 'df_scholar',       name: 'Film Scholar',     icon: '🎓', hint: 'Solve Double Feature with a typed answer, not multiple choice.' },
-  { id: 'df_streak',        name: 'Double Feature Streak', icon: '🔥', hint: 'Reach a 3-day Double Feature Daily streak.' },
-  { id: 'st_perfect_pitch', name: 'Perfect Pitch',    icon: '🎧', hint: 'Guess Name That Score from just the 1-second clip.' },
-  { id: 'st_streak',        name: 'Score Streak',     icon: '🔥', hint: 'Reach a 3-day Name That Score Daily streak.' },
+  { id: 'df_scholar',       name: 'Film Scholar',     icon: '🎓', hint: 'Solve Cinema Crosscut with a typed answer, not multiple choice.' },
+  { id: 'df_streak',        name: 'Crosscut Streak',  icon: '🔥', hint: 'Reach a 3-day Cinema Crosscut Daily streak.' },
+  { id: 'st_perfect_pitch', name: 'Perfect Pitch',    icon: '🎧', hint: 'Guess Cinema Cassette from just the 1-second clip.' },
+  { id: 'st_streak',        name: 'Cassette Streak',  icon: '🔥', hint: 'Reach a 3-day Cinema Cassette Daily streak.' },
 ];
 
 const MOVIE_ACHV_KEY = 'moviesAchievements_v1';
@@ -3653,8 +3653,8 @@ const MOVIE_DAILY_GAME_SEQUENCE = [
   { key: 'chronicle', label: 'Cinema Chronicle' },
   { key: 'code',      label: 'Cinema Code' },
   { key: 'review',    label: 'One-Star Reviews' },
-  { key: 'df',        label: 'Double Feature' },
-  { key: 'st',        label: 'Name That Score' },
+  { key: 'df',        label: 'Cinema Crosscut' },
+  { key: 'st',        label: 'Cinema Cassette' },
 ];
 
 function isMovieDailyGameCompletedToday(key){
@@ -8501,7 +8501,7 @@ function startDfFreeplay(){
 }
 
 function buildDfShareText(){
-  const label = dfMode === 'daily' ? `CINEMA DOUBLE FEATURE Daily #${dailyNumberLabel(dfDailyDate)}` : 'CINEMA DOUBLE FEATURE — Free Play';
+  const label = dfMode === 'daily' ? `CINEMA CROSSCUT Daily #${dailyNumberLabel(dfDailyDate)}` : 'CINEMA CROSSCUT — Free Play';
   const guessCount = dfGuessCount + (dfWon ? 1 : 0);
   return dfWon
     ? `${label}\nSolved in ${guessCount}/${DF_MAX_GUESSES} (${dfTarget.category}) 🔗`
@@ -9305,7 +9305,7 @@ function startStFreeplay(){
 }
 
 function buildStShareText(){
-  const label = stMode === 'daily' ? `CINEMA NAME THAT SCORE Daily #${dailyNumberLabel(stDailyDate)}` : 'CINEMA NAME THAT SCORE — Free Play';
+  const label = stMode === 'daily' ? `CINEMA CASSETTE Daily #${dailyNumberLabel(stDailyDate)}` : 'CINEMA CASSETTE — Free Play';
   const attemptsUsed = stAttempt + (stWon ? 1 : 0);
   const pips = ST_CLIP_LENGTHS.map((secs, i) => i < attemptsUsed - 1 ? '🟥' : i === attemptsUsed - 1 ? '🟩' : '⬜').join('');
   return stWon
@@ -9793,6 +9793,8 @@ const MOVIE_HOME_GAMES_ALL = [
   { key: 'charades',  label: 'CINEMA CHARADES',  color: 'var(--pink)',   tagline: 'Emoji only. No words.<br><b>Guess the movie.</b>' },
   { key: 'crossword', label: 'CINEMA CROSSWORD', color: 'var(--teal)',   tagline: 'Movies hidden in a grid.<br><b>Fill in the blanks.</b>' },
   { key: 'chronicle', label: 'CINEMA CHRONICLE', color: 'var(--orange)', tagline: 'Five movies. Three stats to sort by.<br><b>Put them in order.</b>' },
+  { key: 'df',        label: 'CINEMA CROSSCUT',  color: 'var(--coral)',  tagline: 'Two movies, one hidden link.<br><b>Figure out what connects them.</b>' },
+  { key: 'st',        label: 'CINEMA CASSETTE',  color: 'var(--lime)',   tagline: 'One second of the score.<br><b>Guess the movie before it plays out.</b>' },
   { key: 'chaos',     label: 'CINEMA CHAOS',     color: 'var(--violet)', tagline: 'Fast questions. No mercy.<br><b>Beat the clock.</b>' },
   { key: 'code',      label: 'CINEMA CODE',      color: 'var(--cyan)',   tagline: 'One mystery movie. Six guesses.<br><b>Every guess gives you clues.</b>' },
 ];
@@ -9829,6 +9831,8 @@ function renderMovieHomeSelector(){
   // Chaos has no daily mode, so there's nothing for the Daily popcorn to do —
   // hide it and let Free Play stand alone, centered by the flex row.
   homePlayBtn.style.display = current.key === 'chaos' ? 'none' : '';
+  const heroNote = document.getElementById('movieHeroNote');
+  if(heroNote) heroNote.textContent = `🎬 ${n} feature${n === 1 ? '' : 's'} playing now — flip with the arrows`;
 }
 homeArrowRight.addEventListener('click', ()=>{
   const games = movieHomeGames();
@@ -9849,6 +9853,8 @@ homePlayBtn.addEventListener('click', ()=>{
   else if(key === 'charades'){ showCharadesPage(); startCharadesDaily(); }
   else if(key === 'crossword'){ showCrosswordPage(); startCrosswordDaily(); }
   else if(key === 'chronicle'){ showChroniclePage(); startChronicleDaily(); }
+  else if(key === 'df'){ showDfPage(); startDfDaily(); }
+  else if(key === 'st'){ showStPage(); startStDaily(); }
   else if(key === 'chaos'){ showChaosPage(); startChaosGame(); }
   else if(key === 'code'){ showCodePage(); startCodeDaily(); }
 });
@@ -9859,6 +9865,8 @@ homeFreeplayBtn.addEventListener('click', ()=>{
   else if(key === 'charades'){ showCharadesPage(); startCharadesFreeplay(); }
   else if(key === 'crossword'){ showCrosswordPage(); startCrosswordFreeplay(); }
   else if(key === 'chronicle'){ showChroniclePage(); startChronicleFreeplay(); }
+  else if(key === 'df'){ showDfPage(); startDfFreeplay(); }
+  else if(key === 'st'){ showStPage(); startStFreeplay(); }
   else if(key === 'chaos'){ showChaosPage(); startChaosGame(); }
   else if(key === 'code'){ showCodePage(); startCodeFreeplay(); }
 });
