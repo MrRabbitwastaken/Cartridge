@@ -9546,21 +9546,31 @@ const ST_PREVIEW_CACHE_KEY = 'movies_soundtrack_cache_v1';
 let stPreviewCache = {};
 try{ stPreviewCache = JSON.parse(localStorage.getItem(ST_PREVIEW_CACHE_KEY) || '{}'); }catch(e){ stPreviewCache = {}; }
 
-// Cartridge Cinema is a single HTML file opened directly (file://), which
-// sends Origin: null on every request. iTunes' search endpoint doesn't grant
-// CORS to a null origin, so a plain fetch() is silently blocked there even
-// though it works fine on a real server. Apple's own docs call out JSONP
-// (a dynamic <script> tag + callback param) as the supported cross-domain
-// method, and script tags aren't subject to CORS/Origin checks at all, so
-// that's what we use here instead of fetch().
+// When this page is served from a real http(s) origin, the browser sends a
+// proper Origin header (not the "null" that file:// produces), which
+// iTunes' search endpoint accepts for CORS — so a plain fetch() works and is
+// tried first. Some mobile browsers (notably iOS Safari on at least one
+// device we've seen this on) refuse to load a dynamically-injected <script
+// src="...callback=..."> tag at all — it resembles a classic JSONP
+// ad/tracker pattern — even though the exact same request as a plain
+// fetch() goes through fine. The old script-tag JSONP technique is kept as
+// a fallback for the rare case fetch() itself is unavailable/blocked (e.g.
+// this file opened directly via file:// with no origin at all).
 let stJsonpCounter = 0;
-// Set by the JSONP call below to the most recent failure mode, so the
-// "Audio unavailable" screen can show *why* instead of just *that* — this
-// is the only diagnostic a player without a computer/dev-tools can report
-// back to us, which matters a lot on platforms (iPhone) we can't test on
-// directly ourselves.
+// Set by whichever path below fails, so the "Audio unavailable" screen can
+// show *why* instead of just *that* — this is the only diagnostic a player
+// without a computer/dev-tools can report back to us, which matters a lot
+// on platforms (iPhone) we can't test on directly ourselves.
 let stLastFailReason = null;
-function itunesJsonpSearch(term, timeoutMs){
+function itunesFetchSearch(term, timeoutMs){
+  const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const timer = setTimeout(()=>{ if(controller) controller.abort(); }, timeoutMs || 6000);
+  return fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&limit=10`, controller ? { signal: controller.signal } : {})
+    .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .catch(err => { stLastFailReason = 'fetch-failed:' + (err && err.name ? err.name : 'error'); return null; })
+    .finally(() => clearTimeout(timer));
+}
+function itunesJsonpScript(term, timeoutMs){
   return new Promise((resolve) => {
     const cbName = '__stJsonpCb' + (stJsonpCounter++) + '_' + Date.now();
     const script = document.createElement('script');
@@ -9594,6 +9604,11 @@ function itunesJsonpSearch(term, timeoutMs){
     script.src = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&limit=10&callback=${cbName}`;
     document.head.appendChild(script);
   });
+}
+async function itunesJsonpSearch(term, timeoutMs){
+  const viaFetch = await itunesFetchSearch(term, timeoutMs);
+  if(viaFetch && Array.isArray(viaFetch.results)) return viaFetch;
+  return itunesJsonpScript(term, timeoutMs);
 }
 
 async function fetchSoundtrackPreview(entry){
