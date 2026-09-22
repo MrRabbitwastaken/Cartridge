@@ -7162,7 +7162,7 @@ charadesCloseBtn.addEventListener('click', showHomeScreen);
 document.getElementById('charadesPageMarquee').addEventListener('click', showHomeScreen);
 
 // ---------- Cartridge Chronicle (order 5 games oldest -> newest) ----------
-const CHRONICLE_POOL = EASY_POOL; // same well-known pool as Clash/Connect's Easy difficulty
+const CHRONICLE_POOL = GAMES; // every game in the database, not just the well-known Easy subset
 
 const chronicleModal = document.getElementById('chronicleModal');
 const chroniclePlayArea = document.getElementById('chroniclePlayArea');
@@ -8718,7 +8718,7 @@ window.addEventListener('resize', ()=>{
 });
 
 // ---------- Cartridge Countdown (guess the hidden numbers) ----------
-const COUNTDOWN_POOL = EASY_POOL; // same well-known pool as Clash/Connect/Chronicle
+const COUNTDOWN_POOL = GAMES; // every game in the database, not just the well-known Easy subset
 
 const countdownModal = document.getElementById('countdownModal');
 const countdownPlayArea = document.getElementById('countdownPlayArea');
