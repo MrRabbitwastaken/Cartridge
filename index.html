@@ -9514,15 +9514,32 @@ function currentCassetteStreak(){
   return streak;
 }
 
-// Cartridge (and Cartridge Cinema) are single HTML files opened directly
-// (file://), which sends Origin: null on every request. iTunes' search
-// endpoint doesn't grant CORS to a null origin, so a plain fetch() is
-// silently blocked there even though it works fine on a real server.
-// Apple's own docs call out JSONP (a dynamic <script> tag + callback param)
-// as the supported cross-domain method, and script tags aren't subject to
-// CORS/Origin checks at all, so that's what we use here instead of fetch().
+// Apple's iTunes Search API actually reflects whatever Origin header the
+// browser sends back as Access-Control-Allow-Origin (confirmed via Apple's
+// own developer forums), so a plain fetch() from a real https:// origin like
+// gamecartridge.co.uk should pass CORS — it's only file:// (Origin: null)
+// that's genuinely unsupported. fetch() is tried first with a short timeout;
+// the old <script>+callback JSONP technique (Apple's documented fallback for
+// cross-domain access) is kept as a fallback for file:// or any environment
+// where fetch() itself is blocked. A short per-attempt timeout matters here
+// specifically because resolveCassetteTarget below can retry across many
+// pool entries — a slow/hanging first attempt must not compound into a very
+// long wait before the next entry (or JSONP fallback) gets a chance.
 let cassetteJsonpCounter = 0;
-function cassetteJsonpSearch(term, timeoutMs){
+// Set by whichever path below fails, so the "Audio unavailable" screen can
+// show *why* instead of just *that* — this is the only diagnostic a player
+// without a computer/dev-tools can report back to us, which matters a lot
+// on platforms (iPhone) we can't test on directly ourselves.
+let cassetteLastFailReason = null;
+function cassetteFetchSearch(term, timeoutMs){
+  const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const timer = setTimeout(()=>{ if(controller) controller.abort(); }, timeoutMs || 2000);
+  return fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&limit=10`, controller ? { signal: controller.signal, mode: 'cors' } : { mode: 'cors' })
+    .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .catch(err => { cassetteLastFailReason = 'fetch-failed:' + (err && err.name ? err.name : 'error'); return null; })
+    .finally(() => clearTimeout(timer));
+}
+function cassetteJsonpScript(term, timeoutMs){
   return new Promise((resolve) => {
     const cbName = '__cassJsonpCb' + (cassetteJsonpCounter++) + '_' + Date.now();
     const script = document.createElement('script');
@@ -9542,18 +9559,35 @@ function cassetteJsonpSearch(term, timeoutMs){
     timer = setTimeout(()=>{
       if(settled) return;
       settled = true;
+      cassetteLastFailReason = 'timeout';
       cleanup();
       resolve(null);
-    }, timeoutMs || 8000);
+    }, timeoutMs || 2500);
     script.onerror = function(){
       if(settled) return;
       settled = true;
+      cassetteLastFailReason = 'script-blocked';
       cleanup();
       resolve(null);
     };
     script.src = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&limit=10&callback=${cbName}`;
     document.head.appendChild(script);
   });
+}
+// Tries fetch() first (should work from a real https:// origin per Apple's
+// own forums) and only falls back to the <script>+JSONP technique if fetch
+// fails or times out — NOT run concurrently with fetch, so a normal
+// successful lookup only ever makes one iTunes request. Apple's Search API
+// has undocumented per-IP rate limiting we've already run into during
+// testing, so doubling every request (fetch + JSONP every time) would make
+// that worse, not better. Both timeouts are kept short (2s / 2.5s) so the
+// sequential worst case per pool entry stays bounded even though it's not
+// a true race — this matters because resolveCassetteTarget below retries
+// across several pool entries, and per-entry latency compounds.
+async function cassetteJsonpSearch(term){
+  const viaFetch = await cassetteFetchSearch(term);
+  if(viaFetch && Array.isArray(viaFetch.results)) return viaFetch;
+  return cassetteJsonpScript(term);
 }
 
 const CASSETTE_PREVIEW_CACHE_KEY = 'cartridge_cassette_preview_cache_v1';
@@ -9567,6 +9601,7 @@ async function fetchGameSoundtrackPreview(entry){
   const cacheKey = entry.title + '::' + entry.searchTerm;
   if(Object.prototype.hasOwnProperty.call(cassettePreviewCache, cacheKey)) return cassettePreviewCache[cacheKey];
   try{
+    cassetteLastFailReason = null;
     const data = await cassetteJsonpSearch(entry.searchTerm);
     if(!data) throw new Error('iTunes JSONP request failed or timed out');
     const results = (data.results || []).filter(r => r.previewUrl);
@@ -9576,6 +9611,7 @@ async function fetchGameSoundtrackPreview(entry){
     }
     if(!match) match = results[0] || null;
     const previewUrl = match ? match.previewUrl : null;
+    if(!previewUrl) cassetteLastFailReason = 'no-preview-in-results';
     cassettePreviewCache[cacheKey] = previewUrl;
     try{ localStorage.setItem(CASSETTE_PREVIEW_CACHE_KEY, JSON.stringify(cassettePreviewCache)); }catch(e){}
     return previewUrl;
@@ -9590,7 +9626,15 @@ async function fetchGameSoundtrackPreview(entry){
 // actually resolves — so a single missing iTunes listing can't strand a
 // Daily puzzle on dead air.
 async function resolveCassetteTarget(startIndex){
-  for(let i = 0; i < GAME_SOUNDTRACK_POOL.length; i++){
+  // Capped rather than looping the full pool: if the network is broadly
+  // failing (rate-limited, blocked, etc.) we want to fail fast and show
+  // "Audio unavailable" instead of compounding per-entry timeouts into a
+  // multi-minute wait that looks like the game is just stuck. Each attempt
+  // tries fetch (2s) then falls back to JSONP (2.5s), so worst case per
+  // entry is ~4.5s; capping at 6 attempts bounds total worst-case latency
+  // at ~27s.
+  const attempts = Math.min(GAME_SOUNDTRACK_POOL.length, 6);
+  for(let i = 0; i < attempts; i++){
     const idx = (startIndex + i) % GAME_SOUNDTRACK_POOL.length;
     const entry = GAME_SOUNDTRACK_POOL[idx];
     const url = await fetchGameSoundtrackPreview(entry);
@@ -9711,7 +9755,7 @@ function renderCassetteRound(){
     cassetteClipLengthLabel.textContent = 'Loading clip…';
     cassettePlayClipBtn.disabled = true;
   } else if(cassetteLoadState === 'unavailable'){
-    cassetteClipLengthLabel.textContent = 'Audio unavailable';
+    cassetteClipLengthLabel.textContent = `Audio unavailable (${cassetteLastFailReason || 'unknown'})`;
     cassettePlayClipBtn.disabled = true;
   } else {
     const secs = CASS_CLIP_LENGTHS[Math.min(cassetteAttempt, CASS_CLIP_LENGTHS.length - 1)];

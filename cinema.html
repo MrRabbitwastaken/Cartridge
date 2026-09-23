@@ -9546,15 +9546,32 @@ const ST_PREVIEW_CACHE_KEY = 'movies_soundtrack_cache_v1';
 let stPreviewCache = {};
 try{ stPreviewCache = JSON.parse(localStorage.getItem(ST_PREVIEW_CACHE_KEY) || '{}'); }catch(e){ stPreviewCache = {}; }
 
-// Cartridge Cinema is a single HTML file opened directly (file://), which
-// sends Origin: null on every request. iTunes' search endpoint doesn't grant
-// CORS to a null origin, so a plain fetch() is silently blocked there even
-// though it works fine on a real server. Apple's own docs call out JSONP
-// (a dynamic <script> tag + callback param) as the supported cross-domain
-// method, and script tags aren't subject to CORS/Origin checks at all, so
-// that's what we use here instead of fetch().
+// Apple's iTunes Search API actually reflects whatever Origin header the
+// browser sends back as Access-Control-Allow-Origin (confirmed via Apple's
+// own developer forums), so a plain fetch() from a real https:// origin like
+// gamecartridge.co.uk should pass CORS — it's only file:// (Origin: null)
+// that's genuinely unsupported. fetch() is tried first with a short timeout;
+// the old <script>+callback JSONP technique (Apple's documented fallback for
+// cross-domain access) is kept as a fallback for file:// or any environment
+// where fetch() itself is blocked. A short per-attempt timeout matters here
+// specifically because resolveStTarget below can retry across many pool
+// entries — a slow/hanging first attempt must not compound into a very long
+// wait before the next entry (or JSONP fallback) gets a chance.
 let stJsonpCounter = 0;
-function itunesJsonpSearch(term, timeoutMs){
+// Set by whichever path below fails, so the "Audio unavailable" screen can
+// show *why* instead of just *that* — this is the only diagnostic a player
+// without a computer/dev-tools can report back to us, which matters a lot
+// on platforms (iPhone) we can't test on directly ourselves.
+let stLastFailReason = null;
+function itunesFetchSearch(term, timeoutMs){
+  const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const timer = setTimeout(()=>{ if(controller) controller.abort(); }, timeoutMs || 2000);
+  return fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&limit=10`, controller ? { signal: controller.signal, mode: 'cors' } : { mode: 'cors' })
+    .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .catch(err => { stLastFailReason = 'fetch-failed:' + (err && err.name ? err.name : 'error'); return null; })
+    .finally(() => clearTimeout(timer));
+}
+function itunesJsonpScript(term, timeoutMs){
   return new Promise((resolve) => {
     const cbName = '__stJsonpCb' + (stJsonpCounter++) + '_' + Date.now();
     const script = document.createElement('script');
@@ -9574,18 +9591,35 @@ function itunesJsonpSearch(term, timeoutMs){
     timer = setTimeout(()=>{
       if(settled) return;
       settled = true;
+      stLastFailReason = 'timeout';
       cleanup();
       resolve(null);
-    }, timeoutMs || 8000);
+    }, timeoutMs || 2500);
     script.onerror = function(){
       if(settled) return;
       settled = true;
+      stLastFailReason = 'script-blocked';
       cleanup();
       resolve(null);
     };
     script.src = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&limit=10&callback=${cbName}`;
     document.head.appendChild(script);
   });
+}
+// Tries fetch() first (should work from a real https:// origin per Apple's
+// own forums) and only falls back to the <script>+JSONP technique if fetch
+// fails or times out — NOT run concurrently with fetch, so a normal
+// successful lookup only ever makes one iTunes request. Apple's Search API
+// has undocumented per-IP rate limiting we've already run into during
+// testing, so doubling every request (fetch + JSONP every time) would make
+// that worse, not better. Both timeouts are kept short (2s / 2.5s) so the
+// sequential worst case per pool entry stays bounded even though it's not
+// a true race — this matters because resolveStTarget below retries across
+// several pool entries, and per-entry latency compounds.
+async function itunesJsonpSearch(term){
+  const viaFetch = await itunesFetchSearch(term);
+  if(viaFetch && Array.isArray(viaFetch.results)) return viaFetch;
+  return itunesJsonpScript(term);
 }
 
 async function fetchSoundtrackPreview(entry){
@@ -9595,6 +9629,7 @@ async function fetchSoundtrackPreview(entry){
   const cacheKey = entry.title + '::' + entry.searchTerm;
   if(Object.prototype.hasOwnProperty.call(stPreviewCache, cacheKey)) return stPreviewCache[cacheKey];
   try{
+    stLastFailReason = null;
     const data = await itunesJsonpSearch(entry.searchTerm);
     if(!data) throw new Error('iTunes JSONP request failed or timed out');
     const results = (data.results || []).filter(r => r.previewUrl);
@@ -9604,6 +9639,7 @@ async function fetchSoundtrackPreview(entry){
     }
     if(!match) match = results[0] || null;
     const previewUrl = match ? match.previewUrl : null;
+    if(!previewUrl) stLastFailReason = 'no-preview-in-results';
     stPreviewCache[cacheKey] = previewUrl;
     try{ localStorage.setItem(ST_PREVIEW_CACHE_KEY, JSON.stringify(stPreviewCache)); }catch(e){}
     return previewUrl;
@@ -9618,7 +9654,15 @@ async function fetchSoundtrackPreview(entry){
 // actually resolves — so a single missing iTunes listing can't strand a
 // Daily puzzle on dead air.
 async function resolveStTarget(startIndex){
-  for(let i = 0; i < MOVIE_SOUNDTRACK_POOL.length; i++){
+  // Capped rather than looping the full pool (327+ entries): if the network
+  // is broadly failing (rate-limited, blocked, etc.) we want to fail fast
+  // and show "Audio unavailable" instead of compounding per-entry timeouts
+  // into a multi-minute wait that looks like the game is just stuck. Each
+  // attempt tries fetch (2s) then falls back to JSONP (2.5s), so worst case
+  // per entry is ~4.5s; capping at 6 attempts bounds total worst-case
+  // latency at ~27s.
+  const attempts = Math.min(MOVIE_SOUNDTRACK_POOL.length, 6);
+  for(let i = 0; i < attempts; i++){
     const idx = (startIndex + i) % MOVIE_SOUNDTRACK_POOL.length;
     const entry = MOVIE_SOUNDTRACK_POOL[idx];
     const url = await fetchSoundtrackPreview(entry);
@@ -9733,7 +9777,7 @@ function renderStRound(){
 
   const seconds = ST_CLIP_LENGTHS[Math.min(stAttempt, ST_CLIP_LENGTHS.length - 1)];
   stClipLengthLabel.textContent = stLoadState === 'loading' ? 'Loading clip…'
-    : stLoadState === 'unavailable' ? 'Audio unavailable'
+    : stLoadState === 'unavailable' ? `Audio unavailable (${stLastFailReason || 'unknown'})`
     : `▶ Play ${seconds}s clip`;
   stPlayClipBtn.disabled = stGameOver || stLoadState !== 'ready';
 
