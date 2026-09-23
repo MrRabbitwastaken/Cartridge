@@ -9542,7 +9542,13 @@ function saveStBest(attempts){ try{ localStorage.setItem(ST_BEST_KEY, String(att
 // the poster art cache, and a puzzle whose lookup comes up empty is skipped
 // in favor of the next pool entry so a bad/missing iTunes listing never
 // strands the player on a silent round.
-const ST_PREVIEW_CACHE_KEY = 'movies_soundtrack_cache_v1';
+// Bumped to v2: earlier testing (some of it against broken intermediate
+// builds) could have permanently cached a "no preview found" (null) result
+// for entries that actually do have a working preview, silently starving
+// them of ever being retried. v2 also stops that from happening going
+// forward (see fetchSoundtrackPreview below: only real successes are
+// cached, never failures).
+const ST_PREVIEW_CACHE_KEY = 'movies_soundtrack_cache_v2';
 let stPreviewCache = {};
 try{ stPreviewCache = JSON.parse(localStorage.getItem(ST_PREVIEW_CACHE_KEY) || '{}'); }catch(e){ stPreviewCache = {}; }
 
@@ -9627,7 +9633,14 @@ async function fetchSoundtrackPreview(entry){
   // movie (Star Wars, Harry Potter, etc.) can now have more than one pool
   // entry — each of its songs needs its own cached preview URL.
   const cacheKey = entry.title + '::' + entry.searchTerm;
-  if(Object.prototype.hasOwnProperty.call(stPreviewCache, cacheKey)) return stPreviewCache[cacheKey];
+  // Only ever cache a real success below — a cached FAILURE used to be
+  // stored here too, which meant one bad/slow lookup (from a flaky network
+  // moment, or from testing against an older broken build) would silently
+  // and permanently mark that entry as dead in this browser's localStorage,
+  // with every future round returning the stale null instantly and never
+  // touching the network again. Not caching failures means a transient miss
+  // just gets retried next time instead of being burned in forever.
+  if(stPreviewCache[cacheKey]) return stPreviewCache[cacheKey];
   try{
     stLastFailReason = null;
     const data = await itunesJsonpSearch(entry.searchTerm);
@@ -9639,9 +9652,12 @@ async function fetchSoundtrackPreview(entry){
     }
     if(!match) match = results[0] || null;
     const previewUrl = match ? match.previewUrl : null;
-    if(!previewUrl) stLastFailReason = 'no-preview-in-results';
-    stPreviewCache[cacheKey] = previewUrl;
-    try{ localStorage.setItem(ST_PREVIEW_CACHE_KEY, JSON.stringify(stPreviewCache)); }catch(e){}
+    if(previewUrl){
+      stPreviewCache[cacheKey] = previewUrl;
+      try{ localStorage.setItem(ST_PREVIEW_CACHE_KEY, JSON.stringify(stPreviewCache)); }catch(e){}
+    } else {
+      stLastFailReason = 'no-preview-in-results';
+    }
     return previewUrl;
   }catch(e){
     console.error('Soundtrack preview fetch failed for', entry.title, e);

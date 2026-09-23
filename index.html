@@ -9590,7 +9590,13 @@ async function cassetteJsonpSearch(term){
   return cassetteJsonpScript(term);
 }
 
-const CASSETTE_PREVIEW_CACHE_KEY = 'cartridge_cassette_preview_cache_v1';
+// Bumped to v2: earlier testing (some of it against broken intermediate
+// builds) could have permanently cached a "no preview found" (null) result
+// for entries that actually do have a working preview, silently starving
+// them of ever being retried. v2 also stops that from happening going
+// forward (see fetchGameSoundtrackPreview below: only real successes are
+// cached, never failures).
+const CASSETTE_PREVIEW_CACHE_KEY = 'cartridge_cassette_preview_cache_v2';
 let cassettePreviewCache = {};
 try{ cassettePreviewCache = JSON.parse(localStorage.getItem(CASSETTE_PREVIEW_CACHE_KEY) || '{}'); }catch(e){ cassettePreviewCache = {}; }
 
@@ -9599,7 +9605,14 @@ async function fetchGameSoundtrackPreview(entry){
   // game (Zelda, Halo, Final Fantasy, etc.) can now have more than one pool
   // entry — each of its songs needs its own cached preview URL.
   const cacheKey = entry.title + '::' + entry.searchTerm;
-  if(Object.prototype.hasOwnProperty.call(cassettePreviewCache, cacheKey)) return cassettePreviewCache[cacheKey];
+  // Only ever cache a real success below — a cached FAILURE used to be
+  // stored here too, which meant one bad/slow lookup (from a flaky network
+  // moment, or from testing against an older broken build) would silently
+  // and permanently mark that entry as dead in this browser's localStorage,
+  // with every future round returning the stale null instantly and never
+  // touching the network again. Not caching failures means a transient miss
+  // just gets retried next time instead of being burned in forever.
+  if(cassettePreviewCache[cacheKey]) return cassettePreviewCache[cacheKey];
   try{
     cassetteLastFailReason = null;
     const data = await cassetteJsonpSearch(entry.searchTerm);
@@ -9611,9 +9624,12 @@ async function fetchGameSoundtrackPreview(entry){
     }
     if(!match) match = results[0] || null;
     const previewUrl = match ? match.previewUrl : null;
-    if(!previewUrl) cassetteLastFailReason = 'no-preview-in-results';
-    cassettePreviewCache[cacheKey] = previewUrl;
-    try{ localStorage.setItem(CASSETTE_PREVIEW_CACHE_KEY, JSON.stringify(cassettePreviewCache)); }catch(e){}
+    if(previewUrl){
+      cassettePreviewCache[cacheKey] = previewUrl;
+      try{ localStorage.setItem(CASSETTE_PREVIEW_CACHE_KEY, JSON.stringify(cassettePreviewCache)); }catch(e){}
+    } else {
+      cassetteLastFailReason = 'no-preview-in-results';
+    }
     return previewUrl;
   }catch(e){
     console.error('Soundtrack preview fetch failed for', entry.title, e);
