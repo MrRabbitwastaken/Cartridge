@@ -9545,7 +9545,19 @@ function cassetteFetchSearch(term, timeoutMs){
   const timer = setTimeout(()=>{ if(controller) controller.abort(); }, timeoutMs || 3000);
   return fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&limit=10`, controller ? { signal: controller.signal, mode: 'cors' } : { mode: 'cors' })
     .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .catch(err => { cassetteLastFailReason = 'fetch-failed:' + (err && err.name ? err.name : 'error'); return null; })
+    .catch(err => {
+      // Both name AND message: on WebKit specifically, a failed fetch()'s
+      // TypeError message often carries the real underlying reason (DNS,
+      // TLS, connection refused, blocked by content filter, etc.) that the
+      // generic error name alone doesn't show — and this is the one piece
+      // of this investigation we've never actually been able to see yet,
+      // since it kept getting silently overwritten by whatever the JSONP
+      // fallback failed with afterward. See cassetteJsonpSearch below.
+      const name = err && err.name ? err.name : 'Error';
+      const msg = err && err.message ? String(err.message).slice(0, 100) : '';
+      cassetteLastFailReason = 'fetch-failed:' + name + (msg ? (':' + msg) : '');
+      return null;
+    })
     .finally(() => clearTimeout(timer));
 }
 function cassetteJsonpScript(term, timeoutMs){
@@ -9596,7 +9608,14 @@ function cassetteJsonpScript(term, timeoutMs){
 async function cassetteJsonpSearch(term){
   const viaFetch = await cassetteFetchSearch(term);
   if(viaFetch && Array.isArray(viaFetch.results)) return viaFetch;
-  return cassetteJsonpScript(term);
+  // Preserve the fetch failure's specific reason before the JSONP fallback
+  // attempt below overwrites cassetteLastFailReason with its own outcome —
+  // if JSONP also fails, we want to show BOTH, not just whichever ran last.
+  const fetchReason = cassetteLastFailReason;
+  const viaJsonp = await cassetteJsonpScript(term);
+  if(viaJsonp && Array.isArray(viaJsonp.results)) return viaJsonp;
+  cassetteLastFailReason = `fetch:[${fetchReason}] jsonp:[${cassetteLastFailReason}]`;
+  return null;
 }
 
 // Bumped to v2: earlier testing (some of it against broken intermediate
@@ -9614,7 +9633,7 @@ try{ cassettePreviewCache = JSON.parse(localStorage.getItem(CASSETTE_PREVIEW_CAC
 // is actually running this build or a stale cached one — this has been a
 // live open question during iPhone debugging, since Safari can cache
 // aggressively and the site also runs a service worker.
-const CARTRIDGE_BUILD_ID = 'cartridge-audio-2026-09-23-v5';
+const CARTRIDGE_BUILD_ID = 'cartridge-audio-2026-09-23-v6';
 // Filled in by resolveCassetteTarget below with one entry per pool attempt
 // this round, so a player without dev tools can show us exactly what
 // happened: which entries were tried, whether each was a cache hit or a

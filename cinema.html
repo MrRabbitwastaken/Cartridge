@@ -9566,7 +9566,7 @@ try{ stPreviewCache = JSON.parse(localStorage.getItem(ST_PREVIEW_CACHE_KEY) || '
 // is actually running this build or a stale cached one — this has been a
 // live open question during iPhone debugging, since Safari can cache
 // aggressively and the site also runs a service worker.
-const CARTRIDGE_BUILD_ID = 'cinema-audio-2026-09-23-v5';
+const CARTRIDGE_BUILD_ID = 'cinema-audio-2026-09-23-v6';
 // Filled in by resolveStTarget below with one entry per pool attempt this
 // round, so a player without dev tools can show us exactly what happened:
 // which entries were tried, whether each was a cache hit or a real network
@@ -9596,7 +9596,19 @@ function itunesFetchSearch(term, timeoutMs){
   const timer = setTimeout(()=>{ if(controller) controller.abort(); }, timeoutMs || 3000);
   return fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&limit=10`, controller ? { signal: controller.signal, mode: 'cors' } : { mode: 'cors' })
     .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .catch(err => { stLastFailReason = 'fetch-failed:' + (err && err.name ? err.name : 'error'); return null; })
+    .catch(err => {
+      // Both name AND message: on WebKit specifically, a failed fetch()'s
+      // TypeError message often carries the real underlying reason (DNS,
+      // TLS, connection refused, blocked by content filter, etc.) that the
+      // generic error name alone doesn't show — and this is the one piece
+      // of this investigation we've never actually been able to see yet,
+      // since it kept getting silently overwritten by whatever the JSONP
+      // fallback failed with afterward. See itunesJsonpSearch below.
+      const name = err && err.name ? err.name : 'Error';
+      const msg = err && err.message ? String(err.message).slice(0, 100) : '';
+      stLastFailReason = 'fetch-failed:' + name + (msg ? (':' + msg) : '');
+      return null;
+    })
     .finally(() => clearTimeout(timer));
 }
 function itunesJsonpScript(term, timeoutMs){
@@ -9647,7 +9659,14 @@ function itunesJsonpScript(term, timeoutMs){
 async function itunesJsonpSearch(term){
   const viaFetch = await itunesFetchSearch(term);
   if(viaFetch && Array.isArray(viaFetch.results)) return viaFetch;
-  return itunesJsonpScript(term);
+  // Preserve the fetch failure's specific reason before the JSONP fallback
+  // attempt below overwrites stLastFailReason with its own outcome — if
+  // JSONP also fails, we want to show BOTH, not just whichever ran last.
+  const fetchReason = stLastFailReason;
+  const viaJsonp = await itunesJsonpScript(term);
+  if(viaJsonp && Array.isArray(viaJsonp.results)) return viaJsonp;
+  stLastFailReason = `fetch:[${fetchReason}] jsonp:[${stLastFailReason}]`;
+  return null;
 }
 
 async function fetchSoundtrackPreview(entry){
