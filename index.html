@@ -9533,7 +9533,7 @@ let cassetteJsonpCounter = 0;
 let cassetteLastFailReason = null;
 function cassetteFetchSearch(term, timeoutMs){
   const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-  const timer = setTimeout(()=>{ if(controller) controller.abort(); }, timeoutMs || 2000);
+  const timer = setTimeout(()=>{ if(controller) controller.abort(); }, timeoutMs || 3000);
   return fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&limit=10`, controller ? { signal: controller.signal, mode: 'cors' } : { mode: 'cors' })
     .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .catch(err => { cassetteLastFailReason = 'fetch-failed:' + (err && err.name ? err.name : 'error'); return null; })
@@ -9630,9 +9630,9 @@ async function resolveCassetteTarget(startIndex){
   // failing (rate-limited, blocked, etc.) we want to fail fast and show
   // "Audio unavailable" instead of compounding per-entry timeouts into a
   // multi-minute wait that looks like the game is just stuck. Each attempt
-  // tries fetch (2s) then falls back to JSONP (2.5s), so worst case per
-  // entry is ~4.5s; capping at 6 attempts bounds total worst-case latency
-  // at ~27s.
+  // tries fetch (3s) then falls back to JSONP (2.5s), so worst case per
+  // entry is ~5.5s; capping at 6 attempts bounds total worst-case latency
+  // at ~33s.
   const attempts = Math.min(GAME_SOUNDTRACK_POOL.length, 6);
   for(let i = 0; i < attempts; i++){
     const idx = (startIndex + i) % GAME_SOUNDTRACK_POOL.length;
