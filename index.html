@@ -1883,6 +1883,11 @@
         <button id="cassettePlayClipBtn" aria-label="Play clip">▶</button>
         <div id="cassetteClipLengthLabel">Loading clip…</div>
       </div>
+      <div id="cassetteDebugPanel" style="display:none; margin:6px 0;">
+        <button id="cassetteDebugToggleBtn" type="button" style="font-size:11px; padding:4px 8px;">Show diagnostic</button>
+        <textarea id="cassetteDebugOutput" readonly style="display:none; width:100%; height:160px; font-size:10px; margin-top:6px; background:#111; color:#0f0; font-family:monospace;"></textarea>
+        <button id="cassetteDebugCopyBtn" type="button" style="display:none; font-size:11px; padding:4px 8px; margin-top:4px;">Copy diagnostic</button>
+      </div>
       <audio id="cassetteAudioEl" preload="none" style="display:none;"></audio>
       <div class="charades-guess-row">
         <div class="search-box">
@@ -9408,6 +9413,10 @@ const cassetteAttemptLabel = document.getElementById('cassetteAttemptLabel');
 const cassetteLivesRow = document.getElementById('cassetteLivesRow');
 const cassettePlayClipBtn = document.getElementById('cassettePlayClipBtn');
 const cassetteClipLengthLabel = document.getElementById('cassetteClipLengthLabel');
+const cassetteDebugPanel = document.getElementById('cassetteDebugPanel');
+const cassetteDebugToggleBtn = document.getElementById('cassetteDebugToggleBtn');
+const cassetteDebugOutput = document.getElementById('cassetteDebugOutput');
+const cassetteDebugCopyBtn = document.getElementById('cassetteDebugCopyBtn');
 const cassetteInput = document.getElementById('cassetteInput');
 const cassetteDropdown = document.getElementById('cassetteDropdown');
 const cassetteGuessBtn = document.getElementById('cassetteGuessBtn');
@@ -9600,6 +9609,18 @@ const CASSETTE_PREVIEW_CACHE_KEY = 'cartridge_cassette_preview_cache_v2';
 let cassettePreviewCache = {};
 try{ cassettePreviewCache = JSON.parse(localStorage.getItem(CASSETTE_PREVIEW_CACHE_KEY) || '{}'); }catch(e){ cassettePreviewCache = {}; }
 
+// Bumped by hand on every soundtrack-lookup-related change so a player can
+// confirm on-screen (via the diagnostic panel below) whether their browser
+// is actually running this build or a stale cached one — this has been a
+// live open question during iPhone debugging, since Safari can cache
+// aggressively and the site also runs a service worker.
+const CARTRIDGE_BUILD_ID = 'cartridge-audio-2026-09-23-v5';
+// Filled in by resolveCassetteTarget below with one entry per pool attempt
+// this round, so a player without dev tools can show us exactly what
+// happened: which entries were tried, whether each was a cache hit or a
+// real network attempt, and the precise outcome/timing of each.
+let cassetteDebugTrace = [];
+
 async function fetchGameSoundtrackPreview(entry){
   // Keyed by title+searchTerm rather than just title, since a franchise
   // game (Zelda, Halo, Final Fantasy, etc.) can now have more than one pool
@@ -9650,10 +9671,16 @@ async function resolveCassetteTarget(startIndex){
   // entry is ~5.5s; capping at 6 attempts bounds total worst-case latency
   // at ~33s.
   const attempts = Math.min(GAME_SOUNDTRACK_POOL.length, 6);
+  cassetteDebugTrace = [];
   for(let i = 0; i < attempts; i++){
     const idx = (startIndex + i) % GAME_SOUNDTRACK_POOL.length;
     const entry = GAME_SOUNDTRACK_POOL[idx];
+    const cacheKey = entry.title + '::' + entry.searchTerm;
+    const wasCached = !!cassettePreviewCache[cacheKey];
+    const t0 = (typeof performance !== 'undefined') ? performance.now() : Date.now();
     const url = await fetchGameSoundtrackPreview(entry);
+    const ms = Math.round(((typeof performance !== 'undefined') ? performance.now() : Date.now()) - t0);
+    cassetteDebugTrace.push({ idx, title: entry.title, term: entry.searchTerm, cacheHit: wasCached, ok: !!url, reason: url ? null : cassetteLastFailReason, ms });
     if(url) return { index: idx, entry, url };
   }
   return null;
@@ -9777,6 +9804,14 @@ function renderCassetteRound(){
     const secs = CASS_CLIP_LENGTHS[Math.min(cassetteAttempt, CASS_CLIP_LENGTHS.length - 1)];
     cassetteClipLengthLabel.textContent = `▶ Play ${secs}s clip`;
     cassettePlayClipBtn.disabled = cassetteGameOver;
+  }
+  if(cassetteDebugPanel){
+    cassetteDebugPanel.style.display = (cassetteLoadState === 'unavailable') ? 'block' : 'none';
+    if(cassetteLoadState !== 'unavailable'){
+      cassetteDebugOutput.style.display = 'none';
+      cassetteDebugCopyBtn.style.display = 'none';
+      cassetteDebugToggleBtn.textContent = 'Show diagnostic';
+    }
   }
 
   cassetteGuessHistory.innerHTML = cassetteGuessedTitles.map(cassRenderGuessChip).join('');
@@ -10063,6 +10098,52 @@ cassetteGuessBtn.addEventListener('click', submitCassetteGuess);
 cassetteSkipBtn.addEventListener('click', skipCassetteRound);
 cassetteMcToggleBtn.addEventListener('click', cassetteOpenMc);
 cassettePlayClipBtn.addEventListener('click', cassettePlayCurrentClip);
+
+function buildCassetteDiagnosticText(){
+  const lines = [];
+  lines.push('Build: ' + CARTRIDGE_BUILD_ID);
+  lines.push('Time: ' + new Date().toISOString());
+  lines.push('Origin: ' + location.origin);
+  lines.push('UA: ' + navigator.userAgent);
+  lines.push('Cached preview entries stored: ' + Object.keys(cassettePreviewCache).length);
+  lines.push('');
+  lines.push('Attempts this round (in order tried):');
+  cassetteDebugTrace.forEach((t, i) => {
+    lines.push(`${i+1}. [${t.cacheHit ? 'CACHE' : 'NETWORK'}] "${t.title}" (${t.term}) -> ${t.ok ? 'SUCCESS' : 'FAIL: ' + t.reason} (${t.ms}ms)`);
+  });
+  if(!cassetteDebugTrace.length) lines.push('(no attempts recorded yet - play a round first)');
+  return lines.join('\n');
+}
+if(cassetteDebugToggleBtn){
+  cassetteDebugToggleBtn.addEventListener('click', () => {
+    const showing = cassetteDebugOutput.style.display !== 'none';
+    if(showing){
+      cassetteDebugOutput.style.display = 'none';
+      cassetteDebugCopyBtn.style.display = 'none';
+      cassetteDebugToggleBtn.textContent = 'Show diagnostic';
+    } else {
+      cassetteDebugOutput.value = buildCassetteDiagnosticText();
+      cassetteDebugOutput.style.display = 'block';
+      cassetteDebugCopyBtn.style.display = 'inline-block';
+      cassetteDebugToggleBtn.textContent = 'Hide diagnostic';
+    }
+  });
+}
+if(cassetteDebugCopyBtn){
+  cassetteDebugCopyBtn.addEventListener('click', () => {
+    cassetteDebugOutput.value = buildCassetteDiagnosticText();
+    cassetteDebugOutput.select();
+    cassetteDebugOutput.setSelectionRange(0, 999999);
+    try{
+      document.execCommand('copy');
+      cassetteDebugCopyBtn.textContent = 'Copied!';
+    }catch(e){
+      if(navigator.clipboard){ navigator.clipboard.writeText(cassetteDebugOutput.value).then(()=>{ cassetteDebugCopyBtn.textContent = 'Copied!'; }); }
+    }
+    setTimeout(()=>{ cassetteDebugCopyBtn.textContent = 'Copy diagnostic'; }, 2000);
+  });
+}
+
 cassetteShareBtn.addEventListener('click', ()=> shareOrCopy(buildCassetteShareText(), cassetteShareBtn));
 cassetteFreeplayBtn.addEventListener('click', startCassetteFreeplay);
 cassettePlayAgainBtn.addEventListener('click', startCassetteFreeplay);

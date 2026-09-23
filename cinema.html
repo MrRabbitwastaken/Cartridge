@@ -2389,6 +2389,11 @@
         <button id="stPlayClipBtn" aria-label="Play clip">▶</button>
         <div id="stClipLengthLabel">Loading clip…</div>
       </div>
+      <div id="stDebugPanel" style="display:none; margin:6px 0;">
+        <button id="stDebugToggleBtn" type="button" style="font-size:11px; padding:4px 8px;">Show diagnostic</button>
+        <textarea id="stDebugOutput" readonly style="display:none; width:100%; height:160px; font-size:10px; margin-top:6px; background:#111; color:#0f0; font-family:monospace;"></textarea>
+        <button id="stDebugCopyBtn" type="button" style="display:none; font-size:11px; padding:4px 8px; margin-top:4px;">Copy diagnostic</button>
+      </div>
       <audio id="stAudioEl" preload="none" style="display:none;"></audio>
       <div class="charades-guess-row">
         <div class="search-box">
@@ -9440,6 +9445,10 @@ const stAttemptLabel = document.getElementById('stAttemptLabel');
 const stLivesRow = document.getElementById('stLivesRow');
 const stPlayClipBtn = document.getElementById('stPlayClipBtn');
 const stClipLengthLabel = document.getElementById('stClipLengthLabel');
+const stDebugPanel = document.getElementById('stDebugPanel');
+const stDebugToggleBtn = document.getElementById('stDebugToggleBtn');
+const stDebugOutput = document.getElementById('stDebugOutput');
+const stDebugCopyBtn = document.getElementById('stDebugCopyBtn');
 const stInput = document.getElementById('stInput');
 const stDropdown = document.getElementById('stDropdown');
 const stGuessBtn = document.getElementById('stGuessBtn');
@@ -9551,6 +9560,19 @@ function saveStBest(attempts){ try{ localStorage.setItem(ST_BEST_KEY, String(att
 const ST_PREVIEW_CACHE_KEY = 'movies_soundtrack_cache_v2';
 let stPreviewCache = {};
 try{ stPreviewCache = JSON.parse(localStorage.getItem(ST_PREVIEW_CACHE_KEY) || '{}'); }catch(e){ stPreviewCache = {}; }
+
+// Bumped by hand on every soundtrack-lookup-related change so a player can
+// confirm on-screen (via the diagnostic panel below) whether their browser
+// is actually running this build or a stale cached one — this has been a
+// live open question during iPhone debugging, since Safari can cache
+// aggressively and the site also runs a service worker.
+const CARTRIDGE_BUILD_ID = 'cinema-audio-2026-09-23-v5';
+// Filled in by resolveStTarget below with one entry per pool attempt this
+// round, so a player without dev tools can show us exactly what happened:
+// which entries were tried, whether each was a cache hit or a real network
+// attempt, and the precise outcome/timing of each — instead of only ever
+// seeing the single final reason for whichever attempt failed last.
+let stDebugTrace = [];
 
 // Apple's iTunes Search API actually reflects whatever Origin header the
 // browser sends back as Access-Control-Allow-Origin (confirmed via Apple's
@@ -9678,10 +9700,16 @@ async function resolveStTarget(startIndex){
   // per entry is ~5.5s; capping at 6 attempts bounds total worst-case
   // latency at ~33s.
   const attempts = Math.min(MOVIE_SOUNDTRACK_POOL.length, 6);
+  stDebugTrace = [];
   for(let i = 0; i < attempts; i++){
     const idx = (startIndex + i) % MOVIE_SOUNDTRACK_POOL.length;
     const entry = MOVIE_SOUNDTRACK_POOL[idx];
+    const cacheKey = entry.title + '::' + entry.searchTerm;
+    const wasCached = !!stPreviewCache[cacheKey];
+    const t0 = (typeof performance !== 'undefined') ? performance.now() : Date.now();
     const url = await fetchSoundtrackPreview(entry);
+    const ms = Math.round(((typeof performance !== 'undefined') ? performance.now() : Date.now()) - t0);
+    stDebugTrace.push({ idx, title: entry.title, term: entry.searchTerm, cacheHit: wasCached, ok: !!url, reason: url ? null : stLastFailReason, ms });
     if(url) return { index: idx, entry, url };
   }
   return null;
@@ -9796,6 +9824,14 @@ function renderStRound(){
     : stLoadState === 'unavailable' ? `Audio unavailable (${stLastFailReason || 'unknown'})`
     : `▶ Play ${seconds}s clip`;
   stPlayClipBtn.disabled = stGameOver || stLoadState !== 'ready';
+  if(stDebugPanel){
+    stDebugPanel.style.display = (stLoadState === 'unavailable') ? 'block' : 'none';
+    if(stLoadState !== 'unavailable'){
+      stDebugOutput.style.display = 'none';
+      stDebugCopyBtn.style.display = 'none';
+      stDebugToggleBtn.textContent = 'Show diagnostic';
+    }
+  }
 
   stGuessHistory.innerHTML = stGuessedTitles.map(stRenderGuessChip).join('');
   stMsg.textContent = '';
@@ -10049,6 +10085,51 @@ document.addEventListener('click', (e)=>{
 stGuessBtn.addEventListener('click', submitStGuess);
 stSkipBtn.addEventListener('click', skipStRound);
 stPlayClipBtn.addEventListener('click', stPlayCurrentClip);
+
+function buildStDiagnosticText(){
+  const lines = [];
+  lines.push('Build: ' + CARTRIDGE_BUILD_ID);
+  lines.push('Time: ' + new Date().toISOString());
+  lines.push('Origin: ' + location.origin);
+  lines.push('UA: ' + navigator.userAgent);
+  lines.push('Cached preview entries stored: ' + Object.keys(stPreviewCache).length);
+  lines.push('');
+  lines.push('Attempts this round (in order tried):');
+  stDebugTrace.forEach((t, i) => {
+    lines.push(`${i+1}. [${t.cacheHit ? 'CACHE' : 'NETWORK'}] "${t.title}" (${t.term}) -> ${t.ok ? 'SUCCESS' : 'FAIL: ' + t.reason} (${t.ms}ms)`);
+  });
+  if(!stDebugTrace.length) lines.push('(no attempts recorded yet - play a round first)');
+  return lines.join('\n');
+}
+if(stDebugToggleBtn){
+  stDebugToggleBtn.addEventListener('click', () => {
+    const showing = stDebugOutput.style.display !== 'none';
+    if(showing){
+      stDebugOutput.style.display = 'none';
+      stDebugCopyBtn.style.display = 'none';
+      stDebugToggleBtn.textContent = 'Show diagnostic';
+    } else {
+      stDebugOutput.value = buildStDiagnosticText();
+      stDebugOutput.style.display = 'block';
+      stDebugCopyBtn.style.display = 'inline-block';
+      stDebugToggleBtn.textContent = 'Hide diagnostic';
+    }
+  });
+}
+if(stDebugCopyBtn){
+  stDebugCopyBtn.addEventListener('click', () => {
+    stDebugOutput.value = buildStDiagnosticText();
+    stDebugOutput.select();
+    stDebugOutput.setSelectionRange(0, 999999);
+    try{
+      document.execCommand('copy');
+      stDebugCopyBtn.textContent = 'Copied!';
+    }catch(e){
+      if(navigator.clipboard){ navigator.clipboard.writeText(stDebugOutput.value).then(()=>{ stDebugCopyBtn.textContent = 'Copied!'; }); }
+    }
+    setTimeout(()=>{ stDebugCopyBtn.textContent = 'Copy diagnostic'; }, 2000);
+  });
+}
 
 stShareBtn.addEventListener('click', ()=> shareOrCopy(buildStShareText(), stShareBtn));
 stFreeplayBtn.addEventListener('click', startStFreeplay);
