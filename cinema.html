@@ -711,6 +711,49 @@
     margin-bottom: 4px;
   }
   #dataActionMsg { padding-top: 4px; }
+
+  /* ---------- Watchlist (Extras — save movies from One-Star Reviews, Cup
+     and Cassette results into a personal to-watch/watched tracker) ---------- */
+  .watchlist-modal-box { max-width: 760px; }
+  .wl-pin-btn.pinned { border-color: var(--gold); color: var(--gold); background: rgba(255,210,63,0.1); }
+  .watchlist-tab-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .watchlist-tab {
+    flex: 1 1 auto; padding: 10px 14px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px;
+    color: var(--text-dim); font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer;
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .watchlist-tab span { font-family: 'IBM Plex Mono', monospace; font-weight: 400; opacity: 0.8; }
+  .watchlist-tab:hover { border-color: var(--gold); color: var(--text); }
+  .watchlist-tab.active { background: rgba(255,210,63,0.12); border-color: var(--gold); color: var(--gold); }
+  .watchlist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .watchlist-empty {
+    grid-column: 1 / -1; text-align: center; padding: 30px 16px; font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px; color: var(--text-dim); line-height: 1.6;
+  }
+  .watchlist-card {
+    display: flex; gap: 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px; transition: box-shadow .2s ease, transform .2s ease;
+  }
+  .watchlist-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.35); transform: translateY(-1px); }
+  .watchlist-poster {
+    flex: 0 0 auto; width: 76px; height: 102px; border-radius: 8px; overflow: hidden; position: relative;
+    background: var(--panel); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center;
+  }
+  .watchlist-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .watchlist-poster .cover-placeholder { font-size: 22px; opacity: 0.6; }
+  .watchlist-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .watchlist-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); line-height: 1.3; }
+  .watchlist-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-dim); }
+  .watchlist-dates { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--text-dim); display: flex; gap: 6px; flex-wrap: wrap; }
+  .star-rating { display: flex; gap: 2px; margin: 2px 0; }
+  .star-pick { font-size: 17px; cursor: pointer; color: var(--line); transition: transform .1s ease, color .1s ease; line-height: 1; }
+  .star-pick.filled { color: var(--gold); }
+  .star-pick:hover { transform: scale(1.2); }
+  .watchlist-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .watchlist-actions .ghost-btn { padding: 6px 10px; font-size: 11px; }
+  .star-confirm-row { display: flex; gap: 8px; margin: 4px 0 2px; }
+  .star-confirm-row .ghost-btn { padding: 6px 10px; font-size: 11px; }
+  .ghost-btn.confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; background: var(--panel-2); border-color: var(--line); color: var(--text-dim); }
   @media (max-width: 860px) {
     .board-head { display: none; }
     .cart-row { display: flex; flex-wrap: wrap; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
@@ -1636,6 +1679,14 @@
   .concierge-runner-info { flex: 1 1 auto; min-width: 0; }
   .concierge-runner-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; color: var(--text); }
   .concierge-runner-why { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .concierge-pin-icon-btn {
+    flex: 0 0 auto; width: 34px; height: 34px; border-radius: 9px; background: var(--panel); border: 1px solid var(--line);
+    color: var(--text-dim); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .concierge-pin-icon-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .concierge-pin-icon-btn.pinned { border-color: var(--gold); color: var(--gold); background: rgba(255,210,63,0.12); }
+  .rate-popup-stars .star-pick { font-size: 34px; }
 </style>
 </head>
 <body>
@@ -1712,6 +1763,10 @@
       <span class="side-menu-icon">🧭</span>
       <span class="side-menu-label">Cinema Concierge</span>
     </button>
+    <button class="side-menu-item" id="movieMenuWatchlistBtn">
+      <span class="side-menu-icon">📌</span>
+      <span class="side-menu-label">Watchlist</span>
+    </button>
     <hr class="side-menu-divider">
     <button class="side-menu-item" id="movieMenuCartridgeBtn">
       <span class="side-menu-icon">🎮</span>
@@ -1747,6 +1802,17 @@
         <button class="diff-btn active" id="movieThemeDarkBtn">Dark</button>
         <button class="diff-btn" id="movieThemeLightBtn">Light</button>
       </div>
+    </div>
+
+    <div class="settings-data-section">
+      <div class="settings-section-heading">Your Data</div>
+      <div class="settings-note show">All your Cinema stats — streaks, achievements, best scores — live only in this browser. Export a backup to move them to another device or browser.</div>
+      <div class="btn-row">
+        <button class="ghost-btn" id="movieExportDataBtn">⬇️ Export Stats</button>
+        <button class="ghost-btn" id="movieImportDataBtn">⬆️ Import Stats</button>
+        <input type="file" id="movieImportDataInput" accept="application/json,.json" style="display:none;">
+      </div>
+      <div class="settings-note" id="movieDataActionMsg"></div>
     </div>
   </div>
 </div>
@@ -1811,6 +1877,20 @@
       <div class="help-note">Tap a badge for a hint on how to unlock it.</div>
       <div class="achv-grid" id="movieAchvGrid"></div>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="movieWatchlistModal">
+  <div class="modal-box watchlist-modal-box">
+    <button class="modal-close" id="movieWatchlistClose">✕</button>
+    <div class="modal-title" style="color:var(--gold);">WATCHLIST</div>
+    <div class="help-note" style="margin:-10px 0 16px;">Tap 📌 on a One-Star Reviews, Cup or Cassette result to save a movie here.</div>
+    <div class="watchlist-tab-row">
+      <button class="watchlist-tab active" id="movieWatchlistToWatchTab">🎬 To Watch <span id="movieWatchlistToWatchCount">0</span></button>
+      <button class="watchlist-tab" id="movieWatchlistWatchedTab">✅ Watched <span id="movieWatchlistWatchedCount">0</span></button>
+    </div>
+    <div class="watchlist-grid" id="movieWatchlistToWatchGrid"></div>
+    <div class="watchlist-grid" id="movieWatchlistWatchedGrid" style="display:none;"></div>
   </div>
 </div>
 
@@ -2238,6 +2318,7 @@
         </div>
       </div>
       <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn wl-pin-btn" id="cupWatchlistBtn">📌 Add to Watchlist</button>
         <button class="ghost-btn" id="cupShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="cupFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="cupPlayAgainBtn" style="display:none;">New Bracket</button>
@@ -2294,6 +2375,7 @@
       <div class="clash-final-score" id="reviewFinalScore"></div>
       <div id="reviewPosterCard"></div>
       <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn wl-pin-btn" id="reviewWatchlistBtn">📌 Add to Watchlist</button>
         <button class="ghost-btn" id="reviewShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="reviewFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="reviewPlayAgainBtn" style="display:none;">New Puzzle</button>
@@ -2424,6 +2506,7 @@
       </div>
       <div id="stPosterCard"></div>
       <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn wl-pin-btn" id="stWatchlistBtn">📌 Add to Watchlist</button>
         <button class="ghost-btn" id="stShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="stFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="stPlayAgainBtn" style="display:none;">New Puzzle</button>
@@ -2441,6 +2524,18 @@
     <div class="btn-row" style="justify-content:center;">
       <button class="ghost-btn" id="giveUpConfirmYes">Yes, give up</button>
       <button class="ghost-btn confirm-btn" id="giveUpConfirmNo">No, keep playing</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="movieRatePopup" style="z-index:200;">
+  <div class="modal-box" style="max-width:360px; text-align:center;">
+    <div class="modal-title" style="margin:0 0 6px; font-size:14px; color:var(--gold);">HOW WAS IT?</div>
+    <div class="help-note" style="margin:0 0 16px; font-size:13px;" id="movieRatePopupSubtitle"></div>
+    <div class="star-rating rate-popup-stars" id="movieRatePopupStars" style="justify-content:center; margin-bottom:20px;"></div>
+    <div class="btn-row" style="justify-content:center;">
+      <button class="ghost-btn confirm-btn" id="movieRatePopupConfirm" disabled>Confirm Rating</button>
+      <button class="ghost-btn" id="movieRatePopupSkip">Skip for now</button>
     </div>
   </div>
 </div>
@@ -3448,6 +3543,92 @@ movieSettingsBtn.addEventListener('click', ()=> movieSettingsModal.classList.add
 document.getElementById('movieSettingsModalClose').addEventListener('click', ()=> movieSettingsModal.classList.remove('show'));
 movieSettingsModal.addEventListener('click', (e)=>{ if(e.target === movieSettingsModal) movieSettingsModal.classList.remove('show'); });
 
+// Every Cinema stat/progress key, mirroring Cartridge's own EXPORTABLE_KEYS
+// approach in index.html — kept separate (its own "app" tag and its own
+// button in Cinema's Settings) since Cinema and Cartridge are different
+// games a player may want to back up independently, even though they run
+// from the same site. cartridgeSfxMuted_v1/cartridgeTheme_v1 are included
+// too even though the name says "cartridge" — Cinema deliberately reuses
+// those two keys so sound/theme preference is shared site-wide, and a
+// Cinema-only restore on a fresh device should still bring that back.
+const MOVIE_EXPORTABLE_KEYS = [
+  'moviesAchievements_v1', 'moviesPlayedGames_v1', 'moviesWatchlist_v1',
+  'moviesClashBest_v1', 'moviesClashDailyState_v1', 'moviesClashHistory_v1',
+  'moviesGridDailyState_v1', 'moviesGridHistory_v1',
+  'moviesCharadesDaily_v1', 'moviesCharadesBest_v1', 'moviesCharadesHistory_v1',
+  'moviesCrosswordDaily_v1', 'moviesCrosswordHistory_v1', 'moviesCrosswordBest_v1', 'moviesCrosswordCompletions_v1',
+  'moviesChronicleDailyState_v1', 'moviesChronicleHistory_v1', 'moviesChronicleBest_v1',
+  'moviesDfDaily_v1', 'moviesDfHistory_v1', 'moviesDfBest_v1',
+  'moviesStDaily_v1', 'moviesStHistory_v1', 'moviesStBest_v1',
+  'moviesReviewDaily_v1', 'moviesReviewHistory_v1', 'moviesReviewBest_v1',
+  'moviesCodeDaily_v1', 'moviesCodeHistory_v1', 'moviesCodeBest_v1', 'cinemaCodeUnlocked_v1',
+  'moviesChaosBest_v1', 'moviesChaosStats_v1',
+  'moviesCupDaily_v1',
+  'cartridgeSfxMuted_v1', 'cartridgeTheme_v1',
+];
+
+async function exportMovieStatsData(){
+  const msgEl = document.getElementById('movieDataActionMsg');
+  const data = {};
+  MOVIE_EXPORTABLE_KEYS.forEach(key=>{
+    const value = localStorage.getItem(key);
+    if(value !== null) data[key] = value;
+  });
+  const payload = { app: 'cinema', exportVersion: 1, exportedAt: new Date().toISOString(), data };
+  const json = JSON.stringify(payload, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const filename = `cinema-backup-${todayKey()}.json`;
+
+  const file = new File([blob], filename, { type: 'application/json' });
+  if(navigator.canShare && navigator.canShare({ files: [file] })){
+    try{
+      await navigator.share({ files: [file], title: 'Cinema stats backup' });
+      msgEl.textContent = 'Backup shared.';
+      return;
+    }catch(e){
+      if(e && e.name === 'AbortError') return;
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=> URL.revokeObjectURL(url), 4000);
+  msgEl.textContent = `Downloaded ${filename} — move it to your other device, then use Import Stats there.`;
+}
+document.getElementById('movieExportDataBtn').addEventListener('click', exportMovieStatsData);
+
+const movieImportDataInput = document.getElementById('movieImportDataInput');
+document.getElementById('movieImportDataBtn').addEventListener('click', ()=> movieImportDataInput.click());
+movieImportDataInput.addEventListener('change', ()=>{
+  const file = movieImportDataInput.files && movieImportDataInput.files[0];
+  movieImportDataInput.value = '';
+  if(!file) return;
+  const msgEl = document.getElementById('movieDataActionMsg');
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    let payload;
+    try{ payload = JSON.parse(reader.result); }catch(e){
+      msgEl.textContent = 'That file isn’t valid — could not read it.';
+      return;
+    }
+    if(!payload || payload.app !== 'cinema' || !payload.data){
+      msgEl.textContent = 'That doesn’t look like a Cinema stats backup.';
+      return;
+    }
+    const ok = confirm('This will replace your current Cinema stats on this device with the ones from this backup. Continue?');
+    if(!ok) return;
+    Object.keys(payload.data).forEach(key=>{
+      if(MOVIE_EXPORTABLE_KEYS.includes(key)){
+        try{ localStorage.setItem(key, payload.data[key]); }catch(e){}
+      }
+    });
+    msgEl.textContent = 'Import complete — reloading…';
+    setTimeout(()=> location.reload(), 800);
+  };
+  reader.readAsText(file);
+});
+
 // ---------- Stats panel: per-game basics + the 10 Movie achievements ----------
 function renderMovieStats(){
   const clashHist = loadClashHistory();
@@ -3715,6 +3896,295 @@ function renderMovieRevealCard(containerId, movieTitle){
     }
   });
 }
+
+// ---------- Cinema Watchlist (Extras — pin a movie from One-Star Reviews,
+// Cup or Cassette results into a personal to-watch/watched tracker, with a
+// per-movie 5-star rating once it's watched). Data lives in its own
+// localStorage key so it round-trips through Export/Import Stats like every
+// other piece of Cinema progress. ----------
+const MOVIE_WATCHLIST_KEY = 'moviesWatchlist_v1';
+
+function loadMovieWatchlist(){
+  try{ return JSON.parse(localStorage.getItem(MOVIE_WATCHLIST_KEY) || '[]'); }catch(e){ return []; }
+}
+function saveMovieWatchlist(list){
+  try{ localStorage.setItem(MOVIE_WATCHLIST_KEY, JSON.stringify(list)); }catch(e){}
+}
+function findMovieWatchlistEntry(title){
+  return loadMovieWatchlist().find(e => e.title === title) || null;
+}
+function isInMovieWatchlist(title){
+  return !!findMovieWatchlistEntry(title);
+}
+function addToMovieWatchlist(title){
+  const list = loadMovieWatchlist();
+  if(list.some(e => e.title === title)) return;
+  list.unshift({ title, dateAdded: new Date().toISOString(), status: 'towatch', rating: 0, dateCompleted: null });
+  saveMovieWatchlist(list);
+}
+function removeFromMovieWatchlist(title){
+  saveMovieWatchlist(loadMovieWatchlist().filter(e => e.title !== title));
+}
+// Shared by the pin button on every results screen (Review/Cup/Cassette) —
+// updates its own label/state and, if the Watchlist page happens to be open
+// behind it, keeps that in sync too.
+function setMoviePinButtonState(btn, title){
+  if(!btn) return;
+  const inList = isInMovieWatchlist(title);
+  btn.textContent = inList ? '📌 In Watchlist' : '📌 Add to Watchlist';
+  btn.classList.toggle('pinned', inList);
+  btn.dataset.title = title;
+}
+function toggleMoviePin(btn){
+  const title = btn.dataset.title;
+  if(!title) return;
+  if(isInMovieWatchlist(title)) removeFromMovieWatchlist(title);
+  else addToMovieWatchlist(title);
+  setMoviePinButtonState(btn, title);
+  if(movieWatchlistModal.classList.contains('show')) renderMovieWatchlistPage();
+}
+function setMovieWatchlistStatus(title, status){
+  const list = loadMovieWatchlist();
+  const entry = list.find(e => e.title === title);
+  if(!entry) return;
+  entry.status = status;
+  entry.dateCompleted = status === 'watched' ? new Date().toISOString() : null;
+  saveMovieWatchlist(list);
+  renderMovieWatchlistPage();
+  if(status === 'watched'){
+    launchWinCelebration();
+    openMovieRatePopup(title);
+  }
+}
+function setMovieWatchlistRating(title, stars){
+  const list = loadMovieWatchlist();
+  const entry = list.find(e => e.title === title);
+  if(!entry) return;
+  entry.rating = stars;
+  saveMovieWatchlist(list);
+  renderMovieWatchlistPage();
+}
+
+// A small popup that appears right after marking a movie Watched, so rating
+// it out of 5 stars is a one-tap follow-up to the moment rather than a
+// separate trip back to the Watchlist card later (though the card's own
+// stars still work anytime, for changing your mind or rating later). Picking
+// a star here only previews it — nothing saves until Confirm Rating is
+// pressed, same preview-then-confirm pattern as the card's own star widget
+// (kept as its own local variable rather than sharing pendingMovieRatings,
+// since only one movie is ever being rated here at a time).
+let movieRatePopupTitle = null;
+let movieRatePopupStars = 0;
+function renderMovieRatePopupStars(){
+  const safeTitle = (movieRatePopupTitle || '').replace(/"/g,'&quot;');
+  let stars = '';
+  for(let i=1;i<=5;i++){
+    stars += `<span class="star-pick ${i <= movieRatePopupStars ? 'filled' : ''}" data-star="${i}">${i <= movieRatePopupStars ? '★' : '☆'}</span>`;
+  }
+  document.getElementById('movieRatePopupStars').innerHTML = `<div class="star-rating" data-title="${safeTitle}">${stars}</div>`;
+}
+function openMovieRatePopup(title){
+  movieRatePopupTitle = title;
+  movieRatePopupStars = 0;
+  document.getElementById('movieRatePopupSubtitle').textContent = title;
+  renderMovieRatePopupStars();
+  document.getElementById('movieRatePopupConfirm').disabled = true;
+  document.getElementById('movieRatePopup').classList.add('show');
+}
+function closeMovieRatePopup(){
+  document.getElementById('movieRatePopup').classList.remove('show');
+  movieRatePopupTitle = null;
+  movieRatePopupStars = 0;
+}
+document.getElementById('movieRatePopupSkip').addEventListener('click', closeMovieRatePopup);
+document.getElementById('movieRatePopupConfirm').addEventListener('click', ()=>{
+  if(movieRatePopupTitle && movieRatePopupStars > 0) setMovieWatchlistRating(movieRatePopupTitle, movieRatePopupStars);
+  closeMovieRatePopup();
+});
+document.getElementById('movieRatePopup').addEventListener('click', (e)=>{
+  if(e.target.id === 'movieRatePopup'){ closeMovieRatePopup(); return; }
+  const starEl = e.target.closest('.star-pick');
+  if(starEl && movieRatePopupTitle){
+    movieRatePopupStars = parseInt(starEl.dataset.star, 10);
+    renderMovieRatePopupStars();
+    document.getElementById('movieRatePopupConfirm').disabled = false;
+  }
+});
+function formatWatchlistDate(iso){
+  if(!iso) return '';
+  try{
+    return new Date(iso).toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' });
+  }catch(e){ return ''; }
+}
+// Star ratings are a preview-then-confirm interaction, not instant-save:
+// clicking a star just previews that rating (tracked here per movie title,
+// separate from the saved value in the watchlist entry itself) and a
+// Confirm button appears to actually commit it — so picking the wrong star,
+// or changing your mind on an already-rated movie, never overwrites the
+// saved rating until you deliberately confirm.
+let pendingMovieRatings = {};
+function renderStarRatingHtml(savedRating, title){
+  const safeTitle = title.replace(/"/g,'&quot;');
+  const hasPending = Object.prototype.hasOwnProperty.call(pendingMovieRatings, title);
+  const pending = hasPending ? pendingMovieRatings[title] : null;
+  const display = hasPending ? pending : savedRating;
+  let stars = '';
+  for(let i=1;i<=5;i++){
+    stars += `<span class="star-pick ${i <= display ? 'filled' : ''}" data-star="${i}">${i <= display ? '★' : '☆'}</span>`;
+  }
+  const showConfirm = hasPending && pending !== savedRating;
+  const confirmRow = showConfirm
+    ? `<div class="star-confirm-row">
+        <button class="ghost-btn confirm-btn star-confirm-btn" data-title="${safeTitle}">✓ Confirm ${pending}★</button>
+        <button class="ghost-btn star-cancel-btn" data-title="${safeTitle}">Cancel</button>
+      </div>`
+    : '';
+  return `<div class="star-rating" data-title="${safeTitle}">${stars}</div>${confirmRow}`;
+}
+
+// A dedicated audio element for Watchlist preview clips, kept separate from
+// Cassette's own `stAudio` so browsing your Watchlist can never interfere
+// with (or be interfered by) an in-progress Cassette round.
+const wlAudio = new Audio();
+let wlActiveBtn = null;
+function wlResetActiveBtn(){
+  if(wlActiveBtn){ wlActiveBtn.textContent = '🎵 Play Clip'; wlActiveBtn.disabled = false; }
+  wlActiveBtn = null;
+}
+wlAudio.addEventListener('ended', wlResetActiveBtn);
+wlAudio.addEventListener('pause', wlResetActiveBtn);
+async function playWatchlistClip(title, btn){
+  if(wlActiveBtn === btn){ wlAudio.pause(); return; }
+  const entry = MOVIE_SOUNDTRACK_POOL.find(s => s.title === title);
+  if(!entry) return;
+  wlResetActiveBtn();
+  btn.textContent = '⏳ Loading…';
+  btn.disabled = true;
+  const url = await fetchSoundtrackPreview(entry);
+  btn.disabled = false;
+  if(!url){
+    btn.textContent = '🚫 Unavailable';
+    setTimeout(()=>{ if(btn.textContent === '🚫 Unavailable') btn.textContent = '🎵 Play Clip'; }, 1500);
+    return;
+  }
+  wlAudio.src = url;
+  wlAudio.currentTime = 0;
+  wlActiveBtn = btn;
+  btn.textContent = '⏸ Stop';
+  const p = wlAudio.play();
+  if(p && p.catch) p.catch(()=> wlResetActiveBtn());
+}
+
+function movieWatchlistCardHtml(entry){
+  const movie = MOVIES.find(m => m.title === entry.title);
+  const safeTitle = entry.title.replace(/"/g,'&quot;');
+  const addedLabel = formatWatchlistDate(entry.dateAdded);
+  const completedLabel = entry.dateCompleted ? formatWatchlistDate(entry.dateCompleted) : null;
+  const hasSong = MOVIE_SOUNDTRACK_POOL.some(s => s.title === entry.title);
+  return `
+    <div class="watchlist-card">
+      <div class="watchlist-poster" data-current-title="${safeTitle}"><span class="cover-placeholder">🎬</span></div>
+      <div class="watchlist-info">
+        <div class="watchlist-title">${entry.title}</div>
+        <div class="watchlist-meta">${movie ? `📅 ${movie.year}` : ''}</div>
+        <div class="watchlist-dates">
+          <span>Added ${addedLabel}</span>${completedLabel ? `<span>· Watched ${completedLabel}</span>` : ''}
+        </div>
+        ${entry.status === 'watched' ? renderStarRatingHtml(entry.rating || 0, entry.title) : ''}
+        <div class="watchlist-actions">
+          ${hasSong ? `<button class="ghost-btn wl-play-btn" data-title="${safeTitle}">🎵 Play Clip</button>` : ''}
+          ${entry.status === 'towatch'
+            ? `<button class="ghost-btn wl-watched-btn" data-title="${safeTitle}">✅ Mark Watched</button>`
+            : `<button class="ghost-btn wl-unwatch-btn" data-title="${safeTitle}">↩ To Watch</button>`}
+          <button class="ghost-btn wl-remove-btn" data-title="${safeTitle}">🗑 Remove</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderMovieWatchlistPage(){
+  const list = loadMovieWatchlist();
+  const toWatch = list.filter(e => e.status !== 'watched');
+  const watched = list.filter(e => e.status === 'watched');
+  document.getElementById('movieWatchlistToWatchCount').textContent = toWatch.length;
+  document.getElementById('movieWatchlistWatchedCount').textContent = watched.length;
+  const toWatchGrid = document.getElementById('movieWatchlistToWatchGrid');
+  const watchedGrid = document.getElementById('movieWatchlistWatchedGrid');
+  toWatchGrid.innerHTML = toWatch.length
+    ? toWatch.map(movieWatchlistCardHtml).join('')
+    : '<div class="watchlist-empty">Nothing here yet — tap 📌 on a One-Star Reviews, Cup or Cassette result to add a movie.</div>';
+  watchedGrid.innerHTML = watched.length
+    ? watched.map(movieWatchlistCardHtml).join('')
+    : '<div class="watchlist-empty">Nothing watched yet — mark a movie as watched from your To Watch list.</div>';
+  [...toWatchGrid.querySelectorAll('.watchlist-poster'), ...watchedGrid.querySelectorAll('.watchlist-poster')].forEach(el=>{
+    const title = el.dataset.currentTitle;
+    const movie = MOVIES.find(m => m.title === title);
+    if(!movie) return;
+    fetchMoviePoster(movie.title, movie.year).then(url=>{
+      if(el.dataset.currentTitle !== title) return;
+      if(url) el.innerHTML = `<img src="${url}" alt="${title}">`;
+    });
+  });
+}
+function setMovieWatchlistTab(tab){
+  document.getElementById('movieWatchlistToWatchTab').classList.toggle('active', tab === 'towatch');
+  document.getElementById('movieWatchlistWatchedTab').classList.toggle('active', tab === 'watched');
+  document.getElementById('movieWatchlistToWatchGrid').style.display = tab === 'towatch' ? '' : 'none';
+  document.getElementById('movieWatchlistWatchedGrid').style.display = tab === 'watched' ? '' : 'none';
+}
+
+const movieWatchlistModal = document.getElementById('movieWatchlistModal');
+document.getElementById('movieMenuWatchlistBtn').addEventListener('click', ()=>{
+  closeMovieSideMenu();
+  pendingMovieRatings = {};
+  renderMovieWatchlistPage();
+  setMovieWatchlistTab('towatch');
+  movieWatchlistModal.classList.add('show');
+});
+document.getElementById('movieWatchlistClose').addEventListener('click', ()=>{
+  wlAudio.pause();
+  pendingMovieRatings = {};
+  movieWatchlistModal.classList.remove('show');
+});
+movieWatchlistModal.addEventListener('click', (e)=>{ if(e.target === movieWatchlistModal){ wlAudio.pause(); pendingMovieRatings = {}; movieWatchlistModal.classList.remove('show'); } });
+document.getElementById('movieWatchlistToWatchTab').addEventListener('click', ()=> setMovieWatchlistTab('towatch'));
+document.getElementById('movieWatchlistWatchedTab').addEventListener('click', ()=> setMovieWatchlistTab('watched'));
+
+movieWatchlistModal.addEventListener('click', (e)=>{
+  const starEl = e.target.closest('.star-pick');
+  if(starEl){
+    const title = starEl.closest('.star-rating').dataset.title;
+    pendingMovieRatings[title] = parseInt(starEl.dataset.star, 10);
+    renderMovieWatchlistPage();
+    return;
+  }
+  const confirmStarBtn = e.target.closest('.star-confirm-btn');
+  if(confirmStarBtn){
+    const title = confirmStarBtn.dataset.title;
+    const stars = pendingMovieRatings[title];
+    delete pendingMovieRatings[title];
+    setMovieWatchlistRating(title, stars);
+    return;
+  }
+  const cancelStarBtn = e.target.closest('.star-cancel-btn');
+  if(cancelStarBtn){
+    delete pendingMovieRatings[cancelStarBtn.dataset.title];
+    renderMovieWatchlistPage();
+    return;
+  }
+  const playBtn = e.target.closest('.wl-play-btn');
+  if(playBtn){ playWatchlistClip(playBtn.dataset.title, playBtn); return; }
+  const watchedBtn = e.target.closest('.wl-watched-btn');
+  if(watchedBtn){ setMovieWatchlistStatus(watchedBtn.dataset.title, 'watched'); return; }
+  const unwatchBtn = e.target.closest('.wl-unwatch-btn');
+  if(unwatchBtn){ setMovieWatchlistStatus(unwatchBtn.dataset.title, 'towatch'); return; }
+  const removeBtn = e.target.closest('.wl-remove-btn');
+  if(removeBtn){ removeFromMovieWatchlist(removeBtn.dataset.title); renderMovieWatchlistPage(); return; }
+});
+
+document.getElementById('reviewWatchlistBtn').addEventListener('click', (e)=> toggleMoviePin(e.currentTarget));
+document.getElementById('stWatchlistBtn').addEventListener('click', (e)=> toggleMoviePin(e.currentTarget));
+document.getElementById('cupWatchlistBtn').addEventListener('click', (e)=> toggleMoviePin(e.currentTarget));
 
 // ---------- Movie Achievements (a slimmed-down, 10-achievement version of
 // Cartridge's own achievement system) ----------
@@ -4336,8 +4806,7 @@ const GRID_LEAD_ACTOR = {
   'Once Upon a Time in Hollywood':'Leonardo DiCaprio',
   'Fight Club':'Brad Pitt', 'Se7en':'Brad Pitt', 'Inglourious Basterds':'Brad Pitt', 'Troy':'Brad Pitt',
   'World War Z':'Brad Pitt', '12 Years a Slave':'Brad Pitt', 'Moneyball':'Brad Pitt',
-  'The Martian':'Matt Damon', 'Interstellar':'Matt Damon', 'The Bourne Identity':'Matt Damon',
-  'Oppenheimer':'Matt Damon', 'Good Will Hunting':'Matt Damon',
+  'The Martian':'Matt Damon', 'The Bourne Identity':'Matt Damon', 'Good Will Hunting':'Matt Damon',
   'Iron Man':'Robert Downey Jr.', 'Iron Man 2':'Robert Downey Jr.', 'Iron Man 3':'Robert Downey Jr.',
   'The Avengers':'Robert Downey Jr.', 'Avengers: Age of Ultron':'Robert Downey Jr.',
   'Avengers: Infinity War':'Robert Downey Jr.', 'Avengers: Endgame':'Robert Downey Jr.', 'Sherlock Holmes':'Robert Downey Jr.',
@@ -7742,6 +8211,7 @@ function showReviewResults(){
     : `The answer was ${reviewTarget.title}`;
   applyResultBanner(reviewFinalMessage, reviewWon, reviewWon && guessCount === 1);
   renderMovieRevealCard('reviewPosterCard', reviewTarget.title);
+  setMoviePinButtonState(document.getElementById('reviewWatchlistBtn'), reviewTarget.title);
   reviewFreeplayBtn.style.display = reviewMode === 'daily' ? '' : 'none';
   reviewPlayAgainBtn.style.display = reviewMode === 'freeplay' ? '' : 'none';
   if(reviewMode === 'daily') updateMovieNextDailyButton(reviewNextDailyBtn, 'review');
@@ -9775,10 +10245,17 @@ function renderStRound(){
   stGuessHistory.innerHTML = stGuessedTitles.map(stRenderGuessChip).join('');
   stMsg.textContent = '';
   stInput.value = '';
-  stInput.disabled = stGameOver;
-  stGuessBtn.disabled = stGameOver;
-  stSkipBtn.disabled = stGameOver;
-  stMcToggleBtn.disabled = stGameOver || stMcOpened;
+  // When the soundtrack lookup never resolved a target (stTarget stays null),
+  // there is nothing to guess, skip, or reveal against — disable every action
+  // that would otherwise drive the round into endStRound()/showStResults()
+  // and crash on stTarget.title. This can happen on any platform whenever
+  // the iTunes lookup fails for every attempt (network down, blocked, pool
+  // exhausted), not just the known/paused iOS audio-playback case.
+  const stUnavailable = stLoadState === 'unavailable' || !stTarget;
+  stInput.disabled = stGameOver || stUnavailable;
+  stGuessBtn.disabled = stGameOver || stUnavailable;
+  stSkipBtn.disabled = stGameOver || stUnavailable;
+  stMcToggleBtn.disabled = stGameOver || stMcOpened || stUnavailable;
   renderStMcOptions();
 }
 
@@ -9803,6 +10280,23 @@ function showStResults(){
   stAudioStop();
   stPlayArea.style.display = 'none';
   stResultsArea.style.display = '';
+  // Defensive guard: stTarget can be null if a round is ended (e.g. via a
+  // stray Skip/Guess call) while the soundtrack lookup never resolved. That
+  // shouldn't be reachable now that renderStRound() disables those controls
+  // whenever stTarget is missing, but this keeps the results screen from
+  // throwing instead of leaving the player stuck.
+  if(!stTarget){
+    stFinalMessage.textContent = 'Audio unavailable';
+    applyResultBanner(stFinalMessage, false, false);
+    stFinalScore.textContent = `Couldn't load a soundtrack clip this round (${stLastFailReason || 'unknown reason'}).`;
+    stTrackReveal.innerHTML = '';
+    document.getElementById('stWatchlistBtn').style.display = 'none';
+    stFreeplayBtn.style.display = stMode === 'daily' ? '' : 'none';
+    stPlayAgainBtn.style.display = stMode === 'freeplay' ? '' : 'none';
+    if(stMode === 'daily') updateMovieNextDailyButton(stNextDailyBtn, 'st');
+    else stNextDailyBtn.style.display = 'none';
+    return;
+  }
   const attemptsUsed = stAttempt + (stWon ? 1 : 0);
   const stIsAce = stWon && attemptsUsed === 1;
   stFinalMessage.textContent = stIsAce ? '⚡ ACE! Perfect Pitch! ⚡' : (stWon ? 'Nailed it! 🎧' : 'Stumped!');
@@ -9812,6 +10306,9 @@ function showStResults(){
   applyResultBanner(stFinalMessage, stWon, stIsAce);
   stTrackReveal.innerHTML = `<div class="st-track-reveal">${stTarget.reveal}</div>`;
   renderMovieRevealCard('stPosterCard', stTarget.title);
+  const stWatchlistBtn = document.getElementById('stWatchlistBtn');
+  stWatchlistBtn.style.display = '';
+  setMoviePinButtonState(stWatchlistBtn, stTarget.title);
   stFreeplayBtn.style.display = stMode === 'daily' ? '' : 'none';
   stPlayAgainBtn.style.display = stMode === 'freeplay' ? '' : 'none';
   if(stMode === 'daily') updateMovieNextDailyButton(stNextDailyBtn, 'st');
@@ -10374,6 +10871,7 @@ function showCupResults(){
   cupChampionCard.dataset.currentTitle = cupChampion.title;
   loadMoviePosterArt(cupChampionCard, cupChampion);
   applyResultBanner(cupChampionName, true);
+  setMoviePinButtonState(document.getElementById('cupWatchlistBtn'), cupChampion.title);
   cupFreeplayBtn.style.display = cupMode === 'daily' ? '' : 'none';
   cupPlayAgainBtn.style.display = cupMode !== 'daily' ? '' : 'none';
 }
@@ -11042,6 +11540,9 @@ function renderConciergeResults(){
           <div class="concierge-soundtrack" id="conciergeHeroSoundtrack" style="${soundtrackEntry?'':'display:none;'}">
             <button type="button" id="conciergeSoundtrackBtn">▶ Preview soundtrack</button>
           </div>
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="ghost-btn wl-pin-btn" id="conciergeHeroWatchlistBtn">📌 Add to Watchlist</button>
+          </div>
         </div>
       </div>
       <div class="concierge-runners-label">Also worth a look</div>
@@ -11053,6 +11554,7 @@ function renderConciergeResults(){
               <div class="concierge-runner-title">${r.movie.title}</div>
               <div class="concierge-runner-why">${r.reasons.length ? 'Matches: ' + r.reasons.join(', ') : r.movie.year + ' · ' + r.movie.genres.join('/')}</div>
             </div>
+            <button class="concierge-pin-icon-btn" data-title="${r.movie.title.replace(/"/g,'&quot;')}" title="Add to Watchlist">📌</button>
           </div>
         `).join('')}
       </div>
@@ -11071,6 +11573,21 @@ function renderConciergeResults(){
   }
   document.getElementById('conciergeRestartBtn').addEventListener('click', openConciergeModal);
   document.getElementById('conciergeCloseResultsBtn').addEventListener('click', closeConciergeModal);
+
+  // Watchlist pin — the hero pick plus all 3 runner-up cards (4 movies total).
+  const heroPinBtn = document.getElementById('conciergeHeroWatchlistBtn');
+  setMoviePinButtonState(heroPinBtn, p.title);
+  heroPinBtn.addEventListener('click', (e)=> toggleMoviePin(e.currentTarget));
+  conciergeBody.querySelectorAll('.concierge-pin-icon-btn').forEach(btn=>{
+    btn.classList.toggle('pinned', isInMovieWatchlist(btn.dataset.title));
+    btn.addEventListener('click', ()=>{
+      const title = btn.dataset.title;
+      if(isInMovieWatchlist(title)) removeFromMovieWatchlist(title);
+      else addToMovieWatchlist(title);
+      btn.classList.toggle('pinned', isInMovieWatchlist(title));
+      if(movieWatchlistModal.classList.contains('show')) renderMovieWatchlistPage();
+    });
+  });
 }
 
 async function conciergeToggleSoundtrack(entry, btn){

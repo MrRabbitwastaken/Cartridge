@@ -767,6 +767,49 @@
     margin-bottom: 4px;
   }
   #dataActionMsg { padding-top: 4px; }
+
+  /* ---------- Play List (Extras — save games from Cup and Cassette results
+     into a personal to-play/playing/completed tracker) ---------- */
+  .watchlist-modal-box { max-width: 760px; }
+  .wl-pin-btn.pinned { border-color: var(--gold); color: var(--gold); background: rgba(255,210,63,0.1); }
+  .watchlist-tab-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .watchlist-tab {
+    flex: 1 1 auto; padding: 10px 14px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px;
+    color: var(--text-dim); font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer;
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .watchlist-tab span { font-family: 'IBM Plex Mono', monospace; font-weight: 400; opacity: 0.8; }
+  .watchlist-tab:hover { border-color: var(--gold); color: var(--text); }
+  .watchlist-tab.active { background: rgba(255,210,63,0.12); border-color: var(--gold); color: var(--gold); }
+  .watchlist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .watchlist-empty {
+    grid-column: 1 / -1; text-align: center; padding: 30px 16px; font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px; color: var(--text-dim); line-height: 1.6;
+  }
+  .watchlist-card {
+    display: flex; gap: 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px; transition: box-shadow .2s ease, transform .2s ease;
+  }
+  .watchlist-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.35); transform: translateY(-1px); }
+  .watchlist-poster {
+    flex: 0 0 auto; width: 76px; height: 102px; border-radius: 8px; overflow: hidden; position: relative;
+    background: var(--panel); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center;
+  }
+  .watchlist-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .watchlist-poster .cover-placeholder { font-size: 22px; opacity: 0.6; }
+  .watchlist-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .watchlist-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); line-height: 1.3; }
+  .watchlist-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-dim); }
+  .watchlist-dates { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--text-dim); display: flex; gap: 6px; flex-wrap: wrap; }
+  .star-rating { display: flex; gap: 2px; margin: 2px 0; }
+  .star-pick { font-size: 17px; cursor: pointer; color: var(--line); transition: transform .1s ease, color .1s ease; line-height: 1; }
+  .star-pick.filled { color: var(--gold); }
+  .star-pick:hover { transform: scale(1.2); }
+  .watchlist-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .watchlist-actions .ghost-btn { padding: 6px 10px; font-size: 11px; }
+  .star-confirm-row { display: flex; gap: 8px; margin: 4px 0 2px; }
+  .star-confirm-row .ghost-btn { padding: 6px 10px; font-size: 11px; }
+  .ghost-btn.confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; background: var(--panel-2); border-color: var(--line); color: var(--text-dim); }
   @media (max-width: 860px) {
     .board-head { display: none; }
     .cart-row { display: flex; flex-wrap: wrap; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
@@ -1413,6 +1456,14 @@
   .concierge-runner-info { flex: 1 1 auto; min-width: 0; }
   .concierge-runner-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; color: var(--text); }
   .concierge-runner-why { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .concierge-pin-icon-btn {
+    flex: 0 0 auto; width: 34px; height: 34px; border-radius: 9px; background: var(--panel); border: 1px solid var(--line);
+    color: var(--text-dim); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .concierge-pin-icon-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .concierge-pin-icon-btn.pinned { border-color: var(--gold); color: var(--gold); background: rgba(255,210,63,0.12); }
+  .rate-popup-stars .star-pick { font-size: 34px; }
 </style>
 </head>
 <body>
@@ -1475,6 +1526,10 @@
     <button class="side-menu-item" id="menuConciergeBtn">
       <span class="side-menu-icon">🧭</span>
       <span class="side-menu-label">Cartridge Concierge</span>
+    </button>
+    <button class="side-menu-item" id="menuPlaylistBtn">
+      <span class="side-menu-icon">📌</span>
+      <span class="side-menu-label">Play List</span>
     </button>
     <hr class="side-menu-divider">
     <button class="side-menu-item" id="menuMoviesBtn">
@@ -1657,6 +1712,18 @@
     <div class="btn-row" style="justify-content:center;">
       <button class="ghost-btn" id="giveUpConfirmYes">Yes, give up</button>
       <button class="ghost-btn confirm-btn" id="giveUpConfirmNo">No, keep playing</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="gameRatePopup" style="z-index:200;">
+  <div class="modal-box" style="max-width:360px; text-align:center;">
+    <div class="modal-title" style="margin:0 0 6px; font-size:14px; color:var(--gold);">HOW WAS IT?</div>
+    <div class="help-note" style="margin:0 0 16px; font-size:13px;" id="gameRatePopupSubtitle"></div>
+    <div class="star-rating rate-popup-stars" id="gameRatePopupStars" style="justify-content:center; margin-bottom:20px;"></div>
+    <div class="btn-row" style="justify-content:center;">
+      <button class="ghost-btn confirm-btn" id="gameRatePopupConfirm" disabled>Confirm Rating</button>
+      <button class="ghost-btn" id="gameRatePopupSkip">Skip for now</button>
     </div>
   </div>
 </div>
@@ -1918,6 +1985,7 @@
       </div>
       <div class="achv-toast-list" id="cassetteAchvToastList"></div>
       <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn wl-pin-btn" id="cassetteWatchlistBtn">📌 Add to Play List</button>
         <button class="ghost-btn" id="cassetteShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="cassetteFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="cassettePlayAgainBtn" style="display:none;">New Puzzle</button>
@@ -2033,6 +2101,7 @@
         </div>
       </div>
       <div class="btn-row" style="justify-content:center;">
+        <button class="ghost-btn wl-pin-btn" id="cupWatchlistBtn">📌 Add to Play List</button>
         <button class="ghost-btn" id="cupShareBtn">📋 Share Results</button>
         <button class="ghost-btn" id="cupFreeplayBtn">Play Free Play</button>
         <button class="ghost-btn" id="cupPlayAgainBtn" style="display:none;">New Bracket</button>
@@ -2205,6 +2274,22 @@
         <div class="achv-grid" id="legendaryGrid"></div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="playlistModal">
+  <div class="modal-box watchlist-modal-box">
+    <button class="modal-close" id="playlistModalClose">✕</button>
+    <div class="modal-title" style="color:var(--gold);">PLAY LIST</div>
+    <div class="help-note" style="margin:-10px 0 16px;">Tap 📌 on a Cup or Cassette result to save a game here.</div>
+    <div class="watchlist-tab-row">
+      <button class="watchlist-tab active" id="playlistToPlayTab">🎮 To Play <span id="playlistToPlayCount">0</span></button>
+      <button class="watchlist-tab" id="playlistPlayingTab">🕹️ Playing <span id="playlistPlayingCount">0</span></button>
+      <button class="watchlist-tab" id="playlistCompletedTab">✅ Completed <span id="playlistCompletedCount">0</span></button>
+    </div>
+    <div class="watchlist-grid" id="playlistToPlayGrid"></div>
+    <div class="watchlist-grid" id="playlistPlayingGrid" style="display:none;"></div>
+    <div class="watchlist-grid" id="playlistCompletedGrid" style="display:none;"></div>
   </div>
 </div>
 
@@ -5135,6 +5220,309 @@ function loadClashCardArt(cardEl, game){
   });
 }
 
+// ---------- Cartridge Play List (Extras — pin a game from Cup or Cassette
+// results into a personal to-play/playing/completed tracker, with a
+// per-game 5-star rating once it's completed). Kept entirely separate from
+// Cinema's own Watchlist (different localStorage key, different page) even
+// though the two sites share an origin, since they track different media.
+// Data lives in its own localStorage key so it round-trips through Export/
+// Import Stats like every other piece of Cartridge progress. ----------
+const GAME_PLAYLIST_KEY = 'cartridgePlaylist_v1';
+
+function loadGamePlaylist(){
+  try{ return JSON.parse(localStorage.getItem(GAME_PLAYLIST_KEY) || '[]'); }catch(e){ return []; }
+}
+function saveGamePlaylist(list){
+  try{ localStorage.setItem(GAME_PLAYLIST_KEY, JSON.stringify(list)); }catch(e){}
+}
+function findGamePlaylistEntry(title){
+  return loadGamePlaylist().find(e => e.title === title) || null;
+}
+function isInGamePlaylist(title){
+  return !!findGamePlaylistEntry(title);
+}
+function addToGamePlaylist(title){
+  const list = loadGamePlaylist();
+  if(list.some(e => e.title === title)) return;
+  list.unshift({ title, dateAdded: new Date().toISOString(), status: 'toplay', rating: 0, dateCompleted: null });
+  saveGamePlaylist(list);
+}
+function removeFromGamePlaylist(title){
+  saveGamePlaylist(loadGamePlaylist().filter(e => e.title !== title));
+}
+// Shared by the pin button on every results screen that reveals a single
+// game (Cup/Cassette) — updates its own label/state and, if the Play List
+// page happens to be open behind it, keeps that in sync too.
+function setGamePinButtonState(btn, title){
+  if(!btn) return;
+  const inList = isInGamePlaylist(title);
+  btn.textContent = inList ? '📌 In Play List' : '📌 Add to Play List';
+  btn.classList.toggle('pinned', inList);
+  btn.dataset.title = title;
+}
+function toggleGamePin(btn){
+  const title = btn.dataset.title;
+  if(!title) return;
+  if(isInGamePlaylist(title)) removeFromGamePlaylist(title);
+  else addToGamePlaylist(title);
+  setGamePinButtonState(btn, title);
+  if(playlistModal.classList.contains('show')) renderGamePlaylistPage();
+}
+function setGamePlaylistStatus(title, status){
+  const list = loadGamePlaylist();
+  const entry = list.find(e => e.title === title);
+  if(!entry) return;
+  entry.status = status;
+  entry.dateCompleted = status === 'completed' ? new Date().toISOString() : null;
+  saveGamePlaylist(list);
+  renderGamePlaylistPage();
+  if(status === 'completed'){
+    launchWinCelebration();
+    openGameRatePopup(title);
+  }
+}
+function setGamePlaylistRating(title, stars){
+  const list = loadGamePlaylist();
+  const entry = list.find(e => e.title === title);
+  if(!entry) return;
+  entry.rating = stars;
+  saveGamePlaylist(list);
+  renderGamePlaylistPage();
+}
+
+// A small popup that appears right after marking a game Completed, so
+// rating it out of 5 stars is a one-tap follow-up to the moment rather than
+// a separate trip back to the Play List card later (though the card's own
+// stars still work anytime, for changing your mind or rating later). Picking
+// a star here only previews it — nothing saves until Confirm Rating is
+// pressed, same preview-then-confirm pattern as the card's own star widget
+// (kept as its own local variable rather than sharing pendingGameRatings,
+// since only one game is ever being rated here at a time).
+let gameRatePopupTitle = null;
+let gameRatePopupStars = 0;
+function renderGameRatePopupStars(){
+  const safeTitle = (gameRatePopupTitle || '').replace(/"/g,'&quot;');
+  let stars = '';
+  for(let i=1;i<=5;i++){
+    stars += `<span class="star-pick ${i <= gameRatePopupStars ? 'filled' : ''}" data-star="${i}">${i <= gameRatePopupStars ? '★' : '☆'}</span>`;
+  }
+  document.getElementById('gameRatePopupStars').innerHTML = `<div class="star-rating" data-title="${safeTitle}">${stars}</div>`;
+}
+function openGameRatePopup(title){
+  gameRatePopupTitle = title;
+  gameRatePopupStars = 0;
+  document.getElementById('gameRatePopupSubtitle').textContent = title;
+  renderGameRatePopupStars();
+  document.getElementById('gameRatePopupConfirm').disabled = true;
+  document.getElementById('gameRatePopup').classList.add('show');
+}
+function closeGameRatePopup(){
+  document.getElementById('gameRatePopup').classList.remove('show');
+  gameRatePopupTitle = null;
+  gameRatePopupStars = 0;
+}
+document.getElementById('gameRatePopupSkip').addEventListener('click', closeGameRatePopup);
+document.getElementById('gameRatePopupConfirm').addEventListener('click', ()=>{
+  if(gameRatePopupTitle && gameRatePopupStars > 0) setGamePlaylistRating(gameRatePopupTitle, gameRatePopupStars);
+  closeGameRatePopup();
+});
+document.getElementById('gameRatePopup').addEventListener('click', (e)=>{
+  if(e.target.id === 'gameRatePopup'){ closeGameRatePopup(); return; }
+  const starEl = e.target.closest('.star-pick');
+  if(starEl && gameRatePopupTitle){
+    gameRatePopupStars = parseInt(starEl.dataset.star, 10);
+    renderGameRatePopupStars();
+    document.getElementById('gameRatePopupConfirm').disabled = false;
+  }
+});
+function formatPlaylistDate(iso){
+  if(!iso) return '';
+  try{
+    return new Date(iso).toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' });
+  }catch(e){ return ''; }
+}
+// Star ratings are a preview-then-confirm interaction, not instant-save:
+// clicking a star just previews that rating (tracked here per game title,
+// separate from the saved value in the play list entry itself) and a
+// Confirm button appears to actually commit it — so picking the wrong star,
+// or changing your mind on an already-rated game, never overwrites the
+// saved rating until you deliberately confirm.
+let pendingGameRatings = {};
+function renderGameStarRatingHtml(savedRating, title){
+  const safeTitle = title.replace(/"/g,'&quot;');
+  const hasPending = Object.prototype.hasOwnProperty.call(pendingGameRatings, title);
+  const pending = hasPending ? pendingGameRatings[title] : null;
+  const display = hasPending ? pending : savedRating;
+  let stars = '';
+  for(let i=1;i<=5;i++){
+    stars += `<span class="star-pick ${i <= display ? 'filled' : ''}" data-star="${i}">${i <= display ? '★' : '☆'}</span>`;
+  }
+  const showConfirm = hasPending && pending !== savedRating;
+  const confirmRow = showConfirm
+    ? `<div class="star-confirm-row">
+        <button class="ghost-btn confirm-btn star-confirm-btn" data-title="${safeTitle}">✓ Confirm ${pending}★</button>
+        <button class="ghost-btn star-cancel-btn" data-title="${safeTitle}">Cancel</button>
+      </div>`
+    : '';
+  return `<div class="star-rating" data-title="${safeTitle}">${stars}</div>${confirmRow}`;
+}
+
+// A dedicated audio element for Play List preview clips, kept separate from
+// Cassette's own `cassetteAudio` so browsing your Play List can never
+// interfere with (or be interfered by) an in-progress Cassette round.
+const plAudio = new Audio();
+let plActiveBtn = null;
+function plResetActiveBtn(){
+  if(plActiveBtn){ plActiveBtn.textContent = '🎵 Play Clip'; plActiveBtn.disabled = false; }
+  plActiveBtn = null;
+}
+plAudio.addEventListener('ended', plResetActiveBtn);
+plAudio.addEventListener('pause', plResetActiveBtn);
+async function playPlaylistClip(title, btn){
+  if(plActiveBtn === btn){ plAudio.pause(); return; }
+  const entry = GAME_SOUNDTRACK_POOL.find(s => s.title === title);
+  if(!entry) return;
+  plResetActiveBtn();
+  btn.textContent = '⏳ Loading…';
+  btn.disabled = true;
+  const url = await fetchGameSoundtrackPreview(entry);
+  btn.disabled = false;
+  if(!url){
+    btn.textContent = '🚫 Unavailable';
+    setTimeout(()=>{ if(btn.textContent === '🚫 Unavailable') btn.textContent = '🎵 Play Clip'; }, 1500);
+    return;
+  }
+  plAudio.src = url;
+  plAudio.currentTime = 0;
+  plActiveBtn = btn;
+  btn.textContent = '⏸ Stop';
+  const p = plAudio.play();
+  if(p && p.catch) p.catch(()=> plResetActiveBtn());
+}
+
+function gamePlaylistCardHtml(entry){
+  const game = GAMES.find(g => g.title === entry.title);
+  const safeTitle = entry.title.replace(/"/g,'&quot;');
+  const addedLabel = formatPlaylistDate(entry.dateAdded);
+  const completedLabel = entry.dateCompleted ? formatPlaylistDate(entry.dateCompleted) : null;
+  const hasSong = GAME_SOUNDTRACK_POOL.some(s => s.title === entry.title);
+  const nextActionBtn = entry.status === 'toplay'
+    ? `<button class="ghost-btn pl-playing-btn" data-title="${safeTitle}">🕹️ Start Playing</button>`
+    : entry.status === 'playing'
+      ? `<button class="ghost-btn pl-completed-btn" data-title="${safeTitle}">✅ Mark Completed</button>
+         <button class="ghost-btn pl-toplay-btn" data-title="${safeTitle}">↩ To Play</button>`
+      : `<button class="ghost-btn pl-playing-btn" data-title="${safeTitle}">↩ Playing</button>`;
+  return `
+    <div class="watchlist-card">
+      <div class="watchlist-poster" data-current-title="${safeTitle}"><span class="cover-placeholder">🎮</span></div>
+      <div class="watchlist-info">
+        <div class="watchlist-title">${entry.title}</div>
+        <div class="watchlist-meta">${game ? `📅 ${game.year}` : ''}</div>
+        <div class="watchlist-dates">
+          <span>Added ${addedLabel}</span>${completedLabel ? `<span>· Completed ${completedLabel}</span>` : ''}
+        </div>
+        ${entry.status === 'completed' ? renderGameStarRatingHtml(entry.rating || 0, entry.title) : ''}
+        <div class="watchlist-actions">
+          ${hasSong ? `<button class="ghost-btn pl-play-btn" data-title="${safeTitle}">🎵 Play Clip</button>` : ''}
+          ${nextActionBtn}
+          <button class="ghost-btn pl-remove-btn" data-title="${safeTitle}">🗑 Remove</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderGamePlaylistPage(){
+  const list = loadGamePlaylist();
+  const toPlay = list.filter(e => e.status === 'toplay');
+  const playing = list.filter(e => e.status === 'playing');
+  const completed = list.filter(e => e.status === 'completed');
+  document.getElementById('playlistToPlayCount').textContent = toPlay.length;
+  document.getElementById('playlistPlayingCount').textContent = playing.length;
+  document.getElementById('playlistCompletedCount').textContent = completed.length;
+  const toPlayGrid = document.getElementById('playlistToPlayGrid');
+  const playingGrid = document.getElementById('playlistPlayingGrid');
+  const completedGrid = document.getElementById('playlistCompletedGrid');
+  toPlayGrid.innerHTML = toPlay.length
+    ? toPlay.map(gamePlaylistCardHtml).join('')
+    : '<div class="watchlist-empty">Nothing here yet — tap 📌 on a Cup or Cassette result to add a game.</div>';
+  playingGrid.innerHTML = playing.length
+    ? playing.map(gamePlaylistCardHtml).join('')
+    : '<div class="watchlist-empty">Nothing in progress — move a game here from To Play.</div>';
+  completedGrid.innerHTML = completed.length
+    ? completed.map(gamePlaylistCardHtml).join('')
+    : '<div class="watchlist-empty">Nothing completed yet — mark a game as completed from Playing.</div>';
+  [...toPlayGrid.querySelectorAll('.watchlist-poster'), ...playingGrid.querySelectorAll('.watchlist-poster'), ...completedGrid.querySelectorAll('.watchlist-poster')].forEach(el=>{
+    const title = el.dataset.currentTitle;
+    fetchCoverArt(title).then(url=>{
+      if(el.dataset.currentTitle !== title) return;
+      if(url) el.innerHTML = `<img src="${url}" alt="${title}">`;
+    });
+  });
+}
+function setGamePlaylistTab(tab){
+  document.getElementById('playlistToPlayTab').classList.toggle('active', tab === 'toplay');
+  document.getElementById('playlistPlayingTab').classList.toggle('active', tab === 'playing');
+  document.getElementById('playlistCompletedTab').classList.toggle('active', tab === 'completed');
+  document.getElementById('playlistToPlayGrid').style.display = tab === 'toplay' ? '' : 'none';
+  document.getElementById('playlistPlayingGrid').style.display = tab === 'playing' ? '' : 'none';
+  document.getElementById('playlistCompletedGrid').style.display = tab === 'completed' ? '' : 'none';
+}
+
+const playlistModal = document.getElementById('playlistModal');
+document.getElementById('menuPlaylistBtn').addEventListener('click', ()=>{
+  closeSideMenu();
+  pendingGameRatings = {};
+  renderGamePlaylistPage();
+  setGamePlaylistTab('toplay');
+  playlistModal.classList.add('show');
+});
+document.getElementById('playlistModalClose').addEventListener('click', ()=>{
+  plAudio.pause();
+  pendingGameRatings = {};
+  playlistModal.classList.remove('show');
+});
+playlistModal.addEventListener('click', (e)=>{ if(e.target === playlistModal){ plAudio.pause(); pendingGameRatings = {}; playlistModal.classList.remove('show'); } });
+document.getElementById('playlistToPlayTab').addEventListener('click', ()=> setGamePlaylistTab('toplay'));
+document.getElementById('playlistPlayingTab').addEventListener('click', ()=> setGamePlaylistTab('playing'));
+document.getElementById('playlistCompletedTab').addEventListener('click', ()=> setGamePlaylistTab('completed'));
+
+playlistModal.addEventListener('click', (e)=>{
+  const starEl = e.target.closest('.star-pick');
+  if(starEl){
+    const title = starEl.closest('.star-rating').dataset.title;
+    pendingGameRatings[title] = parseInt(starEl.dataset.star, 10);
+    renderGamePlaylistPage();
+    return;
+  }
+  const confirmStarBtn = e.target.closest('.star-confirm-btn');
+  if(confirmStarBtn){
+    const title = confirmStarBtn.dataset.title;
+    const stars = pendingGameRatings[title];
+    delete pendingGameRatings[title];
+    setGamePlaylistRating(title, stars);
+    return;
+  }
+  const cancelStarBtn = e.target.closest('.star-cancel-btn');
+  if(cancelStarBtn){
+    delete pendingGameRatings[cancelStarBtn.dataset.title];
+    renderGamePlaylistPage();
+    return;
+  }
+  const playBtn = e.target.closest('.pl-play-btn');
+  if(playBtn){ playPlaylistClip(playBtn.dataset.title, playBtn); return; }
+  const playingBtn = e.target.closest('.pl-playing-btn');
+  if(playingBtn){ setGamePlaylistStatus(playingBtn.dataset.title, 'playing'); return; }
+  const completedBtn = e.target.closest('.pl-completed-btn');
+  if(completedBtn){ setGamePlaylistStatus(completedBtn.dataset.title, 'completed'); return; }
+  const toplayBtn = e.target.closest('.pl-toplay-btn');
+  if(toplayBtn){ setGamePlaylistStatus(toplayBtn.dataset.title, 'toplay'); return; }
+  const removeBtn = e.target.closest('.pl-remove-btn');
+  if(removeBtn){ removeFromGamePlaylist(removeBtn.dataset.title); renderGamePlaylistPage(); return; }
+});
+
+document.getElementById('cassetteWatchlistBtn').addEventListener('click', (e)=> toggleGamePin(e.currentTarget));
+document.getElementById('cupWatchlistBtn').addEventListener('click', (e)=> toggleGamePin(e.currentTarget));
+
 function renderClashRound(){
   const stage = CLASH_STAGES[clashStageIndex];
   clashModeLabel.textContent = clashMode === 'daily' ? `DAILY #${dailyNumberLabel(clashDailyDate)}`
@@ -6543,6 +6931,7 @@ document.getElementById('secretResetDailyBtn').addEventListener('click', ()=>{
 // excludes the cover-art cache: it's just a performance cache of image URLs,
 // not player data, and would only bloat the backup file. ----------
 const EXPORTABLE_KEYS = [
+  'cartridgePlaylist_v1',
   'cartridgeDailyState_v1', 'cartridgeDailyHistory_v1',
   'cartridge_achievements_v1', 'cartridgeFreeplayLog_v1', 'cartridgeHintUsage_v1',
   'cartridgeClashBest_v1', 'cartridgeClashDailyState_v1', 'cartridgeClashHistory_v1',
@@ -6551,6 +6940,9 @@ const EXPORTABLE_KEYS = [
   'cartridgeChronicleDailyState_v1', 'cartridgeChronicleHistory_v1', 'cartridgeChronicleBest_v1', 'cartridgeChroniclePerfectCategories_v1',
   'cartridgeCrosswordDailyState_v1', 'cartridgeCrosswordHistory_v1', 'cartridgeCrosswordBestTime_v1', 'cartridgeCrosswordCompletions_v1',
   'cartridgeChaosBest_v1', 'cartridgeChaosStats_v1',
+  'cartridgeCassetteBest_v1', 'cartridgeCassetteDailyState_v1', 'cartridgeCassetteHistory_v1',
+  'cartridgeCountdownBest_v1', 'cartridgeCountdownCompletions_v1', 'cartridgeCountdownDailyState_v1', 'cartridgeCountdownHistory_v1',
+  'cartridgeCupDaily_v1', 'cartridgeSecretUnlock_v1',
   'cartridgeSfxMuted_v1', 'cartridgeTheme_v1',
 ];
 
@@ -9836,10 +10228,18 @@ function renderCassetteRound(){
   cassetteGuessHistory.innerHTML = cassetteGuessedTitles.map(cassRenderGuessChip).join('');
   cassetteMsg.textContent = '';
   cassetteInput.value = '';
-  cassetteInput.disabled = cassetteGameOver;
-  cassetteGuessBtn.disabled = cassetteGameOver;
-  cassetteSkipBtn.disabled = cassetteGameOver;
-  cassetteMcToggleBtn.disabled = cassetteGameOver || cassetteMcOpened;
+  // When the soundtrack lookup never resolved a target (cassetteTarget stays
+  // null), there is nothing to guess, skip, or reveal against — disable
+  // every action that would otherwise drive the round into
+  // endCassetteRound()/showCassetteResults() and crash on cassetteTarget.title.
+  // Same fix applied to Cinema's identical Cassette mode after finding this
+  // during a full test pass; can happen on any platform whenever the iTunes
+  // lookup fails for every attempt (network down, blocked, pool exhausted).
+  const cassetteUnavailable = cassetteLoadState === 'unavailable' || !cassetteTarget;
+  cassetteInput.disabled = cassetteGameOver || cassetteUnavailable;
+  cassetteGuessBtn.disabled = cassetteGameOver || cassetteUnavailable;
+  cassetteSkipBtn.disabled = cassetteGameOver || cassetteUnavailable;
+  cassetteMcToggleBtn.disabled = cassetteGameOver || cassetteMcOpened || cassetteUnavailable;
   renderCassetteMcOptions();
 }
 
@@ -9870,6 +10270,19 @@ function cassetteResultMessage(){
 function showCassetteResults(){
   cassettePlayArea.style.display = 'none';
   cassetteResultsArea.style.display = '';
+  // Defensive guard — see the matching comment in renderCassetteRound().
+  if(!cassetteTarget){
+    cassetteFinalMessage.textContent = 'Audio unavailable';
+    applyResultBanner(cassetteFinalMessage, false, false);
+    cassetteFinalScore.textContent = `Couldn't load a soundtrack clip this round (${cassetteLastFailReason || 'unknown reason'}).`;
+    cassetteTrackReveal.innerHTML = '';
+    document.getElementById('cassetteWatchlistBtn') && (document.getElementById('cassetteWatchlistBtn').style.display = 'none');
+    cassetteFreeplayBtn.style.display = cassetteMode === 'daily' ? '' : 'none';
+    cassettePlayAgainBtn.style.display = cassetteMode === 'freeplay' ? '' : 'none';
+    if(cassetteMode === 'daily') updateNextDailyButton(cassetteNextDailyBtn, 'cassette');
+    else cassetteNextDailyBtn.style.display = 'none';
+    return;
+  }
   const attemptsUsed = cassetteAttempt + 1;
   const cassetteIsAce = cassetteWon && attemptsUsed === 1;
   cassetteFinalMessage.textContent = cassetteIsAce ? '⚡ ACE! Perfect Pitch! ⚡' : cassetteResultMessage();
@@ -9878,6 +10291,11 @@ function showCassetteResults(){
     : `The answer was ${cassetteTarget.title}`;
   applyResultBanner(cassetteFinalMessage, cassetteWon, cassetteIsAce);
   cassetteTrackReveal.innerHTML = `<div class="cass-track-reveal">${cassetteTarget.reveal}</div>`;
+  const cassetteWatchlistBtn = document.getElementById('cassetteWatchlistBtn');
+  if(cassetteWatchlistBtn){
+    cassetteWatchlistBtn.style.display = '';
+    setGamePinButtonState(cassetteWatchlistBtn, cassetteTarget.title);
+  }
   cassetteFreeplayBtn.style.display = cassetteMode === 'daily' ? '' : 'none';
   cassettePlayAgainBtn.style.display = cassetteMode === 'freeplay' ? '' : 'none';
   if(cassetteMode === 'daily') updateNextDailyButton(cassetteNextDailyBtn, 'cassette');
@@ -10465,6 +10883,7 @@ function showCupResults(){
   cupChampionCard.dataset.currentTitle = cupChampion.title;
   loadClashCardArt(cupChampionCard, cupChampion);
   applyResultBanner(cupChampionName, true);
+  setGamePinButtonState(document.getElementById('cupWatchlistBtn'), cupChampion.title);
   cupFreeplayBtn.style.display = cupMode === 'daily' ? '' : 'none';
   cupPlayAgainBtn.style.display = cupMode !== 'daily' ? '' : 'none';
 }
@@ -10898,6 +11317,9 @@ function renderConciergeResults(){
           <div class="concierge-soundtrack" id="conciergeHeroSoundtrack" style="${soundtrackEntry?'':'display:none;'}">
             <button type="button" id="conciergeSoundtrackBtn">▶ Preview soundtrack</button>
           </div>
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="ghost-btn wl-pin-btn" id="conciergeHeroWatchlistBtn">📌 Add to Play List</button>
+          </div>
         </div>
       </div>
       <div class="concierge-runners-label">Also worth a look</div>
@@ -10909,6 +11331,7 @@ function renderConciergeResults(){
               <div class="concierge-runner-title">${r.game.title}</div>
               <div class="concierge-runner-why">${r.reasons.length ? 'Matches: ' + r.reasons.join(', ') : r.game.year + ' · ' + r.game.genres.join('/')}</div>
             </div>
+            <button class="concierge-pin-icon-btn" data-title="${r.game.title.replace(/"/g,'&quot;')}" title="Add to Play List">📌</button>
           </div>
         `).join('')}
       </div>
@@ -10927,6 +11350,21 @@ function renderConciergeResults(){
   }
   document.getElementById('conciergeRestartBtn').addEventListener('click', openConciergeModal);
   document.getElementById('conciergeCloseResultsBtn').addEventListener('click', closeConciergeModal);
+
+  // Play List pin — the hero pick plus all 3 runner-up cards (4 games total).
+  const heroPinBtn = document.getElementById('conciergeHeroWatchlistBtn');
+  setGamePinButtonState(heroPinBtn, p.title);
+  heroPinBtn.addEventListener('click', (e)=> toggleGamePin(e.currentTarget));
+  conciergeBody.querySelectorAll('.concierge-pin-icon-btn').forEach(btn=>{
+    btn.classList.toggle('pinned', isInGamePlaylist(btn.dataset.title));
+    btn.addEventListener('click', ()=>{
+      const title = btn.dataset.title;
+      if(isInGamePlaylist(title)) removeFromGamePlaylist(title);
+      else addToGamePlaylist(title);
+      btn.classList.toggle('pinned', isInGamePlaylist(title));
+      if(playlistModal.classList.contains('show')) renderGamePlaylistPage();
+    });
+  });
 }
 
 async function conciergeToggleSoundtrack(entry, btn){
