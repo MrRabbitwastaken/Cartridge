@@ -807,6 +807,12 @@
   .star-pick:hover { transform: scale(1.2); }
   .watchlist-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
   .watchlist-actions .ghost-btn { padding: 6px 10px; font-size: 11px; }
+  .wl-search-input {
+    width: 100%; padding: 12px 14px; background: var(--panel); border: 2px solid var(--line);
+    border-radius: 8px; color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 14px;
+    outline: none; transition: border-color .15s;
+  }
+  .wl-search-input:focus { border-color: var(--gold); }
   .star-confirm-row { display: flex; gap: 8px; margin: 4px 0 2px; }
   .star-confirm-row .ghost-btn { padding: 6px 10px; font-size: 11px; }
   .ghost-btn.confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; background: var(--panel-2); border-color: var(--line); color: var(--text-dim); }
@@ -2281,7 +2287,13 @@
   <div class="modal-box watchlist-modal-box">
     <button class="modal-close" id="playlistModalClose">✕</button>
     <div class="modal-title" style="color:var(--gold);">PLAY LIST</div>
-    <div class="help-note" style="margin:-10px 0 16px;">Tap 📌 on a Cup or Cassette result to save a game here.</div>
+    <div class="help-note" style="margin:-10px 0 12px;">Tap 📌 on a Cup or Cassette result to save a game here — or search for one directly below.</div>
+    <div class="search-row" style="margin-bottom:16px;">
+      <div class="search-box">
+        <input type="text" id="playlistSearchInput" class="wl-search-input" placeholder="🔍 Search games to add…" autocomplete="off">
+        <div class="dropdown hidden" id="playlistSearchDropdown"></div>
+      </div>
+    </div>
     <div class="watchlist-tab-row">
       <button class="watchlist-tab active" id="playlistToPlayTab">🎮 To Play <span id="playlistToPlayCount">0</span></button>
       <button class="watchlist-tab" id="playlistPlayingTab">🕹️ Playing <span id="playlistPlayingCount">0</span></button>
@@ -5469,11 +5481,15 @@ function setGamePlaylistTab(tab){
 }
 
 const playlistModal = document.getElementById('playlistModal');
+const playlistSearchInput = document.getElementById('playlistSearchInput');
+const playlistSearchDropdown = document.getElementById('playlistSearchDropdown');
 document.getElementById('menuPlaylistBtn').addEventListener('click', ()=>{
   closeSideMenu();
   pendingGameRatings = {};
   renderGamePlaylistPage();
   setGamePlaylistTab('toplay');
+  playlistSearchInput.value = '';
+  hidePlaylistSearchDropdown();
   playlistModal.classList.add('show');
 });
 document.getElementById('playlistModalClose').addEventListener('click', ()=>{
@@ -5484,6 +5500,45 @@ document.getElementById('playlistModalClose').addEventListener('click', ()=>{
 playlistModal.addEventListener('click', (e)=>{ if(e.target === playlistModal){ plAudio.pause(); pendingGameRatings = {}; playlistModal.classList.remove('show'); } });
 document.getElementById('playlistToPlayTab').addEventListener('click', ()=> setGamePlaylistTab('toplay'));
 document.getElementById('playlistPlayingTab').addEventListener('click', ()=> setGamePlaylistTab('playing'));
+
+// Search-to-add — lets you pull any game straight into the Play List
+// without having to win it in a game first. Reuses the same GAMES array
+// and dropdown look as every other in-game search box.
+function hidePlaylistSearchDropdown(){
+  playlistSearchDropdown.classList.add('hidden');
+  playlistSearchDropdown.innerHTML = '';
+}
+function renderPlaylistSearchDropdown(query){
+  const q = query.trim().toLowerCase();
+  if(!q){ hidePlaylistSearchDropdown(); return; }
+  const matches = GAMES.filter(g => g.title.toLowerCase().includes(q)).slice(0, 8);
+  if(!matches.length){
+    playlistSearchDropdown.innerHTML = `<div class="dropdown-item disabled">No games found</div>`;
+    playlistSearchDropdown.classList.remove('hidden');
+    return;
+  }
+  playlistSearchDropdown.innerHTML = matches.map(g=>{
+    const already = isInGamePlaylist(g.title);
+    const safeTitle = g.title.replace(/"/g,'&quot;');
+    return `<div class="dropdown-item${already ? ' disabled' : ''}" data-title="${safeTitle}">${g.title} <span style="opacity:0.6;">(${g.year})</span>${already ? ' — already on your list' : ''}</div>`;
+  }).join('');
+  playlistSearchDropdown.classList.remove('hidden');
+}
+playlistSearchInput.addEventListener('input', ()=> renderPlaylistSearchDropdown(playlistSearchInput.value));
+playlistSearchInput.addEventListener('focus', ()=> renderPlaylistSearchDropdown(playlistSearchInput.value));
+playlistSearchDropdown.addEventListener('click', (e)=>{
+  const item = e.target.closest('.dropdown-item');
+  if(!item || item.classList.contains('disabled')) return;
+  const title = item.dataset.title;
+  addToGamePlaylist(title);
+  playlistSearchInput.value = '';
+  hidePlaylistSearchDropdown();
+  renderGamePlaylistPage();
+  setGamePlaylistTab('toplay');
+});
+document.addEventListener('click', (e)=>{
+  if(!playlistSearchInput.contains(e.target) && !playlistSearchDropdown.contains(e.target)) hidePlaylistSearchDropdown();
+});
 document.getElementById('playlistCompletedTab').addEventListener('click', ()=> setGamePlaylistTab('completed'));
 
 playlistModal.addEventListener('click', (e)=>{

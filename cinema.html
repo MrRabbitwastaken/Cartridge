@@ -751,6 +751,13 @@
   .star-pick:hover { transform: scale(1.2); }
   .watchlist-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
   .watchlist-actions .ghost-btn { padding: 6px 10px; font-size: 11px; }
+  .wl-search-input {
+    width: 100%; padding: 12px 14px; background: var(--panel); border: 2px solid var(--line);
+    border-radius: 8px; color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 14px;
+    outline: none; transition: border-color .15s;
+  }
+  .wl-search-input:focus { border-color: var(--gold); }
+  .wl-search-add-btn { flex: 0 0 auto; padding: 4px 8px; font-size: 11px; }
   .star-confirm-row { display: flex; gap: 8px; margin: 4px 0 2px; }
   .star-confirm-row .ghost-btn { padding: 6px 10px; font-size: 11px; }
   .ghost-btn.confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; background: var(--panel-2); border-color: var(--line); color: var(--text-dim); }
@@ -1884,7 +1891,13 @@
   <div class="modal-box watchlist-modal-box">
     <button class="modal-close" id="movieWatchlistClose">✕</button>
     <div class="modal-title" style="color:var(--gold);">WATCHLIST</div>
-    <div class="help-note" style="margin:-10px 0 16px;">Tap 📌 on a One-Star Reviews, Cup or Cassette result to save a movie here.</div>
+    <div class="help-note" style="margin:-10px 0 12px;">Tap 📌 on a One-Star Reviews, Cup or Cassette result to save a movie here — or search for one directly below.</div>
+    <div class="search-row" style="margin-bottom:16px;">
+      <div class="search-box">
+        <input type="text" id="movieWatchlistSearchInput" class="wl-search-input" placeholder="🔍 Search movies to add…" autocomplete="off">
+        <div class="dropdown hidden" id="movieWatchlistSearchDropdown"></div>
+      </div>
+    </div>
     <div class="watchlist-tab-row">
       <button class="watchlist-tab active" id="movieWatchlistToWatchTab">🎬 To Watch <span id="movieWatchlistToWatchCount">0</span></button>
       <button class="watchlist-tab" id="movieWatchlistWatchedTab">✅ Watched <span id="movieWatchlistWatchedCount">0</span></button>
@@ -4134,11 +4147,15 @@ function setMovieWatchlistTab(tab){
 }
 
 const movieWatchlistModal = document.getElementById('movieWatchlistModal');
+const movieWatchlistSearchInput = document.getElementById('movieWatchlistSearchInput');
+const movieWatchlistSearchDropdown = document.getElementById('movieWatchlistSearchDropdown');
 document.getElementById('movieMenuWatchlistBtn').addEventListener('click', ()=>{
   closeMovieSideMenu();
   pendingMovieRatings = {};
   renderMovieWatchlistPage();
   setMovieWatchlistTab('towatch');
+  movieWatchlistSearchInput.value = '';
+  hideMovieWatchlistSearchDropdown();
   movieWatchlistModal.classList.add('show');
 });
 document.getElementById('movieWatchlistClose').addEventListener('click', ()=>{
@@ -4149,6 +4166,45 @@ document.getElementById('movieWatchlistClose').addEventListener('click', ()=>{
 movieWatchlistModal.addEventListener('click', (e)=>{ if(e.target === movieWatchlistModal){ wlAudio.pause(); pendingMovieRatings = {}; movieWatchlistModal.classList.remove('show'); } });
 document.getElementById('movieWatchlistToWatchTab').addEventListener('click', ()=> setMovieWatchlistTab('towatch'));
 document.getElementById('movieWatchlistWatchedTab').addEventListener('click', ()=> setMovieWatchlistTab('watched'));
+
+// Search-to-add — lets you pull any movie straight into the Watchlist
+// without having to win it in a game first. Reuses the same MOVIES array
+// and dropdown look as every other in-game search box.
+function hideMovieWatchlistSearchDropdown(){
+  movieWatchlistSearchDropdown.classList.add('hidden');
+  movieWatchlistSearchDropdown.innerHTML = '';
+}
+function renderMovieWatchlistSearchDropdown(query){
+  const q = query.trim().toLowerCase();
+  if(!q){ hideMovieWatchlistSearchDropdown(); return; }
+  const matches = MOVIES.filter(m => m.title.toLowerCase().includes(q)).slice(0, 8);
+  if(!matches.length){
+    movieWatchlistSearchDropdown.innerHTML = `<div class="dropdown-item disabled">No movies found</div>`;
+    movieWatchlistSearchDropdown.classList.remove('hidden');
+    return;
+  }
+  movieWatchlistSearchDropdown.innerHTML = matches.map(m=>{
+    const already = isInMovieWatchlist(m.title);
+    const safeTitle = m.title.replace(/"/g,'&quot;');
+    return `<div class="dropdown-item${already ? ' disabled' : ''}" data-title="${safeTitle}">${m.title} <span style="opacity:0.6;">(${m.year})</span>${already ? ' — already on your list' : ''}</div>`;
+  }).join('');
+  movieWatchlistSearchDropdown.classList.remove('hidden');
+}
+movieWatchlistSearchInput.addEventListener('input', ()=> renderMovieWatchlistSearchDropdown(movieWatchlistSearchInput.value));
+movieWatchlistSearchInput.addEventListener('focus', ()=> renderMovieWatchlistSearchDropdown(movieWatchlistSearchInput.value));
+movieWatchlistSearchDropdown.addEventListener('click', (e)=>{
+  const item = e.target.closest('.dropdown-item');
+  if(!item || item.classList.contains('disabled')) return;
+  const title = item.dataset.title;
+  addToMovieWatchlist(title);
+  movieWatchlistSearchInput.value = '';
+  hideMovieWatchlistSearchDropdown();
+  renderMovieWatchlistPage();
+  setMovieWatchlistTab('towatch');
+});
+document.addEventListener('click', (e)=>{
+  if(!movieWatchlistSearchInput.contains(e.target) && !movieWatchlistSearchDropdown.contains(e.target)) hideMovieWatchlistSearchDropdown();
+});
 
 movieWatchlistModal.addEventListener('click', (e)=>{
   const starEl = e.target.closest('.star-pick');
