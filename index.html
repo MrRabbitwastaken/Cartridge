@@ -1470,6 +1470,20 @@
   .concierge-pin-icon-btn:hover { border-color: var(--gold); color: var(--gold); }
   .concierge-pin-icon-btn.pinned { border-color: var(--gold); color: var(--gold); background: rgba(255,210,63,0.12); }
   .rate-popup-stars .star-pick { font-size: 34px; }
+  .concierge-mode-options { display: flex; flex-direction: column; gap: 12px; margin: 18px 0 6px; }
+  .concierge-mode-btn {
+    display: flex; align-items: center; gap: 14px; text-align: left; width: 100%;
+    background: var(--panel); border: 2px solid var(--line); border-radius: 12px; padding: 14px 16px;
+    cursor: pointer; transition: border-color .15s ease, transform .15s ease; color: var(--text);
+  }
+  .concierge-mode-btn:hover { border-color: var(--cyan); transform: translateY(-1px); }
+  .concierge-mode-icon { font-size: 28px; flex: 0 0 auto; }
+  .concierge-mode-title { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 800; color: var(--text); }
+  .concierge-mode-desc { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
+  .concierge-mode-badge {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--orange); border: 1px solid var(--orange);
+    border-radius: 6px; padding: 1px 6px; margin-left: 6px; white-space: nowrap;
+  }
 </style>
 </head>
 <body>
@@ -7158,7 +7172,6 @@ const CHARADES_CLUES = {
   'It Takes Two': '👫🧸🎮❤️',
   'Super Mario Odyssey': '🍄🎩🌍🚀',
   'Battlefield 1': '🪖✈️💣🎖️',
-  "Tom Clancy's Rainbow Six Siege": '🏚️🔫🛡️💣',
   'Forza Horizon 5': '🏎️🌎🏁🎪',
   'Monster Hunter: World': '🐉⚔️🏹🌋',
   'Elden Ring': '💍🐎⚔️🔥',
@@ -7166,12 +7179,10 @@ const CHARADES_CLUES = {
   'Celeste': '⛰️👧💨❤️',
   'Cuphead': '☕🥊🎨👹',
   'Hades': '💀🔥⚔️🏛️',
-  "Baldur's Gate 3": '🐉🎲⚔️📖',
   'Halo Infinite': '👽🔫🪐🟢',
   'Diablo IV': '😈🔥⚔️💀',
   'Battlefield V': '🪖⚔️✈️🌍',
   'Overwatch 2': '🦸🔫🌍👥',
-  "No Man's Sky": '🚀🌌🪐🔨',
   'Battlefield 4': '🪖🔫💥🌊',
   'Battlefield 3': '🪖🔫💥🎖️',
   'Battlefield 2042': '🪖🔫🌪️🤖',
@@ -7199,8 +7210,6 @@ const CHARADES_CLUES = {
   'Starfield': '🚀📜⚔️🌌',
   'Sea of Thieves': '☠️⛵💰🦜',
   // ----- added on request -----
-  "Marvel's Spider-Man": '🦸\u200d♂️🎒🕸️🕷️',
-  "Assassin's Creed Odyssey": '⚔️🇬🇷🥷⛵',
   'God of War (2018)': '🧑🏻\u200d🦲💪🏻🪓🏹',
   'Portal 2': '🪞🔫🪞🌌',
   'Guitar Hero': '🎸🎵🎶🎵',
@@ -7215,7 +7224,6 @@ const CHARADES_CLUES = {
   'The Last of Us': '🍄🧟🎒❤️',
   'Super Smash Bros. Ultimate': '🥊🍄⭐👊',
   'Persona 5': '🎭🔫👑😈',
-  "Uncharted 4: A Thief's End": '🗺️💰🏛️🔫',
   'Crash Bandicoot N. Sane Trilogy': '🦘📦🍊💥',
   // ----- 19 more added on request -----
   'The Legend of Zelda: Tears of the Kingdom': '🌄⚔️😭🏰',
@@ -7223,7 +7231,6 @@ const CHARADES_CLUES = {
   'Gears of War 3': '⚙️🪖⛽💥',
   'Gears of War 2': '⚙️🪖👰🧟',
   'Tetris': '🌈⬇️',
-  "Assassin's Creed IV: Black Flag": '🥷⚓☠️🏴',
   'The Legend of Zelda: Ocarina of Time': '👦⚔️🎶👨',
   'Sonic the Hedgehog': '💍🔵🦔🏃',
   'Resident Evil 4': '👮🧟⛓️🪚',
@@ -7248,6 +7255,304 @@ const CHARADES_CLUES = {
   'Kena: Bridge of Spirits': '👧🌲👻🏹',
   'A Plague Tale: Requiem': '🐀🕯️👧⚰️',
   'LEGO Marvel Super Heroes': '🧱🦸\u200d♂️🕷️⚡',
+  'Wii Sports': '🎾⛳🎳🥊',
+  'Super Mario Bros.': '🍄🟩🏰👑',
+  'Diablo III': '😈🔥🧪💀',
+  'Call of Duty: Modern Warfare': '🪖🔫💥🎯',
+  'New Super Mario Bros.': '🍄👫🟢⭐',
+  'Human: Fall Flat': '🧍🤸😂🧱',
+  'Grand Theft Auto: San Andreas': '🚲🔫🌴🏙️',
+  'Grand Theft Auto: Vice City': '🌴🕶️🔫🏖️',
+  'Call of Duty: Black Ops': '🕵️🔫🧠💣',
+  'Grand Theft Auto IV': '🗽🔫🚗🏙️',
+  'Overwatch': '🦸🦸‍♀️🔫🌍',
+  'Halo 3': '👽🔫🪐🛡️',
+  'Uncharted 4: A Thief\'s End': '🏴‍☠️💰🗺️🔫',
+  'Halo: Combat Evolved': '👽🔫🚀🛡️',
+  'Super Mario 64': '🍄⭐🏰🕹️',
+  'Super Smash Bros. Brawl': '🍄⚔️🧙🥊',
+  'Wii Play': '🎮🎯🏓🐟',
+  'Splatoon 2': '🦑🎨🔫💦',
+  'Splatoon 3': '🦑🎨🔫🏆',
+  'Red Dead Redemption': '🤠🐴🔫🌄',
+  'Call of Duty: Black Ops II': '🕵️🔫🧠🚁',
+  'Call of Duty: Modern Warfare 2': '🪖🔫💥❄️',
+  'The Sims': '🏠👨‍👩‍👧🛋️💭',
+  'Star Wars Jedi: Fallen Order': '🟢⚔️🤖🌌',
+  'Assassin\'s Creed II': '🗡️🏛️🕊️🇮🇹',
+  'Assassin\'s Creed Odyssey': '🗡️🏛️⚓🇬🇷',
+  'Far Cry 3': '🏝️🔫🤪💊',
+  'Watch Dogs': '📱🔓🏙️🔫',
+  'Tom Clancy\'s Rainbow Six Siege': '🪖🔫🏠🧨',
+  'Half-Life 2': '👨‍🔬🔫👽🚧',
+  'Fallout 4': '☢️🏜️🤖🐕',
+  'Fallout 3': '☢️🏜️💀🗽',
+  'BioShock Infinite': '🏙️☁️⚡🎈',
+  'Borderlands 2': '🔫🎨💀🤡',
+  'God of War Ragnarök': '⚔️🪓❄️🐺',
+  'Marvel\'s Spider-Man': '🕷️🕸️🏙️🦸',
+  'Bloodborne': '🩸🐺🏰😱',
+  'Halo 5: Guardians': '👽🔫🛡️🤝',
+  'Gears of War': '⚙️🔫💪👽',
+  'Final Fantasy VII': '⚔️🌃☄️🧪',
+  'Final Fantasy XV': '🚗⚔️👑🌃',
+  'Tomb Raider (2013)': '🏹🏝️💀🗿',
+  'Dark Souls III': '🔥⚔️💀🛡️',
+  'Sekiro: Shadows Die Twice': '🥷⚔️🩸🔄',
+  'Undertale': '💀❤️🎵🐐',
+  'Baldur\'s Gate 3': '🎲🐉⚔️🧙',
+  'Grand Theft Auto III': '🚗🔫🏙️🕶️',
+  'Call of Duty 4: Modern Warfare': '🔫🪖💣🌍',
+  'Call of Duty: Modern Warfare II': '🪖🔫💥🌆',
+  'Mario Kart 64': '🍄🏎️🍌🎮',
+  'The Legend of Zelda: Majora\'s Mask': '🌙😱⏳🎭',
+  'The Legend of Zelda: Twilight Princess': '🐺🌓🗡️🤴',
+  'The Legend of Zelda: The Wind Waker': '⛵🌊🗡️🎨',
+  'Halo 2': '👽🔫🚀🔪',
+  'The Elder Scrolls IV: Oblivion': '⚔️🐉🚪🔥',
+  'Fallout: New Vegas': '☢️🎰🤠🏜️',
+  'Dark Souls': '🔥⚔️🐉🛡️',
+  'Assassin\'s Creed Brotherhood': '🗡️🏛️🤝🇮🇹',
+  'Assassin\'s Creed IV: Black Flag': '🏴‍☠️⛵🗡️🌊',
+  'Assassin\'s Creed Origins': '🗡️🐍🏛️☀️',
+  'Assassin\'s Creed Valhalla': '🗡️🪓🐺❄️',
+  'God of War (2005)': '⚔️🏛️😡🗡️',
+  'God of War III': '⚔️🏛️🔥🗡️',
+  'Uncharted 2: Among Thieves': '🏔️💰🚂🔫',
+  'Uncharted: Drake\'s Fortune': '🏝️💰🗺️🔫',
+  'Resident Evil 2 (2019)': '🧟🚓💉🔬',
+  'Resident Evil Village': '🧟🏰🐺🩸',
+  'Monster Hunter Rise': '🐉⚔️🏹🦅',
+  'Borderlands 3': '🔫💀🎨🌌',
+  'Far Cry 5': '🏔️🔫⛪🤪',
+  'Watch Dogs 2': '📱🔓🌉🖥️',
+  'Splatoon': '🦑🎨🔫🐙',
+  'Gears 5': '⚙️🔫👽🐺',
+  'Spider-Man 2 (2023)': '🕷️🕸️🏙️🖤',
+  'Shadow of the Tomb Raider': '🏹🌴🗿🌑',
+  'Persona 4 Golden': '🎭🗡️📺🌫️',
+  'Nioh': '⚔️🥷👹🇯🇵',
+  'Control': '🧠🏢🔫🌀',
+  'Disco Elysium': '🕵️🍺🧠💭',
+  'Outer Wilds': '🚀🌌⏳☄️',
+  'Ori and the Blind Forest': '🦉🌲💡🌳',
+  'Subnautica': '🌊🐠🏝️🤿',
+  'No Man\'s Sky': '🚀🌌🪐♾️',
+  'Valheim': '🪓⚔️🐺🛖',
+  'Slay the Spire': '🃏⚔️🏰🔺',
+  'Yakuza 0': '👔🥊🏙️🀄',
+  'NieR: Automata': '🤖⚔️🌸💔',
+  'Alan Wake 2': '✍️🔦🌑😱',
+  'Metroid Dread': '👩‍🚀🔫👽😱',
+  'Bayonetta 2': '👠🔫😈🔥',
+  'Call of Duty: Ghosts': '🪖🔫👻🐕',
+  'Call of Duty: Advanced Warfare': '🪖🔫🦾🚀',
+  'Call of Duty: Black Ops III': '🕵️🔫🧠🤖',
+  'Call of Duty: Infinite Warfare': '🪖🔫🚀🌌',
+  'Call of Duty: WWII': '🪖🔫🎖️🌍',
+  'Call of Duty: Black Ops Cold War': '🕵️🔫☢️❄️',
+  'Call of Duty: Vanguard': '🪖🔫🪂🌍',
+  'Call of Duty: Modern Warfare III': '🪖🔫💥🌃',
+  'Call of Duty: Black Ops 6': '🕵️🔫🧠🌀',
+  'Assassin\'s Creed': '🗡️🏛️🕊️⚔️',
+  'Assassin\'s Creed III': '🗡️🏹🌲🇺🇸',
+  'Assassin\'s Creed Revelations': '🗡️🏛️🔑🕯️',
+  'Assassin\'s Creed Unity': '🗡️🇫🇷🏰⚔️',
+  'Assassin\'s Creed Syndicate': '🗡️🎩🏭🇬🇧',
+  'Assassin\'s Creed Rogue': '🗡️⛵❄️🏴',
+  'Assassin\'s Creed Mirage': '🗡️🏺🕊️🌙',
+  'Grand Theft Auto 2': '🚗🔫🏙️🤖',
+  'Grand Theft Auto: Liberty City Stories': '🗽🔫🚗📖',
+  'Grand Theft Auto: Chinatown Wars': '🏙️🔫💊🀄',
+  'New Super Mario Bros. Wii': '🍄🟢👫🎮',
+  'New Super Mario Bros. U': '🍄🐿️🎮⭐',
+  'Super Mario 3D World': '🍄🐱👑🎮',
+  'Super Mario 3D Land': '🍄🦝🏰🌟',
+  'Mario Party Superstars': '🎲🍄🎉⭐',
+  'Mario Party': '🎲🍄🎉🎮',
+  'Mario Party 8': '🎲🍄🎉🌩️',
+  'The Legend of Zelda: A Link to the Past': '🗡️🛡️⏳🌍',
+  'The Legend of Zelda: Skyward Sword': '⚔️☁️🗡️🦅',
+  'The Legend of Zelda: Link\'s Awakening': '🗡️🏝️🥚💤',
+  'The Legend of Zelda': '🗡️🛡️🏰💰',
+  'Halo 4': '👽🔫🛡️🤖',
+  'Halo: Reach': '👽🔫🪐💥',
+  'Halo Wars': '👽🔫🎮♟️',
+  'The Elder Scrolls III: Morrowind': '🌋🦗⚔️🏝️',
+  'Fallout 2': '☢️🏜️💀🐾',
+  'Dark Souls II': '🔥⚔️💀🌊',
+  'God of War II': '⚔️🏛️🗡️🐍',
+  'God of War: Ascension': '⚔️⛓️🔥🏛️',
+  'God of War: Chains of Olympus': '⚔️⛓️🌅🗡️',
+  'Uncharted 3: Drake\'s Deception': '🏜️💰🔫✈️',
+  'Diablo II': '😈🔥💀⚰️',
+  'Diablo': '😈🏰⚔️💀',
+  'Resident Evil (1996)': '🧟🏚️💉🔑',
+  'Resident Evil 3 (2020)': '🧟🚓👹🏃',
+  'Resident Evil 5': '🧟🌍🔫🦠',
+  'Resident Evil 7: Biohazard': '🧟🏠🪚👨‍🌾',
+  'Resident Evil Zero': '🧟🚂💉🧪',
+  'Borderlands': '🔫💀🎨🏜️',
+  'Borderlands: The Pre-Sequel': '🔫🌕💀🚀',
+  'Far Cry 4': '🏔️🔫🐘🇳🇵',
+  'Far Cry 6': '🏝️🔫🚬🐓',
+  'Far Cry 2': '🌍🔫🔥🚙',
+  'Watch Dogs: Legion': '📱🔓🇬🇧🎭',
+  'Forza Motorsport (2023)': '🏎️🏁🔧🛣️',
+  'Gears Tactics': '⚙️🔫♟️💀',
+  'Marvel\'s Spider-Man: Miles Morales': '🕷️🕸️🏙️⚡',
+  'Devil May Cry': '😈⚔️🔫🕶️',
+  'DmC: Devil May Cry': '😈⚔️🔥🕶️',
+  'Rise of the Tomb Raider': '🏹❄️🗿🏔️',
+  'Tomb Raider (1996)': '🏹🗿🏺🦖',
+  'Persona 5 Royal': '🎭🗡️🕶️👑',
+  'Yakuza: Like a Dragon': '🐉👔🥊🎲',
+  'Super Metroid': '👩‍🚀🔫👽🧬',
+  'Metroid Prime': '👩‍🚀🔫🪐💎',
+  'Bayonetta': '👠🔫😈👹',
+  'Bayonetta 3': '👠🔫😈🌌',
+  'Pokémon Red/Blue': '🔴🔵⚡🎮',
+  'Donkey Kong Country': '🦍🍌🏝️🛢️',
+  'Metal Gear Solid 2: Sons of Liberty': '🥷🔫🤖🗽',
+  'Metal Gear Solid 3: Snake Eater': '🥷🌲🐍🎖️',
+  'Metal Gear Solid V: The Phantom Pain': '🥷🐴🦾🏜️',
+  'Street Fighter II': '👊🌍⚡🔥',
+  'Street Fighter V': '👊🌍⚡🩸',
+  'Tekken 7': '👊⚔️🥋👹',
+  'Sid Meier\'s Civilization V': '🏛️🌍⚔️📜',
+  'Sid Meier\'s Civilization VI': '🏛️🌍⚔️🏙️',
+  'XCOM: Enemy Unknown': '👽🔫🛡️🌍',
+  'XCOM 2': '👽🔫🛡️🚂',
+  'Left 4 Dead 2': '🧟🔫🚐🔪',
+  'Portal': '🧪🔵🟠🤖',
+  'Dishonored': '🗡️🎭🐀👁️',
+  'Dishonored 2': '🗡️🎭🐀🏙️',
+  'Titanfall 2': '🤖🔫🪂💙',
+  'Mass Effect': '🚀👽🔫🌌',
+  'Mass Effect 2': '🚀👽🔫🤝',
+  'Mass Effect 3': '🚀👽🔫⚔️',
+  'Dragon Age: Origins': '🐉⚔️🛡️🏰',
+  'Dragon Age: Inquisition': '🐉⚔️⛰️✝️',
+  'BioShock': '🏙️🌊🔑🧬',
+  'BioShock 2': '🏙️🌊🤿👶',
+  'Doom Eternal': '👹🔫🔥😈',
+  'Doom II': '👹🔫🌋💀',
+  'Half-Life': '👨‍🔬🔫👽🧪',
+  'Half-Life: Alyx': '👨‍🔬🔫👽🥽',
+  'Counter-Strike: Source': '🔫💣🧑‍✈️🖥️',
+  'Grand Theft Auto': '🚗🔫🏙️💰',
+  'Grand Theft Auto: Vice City Stories': '🌴🔫🕶️📖',
+  'Call of Duty: World at War': '🪖🔫🎖️🌊',
+  'Call of Duty: Modern Warfare 3 (2011)': '🪖🔫💥🗼',
+  'Call of Duty: Black Ops 4': '🕵️🔫🧟🎮',
+  'Call of Duty (2003)': '🪖🔫🎖️🇩🇪',
+  'Assassin\'s Creed Shadows': '🗡️🥷🌸🌙',
+  'Zelda II: The Adventure of Link': '🗡️🛡️🏔️📈',
+  'Halo Wars 2': '👽♟️🚀⚔️',
+  'The Elder Scrolls II: Daggerfall': '🗡️🏰🌧️⚔️',
+  'Fallout (1997)': '☢️🏜️🤖💀',
+  'God of War: Ghost of Sparta': '⚔️👻🏛️🔱',
+  'Uncharted: The Lost Legacy': '🏝️💰🗺️👩',
+  'Resident Evil 4 (2023)': '🧟🏘️🔫👹',
+  'Resident Evil 6': '🧟🌍🔫🚁',
+  'Far Cry (2004)': '🏝️🔫🧬🌴',
+  'Far Cry Primal': '🏹🦣🔥🗿',
+  'Gears of War 4': '⚙️🔫👽🌪️',
+  'Tomb Raider: Legend': '🏹🗿💍🏛️',
+  'Persona 3': '🎭🗡️🌙⏰',
+  'Persona 4': '🎭🗡️📺🏫',
+  'Metal Gear Solid 4: Guns of the Patriots': '🥷🔫🤖🇺🇸',
+  'Street Fighter IV': '👊🌍⚡🌀',
+  'Tekken 3': '👊⚔️🥋🌍',
+  'Mortal Kombat (1992)': '👊🩸⚔️💀',
+  'Sid Meier\'s Civilization IV': '🏛️🌍⚔️🎵',
+  'X-COM: UFO Defense': '👽🛸🔫🌍',
+  'Left 4 Dead': '🧟🔫🚐💉',
+  'Dishonored: Death of the Outsider': '🗡️👁️🌑🔮',
+  'Titanfall (2014)': '🤖🔫🪂🚀',
+  'Mass Effect: Andromeda': '🚀👽🌌🧭',
+  'Dragon Age II': '🐉⚔️🏙️🩸',
+  'Dragon Age: The Veilguard': '🐉⚔️🛡️🌌',
+  'Doom (1993)': '👹🔫🔥😱',
+  'Counter-Strike 1.6': '🔫💣🧑‍✈️🕹️',
+  'The Forest': '🌲🪓🧟👹',
+  'Sons of the Forest': '🌲🪓🧟❄️',
+  'Dying Light 2': '🧟🏙️🏃🌙',
+  'The Last of Us Part I': '🧟🧒🔫🍄',
+  'Days Gone': '🏍️🧟🔫🌲',
+  'Hitman 3': '🕴️🔫🎭🌍',
+  'Payday 2': '🤠🔫🏦🎭',
+  'Team Fortress 2': '🔫🎩👥⚔️',
+  'Garry\'s Mod': '🧍🔧🎮🤪',
+  'Enter the Gungeon': '🔫🏰💀🐭',
+  'The Binding of Isaac: Rebirth': '👶🔥😈🩸',
+  'Age of Empires IV': '🏰⚔️🌾🛡️',
+  'Warframe': '🤖⚔️🌌🔫',
+  'Palworld': '🐾🔫🏭🌍',
+  'Lies of P': '🤖🥋🎭🩵',
+  'Remnant II': '👽🔫🌍🌀',
+  'Nioh 2': '⚔️👹🥷🩸',
+  'Dragon\'s Dogma 2': '🐉⚔️👹🤝',
+  'Kingdom Come: Deliverance': '⚔️🏰🌾🗡️',
+  'Mount & Blade II: Bannerlord': '🐎⚔️🏰🚩',
+  'Hell Let Loose': '🪖🔫💥🌍',
+  'Insurgency: Sandstorm': '🪖🔫🏜️💥',
+  'Ready or Not': '🚓🔫🛡️🚪',
+  'Escape from Tarkov': '🔫🎒💀🏙️',
+  'Hunt: Showdown': '🔫🧟🌫️🏆',
+  'The Division 2': '🏙️🔫🦠🗽',
+  'Ghost Recon Breakpoint': '🪖🔫🏝️🤖',
+  'Ghost Recon Wildlands': '🪖🔫🌴🇧🇴',
+  'Just Cause 3': '🪂💥🚁🌴',
+  'Just Cause 4': '🪂💥🌪️🚁',
+  'Sleeping Dogs': '🐉🥋🚗🇭🇰',
+  'Mafia: Definitive Edition': '🎩🔫🚗🍝',
+  'Mafia II': '🎩🔫🚗🏙️',
+  'L.A. Noire': '🕵️🚓📸🌆',
+  'Max Payne 3': '🔫🕶️💊☀️',
+  'Bully': '🎒🥊🏫😏',
+  'Deathloop': '🔫🔄🏝️⏳',
+  'Deus Ex: Human Revolution': '🤖🕶️🔫🧬',
+  'Deus Ex: Mankind Divided': '🤖🕶️🔫⚔️',
+  'Metro Exodus': '🚂☢️🔫🌅',
+  'Metro: Last Light': '🚇☢️🔫🔦',
+  'Metro 2033': '🚇☢️🔫💀',
+  'Atomic Heart': '☢️🤖🔫🏭',
+  'The Outer Worlds': '🚀🌌🔫🛸',
+  'Divinity: Original Sin 2': '🐉⚔️🎲🧙',
+  'Star Wars Jedi: Survivor': '🟢⚔️🌲🧗',
+  'Star Wars Battlefront II': '🔫🚀⭐⚔️',
+  'Lego Star Wars: The Skywalker Saga': '🧱⚔️🚀⭐',
+  'Marvel\'s Avengers': '🦸🦸‍♀️💥🌍',
+  'Marvel\'s Guardians of the Galaxy': '🚀🦝🎵🌌',
+  'LittleBigPlanet 3': '🧵🎨🕹️🌍',
+  'Sackboy: A Big Adventure': '🧵🎮🏃🪡',
+  'Super Meat Boy': '🥩🏃🔪😡',
+  'Ori and the Will of the Wisps': '🦉✨🌲💙',
+  'Limbo': '⚫⚪🧒🕷️',
+  'Inside': '🧒🏃🔦🐷',
+  'Little Nightmares': '🧒😱🍗🔦',
+  'Little Nightmares II': '🧒😱📺🪓',
+  'Mega Man 2': '🤖🔵🔫⚡',
+  'StarCraft': '👽🚀⚔️🛰️',
+  'Pikmin 4': '🌱👾🚀🐕',
+  'Crimson Desert': '⚔️🏜️🐉🗡️',
+  'Resident Evil Requiem': '🧟🏚️🩸🕯️',
+  'Pragmata': '🤖👧🌙🔫',
+  '007 First Light': '🕴️🔫🍸🎯',
+  'Avatar: Frontiers of Pandora': '🪐🌳🐾💙',
+  'Fable': '🗡️🐕🏰⚖️',
+  'Fable III': '🗡️🐕👑🔑',
+  'Batman: Arkham Asylum': '🦇🃏🏥🌃',
+  'Batman: Arkham Origins': '🦇🃏🌃❄️',
+  'Batman: Arkham Knight': '🦇🚗🌃🃏',
+  'Transformers: War for Cybertron': '🤖🚗⚔️🪐',
+  'Transformers: Fall of Cybertron': '🤖🚗💥🪐',
+  'Clair Obscur: Expedition 33': '⚔️🎨🖌️🕰️',
+  'Max Payne 2: The Fall of Max Payne': '🔫🕶️💔🌃',
+  'A Plague Tale: Innocence': '🐀🕯️🧒🦠',
+  'LEGO Harry Potter: Years 1-4': '🧱⚡🧙🏰',
+  'LEGO The Lord of the Rings': '🧱💍🧙🌋',
 };
 // Every game that has a clue above — independent of EASY_POOL (used by
 // Clash/Connect's Easy difficulty), so growing this list never changes what
@@ -9802,10 +10107,7 @@ const GAME_SOUNDTRACK_POOL = [
   // time, instead of always the same one.
   { title:'The Legend of Zelda: Ocarina of Time', year:1998, searchTerm:'Song of Storms Ocarina of Time Koji Kondo', trackHint:'song of storms', reveal:'"Song of Storms" — Koji Kondo' },
   { title:'The Legend of Zelda: Breath of the Wild', year:2017, searchTerm:'Rito Village Breath of the Wild Manaka Kataoka', trackHint:'rito village', reveal:'"Rito Village" — Manaka Kataoka' },
-  { title:'The Legend of Zelda: Majora\'s Mask', year:2000, searchTerm:'Song of Healing Majora\'s Mask Koji Kondo', trackHint:'song of healing', reveal:'"Song of Healing" — Koji Kondo' },
-  { title:'The Legend of Zelda: The Wind Waker', year:2002, searchTerm:'Dragon Roost Island Wind Waker Kenta Nagata', trackHint:'dragon roost', reveal:'"Dragon Roost Island" — Kenta Nagata' },
   { title:'The Legend of Zelda: Twilight Princess', year:2006, searchTerm:'Midna\'s Lament Twilight Princess Toru Minegishi', trackHint:'midna', reveal:'"Midna\'s Lament" — Toru Minegishi' },
-  { title:'The Legend of Zelda: Skyward Sword', year:2011, searchTerm:'Ballad of the Goddess Skyward Sword Hajime Wakai', trackHint:'ballad of the goddess', reveal:'"Ballad of the Goddess" — Hajime Wakai' },
   { title:'The Legend of Zelda: A Link to the Past', year:1991, searchTerm:'Dark World Theme Link to the Past Koji Kondo', trackHint:'dark world', reveal:'"Dark World Theme" — Koji Kondo' },
   { title:'The Legend of Zelda', year:1986, searchTerm:'Overworld Theme The Legend of Zelda Koji Kondo', trackHint:'overworld', reveal:'"Overworld Theme" — Koji Kondo' },
   { title:'Super Mario 64', year:1996, searchTerm:'Dire Dire Docks Super Mario 64 Koji Kondo', trackHint:'dire', reveal:'"Dire, Dire Docks" — Koji Kondo' },
@@ -9813,15 +10115,11 @@ const GAME_SOUNDTRACK_POOL = [
   { title:'Mario Kart 8 Deluxe', year:2017, searchTerm:'Rainbow Road Mario Kart 8 Deluxe', trackHint:'rainbow road', reveal:'"Rainbow Road" — Nintendo Sound Team' },
   { title:'Mario Kart 64', year:1996, searchTerm:'Choco Mountain Mario Kart 64', trackHint:'choco mountain', reveal:'"Choco Mountain" — Kenta Nagata' },
   { title:'Super Smash Bros. Ultimate', year:2018, searchTerm:'Lifelight Super Smash Bros Ultimate', trackHint:'lifelight', reveal:'"Lifelight" — Nintendo Sound Team' },
-  { title:'Super Smash Bros. Brawl', year:2008, searchTerm:'Main Theme Super Smash Bros Brawl', trackHint:null, reveal:'Main Theme — Nobuo Uematsu' },
-  { title:'Final Fantasy VII', year:1997, searchTerm:'One-Winged Angel Final Fantasy VII Nobuo Uematsu', trackHint:'one-winged angel', reveal:'"One-Winged Angel" — Nobuo Uematsu' },
-  { title:'Final Fantasy VIII', year:1999, searchTerm:'Liberi Fatali Final Fantasy VIII Nobuo Uematsu', trackHint:'liberi fatali', reveal:'"Liberi Fatali" — Nobuo Uematsu' },
   { title:'Final Fantasy XIV', year:2010, searchTerm:'Answers Final Fantasy XIV Masayoshi Soken', trackHint:'answers', reveal:'"Answers" — Masayoshi Soken' },
   { title:'Final Fantasy XV', year:2016, searchTerm:'Somnus Final Fantasy XV Yoko Shimomura', trackHint:'somnus', reveal:'"Somnus" — Yoko Shimomura' },
   { title:'Halo: Combat Evolved', year:2001, searchTerm:'Truth and Reconciliation Suite Halo Martin O\'Donnell', trackHint:'truth and reconciliation', reveal:'"Truth and Reconciliation Suite" — Martin O\'Donnell & Michael Salvatori' },
   { title:'Halo 3', year:2007, searchTerm:'One Final Effort Halo 3 Martin O\'Donnell', trackHint:'one final effort', reveal:'"One Final Effort" — Martin O\'Donnell' },
   { title:'Halo: Reach', year:2010, searchTerm:'Overture Halo Reach Martin O\'Donnell', trackHint:'overture', reveal:'"Overture" — Martin O\'Donnell' },
-  { title:'Assassin\'s Creed II', year:2009, searchTerm:'Ezio\'s Family Assassin\'s Creed II Jesper Kyd', trackHint:'ezio\'s family', reveal:'"Ezio\'s Family" — Jesper Kyd' },
   { title:'Assassin\'s Creed IV: Black Flag', year:2013, searchTerm:'Sea Shanty A-Rovin Assassin\'s Creed Black Flag', trackHint:'a-rovin', reveal:'"A-Rovin\' (Sea Shanty)" — Sean Dagher' },
   { title:'Assassin\'s Creed Origins', year:2017, searchTerm:'Juno Assassin\'s Creed Origins Sarah Schachner', trackHint:'juno', reveal:'"Juno" — Sarah Schachner' },
   { title:'Assassin\'s Creed Rogue', year:2014, searchTerm:'Main Theme Assassin\'s Creed Rogue', trackHint:null, reveal:'Main Theme — Elitsa Alexandrova & Olivier Deriviere' },
@@ -9829,27 +10127,213 @@ const GAME_SOUNDTRACK_POOL = [
   { title:'Metal Gear Solid 2: Sons of Liberty', year:2001, searchTerm:'Yell Dead Cell Metal Gear Solid 2 Harry Gregson-Williams', trackHint:'yell', reveal:'"Yell \'Dead Cell\'" — Harry Gregson-Williams' },
   { title:'Metal Gear Solid V: The Phantom Pain', year:2015, searchTerm:'Sins of the Father Metal Gear Solid V Stefanie Joosten', trackHint:'sins of the father', reveal:'"Sins of the Father" — Ludvig Forssell (feat. Stefanie Joosten)' },
   { title:'Persona 5', year:2016, searchTerm:'Life Will Change Persona 5 Lyn Inaizumi', trackHint:'life will change', reveal:'"Life Will Change" — Lyn Inaizumi (Shoji Meguro)' },
-  { title:'Persona 4', year:2008, searchTerm:'Reach Out to the Truth Persona 4 Shoji Meguro', trackHint:'reach out to the truth', reveal:'"Reach Out to the Truth" — Shoji Meguro' },
   { title:'Persona 3', year:2006, searchTerm:'Burn My Dread Persona 3 Yumi Kawamura', trackHint:'burn my dread', reveal:'"Burn My Dread" — Shoji Meguro feat. Yumi Kawamura' },
   { title:'Mass Effect 2', year:2010, searchTerm:'Suicide Mission Mass Effect 2 Jack Wall', trackHint:'suicide mission', reveal:'"Suicide Mission" — Jack Wall & Sam Hulick' },
   { title:'Mass Effect 3', year:2012, searchTerm:'An End Once and For All Mass Effect 3', trackHint:'an end', reveal:'"An End, Once and for All" — Sam Hulick, Christopher Lennertz & Clint Mansell' },
   { title:'Mass Effect', year:2007, searchTerm:'Vigil Mass Effect Jack Wall', trackHint:'vigil', reveal:'"Vigil" — Jack Wall' },
-  { title:'Uncharted: Drake\'s Fortune', year:2007, searchTerm:'Nate\'s Theme Uncharted Drake\'s Fortune Greg Edmonson', trackHint:'nate\'s theme', reveal:'"Nate\'s Theme" — Greg Edmonson' },
-  { title:'Uncharted 2: Among Thieves', year:2009, searchTerm:'Nate\'s Theme 2.0 Uncharted 2 Greg Edmonson', trackHint:'nate\'s theme', reveal:'"Nate\'s Theme 2.0" — Greg Edmonson' },
   { title:'Uncharted 4: A Thief\'s End', year:2016, searchTerm:'A Thief\'s End Main Theme Henry Jackman', trackHint:null, reveal:'Main Theme — Henry Jackman' },
-  { title:'Dark Souls', year:2011, searchTerm:'Gwyn Lord of Cinder Dark Souls Motoi Sakuraba', trackHint:'gwyn', reveal:'"Gwyn, Lord of Cinder" — Motoi Sakuraba' },
   { title:'Bloodborne', year:2015, searchTerm:'Oath of Vengeance Bloodborne Tsukasa Saitoh', trackHint:'oath of vengeance', reveal:'"Oath of Vengeance" — Tsukasa Saitoh' },
   { title:'Sekiro: Shadows Die Twice', year:2019, searchTerm:'Genichiro Way of Tomoe Sekiro Yuka Kitamura', trackHint:'genichiro', reveal:'"Genichiro, Way of Tomoe" — Yuka Kitamura' },
-  { title:'Elden Ring', year:2022, searchTerm:'Radagon and the Elden Beast Elden Ring Tsukasa Saitoh', trackHint:'radagon', reveal:'"Radagon and the Elden Beast" — Tsukasa Saitoh & Yuka Kitamura' },
   { title:'God of War (2018)', year:2018, searchTerm:'Blades of Chaos God of War Bear McCreary', trackHint:'blades of chaos', reveal:'"Blades of Chaos" — Bear McCreary' },
   { title:'God of War Ragnarök', year:2022, searchTerm:'For Baldur God of War Ragnarok Bear McCreary', trackHint:'for baldur', reveal:'"For Baldur" — Bear McCreary' },
-  { title:'Diablo III', year:2012, searchTerm:'Diablo III Main Theme Russell Brower', trackHint:null, reveal:'Main Theme — Russell Brower' },
   { title:'Diablo II', year:2000, searchTerm:'Rogue Encampment Diablo II Matt Uelmen', trackHint:'rogue encampment', reveal:'"Rogue Encampment" — Matt Uelmen' },
-  { title:'Fallout: New Vegas', year:2010, searchTerm:'Big Iron Marty Robbins Fallout New Vegas', trackHint:'big iron', reveal:'"Big Iron" — Marty Robbins' },
-  { title:'Fallout 3', year:2008, searchTerm:'I Don\'t Want to Set the World on Fire Ink Spots Fallout 3', trackHint:'set the world on fire', reveal:'"I Don\'t Want to Set the World on Fire" — The Ink Spots' },
   { title:'Fallout 4', year:2015, searchTerm:'The Wanderer Dion Fallout 4', trackHint:'wanderer', reveal:'"The Wanderer" — Dion' },
   { title:'Portal', year:2007, searchTerm:'Reconstructing More Science Portal Kelly Bailey', trackHint:'reconstructing', reveal:'"Reconstructing More Science" — Kelly Bailey' },
-  { title:'Portal 2', year:2011, searchTerm:'Exile Vilify The National Portal 2', trackHint:'exile vilify', reveal:'"Exile Vilify" — The National' }
+  { title:'Portal 2', year:2011, searchTerm:'Exile Vilify The National Portal 2', trackHint:'exile vilify', reveal:'"Exile Vilify" — The National' },
+  { title:'Wii Sports', year:2006, searchTerm:'Wii Sports Theme Kazumi Totaka', trackHint:'wii sports theme', reveal:'"Wii Sports Theme" — Kazumi Totaka' },
+  { title:'Super Mario Bros.', year:1985, searchTerm:'Ground Theme Super Mario Bros Koji Kondo', trackHint:'ground theme', reveal:'"Ground Theme" — Koji Kondo' },
+  { title:'New Super Mario Bros.', year:2006, searchTerm:'Ground Theme New Super Mario Bros Koji Kondo', trackHint:'ground theme', reveal:'"Ground Theme" — Koji Kondo' },
+  { title:'Terraria', year:2011, searchTerm:'Overworld Day Terraria Scott Lloyd Shelly', trackHint:'overworld day', reveal:'"Overworld Day" — Scott Lloyd Shelly' },
+  { title:'Uncharted 4: A Thief\'s End', year:2016, searchTerm:'Nate\'s Theme 4.0 Uncharted 4 Henry Jackman', trackHint:'nate\'s theme', reveal:'"Nate\'s Theme 4.0" — Henry Jackman' },
+  { title:'The Legend of Zelda: Tears of the Kingdom', year:2023, searchTerm:'Hyrule Castle Tears of the Kingdom Hajime Wakai', trackHint:'hyrule castle', reveal:'"Hyrule Castle" — Hajime Wakai' },
+  { title:'Splatoon 3', year:2022, searchTerm:'Anarchy Rainbow Splatoon 3 Deep Cut', trackHint:'anarchy rainbow', reveal:'"Anarchy Rainbow" — Deep Cut (Toru Minegishi & Bungo Yamada)' },
+  { title:'Crash Bandicoot N. Sane Trilogy', year:2017, searchTerm:'Crash Bandicoot Theme Josh Mancell', trackHint:'crash bandicoot theme', reveal:'"Crash Bandicoot Theme" — Josh Mancell' },
+  { title:'Star Wars Jedi: Fallen Order', year:2019, searchTerm:'Jedi Fallen Order Main Theme Gordy Haab', trackHint:'main theme', reveal:'"Main Theme" — Gordy Haab' },
+  { title:'Assassin\'s Creed Odyssey', year:2018, searchTerm:'Main Theme Assassin\'s Creed Odyssey Sarah Schachner', trackHint:'main theme', reveal:'"Main Theme" — Sarah Schachner' },
+  { title:'Half-Life 2', year:2004, searchTerm:'Hazardous Environments Half-Life 2 Kelly Bailey', trackHint:'hazardous environments', reveal:'"Hazardous Environments" — Kelly Bailey' },
+  { title:'Borderlands 2', year:2012, searchTerm:'Borderlands 2 Theme Jesper Kyd', trackHint:'main theme', reveal:'"Borderlands 2 Theme" — Jesper Kyd' },
+  { title:'Marvel\'s Spider-Man', year:2018, searchTerm:'Main Theme Marvel\'s Spider-Man John Paesano', trackHint:'main theme', reveal:'"Main Theme" — John Paesano' },
+  { title:'Halo 5: Guardians', year:2015, searchTerm:'Never Forget Halo 5 Guardians Kazuma Jinnouchi', trackHint:'never forget', reveal:'"Never Forget" — Kazuma Jinnouchi' },
+  { title:'Gears of War', year:2006, searchTerm:'Gears of War Theme Kevin Riepl', trackHint:'main theme', reveal:'"Gears of War Theme" — Kevin Riepl' },
+  { title:'Resident Evil 4', year:2005, searchTerm:'Save Room Theme Resident Evil 4 Misao Senbongi', trackHint:'save room theme', reveal:'"Save Room Theme" — Misao Senbongi & Shusaku Uchiyama' },
+  { title:'Dark Souls III', year:2016, searchTerm:'Nameless King Dark Souls III Yuka Kitamura', trackHint:'nameless king', reveal:'"Nameless King" — Yuka Kitamura' },
+  { title:'Baldur\'s Gate 3', year:2023, searchTerm:'Down by the River Baldur\'s Gate 3 Borislav Slavov', trackHint:'down by the river', reveal:'"Down by the River" — Borislav Slavov' },
+  { title:'Halo 2', year:2004, searchTerm:'Mjolnir Mix Halo 2 Martin O\'Donnell', trackHint:'mjolnir mix', reveal:'"Mjolnir Mix" — Martin O\'Donnell & Michael Salvatori' },
+  { title:'Halo Infinite', year:2021, searchTerm:'Halo Infinite Main Theme Gareth Coker', trackHint:'main theme', reveal:'"Main Theme" — Gareth Coker' },
+  { title:'The Elder Scrolls IV: Oblivion', year:2006, searchTerm:'Reign of the Septims Oblivion Jeremy Soule', trackHint:'reign of the septims', reveal:'"Reign of the Septims" — Jeremy Soule' },
+  { title:'Assassin\'s Creed Brotherhood', year:2010, searchTerm:'Monteriggioni Assassin\'s Creed Brotherhood Jesper Kyd', trackHint:'monteriggioni', reveal:'"Monteriggioni" — Jesper Kyd' },
+  { title:'Assassin\'s Creed IV: Black Flag', year:2013, searchTerm:'Main Theme Assassin\'s Creed Black Flag Brian Tyler', trackHint:'main theme', reveal:'"Main Theme" — Brian Tyler' },
+  { title:'Assassin\'s Creed Origins', year:2017, searchTerm:'Main Theme Assassin\'s Creed Origins Sarah Schachner', trackHint:'main theme', reveal:'"Main Theme" — Sarah Schachner' },
+  { title:'Assassin\'s Creed Valhalla', year:2020, searchTerm:'Ascension Assassin\'s Creed Valhalla Jesper Kyd Sarah Schachner Einar Selvik', trackHint:'ascension', reveal:'"Ascension" — Jesper Kyd, Sarah Schachner & Einar Selvik' },
+  { title:'God of War (2005)', year:2005, searchTerm:'Main Theme God of War Gerard Marino', trackHint:'main theme', reveal:'"Main Theme" — Gerard Marino' },
+  { title:'God of War III', year:2010, searchTerm:'Main Theme God of War III Gerard Marino', trackHint:'main theme', reveal:'"Main Theme" — Gerard Marino' },
+  { title:'Monster Hunter Rise', year:2021, searchTerm:'Proof of a Hero Monster Hunter Rise Masato Kouda', trackHint:'proof of a hero', reveal:'"Proof of a Hero" — Masato Kouda' },
+  { title:'Far Cry 5', year:2018, searchTerm:'Only You Far Cry 5 Dan Romer', trackHint:'only you', reveal:'"Only You" — Dan Romer & Will Bates' },
+  { title:'Gears 5', year:2019, searchTerm:'Gears 5 Theme Ramin Djawadi', trackHint:'main theme', reveal:'"Gears 5 Theme" — Ramin Djawadi' },
+  { title:'Horizon Forbidden West', year:2022, searchTerm:'Aloy\'s Theme Horizon Forbidden West Joris de Man', trackHint:'aloy\'s theme', reveal:'"Aloy\'s Theme" — Joris de Man, Niels van der Leest & The Flight' },
+  { title:'Shadow of the Tomb Raider', year:2018, searchTerm:'Main Theme Shadow of the Tomb Raider Brian D\'Oliveira', trackHint:'main theme', reveal:'"Main Theme" — Brian D\'Oliveira' },
+  { title:'Persona 4 Golden', year:2012, searchTerm:'Reach Out to the Truth Persona 4 Shoji Meguro', trackHint:'reach out to the truth', reveal:'"Reach Out to the Truth" — Shoji Meguro' },
+  { title:'Nioh', year:2017, searchTerm:'Nioh Theme Hideyuki Fukasawa', trackHint:'main theme', reveal:'"Nioh Theme" — Hideyuki Fukasawa' },
+  { title:'Subnautica', year:2018, searchTerm:'Subnautica Main Theme Simon Chylinski', trackHint:'main theme', reveal:'"Subnautica Theme" — Simon Chylinski' },
+  { title:'Bayonetta 2', year:2014, searchTerm:'Tomorrow Is Mine Bayonetta 2 Hiroshi Yamaguchi', trackHint:'tomorrow is mine', reveal:'"Tomorrow Is Mine" — Hiroshi Yamaguchi' },
+  { title:'Assassin\'s Creed', year:2007, searchTerm:'Assassin\'s Creed Theme Jesper Kyd', trackHint:'main theme', reveal:'"Assassin\'s Creed Theme" — Jesper Kyd' },
+  { title:'Assassin\'s Creed III', year:2012, searchTerm:'Main Theme Assassin\'s Creed III Lorne Balfe', trackHint:'main theme', reveal:'"Main Theme" — Lorne Balfe' },
+  { title:'Assassin\'s Creed Revelations', year:2011, searchTerm:'Reflections Assassin\'s Creed Revelations Jesper Kyd', trackHint:'reflections', reveal:'"Reflections" — Jesper Kyd' },
+  { title:'Assassin\'s Creed Syndicate', year:2015, searchTerm:'Main Theme Assassin\'s Creed Syndicate Austin Wintory', trackHint:'main theme', reveal:'"Main Theme" — Austin Wintory' },
+  { title:'New Super Mario Bros. Wii', year:2009, searchTerm:'Ground Theme New Super Mario Bros Wii Koji Kondo', trackHint:'ground theme', reveal:'"Ground Theme" — Koji Kondo, Asuka Ohta & Shiho Fujii' },
+  { title:'New Super Mario Bros. U', year:2012, searchTerm:'Acorn Plains Theme New Super Mario Bros U Mahito Yokota', trackHint:'acorn plains', reveal:'"Acorn Plains Theme" — Mahito Yokota' },
+  { title:'Super Mario 3D World', year:2013, searchTerm:'Super Bell Hill Super Mario 3D World Mahito Yokota', trackHint:'super bell hill', reveal:'"Super Bell Hill" — Mahito Yokota' },
+  { title:'Super Mario 3D Land', year:2011, searchTerm:'Title Theme Super Mario 3D Land Mahito Yokota', trackHint:'title theme', reveal:'"Title Theme" — Mahito Yokota' },
+  { title:'The Legend of Zelda: Link\'s Awakening', year:1993, searchTerm:'Mabe Village Theme Link\'s Awakening Kazumi Totaka', trackHint:'mabe village', reveal:'"Mabe Village Theme" — Kazumi Totaka' },
+  { title:'Halo 4', year:2012, searchTerm:'Green and Blue Halo 4 Neil Davidge', trackHint:'green and blue', reveal:'"Green and Blue" — Neil Davidge' },
+  { title:'Halo Wars', year:2009, searchTerm:'Spirit Halo Wars Stephen Rippy', trackHint:'spirit', reveal:'"Spirit" — Stephen Rippy' },
+  { title:'The Elder Scrolls III: Morrowind', year:2002, searchTerm:'Nerevar Rising Morrowind Jeremy Soule', trackHint:'nerevar rising', reveal:'"Nerevar Rising" — Jeremy Soule' },
+  { title:'Fallout 2', year:1998, searchTerm:'Moribund World Fallout 2 Mark Morgan', trackHint:'moribund world', reveal:'"Moribund World" — Mark Morgan' },
+  { title:'Dark Souls II', year:2014, searchTerm:'Majula Dark Souls II Motoi Sakuraba', trackHint:'majula', reveal:'"Majula" — Motoi Sakuraba' },
+  { title:'God of War II', year:2007, searchTerm:'Main Theme God of War II Gerard Marino', trackHint:'main theme', reveal:'"Main Theme" — Gerard Marino' },
+  { title:'God of War: Ascension', year:2013, searchTerm:'Main Theme God of War Ascension Tyler Bates', trackHint:'main theme', reveal:'"Main Theme" — Tyler Bates' },
+  { title:'God of War: Chains of Olympus', year:2008, searchTerm:'Main Theme God of War Chains of Olympus Cris Velasco', trackHint:'main theme', reveal:'"Main Theme" — Cris Velasco' },
+  { title:'Uncharted 3: Drake\'s Deception', year:2011, searchTerm:'Nate\'s Theme 3.0 Uncharted 3 Greg Edmonson', trackHint:'nate\'s theme', reveal:'"Nate\'s Theme 3.0" — Greg Edmonson' },
+  { title:'Resident Evil (1996)', year:1996, searchTerm:'Save Room Theme Resident Evil Makoto Tomozawa', trackHint:'save room theme', reveal:'"Save Room Theme" — Makoto Tomozawa & Masami Ueda' },
+  { title:'Resident Evil 5', year:2009, searchTerm:'Save Room Theme Resident Evil 5 Kota Suzuki', trackHint:'save room theme', reveal:'"Save Room Theme" — Kota Suzuki' },
+  { title:'Far Cry 4', year:2014, searchTerm:'Main Theme Far Cry 4 Cliff Martinez', trackHint:'main theme', reveal:'"Main Theme" — Cliff Martinez' },
+  { title:'Gears of War 2', year:2008, searchTerm:'Gears of War 2 Theme Steve Jablonsky', trackHint:'main theme', reveal:'"Gears of War 2 Theme" — Steve Jablonsky' },
+  { title:'Gears of War 3', year:2011, searchTerm:'Gears of War 3 Theme Steve Jablonsky', trackHint:'main theme', reveal:'"Gears of War 3 Theme" — Steve Jablonsky' },
+  { title:'Marvel\'s Spider-Man: Miles Morales', year:2020, searchTerm:'Miles Morales Theme John Paesano', trackHint:'main theme', reveal:'"Miles Morales Theme" — John Paesano' },
+  { title:'Devil May Cry', year:2001, searchTerm:'Taste the Blood Devil May Cry Masami Ueda', trackHint:'taste the blood', reveal:'"Taste the Blood" — Masami Ueda' },
+  { title:'DmC: Devil May Cry', year:2013, searchTerm:'Dangerous DmC Devil May Cry Combichrist', trackHint:'dangerous', reveal:'"Dangerous" — Combichrist' },
+  { title:'Rise of the Tomb Raider', year:2015, searchTerm:'Main Theme Rise of the Tomb Raider Bobby Tahouri', trackHint:'main theme', reveal:'"Main Theme" — Bobby Tahouri' },
+  { title:'Tomb Raider (1996)', year:1996, searchTerm:'Main Theme Tomb Raider Nathan McCree', trackHint:'main theme', reveal:'"Main Theme" — Nathan McCree' },
+  { title:'Persona 5 Royal', year:2019, searchTerm:'Life Will Change Persona 5 Royal Shoji Meguro', trackHint:'life will change', reveal:'"Life Will Change" — Shoji Meguro' },
+  { title:'Metal Gear Solid', year:1998, searchTerm:'The Best Is Yet to Come Metal Gear Solid Rika Muranaka', trackHint:'the best is yet to come', reveal:'"The Best Is Yet to Come" — Rika Muranaka' },
+  { title:'Street Fighter IV', year:2008, searchTerm:'Indestructible Street Fighter IV Hideyuki Fukasawa', trackHint:'indestructible', reveal:'"Indestructible" — Hideyuki Fukasawa' },
+  { title:'XCOM: Enemy Unknown', year:2012, searchTerm:'Main Theme XCOM Enemy Unknown Michael McCann', trackHint:'main theme', reveal:'"Main Theme" — Michael McCann' },
+  { title:'XCOM 2', year:2016, searchTerm:'Main Theme XCOM 2 Michael McCann', trackHint:'main theme', reveal:'"Main Theme" — Michael McCann' },
+  { title:'Titanfall 2', year:2016, searchTerm:'Titanfall 2 Theme Stephen Barton', trackHint:'main theme', reveal:'"Titanfall 2 Theme" — Stephen Barton' },
+  { title:'BioShock 2', year:2010, searchTerm:'Rapture BioShock 2 Garry Schyman', trackHint:'rapture', reveal:'"Rapture" — Garry Schyman' },
+  { title:'Doom II', year:1994, searchTerm:'The Healer Stalks Doom II Bobby Prince', trackHint:'the healer stalks', reveal:'"The Healer Stalks" — Bobby Prince' },
+  { title:'Half-Life', year:1998, searchTerm:'Half-Life Theme Kelly Bailey', trackHint:'main theme', reveal:'"Half-Life Theme" — Kelly Bailey' },
+  { title:'Half-Life: Alyx', year:2020, searchTerm:'Half-Life Alyx Theme Mike Morasky', trackHint:'main theme', reveal:'"Half-Life: Alyx Theme" — Mike Morasky' },
+  { title:'Zelda II: The Adventure of Link', year:1987, searchTerm:'Palace Theme Zelda II Adventure of Link Akito Nakatsuka', trackHint:'palace theme', reveal:'"Palace Theme" — Akito Nakatsuka' },
+  { title:'The Elder Scrolls II: Daggerfall', year:1996, searchTerm:'Daggerfall Theme Eric Heberling', trackHint:'main theme', reveal:'"Daggerfall Theme" — Eric Heberling' },
+  { title:'Fallout (1997)', year:1997, searchTerm:'Vault 13 Fallout Mark Morgan', trackHint:'vault 13', reveal:'"Vault 13" — Mark Morgan' },
+  { title:'God of War: Ghost of Sparta', year:2010, searchTerm:'Main Theme God of War Ghost of Sparta Cris Velasco', trackHint:'main theme', reveal:'"Main Theme" — Cris Velasco' },
+  { title:'Gears of War 4', year:2016, searchTerm:'Gears of War 4 Theme Ramin Djawadi', trackHint:'main theme', reveal:'"Gears of War 4 Theme" — Ramin Djawadi' },
+  { title:'Tomb Raider: Legend', year:2006, searchTerm:'Main Theme Tomb Raider Legend Troels Folmann', trackHint:'main theme', reveal:'"Main Theme" — Troels Folmann' },
+  { title:'Metal Gear Solid 4: Guns of the Patriots', year:2008, searchTerm:'Old Snake Metal Gear Solid 4 Harry Gregson-Williams', trackHint:'old snake', reveal:'"Old Snake" — Harry Gregson-Williams' },
+  { title:'Dishonored: Death of the Outsider', year:2017, searchTerm:'Dishonored Theme Daniel Licht', trackHint:'main theme', reveal:'"Dishonored Theme" — Daniel Licht' },
+  { title:'Titanfall (2014)', year:2014, searchTerm:'Titanfall Theme Stephen Barton', trackHint:'main theme', reveal:'"Titanfall Theme" — Stephen Barton' },
+  { title:'Mass Effect: Andromeda', year:2017, searchTerm:'Andromeda Theme John Paesano', trackHint:'main theme', reveal:'"Andromeda Theme" — John Paesano' },
+  { title:'Dragon Age II', year:2011, searchTerm:'Dragon Age II Theme Inon Zur', trackHint:'main theme', reveal:'"Dragon Age II Theme" — Inon Zur' },
+  { title:'Destiny 2', year:2017, searchTerm:'Main Theme Destiny 2 Michael Salvatori', trackHint:'main theme', reveal:'"Main Theme" — Michael Salvatori, Skye Lewin & C Paul Johnson' },
+  { title:'Starfield', year:2023, searchTerm:'Starfield Main Theme Inon Zur', trackHint:'main theme', reveal:'"Starfield Main Theme" — Inon Zur' },
+  { title:'Sea of Thieves', year:2018, searchTerm:'Sea of Thieves Theme Robin Beanland', trackHint:'main theme', reveal:'"Sea of Thieves Theme" — Robin Beanland' },
+  { title:'Dying Light 2', year:2022, searchTerm:'Main Theme Dying Light 2 Olivier Deriviere', trackHint:'main theme', reveal:'"Main Theme" — Olivier Deriviere' },
+  { title:'The Last of Us Part I', year:2013, searchTerm:'The Last of Us Theme Gustavo Santaolalla', trackHint:'main theme', reveal:'"The Last of Us" — Gustavo Santaolalla' },
+  { title:'Hitman 3', year:2021, searchTerm:'Hitman 3 Theme Niels Bye Nielsen', trackHint:'main theme', reveal:'"Hitman 3 Theme" — Niels Bye Nielsen' },
+  { title:'Payday 2', year:2013, searchTerm:'Hoxton Breakout Payday 2 Simon Viklund', trackHint:'hoxton breakout', reveal:'"Hoxton Breakout" — Simon Viklund' },
+  { title:'Team Fortress 2', year:2007, searchTerm:'Rocket Jump Waltz Team Fortress 2 Mike Morasky', trackHint:'rocket jump waltz', reveal:'"Rocket Jump Waltz" — Mike Morasky' },
+  { title:'Enter the Gungeon', year:2016, searchTerm:'Gungeon Theme Enter the Gungeon Doseone', trackHint:'main theme', reveal:'"Gungeon Theme" — Doseone' },
+  { title:'The Binding of Isaac: Rebirth', year:2014, searchTerm:'Food The Binding of Isaac Rebirth Danny Baranowsky', trackHint:'food', reveal:'"Food" — Danny Baranowsky' },
+  { title:'Warframe', year:2013, searchTerm:'Warframe Theme Keith Power George Spanos', trackHint:'main theme', reveal:'"Warframe Theme" — Keith Power & George Spanos' },
+  { title:'Kingdom Come: Deliverance', year:2018, searchTerm:'Main Theme Kingdom Come Deliverance Jan Valta Adam Sporka', trackHint:'main theme', reveal:'"Main Theme" — Jan Valta & Adam Sporka' },
+  { title:'The Division 2', year:2019, searchTerm:'The Division 2 Theme Ola Strandh', trackHint:'main theme', reveal:'"The Division 2 Theme" — Ola Strandh' },
+  { title:'L.A. Noire', year:2011, searchTerm:'Main Theme L.A. Noire Andrew Hale Simon Hale', trackHint:'main theme', reveal:'"Main Theme" — Andrew Hale & Simon Hale' },
+  { title:'Max Payne 3', year:2012, searchTerm:'Max Payne 3 Theme Health', trackHint:'main theme', reveal:'"Max Payne 3 Theme" — HEALTH' },
+  { title:'Bully', year:2006, searchTerm:'Bully Theme Shawn Lee', trackHint:'main theme', reveal:'"Bully Theme" — Shawn Lee' },
+  { title:'Deathloop', year:2021, searchTerm:'Deathloop Theme Tom Salta', trackHint:'main theme', reveal:'"Deathloop Theme" — Tom Salta' },
+  { title:'Deus Ex: Mankind Divided', year:2016, searchTerm:'Mankind Divided Theme Sascha Dikiciyan Michael Schwabe', trackHint:'main theme', reveal:'"Mankind Divided Theme" — Sascha Dikiciyan & Michael Schwabe' },
+  { title:'Metro Exodus', year:2019, searchTerm:'Metro Exodus Theme Alexey Omelchuk', trackHint:'main theme', reveal:'"Metro Exodus Theme" — Alexey Omelchuk' },
+  { title:'Metro: Last Light', year:2013, searchTerm:'Last Light Theme Alexey Omelchuk', trackHint:'main theme', reveal:'"Last Light Theme" — Alexey Omelchuk' },
+  { title:'Metro 2033', year:2010, searchTerm:'Metro 2033 Theme Alexey Omelchuk', trackHint:'main theme', reveal:'"Metro 2033 Theme" — Alexey Omelchuk' },
+  { title:'The Outer Worlds', year:2019, searchTerm:'The Outer Worlds Theme Justin E. Bell', trackHint:'main theme', reveal:'"The Outer Worlds Theme" — Justin E. Bell' },
+  { title:'Divinity: Original Sin 2', year:2017, searchTerm:'Main Theme Divinity Original Sin 2 Borislav Slavov', trackHint:'main theme', reveal:'"Main Theme" — Borislav Slavov' },
+  { title:'Star Wars Jedi: Survivor', year:2023, searchTerm:'Survivor Theme Star Wars Jedi Survivor Stephen Barton Gordy Haab', trackHint:'main theme', reveal:'"Survivor Theme" — Stephen Barton & Gordy Haab' },
+  { title:'Star Wars Battlefront II', year:2017, searchTerm:'Main Theme Star Wars Battlefront II Gordy Haab', trackHint:'main theme', reveal:'"Main Theme" — Gordy Haab' },
+  { title:'Marvel\'s Avengers', year:2020, searchTerm:'Avengers Theme Marvel\'s Avengers Bobby Tahouri', trackHint:'main theme', reveal:'"Avengers Theme" — Bobby Tahouri' },
+  { title:'Ratchet & Clank: Rift Apart', year:2021, searchTerm:'Rift Apart Theme Mark Mothersbaugh', trackHint:'main theme', reveal:'"Rift Apart Theme" — Mark Mothersbaugh' },
+  { title:'LittleBigPlanet 3', year:2014, searchTerm:'LittleBigPlanet 3 Theme Winifred Phillips', trackHint:'main theme', reveal:'"LittleBigPlanet 3 Theme" — Winifred Phillips' },
+  { title:'Super Meat Boy', year:2010, searchTerm:'Forest Funk Super Meat Boy Danny Baranowsky', trackHint:'forest funk', reveal:'"Forest Funk" — Danny Baranowsky' },
+  { title:'Ori and the Will of the Wisps', year:2020, searchTerm:'Silent Woods Ori and the Will of the Wisps Gareth Coker', trackHint:'silent woods', reveal:'"Silent Woods" — Gareth Coker' },
+  { title:'Limbo', year:2010, searchTerm:'Limbo Theme Martin Stig Andersen', trackHint:'main theme', reveal:'"Limbo Theme" — Martin Stig Andersen' },
+  { title:'Inside', year:2016, searchTerm:'Inside Theme Martin Stig Andersen', trackHint:'main theme', reveal:'"Inside Theme" — Martin Stig Andersen' },
+  { title:'Little Nightmares', year:2017, searchTerm:'Little Nightmares Theme Tobias Lilja', trackHint:'main theme', reveal:'"Little Nightmares Theme" — Tobias Lilja' },
+  { title:'Little Nightmares II', year:2021, searchTerm:'Little Nightmares II Theme Tobias Lilja', trackHint:'main theme', reveal:'"Little Nightmares II Theme" — Tobias Lilja' },
+  { title:'Pac-Man', year:1980, searchTerm:'Pac-Man Theme Toshio Kai', trackHint:'main theme', reveal:'"Pac-Man Theme" — Toshio Kai' },
+  { title:'StarCraft', year:1998, searchTerm:'Terran Theme StarCraft Glenn Stafford Derek Duke', trackHint:'terran theme', reveal:'"Terran Theme" — Glenn Stafford, Derek Duke & Tracy W. Bush' },
+  { title:'RollerCoaster Tycoon', year:1999, searchTerm:'RollerCoaster Tycoon Theme Allister Brimble', trackHint:'main theme', reveal:'"RollerCoaster Tycoon Theme" — Allister Brimble' },
+  { title:'Fable', year:2004, searchTerm:'Fable Theme Russell Shaw', trackHint:'main theme', reveal:'"Fable Theme" — Russell Shaw' },
+  { title:'Fable II', year:2008, searchTerm:'Fable II Theme Russell Shaw', trackHint:'main theme', reveal:'"Fable II Theme" — Russell Shaw' },
+  { title:'Fable III', year:2010, searchTerm:'Fable III Theme Russell Shaw', trackHint:'main theme', reveal:'"Fable III Theme" — Russell Shaw' },
+  { title:'Batman: Arkham Asylum', year:2009, searchTerm:'Arkham Asylum Theme Ron Fish Nick Arundel', trackHint:'main theme', reveal:'"Arkham Asylum Theme" — Ron Fish & Nick Arundel' },
+  { title:'Batman: Arkham Origins', year:2013, searchTerm:'Arkham Origins Theme Christopher Drake', trackHint:'main theme', reveal:'"Arkham Origins Theme" — Christopher Drake' },
+  { title:'Batman: Arkham Knight', year:2015, searchTerm:'Arkham Knight Theme Nick Arundel', trackHint:'main theme', reveal:'"Arkham Knight Theme" — Nick Arundel' },
+  { title:'The Witcher 2: Assassins of Kings', year:2011, searchTerm:'Witcher 2 Main Theme Adam Skorupa Krzysztof Wierzynkiewicz', trackHint:'main theme', reveal:'"Main Theme" — Adam Skorupa & Krzysztof Wierzynkiewicz' },
+  { title:'Clair Obscur: Expedition 33', year:2025, searchTerm:'Lumiere Clair Obscur Expedition 33 Lorien Testard', trackHint:'lumiere', reveal:'"Lumiere" — Lorien Testard' },
+  { title:'Max Payne', year:2001, searchTerm:'Max Payne Theme Kartsy Hatakka Kimmo Kajasto', trackHint:'main theme', reveal:'"Max Payne Theme" — Kärtsy Hatakka & Kimmo Kajasto' },
+  { title:'Kingdom Come: Deliverance II', year:2025, searchTerm:'Kingdom Come Deliverance II Theme Adam Sporka Jan Valta', trackHint:'main theme', reveal:'"Main Theme" — Adam Sporka & Jan Valta' },
+  { title:'A Plague Tale: Innocence', year:2019, searchTerm:'A Plague Tale Innocence Theme Olivier Deriviere', trackHint:'main theme', reveal:'"Main Theme" — Olivier Deriviere' },
+  { title:'A Plague Tale: Requiem', year:2022, searchTerm:'A Plague Tale Requiem Theme Olivier Deriviere', trackHint:'main theme', reveal:'"Main Theme" — Olivier Deriviere' },
+  { title:'Call of Duty: Modern Warfare', year:2019, searchTerm:'Call of Duty Modern Warfare Theme Sarah Schachner', trackHint:'main theme', reveal:'"Main Theme" — Sarah Schachner' },
+  { title:'Call of Duty 4: Modern Warfare', year:2007, searchTerm:'Call of Duty 4 Modern Warfare Theme Harry Gregson-Williams', trackHint:'main theme', reveal:'"Main Theme" — Harry Gregson-Williams' },
+  { title:'Call of Duty: Ghosts', year:2013, searchTerm:'Call of Duty Ghosts Theme Brian Tyler', trackHint:'main theme', reveal:'"Main Theme" — Brian Tyler' },
+  { title:'Call of Duty: Modern Warfare 3 (2011)', year:2011, searchTerm:'Call of Duty Modern Warfare 3 Theme Brian Tyler', trackHint:'main theme', reveal:'"Main Theme" — Brian Tyler' },
+  { title:'Watch Dogs', year:2014, searchTerm:'Watch Dogs Theme Brian Reitzell', trackHint:'main theme', reveal:'"Watch Dogs Theme" — Brian Reitzell' },
+  { title:'Watch Dogs 2', year:2016, searchTerm:'Watch Dogs 2 Theme Hudson Mohawke', trackHint:'main theme', reveal:'"Watch Dogs 2 Theme" — Hudson Mohawke' },
+  { title:'X-COM: UFO Defense', year:1994, searchTerm:'X-COM UFO Defense Theme John Broomhall', trackHint:'main theme', reveal:'"Main Theme" — John Broomhall' },
+  { title:'Resident Evil 2 (2019)', year:2019, searchTerm:'Save Room Theme Resident Evil 2 Remake Kota Suzuki', trackHint:'save room theme', reveal:'"Save Room Theme" — Kota Suzuki & Shusaku Uchiyama' },
+  { title:'Assassin\'s Creed Unity', year:2014, searchTerm:'Main Theme Assassin\'s Creed Unity Chris Tilton', trackHint:'main theme', reveal:'"Main Theme" — Chris Tilton' },
+  { title:'Assassin\'s Creed Rogue', year:2014, searchTerm:'Main Theme Assassin\'s Creed Rogue Elitsa Alexandrova Sean Rowe', trackHint:'main theme', reveal:'"Main Theme" — Elitsa Alexandrova & Sean Rowe' },
+  { title:'Assassin\'s Creed Mirage', year:2023, searchTerm:'Main Theme Assassin\'s Creed Mirage Brendan Angelides', trackHint:'main theme', reveal:'"Main Theme" — Brendan Angelides' },
+  { title:'Far Cry 6', year:2021, searchTerm:'Main Theme Far Cry 6 Pedro Bromfman', trackHint:'main theme', reveal:'"Main Theme" — Pedro Bromfman' },
+  { title:'Far Cry Primal', year:2016, searchTerm:'Main Theme Far Cry Primal Jason Graves', trackHint:'main theme', reveal:'"Main Theme" — Jason Graves' },
+  { title:'Call of Duty: Modern Warfare II', year:2022, searchTerm:'Main Theme Call of Duty Modern Warfare II Sarah Schachner', trackHint:'main theme', reveal:'"Main Theme" — Sarah Schachner' },
+  { title:'Rocket League', year:2015, searchTerm:'Rocket League Theme Mike Ault', trackHint:'main theme', reveal:'"Rocket League Theme" — Mike Ault' },
+  { title:'The Sims', year:2000, searchTerm:'Main Theme The Sims Jerry Martin', trackHint:'main theme', reveal:'"Main Theme" — Jerry Martin' },
+  { title:'Battlefield 1', year:2016, searchTerm:'Letter from the Front Battlefield 1 Johan Soderqvist', trackHint:'letter from the front', reveal:'"Letter from the Front" — Johan Söderqvist' },
+  { title:'Apex Legends', year:2019, searchTerm:'Apex Legends Theme Stephen Barton Bear McCreary', trackHint:'main theme', reveal:'"Apex Legends Theme" — Stephen Barton & Bear McCreary' },
+  { title:'Overwatch 2', year:2022, searchTerm:'Title Theme Overwatch Derek Duke', trackHint:'title theme', reveal:'"Title Theme" — Derek Duke' },
+  { title:'Days Gone', year:2019, searchTerm:'Main Theme Days Gone Nathan Whitehead', trackHint:'main theme', reveal:'"Main Theme" — Nathan Whitehead' },
+  { title:'Nioh 2', year:2020, searchTerm:'Nioh 2 Theme Hideyuki Fukasawa', trackHint:'main theme', reveal:'"Nioh 2 Theme" — Hideyuki Fukasawa' },
+  { title:'Street Fighter V', year:2016, searchTerm:'Main Theme Street Fighter V Hideyuki Fukasawa', trackHint:'main theme', reveal:'"Main Theme" — Hideyuki Fukasawa' },
+  { title:'Street Fighter 6', year:2023, searchTerm:'Main Theme Street Fighter 6 Hideyuki Fukasawa', trackHint:'main theme', reveal:'"Main Theme" — Hideyuki Fukasawa' },
+  { title:'Yakuza: Like a Dragon', year:2020, searchTerm:'Main Theme Yakuza Like a Dragon Hidenori Shoji', trackHint:'main theme', reveal:'"Main Theme" — Hidenori Shoji' },
+  { title:'Bayonetta 3', year:2022, searchTerm:'Main Theme Bayonetta 3 Rei Kondoh', trackHint:'main theme', reveal:'"Main Theme" — Rei Kondoh' },
+  { title:'Mario Party', year:1998, searchTerm:'Mario Party Theme Kazumi Totaka', trackHint:'main theme', reveal:'"Mario Party Theme" — Kazumi Totaka' },
+  { title:'Left 4 Dead', year:2008, searchTerm:'Main Theme Left 4 Dead Mike Morasky', trackHint:'main theme', reveal:'"Main Theme" — Mike Morasky' },
+  { title:'Left 4 Dead 2', year:2009, searchTerm:'Main Theme Left 4 Dead 2 Mike Morasky', trackHint:'main theme', reveal:'"Main Theme" — Mike Morasky' },
+  { title:'Dragon\'s Dogma 2', year:2024, searchTerm:'Main Theme Dragon\'s Dogma 2 Tadayoshi Makino', trackHint:'main theme', reveal:'"Main Theme" — Tadayoshi Makino' },
+  { title:'Ghost Recon Breakpoint', year:2019, searchTerm:'Main Theme Ghost Recon Breakpoint Alain Johannes', trackHint:'main theme', reveal:'"Main Theme" — Alain Johannes' },
+  { title:'Injustice 2', year:2017, searchTerm:'Main Theme Injustice 2 Christopher Drake', trackHint:'main theme', reveal:'"Main Theme" — Christopher Drake' },
+  { title:'Pikmin 4', year:2023, searchTerm:'Main Theme Pikmin 4 Hajime Wakai', trackHint:'main theme', reveal:'"Main Theme" — Hajime Wakai' },
+  { title:'Resident Evil Village', year:2021, searchTerm:'Main Theme Resident Evil Village Shusaku Uchiyama', trackHint:'main theme', reveal:'"Main Theme" — Shusaku Uchiyama' },
+  { title:'Resident Evil 6', year:2012, searchTerm:'Main Theme Resident Evil 6 Kota Suzuki', trackHint:'main theme', reveal:'"Main Theme" — Kota Suzuki' },
+  { title:'Resident Evil Zero', year:2002, searchTerm:'Main Theme Resident Evil Zero Shusaku Uchiyama', trackHint:'main theme', reveal:'"Main Theme" — Shusaku Uchiyama' },
+  { title:'Resident Evil 3 (2020)', year:2020, searchTerm:'Main Theme Resident Evil 3 Remake Kota Suzuki', trackHint:'main theme', reveal:'"Main Theme" — Kota Suzuki' },
+  { title:'Resident Evil 4 (2023)', year:2023, searchTerm:'Save Room Theme Resident Evil 4 Remake Kota Suzuki', trackHint:'save room theme', reveal:'"Save Room Theme" — Kota Suzuki' },
+  { title:'Grand Theft Auto III', year:2001, searchTerm:'Main Theme Grand Theft Auto III Craig Conner', trackHint:'main theme', reveal:'"Main Theme" — Craig Conner' },
+  { title:'Grand Theft Auto: Vice City', year:2002, searchTerm:'Main Theme Grand Theft Auto Vice City Craig Conner', trackHint:'main theme', reveal:'"Main Theme" — Craig Conner' },
+  { title:'Grand Theft Auto: San Andreas', year:2004, searchTerm:'Main Theme Grand Theft Auto San Andreas Craig Conner', trackHint:'main theme', reveal:'"Main Theme" — Craig Conner' },
+  { title:'Grand Theft Auto: Liberty City Stories', year:2005, searchTerm:'Main Theme Grand Theft Auto Liberty City Stories Craig Conner', trackHint:'main theme', reveal:'"Main Theme" — Craig Conner' },
+  { title:'Grand Theft Auto: Vice City Stories', year:2006, searchTerm:'Main Theme Grand Theft Auto Vice City Stories Craig Conner', trackHint:'main theme', reveal:'"Main Theme" — Craig Conner' },
+  { title:'Sid Meier\'s Civilization V', year:2010, searchTerm:'Main Theme Civilization V Michael Curran', trackHint:'main theme', reveal:'"Main Theme" — Michael Curran' },
+  { title:'Wii Play', year:2006, searchTerm:'Wii Play Theme Kazumi Totaka', trackHint:'main theme', reveal:'"Wii Play Theme" — Kazumi Totaka' },
+  { title:'Wii Fit', year:2007, searchTerm:'Wii Fit Theme Kazumi Totaka', trackHint:'main theme', reveal:'"Wii Fit Theme" — Kazumi Totaka' },
+  { title:'Marvel\'s Guardians of the Galaxy', year:2021, searchTerm:'Space Rangers Marvel\'s Guardians of the Galaxy Richard Jacques', trackHint:'space rangers', reveal:'"Space Rangers" — Richard Jacques' },
+  { title:'Age of Empires IV', year:2021, searchTerm:'Main Theme Age of Empires IV Rom Di Prisco', trackHint:'main theme', reveal:'"Main Theme" — Rom Di Prisco' },
+  { title:'Fall Guys', year:2020, searchTerm:'Danger Fall Guys Jukio Kallio Daniel Hagstrom', trackHint:'danger', reveal:'"Danger" — Jukio Kallio & Daniel Hagström' },
+  { title:'Call of Duty: WWII', year:2017, searchTerm:'Main Theme Call of Duty WWII Brian Tyler', trackHint:'main theme', reveal:'"Main Theme" — Brian Tyler' },
+  { title:'Call of Duty: Advanced Warfare', year:2014, searchTerm:'Main Theme Call of Duty Advanced Warfare Harry Gregson-Williams', trackHint:'main theme', reveal:'"Main Theme" — Harry Gregson-Williams' },
+  { title:'Call of Duty: Black Ops II', year:2012, searchTerm:'Main Theme Call of Duty Black Ops II Jack Wall', trackHint:'main theme', reveal:'"Main Theme" — Jack Wall' },
+  { title:'Call of Duty: Modern Warfare III', year:2023, searchTerm:'Main Theme Call of Duty Modern Warfare III Sarah Schachner', trackHint:'main theme', reveal:'"Main Theme" — Sarah Schachner' },
+  { title:'Avatar: Frontiers of Pandora', year:2023, searchTerm:'Main Theme Avatar Frontiers of Pandora Pinar Toprak', trackHint:'main theme', reveal:'"Main Theme" — Pinar Toprak' },
+  { title:'League of Legends', year:2009, searchTerm:'Main Theme League of Legends Christian Linke', trackHint:'main theme', reveal:'"Main Theme" — Christian Linke' },
+  { title:'Battlefield V', year:2018, searchTerm:'Main Theme Battlefield V Johan Skugge Jukka Rintamaki', trackHint:'main theme', reveal:'"Main Theme" — Johan Skugge & Jukka Rintamäki' },
+  { title:'Battlefield 2042', year:2021, searchTerm:'Main Theme Battlefield 2042 Johan Skugge Jukka Rintamaki', trackHint:'main theme', reveal:'"Main Theme" — Johan Skugge & Jukka Rintamäki' },
+  { title:'Grand Theft Auto: Chinatown Wars', year:2009, searchTerm:'Main Theme Grand Theft Auto Chinatown Wars Craig Conner', trackHint:'main theme', reveal:'"Main Theme" — Craig Conner' },
+  { title:'Grand Theft Auto', year:1997, searchTerm:'Main Theme Grand Theft Auto Mark Knight Paul Farley', trackHint:'main theme', reveal:'"Main Theme" — Mark Knight & Paul Farley' },
+  { title:'Grand Theft Auto 2', year:1999, searchTerm:'Main Theme Grand Theft Auto 2 Mark Knight Paul Farley', trackHint:'main theme', reveal:'"Main Theme" — Mark Knight & Paul Farley' },
+  { title:'The Sims 4', year:2014, searchTerm:'Main Theme The Sims 4 Ilan Eshkeri', trackHint:'main theme', reveal:'"Main Theme" — Ilan Eshkeri' },
 ];
 
 const cassetteModal = document.getElementById('cassetteModal');
@@ -11102,7 +11586,53 @@ const CONCIERGE_ERA_TIERS = [
   { id:'any', label:"Doesn't matter", min:-Infinity, max:Infinity },
 ];
 
-const CONCIERGE_QUESTIONS = [
+// ----- Thorough-mode-only criteria (5 extra questions) -----
+const CONCIERGE_INDIE_PUBLISHERS = new Set([
+  'Annapurna Interactive','ConcernedApe','Devolver Digital','Team Cherry','Supergiant Games',
+  'Mega Crit','Extremely OK Games','Playdead','Team Meat','Nicalis','Re-Logic','Innersloth',
+  'Facepunch Studios','Studio MDHR','tobyfox','ZA/UM','Kepler Interactive','Coffee Stain Publishing',
+  'Curve Games','Ember Lab','Endnight Games','Warhorse Studios',
+]);
+const CONCIERGE_PUBLISHER_OPTIONS = [
+  { id:'aaa', label:'AAA blockbuster', test:(g)=>!CONCIERGE_INDIE_PUBLISHERS.has(g.publisher) },
+  { id:'indie', label:'Indie gem', test:(g)=>CONCIERGE_INDIE_PUBLISHERS.has(g.publisher) },
+  { id:'any', label:"Doesn't matter", test:null },
+];
+const CONCIERGE_POPULARITY_TIERS = [
+  { id:'massive', label:'Massive hit', test:(g)=>g.sales >= 20 },
+  { id:'hidden', label:'Under-the-radar gem', test:(g)=>g.sales <= 3 },
+  { id:'any', label:"Doesn't matter", test:null },
+];
+const CONCIERGE_AVOID_OPTIONS = [
+  { id:'horror', label:'Horror & Stealth', match:['Horror','Stealth'] },
+  { id:'shooter', label:'Shooter', match:['FPS','Shooter','Battle Royale'] },
+  { id:'survival', label:'Survival', match:['Survival'] },
+  { id:'strategy', label:'Strategy', match:['Strategy','MOBA'] },
+  { id:'puzzle', label:'Puzzle', match:['Puzzle'] },
+  { id:'racing', label:'Sports & Racing', match:['Sports','Racing'] },
+  { id:'none', label:"Nothing — I'll take anything", match:null },
+];
+const CONCIERGE_COMMITMENT_OPTIONS = [
+  { id:'comfort', label:'Comfort — jump in anytime', match:['Sandbox','Simulation','Party','Sports','Racing','Farming'] },
+  { id:'campaign', label:'One big campaign to sink into', match:['RPG','Action RPG','Action-Adventure','Horror'] },
+  { id:'any', label:"Doesn't matter", match:null },
+];
+const CONCIERGE_TONE_OPTIONS = [
+  { id:'coop', label:'Co-op chaos with friends', match:['Co-op','Party'] },
+  { id:'chill', label:'Something chill to unwind with', match:['Puzzle','Simulation','Sandbox'] },
+  { id:'competitive', label:'A competitive edge', match:['Battle Royale','MOBA','Fighting'] },
+  { id:'pure', label:'Keep it pure genre, no blending', match:null },
+  { id:'any', label:"Doesn't matter", match:null },
+];
+const CONCIERGE_THOROUGH_QUESTIONS = [
+  { id:'publisher', prompt:'AAA blockbuster, or an indie gem?', type:'chips', options:CONCIERGE_PUBLISHER_OPTIONS },
+  { id:'popularity', prompt:'A massive hit, or an under-the-radar gem?', type:'chips', options:CONCIERGE_POPULARITY_TIERS },
+  { id:'avoid', prompt:"Anything you'd rather avoid?", type:'chips', options:CONCIERGE_AVOID_OPTIONS },
+  { id:'commitment', prompt:'Jump in anytime, or one big campaign to sink into?', type:'chips', options:CONCIERGE_COMMITMENT_OPTIONS },
+  { id:'tone', prompt:'Want anything blended in with the main genre?', type:'chips', options:CONCIERGE_TONE_OPTIONS },
+];
+
+const CONCIERGE_BASE_QUESTIONS = [
   { id:'platform', prompt:'What are you playing on?', type:'chips', options:CONCIERGE_PLATFORM_OPTIONS },
   { id:'genre', prompt:'What genre are you in the mood for?', type:'chips', options:CONCIERGE_GENRE_GROUPS },
   { id:'length', prompt:'How much time do you want to sink into it?', type:'chips', options:CONCIERGE_LENGTH_BUCKETS },
@@ -11110,8 +11640,13 @@ const CONCIERGE_QUESTIONS = [
   { id:'perspective', prompt:'How do you like to play?', type:'chips', options:CONCIERGE_PERSPECTIVE_OPTIONS },
   { id:'quality', prompt:'Critically acclaimed, or open to a hidden gem?', type:'chips', options:CONCIERGE_QUALITY_TIERS },
   { id:'era', prompt:'Any era you\'re leaning toward?', type:'chips', options:CONCIERGE_ERA_TIERS },
-  { id:'favorites', prompt:"Name up to 3 games you love — we'll use them to fine-tune your pick.", type:'favorites' },
 ];
+const CONCIERGE_FAVORITES_QUESTION = { id:'favorites', prompt:"Name up to 3 games you love — we'll use them to fine-tune your pick.", type:'favorites' };
+function getConciergeQuestions(){
+  return conciergeMode === 'thorough'
+    ? [...CONCIERGE_BASE_QUESTIONS, ...CONCIERGE_THOROUGH_QUESTIONS, CONCIERGE_FAVORITES_QUESTION]
+    : [...CONCIERGE_BASE_QUESTIONS, CONCIERGE_FAVORITES_QUESTION];
+}
 
 let conciergeStep = 0;
 let conciergeAnswers = {};
@@ -11119,6 +11654,7 @@ let conciergeFavorites = [];
 let conciergeResult = null;
 let conciergeAudioEntry = null;
 let conciergePlaying = false;
+let conciergeMode = null; // 'quick' | 'thorough'
 
 const conciergeModal = document.getElementById('conciergeModal');
 const conciergeModalClose = document.getElementById('conciergeModalClose');
@@ -11135,8 +11671,39 @@ function openConciergeModal(){
   conciergeAnswers = {};
   conciergeFavorites = [];
   conciergeResult = null;
+  conciergeMode = null;
   conciergeModal.classList.add('show');
-  renderConciergeStep();
+  renderConciergeModeSelect();
+}
+
+function renderConciergeModeSelect(){
+  conciergeBody.innerHTML = `
+    <div class="concierge-question">How deep do you want to go?</div>
+    <div class="concierge-fav-hint">Pick a path — both end with a game picked just for you.</div>
+    <div class="concierge-mode-options">
+      <button class="concierge-mode-btn" type="button" data-mode="quick">
+        <div class="concierge-mode-icon">⚡</div>
+        <div>
+          <div class="concierge-mode-title">Quick Pick</div>
+          <div class="concierge-mode-desc">${CONCIERGE_BASE_QUESTIONS.length + 1} quick questions — fast and fun.</div>
+        </div>
+      </button>
+      <button class="concierge-mode-btn" type="button" data-mode="thorough">
+        <div class="concierge-mode-icon">🔍</div>
+        <div>
+          <div class="concierge-mode-title">Thorough<span class="concierge-mode-badge">DEEP CUT</span></div>
+          <div class="concierge-mode-desc">${CONCIERGE_BASE_QUESTIONS.length + CONCIERGE_THOROUGH_QUESTIONS.length + 1} questions — really narrow it down to the perfect pick.</div>
+        </div>
+      </button>
+    </div>
+  `;
+  conciergeBody.querySelectorAll('.concierge-mode-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      conciergeMode = btn.dataset.mode;
+      conciergeStep = 0;
+      renderConciergeStep();
+    });
+  });
 }
 function closeConciergeModal(){
   conciergeStopSoundtrack();
@@ -11211,6 +11778,40 @@ function scoreGame(game){
     if(tier && game.year >= tier.min && game.year <= tier.max){ score += 3; reasons.push(tier.label); }
   });
 
+  // ----- Thorough-mode-only criteria (no-ops when those questions weren't asked) -----
+  conciergeAnswerIds('publisher').forEach(id=>{
+    const opt = CONCIERGE_PUBLISHER_OPTIONS.find(o=>o.id===id);
+    if(opt && opt.test && opt.test(game)){ score += 3; reasons.push(opt.label); }
+  });
+
+  conciergeAnswerIds('popularity').forEach(id=>{
+    const tier = CONCIERGE_POPULARITY_TIERS.find(o=>o.id===id);
+    if(tier && tier.test && tier.test(game)){ score += 3; reasons.push(tier.label); }
+  });
+
+  // Avoid: a hard penalty rather than a filter, so a result is always
+  // returned even if every other answer was also very narrow.
+  conciergeAnswerIds('avoid').forEach(id=>{
+    if(id === 'none') return;
+    const opt = CONCIERGE_AVOID_OPTIONS.find(o=>o.id===id);
+    if(opt && opt.match && opt.match.some(m=>game.genres.includes(m))) score -= 1000;
+  });
+
+  conciergeAnswerIds('commitment').forEach(id=>{
+    const opt = CONCIERGE_COMMITMENT_OPTIONS.find(o=>o.id===id);
+    if(opt && opt.match && opt.match.some(m=>game.genres.includes(m))){ score += 3; reasons.push(opt.label); }
+  });
+
+  conciergeAnswerIds('tone').forEach(id=>{
+    const opt = CONCIERGE_TONE_OPTIONS.find(o=>o.id===id);
+    if(!opt) return;
+    if(opt.id === 'pure'){
+      if(game.genres.length <= 2){ score += 2; reasons.push(opt.label); }
+    } else if(opt.match && opt.match.some(m=>game.genres.includes(m))){
+      score += 3; reasons.push(opt.label);
+    }
+  });
+
   // Favorites: bonus for sharing genres/publisher/perspective/platform with
   // any of the up to-3 games the person said they already love.
   conciergeFavorites.forEach(fav=>{
@@ -11236,18 +11837,19 @@ function computeConciergeResult(){
 }
 
 function conciergeDotsHtml(){
-  return CONCIERGE_QUESTIONS.map((q,i)=>{
+  return getConciergeQuestions().map((q,i)=>{
     const cls = i < conciergeStep ? 'done' : (i === conciergeStep ? 'current' : '');
     return `<span class="concierge-dot ${cls}"></span>`;
   }).join('');
 }
 
 function renderConciergeStep(){
-  const q = CONCIERGE_QUESTIONS[conciergeStep];
+  const questions = getConciergeQuestions();
+  const q = questions[conciergeStep];
   if(q.type === 'chips'){
     const selected = conciergeAnswers[q.id] || [];
     conciergeBody.innerHTML = `
-      <div class="concierge-progress">Question ${conciergeStep+1} of ${CONCIERGE_QUESTIONS.length}</div>
+      <div class="concierge-progress">Question ${conciergeStep+1} of ${questions.length}</div>
       <div class="concierge-dots">${conciergeDotsHtml()}</div>
       <div class="concierge-question">${q.prompt}</div>
       <div class="concierge-fav-hint">Pick as many as apply.</div>
@@ -11255,7 +11857,7 @@ function renderConciergeStep(){
         ${q.options.map(o=>`<button class="concierge-chip${selected.includes(o.id)?' selected':''}" data-id="${o.id}">${o.label}</button>`).join('')}
       </div>
       <div class="concierge-nav">
-        <button class="ghost-btn" id="conciergeBackBtn" ${conciergeStep===0?'disabled':''}>◀ Back</button>
+        <button class="ghost-btn" id="conciergeBackBtn">◀ Back</button>
         <button class="ghost-btn" id="conciergeNextBtn">Next ▶</button>
       </div>
     `;
@@ -11274,16 +11876,19 @@ function renderConciergeStep(){
       });
     });
     const backBtn = document.getElementById('conciergeBackBtn');
-    if(backBtn) backBtn.addEventListener('click', ()=>{ conciergeStep--; renderConciergeStep(); });
+    if(backBtn) backBtn.addEventListener('click', ()=>{
+      if(conciergeStep === 0){ renderConciergeModeSelect(); return; }
+      conciergeStep--; renderConciergeStep();
+    });
     const nextBtn = document.getElementById('conciergeNextBtn');
     if(nextBtn) nextBtn.addEventListener('click', ()=>{
       conciergeStep++;
-      if(conciergeStep >= CONCIERGE_QUESTIONS.length) renderConciergeResults();
+      if(conciergeStep >= questions.length) renderConciergeResults();
       else renderConciergeStep();
     });
   } else if(q.type === 'favorites'){
     conciergeBody.innerHTML = `
-      <div class="concierge-progress">Question ${conciergeStep+1} of ${CONCIERGE_QUESTIONS.length} (optional)</div>
+      <div class="concierge-progress">Question ${conciergeStep+1} of ${questions.length} (optional)</div>
       <div class="concierge-dots">${conciergeDotsHtml()}</div>
       <div class="concierge-question">${q.prompt}</div>
       <div class="concierge-fav-search">
