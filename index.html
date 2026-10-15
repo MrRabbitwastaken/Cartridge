@@ -410,6 +410,14 @@
   }
   .cover-locked > .cover-lock { display: flex; }
   .cover-locked > img { visibility: hidden; }
+  /* Pixelated reveal: a tiny canvas scaled up with hard edges, greyscale until
+     the final step. The real <img> is hidden while pixelation is active. */
+  .cover-pix { display: none; position: absolute; inset: 0; width: 100%; height: 100%;
+    image-rendering: pixelated; image-rendering: crisp-edges; filter: grayscale(1) contrast(1.05); }
+  .cover-colour > .cover-pix { filter: none; }
+  .cover-pixelated > .cover-pix { display: block; }
+  .cover-pixelated > img { visibility: hidden; }
+  .cover-locked > .cover-pix { display: none; }
   .progress-cover .cover-lock { font-size: 11px; line-height: 1.8; padding: 14px; }
   .cover-placeholder {
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
@@ -1601,7 +1609,7 @@
       </div>
       <div class="help-section">
         <div class="help-heading">Cover art</div>
-        <p>The cover art next to the Guess button belongs to the mystery game. It starts as a <b>locked grey tile</b> — get your first <b>green</b> field to unlock it as a blurred image. Every time a field on the board turns <b>green</b> — Year, Publisher, Critic, Genre, Platform, Sales, or Time to Beat — the cover sharpens by 20%. Genre and Platform count as soon as just one shared pill lights up green, so you don't need every tag to match. Any 5 of those 7 fields turning green is enough for a fully clear cover; solving the game (or giving up) reveals it completely either way.</p>
+        <p>The cover art next to the Guess button belongs to the mystery game. It starts as a <b>locked grey tile</b> — get your first <b>green</b> field to unlock it as a chunky, black-and-white <b>pixelated</b> image. Every time a field on the board turns <b>green</b> — Year, Publisher, Critic, Genre, Platform, Sales, or Time to Beat — the pixels get finer. Genre and Platform count as soon as just one shared pill lights up green, so you don't need every tag to match. Any 5 of those 7 fields turning green swaps in the full-colour cover; solving the game (or giving up) reveals it completely either way.</p>
       </div>
       <div class="help-section">
         <div class="help-heading">🃏 Cartridge Clash</div>
@@ -2173,6 +2181,14 @@
       </div>
     </div>
 
+    <div class="difficulty-row" id="coverColourRow" style="display:none">
+      <span class="difficulty-label">Cover Pixels:</span>
+      <div class="diff-group">
+        <button class="diff-btn active" id="coverGreyBtn">Greyscale</button>
+        <button class="diff-btn" id="coverColourBtn">Colour</button>
+      </div>
+    </div>
+
     <div class="freeplay-controls" id="freeplayControls">
       <div class="difficulty-row">
         <span class="difficulty-label">Difficulty:</span>
@@ -2338,6 +2354,7 @@
     <div class="progress-body">
       <div class="progress-cover" id="progressCover">
         <img id="progressCoverImg" alt="Cover art" class="hidden">
+        <canvas class="cover-pix" id="progressCoverPix"></canvas>
         <div class="cover-placeholder" id="progressCoverPlaceholder">···</div>
         <div class="cover-lock" id="progressCoverLock"><span>Get a green clue to reveal the cover</span></div>
       </div>
@@ -2399,8 +2416,9 @@
       <div class="dropdown hidden" id="dropdown"></div>
     </div>
     <button id="guessBtn">GUESS</button>
-    <div class="cover-panel" id="coverPanel" title="Cover art — unlocks with your first green clue, then sharpens as you guess">
+    <div class="cover-panel" id="coverPanel" title="Cover art — unlocks with your first green clue, then gets less pixelated as you guess">
       <img class="cover-img hidden" id="coverImg" alt="Cover art">
+      <canvas class="cover-pix" id="coverPix"></canvas>
       <div class="cover-placeholder" id="coverPlaceholder">···</div>
       <div class="cover-lock" id="coverLock"><span>Get a green clue to reveal</span></div>
     </div>
@@ -3715,6 +3733,8 @@ const progressCover = document.getElementById('progressCover');
 const progressModal = document.getElementById('progressModal');
 const progressGrid = document.getElementById('progressGrid');
 const progressCoverImg = document.getElementById('progressCoverImg');
+const coverPix = document.getElementById('coverPix');
+const progressCoverPix = document.getElementById('progressCoverPix');
 const progressCoverPlaceholder = document.getElementById('progressCoverPlaceholder');
 const hintBtn = document.getElementById('hintBtn');
 const hintNote = document.getElementById('hintNote');
@@ -3894,6 +3914,7 @@ settingsBtn.addEventListener('click', ()=>{
   const onAnyGame = onCartridge || onClash || onConnect;
   const inAnyFreeplay = inCartridgeFreeplay || inClashFreeplay || inConnectFreeplay;
   settingsDailyNote.classList.toggle('show', onAnyGame && !inAnyFreeplay);
+  document.getElementById('coverColourRow').style.display = onCartridge ? '' : 'none'; // Classic only
 
   freeplayControls.classList.toggle('show', inCartridgeFreeplay);
   clashFreeplayControls.classList.toggle('show', inClashFreeplay);
@@ -4172,7 +4193,7 @@ function endRound(bannerTitle){
     saveDailyState(dailyState);
     recordDailyResult(dailyState.date, 'lost', guesses.length);
   } else if(appMode === 'archive' && archiveReplayDate){
-    recordDailyResult(archiveReplayDate, 'lost', guesses.length);
+    recordDailyResult(archiveReplayDate, 'lost', guesses.length); recordArchivePlay('classic', archiveReplayDate);
   }
   renderAchievementToasts([...evaluateAchievements('lose'), ...checkCrossGameAchievements()]);
 }
@@ -4210,7 +4231,7 @@ function submitGuess(){
       saveDailyState(dailyState);
       recordDailyResult(dailyState.date, 'won', guesses.length);
     } else if(appMode === 'archive' && archiveReplayDate){
-      recordDailyResult(archiveReplayDate, 'won', guesses.length);
+      recordDailyResult(archiveReplayDate, 'won', guesses.length); recordArchivePlay('classic', archiveReplayDate);
     }
     renderAchievementToasts([...evaluateAchievements('win'), ...checkCrossGameAchievements()]);
   } else {
@@ -4272,7 +4293,7 @@ function compareExactString(a,b){
   return a.toLowerCase() === b.toLowerCase() ? {status:'exact'} : {status:'far'};
 }
 
-// ---------- Cover art (RAWG.io) — blurred cover that sharpens as fields are revealed ----------
+// ---------- Cover art (RAWG.io) — pixelated cover that sharpens as fields are revealed ----------
 const RAWG_API_KEY = '1eaeb9426b5f4c869f7307af798bfd6a';
 const COVER_CACHE_KEY = 'cartridge_cover_cache_v1';
 let coverArtCache = {};
@@ -4318,18 +4339,58 @@ function revealedCoverFields(guessList){
   return fields.size;
 }
 
+// Pixelated cover reveal. 0 green fields = locked grey tile; then the art is shown
+// as a coarse greyscale pixel grid that gets finer with each green field, and is
+// replaced by the real full-colour cover at 5 fields or when the round ends.
+// Edit this array to tune the steps (blocks across, indexed by green fields - 1).
+const COVER_PIXEL_STEPS = [10, 16, 28, 48];
+function drawPixelCover(canvas, img, blocks){
+  if(!img || !img.naturalWidth) return;
+  const aspect = 102 / 76; // panel height / width
+  const w = blocks, h = Math.max(1, Math.round(blocks * aspect));
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  // centre-crop the source to the panel's aspect ratio (like object-fit: cover)
+  let sw = img.naturalWidth, sh = img.naturalHeight;
+  if(sh / sw > aspect){ const nh = sw * aspect; var sx = 0, sy = (sh - nh) / 2; sh = nh; }
+  else { const nw = sh / aspect; var sx = (sw - nw) / 2, sy = 0; sw = nw; }
+  try{ ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h); }catch(e){}
+}
 function applyCoverBlur(){
   if(!target) return;
-  const maxBlur = 24; // px, fully blurred at 0 revealed fields
-  let fraction = Math.min(revealedCoverFields() * COVER_REVEAL_STEP, 1);
-  if(solved || gaveUp) fraction = 1; // fully reveal once the round ends, win or lose
-  const blurPx = maxBlur * (1 - fraction);
-  // Locked (grey tile) until the first green field, unless the round has ended.
-  const locked = !(solved || gaveUp) && revealedCoverFields() === 0;
+  const ended = solved || gaveUp;
+  const fields = revealedCoverFields();
+  const locked = !ended && fields === 0;
+  const full = ended || fields > COVER_PIXEL_STEPS.length;
+  const pixelated = !locked && !full && coverImg.complete && coverImg.naturalWidth > 0 && !coverImg.classList.contains('hidden');
   coverPanel.classList.toggle('cover-locked', locked);
   progressCover.classList.toggle('cover-locked', locked);
-  coverImg.style.filter = `blur(${blurPx}px) brightness(${(0.9 + 0.1*fraction).toFixed(2)})`;
+  coverPanel.classList.toggle('cover-pixelated', pixelated);
+  progressCover.classList.toggle('cover-pixelated', pixelated);
+  coverImg.style.filter = 'none';
+  if(pixelated){
+    const blocks = COVER_PIXEL_STEPS[fields - 1];
+    drawPixelCover(coverPix, coverImg, blocks);
+    drawPixelCover(progressCoverPix, coverImg, blocks);
+  }
 }
+
+// Pixelated cover colour option (Settings, Cartridge Classic only). Greyscale by default.
+const COVER_COLOUR_KEY = 'cartridgeCoverColour_v1';
+let coverColour = false;
+try{ coverColour = localStorage.getItem(COVER_COLOUR_KEY) === '1'; }catch(e){}
+function setCoverColour(on){
+  coverColour = !!on;
+  try{ localStorage.setItem(COVER_COLOUR_KEY, coverColour ? '1' : '0'); }catch(e){}
+  document.getElementById('coverGreyBtn').classList.toggle('active', !coverColour);
+  document.getElementById('coverColourBtn').classList.toggle('active', coverColour);
+  coverPanel.classList.toggle('cover-colour', coverColour);
+  progressCover.classList.toggle('cover-colour', coverColour);
+}
+document.getElementById('coverGreyBtn').addEventListener('click', () => setCoverColour(false));
+document.getElementById('coverColourBtn').addEventListener('click', () => setCoverColour(true));
+setCoverColour(coverColour);
 
 let coverArtLoadedFor = null;
 async function refreshCoverArt(){
@@ -4344,6 +4405,7 @@ async function refreshCoverArt(){
   const url = await fetchCoverArt(requestedTitle);
   if(!target || target.title !== requestedTitle) return; // target changed while the fetch was in flight
   if(url){
+    coverImg.onload = () => applyCoverBlur();
     coverImg.src = url;
     coverImg.classList.remove('hidden');
     coverPlaceholder.style.display = 'none';
@@ -4369,7 +4431,7 @@ const ACHIEVEMENTS = [
   {id:'rampage',           name:'Rampage',               icon:'🎖️', hint:'Play the Daily 15 days in a row.'},
   {id:'sharp_eye',         name:'Sharp Eye',             icon:'👀', hint:'Land 4 or more exact-match fields on a guess that isn\u2019t your final winning one.'},
   {id:'well_rounded',      name:'Well Rounded',          icon:'🕹️', hint:'Win at least one round in Daily, Free Play, and an Archive replay.'},
-  {id:'archivist',         name:'Archivist',             icon:'📼', hint:'Solve 5 different days from the Archive.'},
+  {id:'archivist',         name:'Archivist',             icon:'📼', hint:'Complete 5 different days from the Archive, in any games.'},
   {id:'explorer',          name:'Explorer',              icon:'🗺️', hint:'Play a round in Free Play mode.'},
   {id:'perfect_ten',       name:'Perfect Ten',           icon:'🎮', hint:'Win 10 rounds total, across any mode.'},
   {id:'cover_blown',       name:'Cover Blown',           icon:'🖼️', hint:'Fully sharpen the cover art before you solve the title.'},
@@ -4419,7 +4481,7 @@ const LEGENDARY_ACHIEVEMENTS = [
 const LEGENDARY_BY_ID = Object.fromEntries(LEGENDARY_ACHIEVEMENTS.map(a => [a.id, a]));
 
 function loadAchievementState(){
-  const fallback = { unlocked:{}, totalWins:0, modeWins:{daily:false, freeplay:false, archive:false}, archiveSolvedDates:[] };
+  const fallback = { unlocked:{}, totalWins:0, modeWins:{daily:false, freeplay:false, archive:false}, archiveSolvedDates:[], archivePlays:[] };
   try{
     const raw = localStorage.getItem(ACHIEVEMENTS_KEY);
     if(!raw) return fallback;
@@ -4520,7 +4582,6 @@ function evaluateAchievements(outcome){ // outcome: 'win' | 'lose'
     if(priorFields * COVER_REVEAL_STEP >= 1) unlock('cover_blown');
 
     if(state.modeWins.daily && state.modeWins.freeplay && state.modeWins.archive) unlock('well_rounded');
-    if(state.archiveSolvedDates.length >= 5) unlock('archivist');
     if(state.totalWins >= 10) unlock('perfect_ten');
 
     if(appMode === 'daily'){
@@ -4551,6 +4612,8 @@ function evaluateAchievements(outcome){ // outcome: 'win' | 'lose'
     if(playedStreak >= 30) unlock('cartridge_king');
     if(playedStreak >= 365) unlock('touch_grass');
   }
+
+  if(new Set([...(state.archivePlays||[]), ...(state.archiveSolvedDates||[]).map(d => 'classic|'+d)]).size >= 5) unlock('archivist');
 
   // Legendary tier — checked regardless of outcome or mode.
   newlyUnlocked.push(...checkNightOwl());
@@ -4591,6 +4654,24 @@ function unlockAchievements(ids){
   }
   saveAchievementState(state);
   return newlyUnlocked;
+}
+
+
+// Archivist: counts each finished Archive day (win or lose) in ANY game, once per
+// game+date. Earlier Classic-only solves (archiveSolvedDates) still count.
+function recordArchivePlay(game, date){
+  if(!date) return;
+  const st = achievementState;
+  if(!Array.isArray(st.archivePlays)) st.archivePlays = [];
+  const key = game + '|' + date;
+  if(!st.archivePlays.includes(key)) st.archivePlays.push(key);
+  const legacy = (st.archiveSolvedDates||[]).map(d => 'classic|' + d);
+  const total = new Set([...st.archivePlays, ...legacy]).size;
+  saveAchievementState(st);
+  if(total >= 5 && !st.unlocked.archivist){
+    const fresh = unlockAchievements(['archivist']);
+    if(fresh.length) renderAchievementToasts(fresh);
+  }
 }
 
 // ----- Legendary tier helpers, shared across all 4 games -----
@@ -4966,10 +5047,11 @@ hintBtn.addEventListener('click', spendHint);
 function openProgressModal(){
   if(!target) return;
   buildProgressGrid();
-  // mirror whatever the main cover currently shows (same art, same blur amount)
+  // mirror whatever the main cover currently shows (same art, same pixel level)
   progressCoverImg.className = coverImg.className;
   progressCoverImg.src = coverImg.src || '';
-  progressCoverImg.style.filter = coverImg.style.filter;
+  progressCoverImg.style.filter = 'none';
+  applyCoverBlur();
   progressCoverPlaceholder.style.display = coverImg.classList.contains('hidden') ? 'flex' : 'none';
   progressCoverPlaceholder.textContent = coverPlaceholder.textContent;
   progressModal.classList.add('show');
@@ -5799,7 +5881,7 @@ function endClashGame(){
     persistClashDaily();
     recordClashDailyResult(clashScore);
   } else if(clashMode === 'archive'){
-    recordClashDailyResult(clashScore, clashArchiveDate);
+    recordClashDailyResult(clashScore, clashArchiveDate); recordArchivePlay('clash', clashArchiveDate);
   }
   const total = CLASH_STAGES.length * CLASH_ROUNDS_PER_STAGE;
   playSfx(clashScore === total ? 'win' : 'lose');
@@ -6481,7 +6563,7 @@ gridSubmitBtn.addEventListener('click', ()=>{
         gridGameOver = true;
         persistGridDaily();
         if(gridMode === 'daily') recordGridDailyResult(gridDailyDate, true);
-        else if(gridMode === 'archive') recordGridDailyResult(gridArchiveDate, true);
+        else if(gridMode === 'archive') { recordGridDailyResult(gridArchiveDate, true); recordArchivePlay('connect', gridArchiveDate); }
         playSfx('win');
         showGridResults(true);
         const unlocked = checkGridAchievements(true)
@@ -6521,7 +6603,7 @@ gridSubmitBtn.addEventListener('click', ()=>{
       gridGameOver = true;
       persistGridDaily();
       if(gridMode === 'daily') recordGridDailyResult(gridDailyDate, false);
-      else if(gridMode === 'archive') recordGridDailyResult(gridArchiveDate, false);
+      else if(gridMode === 'archive') { recordGridDailyResult(gridArchiveDate, false); recordArchivePlay('connect', gridArchiveDate); }
       playSfx('lose');
       showGridResults(false);
       const unlocked = checkGridAchievements(false)
@@ -6558,7 +6640,7 @@ function giveUpGrid(){
   gridGameOver = true;
   persistGridDaily();
   if(gridMode === 'daily') recordGridDailyResult(gridDailyDate, false);
-  else if(gridMode === 'archive') recordGridDailyResult(gridArchiveDate, false);
+  else if(gridMode === 'archive') { recordGridDailyResult(gridArchiveDate, false); recordArchivePlay('connect', gridArchiveDate); }
   playSfx('lose');
   showGridResults(false);
   const unlocked = checkGridAchievements(false)
@@ -7792,7 +7874,7 @@ function endCharadesRound(){
   persistCharadesDaily();
   const guessCount = charadesGuessedTitles.length + (charadesWon ? 1 : 0);
   if(charadesMode === 'daily') recordCharadesDailyResult(charadesDailyDate, charadesWon, guessCount);
-  else if(charadesMode === 'archive') recordCharadesDailyResult(charadesArchiveDate, charadesWon, guessCount);
+  else if(charadesMode === 'archive') { recordCharadesDailyResult(charadesArchiveDate, charadesWon, guessCount); recordArchivePlay('charades', charadesArchiveDate); }
   renderCharadesRound();
   showCharadesResults();
 
@@ -8307,7 +8389,7 @@ function endChronicleGame(){
   chronicleGameOver = true;
   persistChronicleDaily();
   if(chronicleMode === 'daily') recordChronicleDailyResult(chronicleDailyDate, chronicleScore);
-  else if(chronicleMode === 'archive') recordChronicleDailyResult(chronicleArchiveDate, chronicleScore);
+  else if(chronicleMode === 'archive') { recordChronicleDailyResult(chronicleArchiveDate, chronicleScore); recordArchivePlay('chronicle', chronicleArchiveDate); }
   showChronicleResults();
 
   const ids = [];
@@ -9303,14 +9385,14 @@ function endCrosswordRound(solved){
 
   if(solved){
     if(crosswordMode === 'daily') recordCrosswordDailyResult(crosswordDailyDate, true, elapsed);
-    else if(crosswordMode === 'archive') recordCrosswordDailyResult(crosswordArchiveDate, true, elapsed);
+    else if(crosswordMode === 'archive') { recordCrosswordDailyResult(crosswordArchiveDate, true, elapsed); recordArchivePlay('crossword', crosswordArchiveDate); }
     incrementCrosswordCompletions();
     crosswordWinTime.textContent = cwFormatTime(elapsed);
     crosswordWinSub.innerHTML = `Solved in <b>${cwFormatTime(elapsed)}</b> \u2014 ${crosswordGradeLabel(crosswordGrade(elapsed))}`;
     crosswordWinOverlay.classList.add('show');
   } else {
     if(crosswordMode === 'daily') recordCrosswordDailyResult(crosswordDailyDate, false, elapsed);
-    else if(crosswordMode === 'archive') recordCrosswordDailyResult(crosswordArchiveDate, false, elapsed);
+    else if(crosswordMode === 'archive') { recordCrosswordDailyResult(crosswordArchiveDate, false, elapsed); recordArchivePlay('crossword', crosswordArchiveDate); }
     showCrosswordResults(true);
   }
 
@@ -9865,7 +9947,7 @@ function endCountdownGame(){
   countdownGameOver = true;
   persistCountdownDaily();
   if(countdownMode === 'daily') recordCountdownDailyResult(countdownDailyDate, countdownScore);
-  else if(countdownMode === 'archive') recordCountdownDailyResult(countdownArchiveDate, countdownScore);
+  else if(countdownMode === 'archive') { recordCountdownDailyResult(countdownArchiveDate, countdownScore); recordArchivePlay('countdown', countdownArchiveDate); }
   incrementCountdownCompletions();
   showCountdownResults();
 
@@ -10872,7 +10954,7 @@ function endCassetteRound(){
   persistCassetteDaily();
   const attemptsUsed = cassetteAttempt + 1;
   if(cassetteMode === 'daily') recordCassetteDailyResult(cassetteDailyDate, cassetteWon, attemptsUsed);
-  else if(cassetteMode === 'archive') recordCassetteDailyResult(cassetteArchiveDate, cassetteWon, attemptsUsed);
+  else if(cassetteMode === 'archive') { recordCassetteDailyResult(cassetteArchiveDate, cassetteWon, attemptsUsed); recordArchivePlay('cassette', cassetteArchiveDate); }
   renderCassetteRound();
   showCassetteResults();
 
