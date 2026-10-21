@@ -127,6 +127,12 @@ input[type=checkbox] { accent-color: var(--leaf); width: 22px; height: 22px; fle
 .cook .ci span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cook .meta { color: var(--muted); font-size: 13px; }
 
+/* my recipes */
+ul.mine { list-style: none; margin: 8px 0 14px; padding: 0; }
+ul.mine li { border-top: 1px solid var(--line); padding: 8px 0; }
+ul.mine .head { display: flex; align-items: center; gap: 10px; }
+ul.mine .rname { flex: 1; min-width: 0; font-weight: 600; }
+
 /* usual shops */
 .us { border: 1px solid var(--line); border-radius: 10px; background: var(--card); padding: 10px 12px; margin: 10px 0 8px; }
 .us h2 { margin: 0 0 2px; font-size: 17px; }
@@ -282,6 +288,9 @@ const Diet = (() => {
   function tags(r) {
     let c = cache.get(r.ingredients);
     if (!c || c.mins !== r.mins) { c = { ...classify(r), mins: r.mins }; cache.set(r.ingredients, c); }
+    if (Array.isArray(r.tags) && r.tags.length) {            // tags ticked by hand on your own recipes add to the detected ones
+      const m = { ...c }; for (const k of r.tags) m[k] = true; if (m.vegan) m.vegetarian = true; return m;
+    }
     return c;
   }
 
@@ -326,9 +335,9 @@ function hydrate(o) {
   const d = Object.assign(blank(), o || {});
   selected.clear(); recipeSkip.clear(); swaps.clear(); skipped.clear(); ticked.clear(); favs.clear(); essSel.clear(); weekly.clear(); pantry.clear(); pantryBuy.clear(); filters.clear();
   usual = Array.isArray(d.usual) ? d.usual : [];
-  custom = (d.custom || []).map((r) => ({ ...r, meal: r.meal || "dinner" })); extra = d.extra || []; essCustom = d.essCustom || []; essNotes = d.essNotes || {};
+  custom = (d.custom || []).map((r) => ({ ...r, meal: r.meal || "dinner", own: true, tier: ["easy", "medium", "hard"].includes(r.tier) ? r.tier : "medium", tags: Array.isArray(r.tags) ? r.tags : [] })); extra = d.extra || []; essCustom = d.essCustom || []; essNotes = d.essNotes || {};
   plans = d.plans || {}; ui = Object.assign({ meal: "dinner", tier: "all", levels: [], sort: "az", tab: "meals" }, d.ui || {});
-  if (!["all", "custom", "favs", "picked"].includes(ui.tier)) ui.tier = "all"; if (!Array.isArray(ui.levels)) ui.levels = [];
+  if (!["all", "useup", "favs", "picked"].includes(ui.tier)) ui.tier = "all"; if (!Array.isArray(ui.levels)) ui.levels = [];
   d.selected.forEach(([id, n]) => byId(id) && selected.set(id, n));
   d.recipeSkip.forEach(([id, ks]) => byId(id) && recipeSkip.set(id, new Set(ks)));
   d.swaps.forEach(([id, es]) => byId(id) && swaps.set(id, new Map(es)));
@@ -396,7 +405,7 @@ function toast(t) { const e = $("toast"); e.textContent = t; e.hidden = false; c
 const weekStart = (ts) => { const d = new Date(ts); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); };
 const shiftWeek = (ws, n) => { const d = new Date(ws); d.setDate(d.getDate() + 7 * n); return weekStart(d.getTime()); };
 const fmtDay = (ts) => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-const passes = (r) => { if (ui.levels.length && r.tier !== "custom" && !ui.levels.includes(r.tier)) return false; if (!filters.size) return true; const t = Diet.tags(r); return [...filters].every((f) => t[f]); };
+const passes = (r) => { if (ui.levels.length && !ui.levels.includes(r.tier)) return false; if (!filters.size) return true; const t = Diet.tags(r); return [...filters].every((f) => t[f]); };
 
 // Everyday dried pasta shapes and everyday rices can stand in for each other.
 const FAMILIES = [
@@ -536,7 +545,7 @@ function recipeRows() {
   let rows;
   if (ui.tier === "favs") rows = all().filter((r) => favs.has(r.id));
   else if (ui.tier === "picked") rows = all().filter((r) => selected.has(r.id));
-  else rows = all().filter((r) => r.meal === ui.meal && (ui.tier === "custom" ? r.tier === "custom" : true));
+  else rows = all().filter((r) => r.meal === ui.meal);
   const q = query.trim().toLowerCase();
   const m = (r) => passes(r) && (!q || r.name.toLowerCase().includes(q) || r.ingredients.some((i) => i.name.toLowerCase().includes(q)));
   let out = rows.filter(m);
@@ -599,9 +608,10 @@ function usualBlock() {
 }
 function viewMeals(main) {
   const hx = main;   // controls scroll with the list so the phone screen isn't eaten by a tall sticky header
-  segButtons(hx, "meal", Object.entries(MEAL_LABEL), ui.meal, (v) => { ui.meal = v; if (["favs", "picked"].includes(ui.tier)) ui.tier = "all"; persist(); render(); });
-  segButtons(hx, "", [["all", "All"], ["custom", "Mine"], ["favs", "★"], ["picked", "Picked" + (selected.size ? " (" + selected.size + ")" : "")]],
+  if (ui.tier !== "useup") segButtons(hx, "meal", Object.entries(MEAL_LABEL), ui.meal, (v) => { ui.meal = v; if (["favs", "picked"].includes(ui.tier)) ui.tier = "all"; persist(); render(); });
+  segButtons(hx, "", [["all", "All"], ["useup", "Complete cart"], ["favs", "★"], ["picked", "Picked" + (selected.size ? " (" + selected.size + ")" : "")]],
     ui.tier, (v) => { ui.tier = v; persist(); render(); });
+  if (ui.tier === "useup") { useUpBlock(main); return; }
   const tools = el("div", "tools");
   const q = el("input"); q.type = "text"; q.id = "q"; q.placeholder = "Search meals or ingredients"; q.value = query; q.setAttribute("aria-label", "Search");
   q.addEventListener("input", () => { query = q.value; renderRecipes(); });
@@ -633,9 +643,6 @@ function viewMeals(main) {
     chips.append(c);
   }
   hx.append(chips);
-  const bar = el("div", "hrow"); bar.style.marginTop = "6px";
-  const nw = el("button", "link", "+ New recipe"); nw.type = "button"; nw.addEventListener("click", () => openEditor(null));
-  bar.append(nw); hx.append(bar);
   if (ui.tier === "favs") { main.append(usualBlock()); main.append(el("h3", null, "Favourite meals")); }
   const ul = el("ul", "recipes"); ul.id = "recipes"; main.append(ul);
   renderRecipes();
@@ -645,7 +652,7 @@ function renderRecipes() {
   const rows = recipeRows();
   if (!rows.length) {
     const e = el("p", "empty", ui.tier === "favs" ? "No favourites yet. Tap the star on any meal." : ui.tier === "picked" ? "Nothing picked yet. Tick meals on the other tabs."
-      : ui.tier === "custom" && !query ? "No recipes of your own yet. Use “+ New recipe”." : filters.size || ui.levels.length ? "No meals match your filters. Try turning one off." : "No meals match.");
+      : filters.size || ui.levels.length ? "No meals match your filters. Try turning one off." : "No meals match.");
     ul.append(e); return;
   }
   rows.forEach((r) => ul.append(recipeLi(r)));
@@ -718,7 +725,7 @@ function ingList(r, li) {
     if (pItem) nm.append(el("span", "tag", "pantry"));
     row.append(cb, nm, el("span", "iqty", fmtQty(ing, scale))); ul.append(row);
   });
-  if (r.tier === "custom") {
+  if (r.own) {
     const li2 = el("li"); const ed = el("button", "link", "Edit recipe"), de = el("button", "link danger", "Delete recipe"); ed.type = de.type = "button";
     ed.addEventListener("click", () => openEditor(r.id));
     de.addEventListener("click", () => { if (de.dataset.sure) { custom = custom.filter((x) => x.id !== r.id); selected.delete(r.id); recipeSkip.delete(r.id); favs.delete(r.id); persist(); render(); } else { de.dataset.sure = 1; de.textContent = "Tap again to delete"; } });
@@ -820,10 +827,17 @@ function openEditor(id) {
     const f = (label, node) => { const l = el("label"); l.style.display = "block"; l.style.margin = "0 0 10px"; l.append(el("div", "hint", label), node); sb.append(l); return node; };
     const name = f("Name", Object.assign(el("input"), { type: "text", id: "ed-name", value: r ? r.name : "" }));
     const meal = f("Meal", el("select")); meal.id = "ed-meal"; Object.entries(MEAL_LABEL).forEach(([v, l]) => { const o = new Option(l, v); o.selected = (r ? r.meal : ui.meal) === v; meal.append(o); });
+    const lvl = f("Difficulty", el("select")); lvl.id = "ed-level"; [["easy", "Easy"], ["medium", "Medium"], ["hard", "Hard"]].forEach(([v, l]) => { const o = new Option(l, v); o.selected = (r ? r.tier : "medium") === v; lvl.append(o); });
     const sv = f("Serves", Object.assign(el("input"), { type: "number", id: "ed-serves", min: 1, max: 24, value: r ? r.servings : 4 }));
     const mins = f("Minutes (optional)", Object.assign(el("input"), { type: "number", id: "ed-mins", min: 0, max: 600, value: r ? r.mins || "" : "" }));
     const ta = f("Ingredients, one per line, e.g. “300 g penne”, “2 tins chopped tomatoes”, “garlic”", el("textarea")); ta.id = "ed-ings"; ta.rows = 7;
     ta.value = r ? r.ingredients.map((i) => (i.unit === "each" || i.unit === "pack" ? (i.qty === 1 ? "" : i.qty + " ") : i.qty + " " + i.unit + " ") + i.name).join("\n") : "";
+    const tagSet = new Set(r && r.tags ? r.tags : []);
+    const tg = el("div", "chips"); tg.id = "ed-tags";
+    const TAGS = FILTERS.concat(FILTERS_MORE).filter(([k]) => !["quick", "veryQuick"].includes(k));
+    TAGS.forEach(([k, l]) => { const c = el("button", "chip", l); c.type = "button"; c.dataset.tag = k; c.setAttribute("aria-pressed", String(tagSet.has(k)));
+      c.addEventListener("click", () => { tagSet.has(k) ? tagSet.delete(k) : tagSet.add(k); c.setAttribute("aria-pressed", String(tagSet.has(k))); }); tg.append(c); });
+    const tgl = el("div"); tgl.style.margin = "0 0 10px"; tgl.append(el("div", "hint", "Tags (optional). Meat, pasta and rice are spotted from the ingredients; tick any it misses."), tg); sb.append(tgl);
     const mt = f("Method (optional, one step per line)", el("textarea")); mt.id = "ed-method"; mt.rows = 5; mt.value = r && r.method ? r.method.join("\n") : "";
     const msg = el("p", "hint"); msg.setAttribute("role", "alert");
     const save = el("button", "btn primary", "Save recipe"); save.type = "button"; save.id = "ed-save"; save.style.width = "100%";
@@ -831,10 +845,10 @@ function openEditor(id) {
       const ings = parseIngredients(ta.value);
       if (!name.value.trim()) { msg.textContent = "Give the recipe a name."; return; }
       if (!ings.length) { msg.textContent = "Add at least one ingredient."; return; }
-      const data = { name: name.value.trim(), meal: meal.value, servings: Math.max(1, Number(sv.value) || 4), mins: Number(mins.value) || 0, ingredients: ings, method: mt.value.split("\n").map((s) => s.trim()).filter(Boolean) };
+      const data = { name: name.value.trim(), meal: meal.value, servings: Math.max(1, Number(sv.value) || 4), mins: Number(mins.value) || 0, tier: lvl.value, own: true, tags: [...tagSet], ingredients: ings, method: mt.value.split("\n").map((s) => s.trim()).filter(Boolean) };
       if (r) { Object.assign(r, data); recipeSkip.delete(r.id); if (selected.has(r.id)) selected.set(r.id, data.servings); }
-      else { const nr = { id: "c" + Date.now().toString(36), tier: "custom", ...data }; custom.push(nr); ui.meal = nr.meal; ui.tier = "custom"; }
-      persist(); closeSheet(); render(); toast("Recipe saved");
+      else { const nr = { id: "c" + Date.now().toString(36), ...data }; custom.push(nr); ui.meal = nr.meal; ui.tier = "all"; }
+      persist(); closeSheet(); render(); toast("Recipe saved. It is now in your All list.");
     });
     sb.append(msg, save);
   });
@@ -1010,8 +1024,26 @@ function viewEss(main) {
 }
 
 // ---------- More: use up leftovers, pantry, backup ----------
-function viewMore(main) {
-  main.append(el("h2", null, "Use up what’s left"));
+// ---------- My recipes (in More): recipes you wrote, which also appear in the main All list ----------
+function myRecipesBlock(main) {
+  main.append(el("h2", null, "My recipes"));
+  main.append(el("p", "hint", "Add your own meals. They show up in the main meal list alongside the rest, with the same filters."));
+  const nw = el("button", "btn primary", "+ New recipe"); nw.type = "button"; nw.id = "new-recipe"; nw.addEventListener("click", () => openEditor(null)); main.append(nw);
+  const ul = el("ul", "mine"); ul.id = "mine-list";
+  custom.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach((r) => {
+    const li = el("li"); const h = el("div", "head"); const nm = el("div", "rname", r.name); nm.append(el("span", "tag", MEAL_LABEL[r.meal] + " · " + TIER_LABEL[r.tier]));
+    const ed = el("button", "link", "Edit"); ed.type = "button"; ed.addEventListener("click", () => openEditor(r.id));
+    const de = el("button", "link danger", "Delete"); de.type = "button";
+    de.addEventListener("click", () => { if (!de.dataset.sure) { de.dataset.sure = 1; de.textContent = "Tap again"; return; }
+      custom = custom.filter((x) => x.id !== r.id); selected.delete(r.id); recipeSkip.delete(r.id); favs.delete(r.id); persist(); rr(); });
+    h.append(nm, ed, de); li.append(h); ul.append(li);
+  });
+  if (!custom.length) ul.append(el("li", "hint", "No recipes of your own yet."));
+  main.append(ul);
+}
+function useUpBlock(main) {
+  main.append(el("h2", null, "Complete your cart"));
+  main.append(el("p", "hint", "Meals that use up what’s left in the packs you’re buying."));
   const { lo, list } = suggestions();
   const seg = el("div", "chips");
   [["all", "Any meal"], ...Object.entries(MEAL_LABEL)].forEach(([v, l]) => { const c = el("button", "chip", l); c.type = "button"; c.setAttribute("aria-pressed", String(ccMeal === v)); c.addEventListener("click", () => { ccMeal = v; rr(); }); seg.append(c); });
@@ -1036,6 +1068,9 @@ function viewMore(main) {
   main.append(ul);
   if (lo.size && !list.length) main.append(el("p", "hint", "No other meals fit right now. Try “Any meal”."));
 
+}
+function viewMore(main) {
+  myRecipesBlock(main);
   main.append(el("h2", null, "Pantry"));
   main.append(el("p", "hint", "Things you always have. They stay off your list (you can still tick them in a recipe to buy anyway)."));
   const pw = el("div", "pantry");
