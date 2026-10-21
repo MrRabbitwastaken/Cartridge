@@ -1,0 +1,885 @@
+<title>Meal Cart Planner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one column, phone first. Sticky header, content, bottom tab bar. Same green-on-paper look as the Chrome extension. */
+:root {
+  --paper: #f6f8f5; --card: #ffffff; --ink: #17261c; --muted: #5d6b61; --line: #d5ddd6;
+  --leaf: #1f5c3a; --leaf-ink: #ffffff; --leaf-soft: #e3efe7; --tomato: #c8321f; --star: #d99a12;
+  --font: "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #121a15; --card: #1a251e; --ink: #e8f0ea; --muted: #9bab9f; --line: #2c3a31;
+  --leaf: #4fae78; --leaf-ink: #0c1a11; --leaf-soft: #1f3327; --tomato: #ee7a68; --star: #e8b43c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #121a15; --card: #1a251e; --ink: #e8f0ea; --muted: #9bab9f; --line: #2c3a31;
+  --leaf: #4fae78; --leaf-ink: #0c1a11; --leaf-soft: #1f3327; --tomato: #ee7a68; --star: #e8b43c; color-scheme: dark; }
+[hidden] { display: none !important; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.4 var(--font);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+#app { max-width: 640px; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--paper); }
+header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--paper); padding: 12px 0 8px; border-bottom: 1px solid var(--line); }
+.hrow { display: flex; align-items: center; gap: 10px; }
+h1 { margin: 0; font-size: 19px; letter-spacing: -0.01em; flex: 1; }
+h2 { margin: 18px 0 6px; font-size: 14px; letter-spacing: .02em; }
+h3 { margin: 14px 0 4px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+main { flex: 1; padding: 8px 0 96px; }
+ul { list-style: none; margin: 0; padding: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.btn { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 9px 14px; min-height: 40px; }
+.btn.primary { background: var(--leaf); color: var(--leaf-ink); border-color: var(--leaf); font-weight: 600; }
+.btn.small { min-height: 32px; padding: 4px 10px; font-size: 13px; }
+.link { background: none; border: 0; color: var(--leaf); padding: 6px 4px; font-weight: 600; }
+.link.muted { color: var(--muted); font-weight: 400; }
+.link.danger { color: var(--tomato); }
+.hint { color: var(--muted); font-size: 13px; margin: 4px 0 8px; }
+input[type=text], input[type=number], select, textarea { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); min-height: 40px; }
+input[type=checkbox] { accent-color: var(--leaf); width: 22px; height: 22px; flex: none; }
+:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+
+.seg { display: flex; gap: 4px; margin: 8px 0 0; }
+.seg button { flex: 1; padding: 8px 0; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 8px; min-height: 38px; }
+.seg button[aria-selected="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.seg.meal button[aria-selected="true"] { background: var(--leaf); color: var(--leaf-ink); border-color: var(--leaf); }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 0; }
+.chip { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 4px 11px; font-size: 13px; min-height: 30px; }
+.chip[aria-pressed="true"] { background: var(--leaf-soft); color: var(--leaf); border-color: var(--leaf); font-weight: 600; }
+.tools { display: flex; gap: 8px; margin: 8px 0 0; }
+.tools select { width: auto; flex: none; }
+
+.recipes > li { border-bottom: 1px solid var(--line); padding: 6px 0; }
+.rrow { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.rrow .grow { flex: 1; min-width: 0; }
+.rname { font-weight: 600; overflow-wrap: anywhere; }
+.rmeta { color: var(--muted); font-size: 12.5px; display: flex; flex-wrap: wrap; gap: 2px 8px; }
+.dt { color: var(--leaf); }
+.star { border: 0; background: none; padding: 6px; color: var(--muted); line-height: 0; }
+.star svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+.star[aria-pressed="true"] { color: var(--star); }
+.star[aria-pressed="true"] svg { fill: currentColor; }
+.stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
+.stepper button { border: 0; background: none; width: 34px; height: 34px; font-size: 18px; }
+.stepper span { min-width: 22px; text-align: center; font-variant-numeric: tabular-nums; }
+.on > .rrow .rname { color: var(--leaf); }
+.rextra { padding: 0 0 8px 32px; }
+.rextra .row2 { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 2px 0 6px; }
+.rextra select { width: auto; min-height: 34px; padding: 4px 8px; }
+.ings li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.ings li.off .iname { text-decoration: line-through; color: var(--muted); }
+.ings .iname { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.ings .iqty { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tag { font-size: 11.5px; border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; color: var(--muted); margin-left: 6px; }
+.empty { color: var(--muted); padding: 24px 0; text-align: center; }
+
+/* shop */
+.prog { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 8px 0 4px; }
+.prog i { display: block; height: 100%; background: var(--leaf); width: 0; transition: width .2s; }
+.shop-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.aisle { margin-top: 14px; }
+.aisle h3 { margin: 0 0 2px; display: flex; justify-content: space-between; }
+.item { display: flex; align-items: center; gap: 12px; padding: 4px 0; border-bottom: 1px solid var(--line); min-height: 54px; }
+.item label { flex: 1; display: flex; align-items: center; gap: 12px; min-height: 54px; cursor: pointer; min-width: 0; }
+.item .nm { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.item .nm small { display: block; color: var(--muted); font-size: 12.5px; }
+.item .ct { font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+.item.done .nm { text-decoration: line-through; color: var(--muted); }
+.item.done .nm small { text-decoration: none; }
+.item .x { border: 0; background: none; color: var(--muted); padding: 10px; font-size: 13px; }
+.addrow { display: flex; gap: 8px; margin: 10px 0 0; }
+.addrow button { flex: none; }
+
+/* planner */
+.pl-head { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 8px; }
+.pl-head h2 { margin: 0; }
+.pl-head button { border: 1px solid var(--line); background: var(--card); border-radius: 8px; width: 40px; height: 40px; font-size: 20px; }
+.day { border: 1px solid var(--line); border-radius: 10px; background: var(--card); padding: 8px 12px; margin: 0 0 8px; }
+.day.today { border-color: var(--leaf); box-shadow: inset 3px 0 0 var(--leaf); }
+.day h4 { margin: 0 0 2px; display: flex; justify-content: space-between; font-size: 14px; }
+.day h4 small { font-weight: 400; color: var(--muted); }
+.day li { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.day li .nm { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.day .add { width: 100%; text-align: left; border: 1px dashed var(--line); background: none; border-radius: 8px; padding: 8px 10px; color: var(--muted); min-height: 38px; margin-top: 4px; }
+
+/* essentials / lists */
+.crow { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.crow .grow { flex: 1; min-width: 0; }
+.crow input[type=text] { margin-top: 4px; min-height: 34px; padding: 5px 8px; font-size: 14px; }
+.weeklybox { border: 1px solid var(--line); border-radius: 10px; background: var(--card); padding: 8px 12px; }
+
+/* more */
+.card { border: 1px solid var(--line); border-radius: 10px; background: var(--card); padding: 10px 12px; margin: 0 0 10px; }
+.cc li { border-bottom: 1px solid var(--line); padding: 10px 0; }
+.cc .head { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.cc p { margin: 3px 0 0; font-size: 13px; color: var(--muted); }
+.cc p.free { color: var(--leaf); font-weight: 600; }
+.pantry { display: flex; flex-wrap: wrap; gap: 6px; }
+.pantry .chip { display: inline-flex; gap: 6px; align-items: center; }
+
+/* bottom nav */
+nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; background: var(--paper); border-top: 1px solid var(--line);
+  padding: 4px max(8px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(8px, env(safe-area-inset-left, 0px)); }
+nav .in { max-width: 640px; margin: 0 auto; display: flex; }
+nav button { flex: 1; border: 0; background: none; color: var(--muted); padding: 6px 0 4px; font-size: 11.5px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 54px; position: relative; }
+nav button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+nav button[aria-selected="true"] { color: var(--leaf); font-weight: 700; }
+.badge { position: absolute; top: 2px; left: calc(50% + 6px); background: var(--leaf); color: var(--leaf-ink); border-radius: 99px; font-size: 10.5px; min-width: 17px; padding: 0 4px; line-height: 17px; text-align: center; }
+.badge:empty { display: none; }
+
+/* sheet */
+#sheet { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; justify-content: center; }
+#sheet .box { background: var(--paper); width: 100%; max-width: 640px; max-height: 88%; display: flex; flex-direction: column; border-radius: 14px 14px 0 0;
+  padding: 14px max(16px, env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+#sheet .sb { overflow-y: auto; flex: 1; min-height: 0; margin: 10px 0; }
+#sheet .pick { display: flex; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 10px 0; gap: 8px; justify-content: space-between; align-items: center; }
+#toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(72px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--paper); border-radius: 999px; padding: 8px 16px; font-size: 13.5px; z-index: 50; max-width: 90%; }
+.sync { font-size: 12px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .prog i { transition: none; } }
+</style>
+
+<div id="app">
+  <header>
+    <div class="hrow"><h1>Meal Cart</h1><span class="sync" id="sync" role="status"></span></div>
+    <div id="hextra"></div>
+  </header>
+  <main id="main"></main>
+</div>
+<nav aria-label="Sections"><div class="in" id="nav"></div></nav>
+<div id="sheet" hidden></div>
+<div id="toast" role="status" hidden></div>
+
+<script>
+const RECIPES = [{"id":"cheesy-tomato-pasta","name":"Cheesy tomato pasta","tier":"easy","mins":20,"servings":2,"ingredients":[{"name":"penne pasta","query":"penne pasta 500g","qty":150,"unit":"g","pack":500},{"name":"passata","query":"passata 500g","qty":250,"unit":"g","pack":500},{"name":"mozzarella","query":"mozzarella ball","qty":1,"unit":"pack","pack":1},{"name":"garlic","query":"garlic bulb","qty":1,"unit":"bulb","pack":1}],"meal":"dinner"},{"id":"chicken-fajitas","name":"Chicken fajita wraps","tier":"easy","mins":25,"servings":4,"ingredients":[{"name":"chicken breast","query":"chicken breast fillets","qty":500,"unit":"g","pack":650},{"name":"fajita seasoning","query":"fajita seasoning mix","qty":1,"unit":"sachet","pack":1},{"name":"peppers","query":"mixed peppers 3 pack","qty":1,"unit":"pack","pack":1},{"name":"tortilla wraps","query":"tortilla wraps 8 pack","qty":8,"unit":"wraps","pack":8},{"name":"soured cream","query":"soured cream","qty":1,"unit":"pot","pack":1}],"meal":"dinner"},{"id":"chilli-con-carne","name":"Chilli con carne","tier":"medium","mins":60,"servings":4,"ingredients":[{"name":"beef mince","query":"beef mince 500g","qty":500,"unit":"g","pack":500},{"name":"onions","query":"brown onions","qty":2,"unit":"onions","pack":3},{"name":"chopped tomatoes","query":"chopped tomatoes 400g","qty":2,"unit":"tins","pack":1},{"name":"kidney beans","query":"red kidney beans tin","qty":1,"unit":"tin","pack":1},{"name":"chilli seasoning","query":"chilli con carne seasoning","qty":1,"unit":"sachet","pack":1},{"name":"long grain rice","query":"long grain rice 1kg","qty":300,"unit":"g","pack":1000}],"meal":"dinner"},{"id":"chicken-tikka-masala","name":"Chicken tikka masala","tier":"medium","mins":55,"servings":4,"ingredients":[{"name":"chicken thighs","query":"chicken thigh fillets","qty":600,"unit":"g","pack":600},{"name":"tikka paste","query":"tikka masala curry paste","qty":1,"unit":"jar","pack":1},{"name":"natural yoghurt","query":"natural yoghurt 500g","qty":150,"unit":"g","pack":500},{"name":"coconut milk","query":"coconut milk tin","qty":1,"unit":"tin","pack":1},{"name":"basmati rice","query":"basmati rice 1kg","qty":300,"unit":"g","pack":1000},{"name":"naan bread","query":"naan bread 4 pack","qty":4,"unit":"naan","pack":4}],"meal":"dinner"},{"id":"mushroom-risotto","name":"Wild mushroom risotto","tier":"hard","mins":50,"servings":2,"ingredients":[{"name":"arborio rice","query":"arborio risotto rice","qty":200,"unit":"g","pack":500},{"name":"mixed mushrooms","query":"mixed wild mushrooms","qty":250,"unit":"g","pack":250},{"name":"white wine","query":"dry white wine 75cl","qty":1,"unit":"bottle","pack":1},{"name":"parmesan","query":"parmesan block","qty":1,"unit":"pack","pack":1},{"name":"vegetable stock","query":"vegetable stock cubes","qty":1,"unit":"pack","pack":1},{"name":"shallots","query":"shallots","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"beef-wellington","name":"Classic Beef Wellington","tier":"hard","mins":150,"servings":4,"ingredients":[{"name":"beef fillet","query":"beef fillet joint","qty":1,"unit":"joint","pack":1},{"name":"puff pastry","query":"ready rolled puff pastry","qty":1,"unit":"sheet","pack":1},{"name":"chestnut mushrooms","query":"chestnut mushrooms 400g","qty":400,"unit":"g","pack":400},{"name":"parma ham","query":"parma ham","qty":1,"unit":"pack","pack":1},{"name":"english mustard","query":"english mustard","qty":1,"unit":"jar","pack":1},{"name":"eggs","query":"free range eggs 6 pack","qty":1,"unit":"egg","pack":6}],"meal":"dinner"},{"id":"easy-teriyaki-chicken","name":"Easy Teriyaki Chicken","tier":"easy","mins":25,"servings":4,"ingredients":[{"name":"chicken thigh fillets","query":"boneless chicken thigh fillets","qty":600,"unit":"g","pack":650},{"name":"teriyaki sauce","query":"teriyaki sauce","qty":1,"unit":"pack","pack":1},{"name":"jasmine rice","query":"jasmine rice 1kg","qty":300,"unit":"g","pack":1000},{"name":"tenderstem broccoli","query":"tenderstem broccoli 200g","qty":200,"unit":"g","pack":200},{"name":"spring onions","query":"spring onions","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"sheet-pan-gnocchi","name":"Sheet Pan Gnocchi","tier":"easy","mins":30,"servings":4,"ingredients":[{"name":"gnocchi","query":"potato gnocchi 500g","qty":500,"unit":"g","pack":500},{"name":"cherry tomatoes","query":"cherry tomatoes 250g","qty":250,"unit":"g","pack":250},{"name":"courgettes","query":"courgettes","qty":2,"unit":"each","pack":2},{"name":"red onion","query":"red onions","qty":1,"unit":"each","pack":3},{"name":"mozzarella","query":"mozzarella ball","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"chicken-fried-rice","name":"Chicken Fried Rice","tier":"easy","mins":25,"servings":4,"ingredients":[{"name":"jasmine rice","query":"jasmine rice 1kg","qty":300,"unit":"g","pack":1000},{"name":"chicken breast","query":"chicken breast fillets","qty":400,"unit":"g","pack":650},{"name":"frozen peas","query":"frozen garden peas 900g","qty":100,"unit":"g","pack":900},{"name":"eggs","query":"free range eggs 6 pack","qty":2,"unit":"each","pack":6},{"name":"soy sauce","query":"soy sauce","qty":1,"unit":"pack","pack":1},{"name":"spring onions","query":"spring onions","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"chicken-pesto-pasta-quesadillas","name":"Chicken Pesto Pasta Quesadillas","tier":"easy","mins":25,"servings":4,"ingredients":[{"name":"tortilla wraps","query":"tortilla wraps 8 pack","qty":8,"unit":"each","pack":8},{"name":"cooked chicken","query":"cooked chicken breast slices","qty":200,"unit":"g","pack":240},{"name":"green pesto","query":"green pesto jar","qty":1,"unit":"pack","pack":1},{"name":"fusilli","query":"fusilli pasta 500g","qty":150,"unit":"g","pack":500},{"name":"grated mozzarella","query":"grated mozzarella","qty":200,"unit":"g","pack":200}],"meal":"dinner"},{"id":"sausage-and-mash-with-onion-gravy","name":"Sausage and Mash with Onion Gravy","tier":"easy","mins":40,"servings":4,"ingredients":[{"name":"pork sausages","query":"pork sausages 8 pack","qty":8,"unit":"each","pack":8},{"name":"potatoes","query":"maris piper potatoes 2kg","qty":800,"unit":"g","pack":2000},{"name":"onions","query":"brown onions 1kg bag","qty":2,"unit":"each","pack":6},{"name":"onion gravy granules","query":"onion gravy granules","qty":1,"unit":"pack","pack":1},{"name":"frozen peas","query":"frozen garden peas 900g","qty":150,"unit":"g","pack":900}],"meal":"dinner"},{"id":"spaghetti-bolognese","name":"Spaghetti Bolognese","tier":"easy","mins":40,"servings":4,"ingredients":[{"name":"beef mince","query":"beef mince 500g 5% fat","qty":500,"unit":"g","pack":500},{"name":"spaghetti","query":"spaghetti 500g","qty":300,"unit":"g","pack":500},{"name":"passata","query":"passata 500g","qty":500,"unit":"g","pack":500},{"name":"onions","query":"brown onions 1kg bag","qty":1,"unit":"each","pack":6},{"name":"garlic","query":"garlic bulb","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"tuna-pasta-bake","name":"Tuna Pasta Bake","tier":"easy","mins":35,"servings":4,"ingredients":[{"name":"tuna tins","query":"tuna chunks in brine 4 pack","qty":2,"unit":"each","pack":4},{"name":"penne","query":"penne pasta 500g","qty":300,"unit":"g","pack":500},{"name":"chopped tomatoes","query":"chopped tomatoes 400g tin","qty":2,"unit":"each","pack":1},{"name":"sweetcorn","query":"sweetcorn tin","qty":1,"unit":"pack","pack":1},{"name":"mature cheddar","query":"mature cheddar 350g","qty":150,"unit":"g","pack":350}],"meal":"dinner"},{"id":"honey-soy-salmon-traybake","name":"Honey Soy Salmon Traybake","tier":"easy","mins":25,"servings":2,"ingredients":[{"name":"salmon fillets","query":"salmon fillets 2 pack","qty":2,"unit":"each","pack":2},{"name":"runny honey","query":"runny honey","qty":1,"unit":"pack","pack":1},{"name":"soy sauce","query":"soy sauce","qty":1,"unit":"pack","pack":1},{"name":"tenderstem broccoli","query":"tenderstem broccoli 200g","qty":200,"unit":"g","pack":200},{"name":"new potatoes","query":"new potatoes 750g","qty":400,"unit":"g","pack":750}],"meal":"dinner"},{"id":"chicken-caesar-wraps","name":"Chicken Caesar Wraps","tier":"easy","mins":20,"servings":4,"ingredients":[{"name":"tortilla wraps","query":"tortilla wraps 8 pack","qty":4,"unit":"each","pack":8},{"name":"chicken breast","query":"chicken breast fillets","qty":400,"unit":"g","pack":650},{"name":"baby gem lettuce","query":"baby gem lettuce 2 pack","qty":2,"unit":"each","pack":2},{"name":"caesar dressing","query":"caesar dressing","qty":1,"unit":"pack","pack":1},{"name":"parmesan shavings","query":"parmesan shavings","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"beef-burgers","name":"Beef Burgers","tier":"easy","mins":25,"servings":4,"ingredients":[{"name":"beef burgers","query":"beef burgers 4 pack","qty":4,"unit":"each","pack":4},{"name":"brioche buns","query":"brioche burger buns 4 pack","qty":4,"unit":"each","pack":4},{"name":"cheese slices","query":"burger cheese slices","qty":4,"unit":"each","pack":8},{"name":"tomatoes","query":"salad tomatoes","qty":2,"unit":"each","pack":6},{"name":"baby gem lettuce","query":"baby gem lettuce 2 pack","qty":1,"unit":"each","pack":2}],"meal":"dinner"},{"id":"veggie-noodle-stir-fry","name":"Veggie Noodle Stir Fry","tier":"easy","mins":15,"servings":2,"ingredients":[{"name":"wok noodles","query":"straight to wok noodles 3 pack","qty":2,"unit":"each","pack":3},{"name":"stir fry vegetables","query":"stir fry vegetables","qty":400,"unit":"g","pack":400},{"name":"soy sauce","query":"soy sauce","qty":1,"unit":"pack","pack":1},{"name":"sweet chilli sauce","query":"sweet chilli sauce","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"shakshuka","name":"Shakshuka","tier":"easy","mins":30,"servings":2,"ingredients":[{"name":"eggs","query":"free range eggs 6 pack","qty":4,"unit":"each","pack":6},{"name":"chopped tomatoes","query":"chopped tomatoes 400g tin","qty":2,"unit":"each","pack":1},{"name":"peppers","query":"mixed peppers 3 pack","qty":1,"unit":"each","pack":1},{"name":"onions","query":"brown onions 1kg bag","qty":1,"unit":"each","pack":6},{"name":"ground cumin","query":"ground cumin","qty":1,"unit":"pack","pack":1},{"name":"feta","query":"feta cheese 200g","qty":100,"unit":"g","pack":200},{"name":"crusty bread","query":"crusty bread loaf","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"loaded-jacket-potatoes","name":"Loaded Jacket Potatoes","tier":"easy","mins":60,"servings":2,"ingredients":[{"name":"baking potatoes","query":"baking potatoes 4 pack","qty":2,"unit":"each","pack":4},{"name":"baked beans","query":"baked beans tin","qty":1,"unit":"pack","pack":1},{"name":"mature cheddar","query":"mature cheddar 350g","qty":100,"unit":"g","pack":350}],"meal":"dinner"},{"id":"creamy-mushroom-tagliatelle","name":"Creamy Mushroom Tagliatelle","tier":"easy","mins":25,"servings":2,"ingredients":[{"name":"tagliatelle","query":"tagliatelle 500g","qty":150,"unit":"g","pack":500},{"name":"chestnut mushrooms","query":"chestnut mushrooms 250g","qty":250,"unit":"g","pack":250},{"name":"single cream","query":"single cream 300ml","qty":150,"unit":"ml","pack":300},{"name":"garlic","query":"garlic bulb","qty":1,"unit":"pack","pack":1},{"name":"parmesan","query":"parmesan block","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"sweet-potato-and-black-bean-tacos","name":"Sweet Potato and Black Bean Tacos","tier":"easy","mins":30,"servings":4,"ingredients":[{"name":"taco shells","query":"taco shells 12 pack","qty":8,"unit":"each","pack":12},{"name":"sweet potatoes","query":"sweet potatoes","qty":600,"unit":"g","pack":1000},{"name":"black beans","query":"black beans tin","qty":2,"unit":"each","pack":1},{"name":"avocados","query":"ripe avocados 2 pack","qty":2,"unit":"each","pack":2},{"name":"soured cream","query":"soured cream","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"sausage-rigatoni","name":"Sausage Rigatoni","tier":"easy","mins":30,"servings":4,"ingredients":[{"name":"pork sausages","query":"pork sausages 8 pack","qty":6,"unit":"each","pack":8},{"name":"rigatoni","query":"rigatoni 500g","qty":300,"unit":"g","pack":500},{"name":"passata","query":"passata 500g","qty":500,"unit":"g","pack":500},{"name":"onions","query":"brown onions 1kg bag","qty":1,"unit":"each","pack":6},{"name":"parmesan","query":"parmesan block","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"naan-pizzas","name":"Naan Pizzas","tier":"easy","mins":20,"servings":4,"ingredients":[{"name":"plain naan","query":"plain naan bread 4 pack","qty":4,"unit":"each","pack":4},{"name":"passata","query":"passata 500g","qty":150,"unit":"g","pack":500},{"name":"mozzarella","query":"mozzarella ball","qty":2,"unit":"each","pack":1},{"name":"pepperoni","query":"pepperoni slices","qty":1,"unit":"pack","pack":1},{"name":"basil","query":"fresh basil","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"thai-green-chicken-curry","name":"Thai Green Chicken Curry","tier":"easy","mins":30,"servings":4,"ingredients":[{"name":"green curry paste","query":"thai green curry paste","qty":1,"unit":"pack","pack":1},{"name":"coconut milk","query":"coconut milk 400ml tin","qty":400,"unit":"ml","pack":400},{"name":"chicken breast","query":"chicken breast fillets","qty":500,"unit":"g","pack":650},{"name":"green beans","query":"fine green beans","qty":150,"unit":"g","pack":220},{"name":"jasmine rice","query":"jasmine rice 1kg","qty":300,"unit":"g","pack":1000}],"meal":"dinner"},{"id":"mac-and-cheese","name":"Mac and Cheese","tier":"easy","mins":35,"servings":4,"ingredients":[{"name":"macaroni","query":"macaroni 500g","qty":320,"unit":"g","pack":500},{"name":"mature cheddar","query":"mature cheddar 350g","qty":250,"unit":"g","pack":350},{"name":"milk","query":"semi skimmed milk 2 pint","qty":600,"unit":"ml","pack":1136},{"name":"butter","query":"butter 250g","qty":50,"unit":"g","pack":250},{"name":"plain flour","query":"plain flour 1.5kg","qty":50,"unit":"g","pack":1500}],"meal":"dinner"},{"id":"lemon-garlic-prawn-linguine","name":"Lemon Garlic Prawn Linguine","tier":"easy","mins":20,"servings":2,"ingredients":[{"name":"linguine","query":"linguine 500g","qty":200,"unit":"g","pack":500},{"name":"king prawns","query":"raw king prawns 250g","qty":250,"unit":"g","pack":250},{"name":"garlic","query":"garlic bulb","qty":1,"unit":"pack","pack":1},{"name":"lemons","query":"unwaxed lemons 4 pack","qty":1,"unit":"each","pack":4},{"name":"flat leaf parsley","query":"flat leaf parsley","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"pan-seared-rump-steak-with-roasted-tomato-umami-dressing","name":"Pan-Seared Rump Steak with Roasted Tomato Umami Dressing","tier":"medium","mins":40,"servings":2,"ingredients":[{"name":"rump steaks","query":"rump steak 2 pack","qty":2,"unit":"each","pack":2},{"name":"vine tomatoes","query":"cherry vine tomatoes 250g","qty":250,"unit":"g","pack":250},{"name":"worcestershire sauce","query":"worcestershire sauce","qty":1,"unit":"pack","pack":1},{"name":"soy sauce","query":"soy sauce","qty":1,"unit":"pack","pack":1},{"name":"balsamic vinegar","query":"balsamic vinegar","qty":1,"unit":"pack","pack":1},{"name":"tomato puree","query":"tomato puree","qty":1,"unit":"pack","pack":1},{"name":"garlic","query":"garlic bulb","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"traditional-fish-tagine","name":"Traditional Fish Tagine","tier":"medium","mins":55,"servings":4,"ingredients":[{"name":"white fish fillets","query":"cod or haddock fillets","qty":600,"unit":"g","pack":600},{"name":"chopped tomatoes","query":"chopped tomatoes 400g tin","qty":2,"unit":"each","pack":1},{"name":"chickpeas","query":"chickpeas tin","qty":1,"unit":"each","pack":1},{"name":"ras el hanout","query":"ras el hanout","qty":1,"unit":"pack","pack":1},{"name":"onions","query":"brown onions 1kg bag","qty":2,"unit":"each","pack":6},{"name":"green olives","query":"pitted green olives","qty":1,"unit":"pack","pack":1},{"name":"couscous","query":"couscous 500g","qty":200,"unit":"g","pack":500},{"name":"lemons","query":"unwaxed lemons 4 pack","qty":1,"unit":"each","pack":4},{"name":"coriander","query":"fresh coriander","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"smoked-haddock-fish-cakes","name":"Smoked Haddock Fish Cakes","tier":"medium","mins":50,"servings":4,"ingredients":[{"name":"smoked haddock","query":"smoked haddock fillets","qty":400,"unit":"g","pack":440},{"name":"potatoes","query":"maris piper potatoes 2kg","qty":500,"unit":"g","pack":2000},{"name":"eggs","query":"free range eggs 6 pack","qty":2,"unit":"each","pack":6},{"name":"panko breadcrumbs","query":"panko breadcrumbs","qty":100,"unit":"g","pack":200},{"name":"flat leaf parsley","query":"flat leaf parsley","qty":1,"unit":"pack","pack":1},{"name":"lemons","query":"unwaxed lemons 4 pack","qty":1,"unit":"each","pack":4},{"name":"frozen peas","query":"frozen garden peas 900g","qty":150,"unit":"g","pack":900}],"meal":"dinner"},{"id":"quick-keema-rice-with-lamb-mince","name":"Quick Keema Rice with Lamb Mince","tier":"medium","mins":35,"servings":4,"ingredients":[{"name":"lamb mince","query":"lamb mince 500g","qty":500,"unit":"g","pack":500},{"name":"basmati rice","query":"basmati rice 1kg","qty":300,"unit":"g","pack":1000},{"name":"garam masala","query":"garam masala","qty":1,"unit":"pack","pack":1},{"name":"frozen peas","query":"frozen garden peas 900g","qty":150,"unit":"g","pack":900},{"name":"onions","query":"brown onions 1kg bag","qty":2,"unit":"each","pack":6},{"name":"garlic","query":"garlic bulb","qty":1,"unit":"pack","pack":1},{"name":"tomato puree","query":"tomato puree","qty":1,"unit":"pack","pack":1},{"name":"natural yoghurt","query":"natural yoghurt 500g","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"beef-stroganoff","name":"Beef Stroganoff","tier":"medium","mins":35,"servings":4,"ingredients":[{"name":"beef strips","query":"beef stir fry strips","qty":500,"unit":"g","pack":400},{"name":"chestnut mushrooms","query":"chestnut mushrooms 250g","qty":250,"unit":"g","pack":250},{"name":"soured cream","query":"soured cream 300ml","qty":150,"unit":"ml","pack":300},{"name":"onions","query":"brown onions 1kg bag","qty":1,"unit":"each","pack":6},{"name":"smoked paprika","query":"smoked paprika","qty":1,"unit":"pack","pack":1},{"name":"basmati rice","query":"basmati rice 1kg","qty":300,"unit":"g","pack":1000}],"meal":"dinner"},{"id":"chicken-cacciatore","name":"Chicken Cacciatore","tier":"medium","mins":60,"servings":4,"ingredients":[{"name":"chicken thighs and drumsticks","query":"bone in chicken thighs","qty":1000,"unit":"g","pack":1000},{"name":"chopped tomatoes","query":"chopped tomatoes 400g tin","qty":2,"unit":"each","pack":1},{"name":"peppers","query":"mixed peppers 3 pack","qty":1,"unit":"each","pack":1},{"name":"black olives","query":"pitted black olives","qty":1,"unit":"pack","pack":1},{"name":"red onion","query":"red onions","qty":1,"unit":"each","pack":3},{"name":"garlic","query":"garlic bulb","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"prawn-pad-thai","name":"Prawn Pad Thai","tier":"medium","mins":30,"servings":2,"ingredients":[{"name":"rice noodles","query":"flat rice noodles","qty":200,"unit":"g","pack":250},{"name":"pad thai sauce","query":"pad thai sauce","qty":1,"unit":"pack","pack":1},{"name":"king prawns","query":"raw king prawns 250g","qty":200,"unit":"g","pack":250},{"name":"eggs","query":"free range eggs 6 pack","qty":2,"unit":"each","pack":6},{"name":"beansprouts","query":"beansprouts","qty":1,"unit":"pack","pack":1},{"name":"roasted peanuts","query":"roasted salted peanuts","qty":1,"unit":"pack","pack":1},{"name":"limes","query":"limes","qty":1,"unit":"each","pack":4}],"meal":"dinner"},{"id":"lamb-koftas-with-tzatziki-and-flatbreads","name":"Lamb Koftas with Tzatziki and Flatbreads","tier":"medium","mins":40,"servings":4,"ingredients":[{"name":"lamb mince","query":"lamb mince 500g","qty":500,"unit":"g","pack":500},{"name":"flatbreads","query":"garlic flatbreads 4 pack","qty":4,"unit":"each","pack":4},{"name":"tzatziki","query":"tzatziki","qty":1,"unit":"pack","pack":1},{"name":"ground cumin","query":"ground cumin","qty":1,"unit":"pack","pack":1},{"name":"cucumber","query":"cucumber","qty":1,"unit":"each","pack":1},{"name":"red onion","query":"red onions","qty":1,"unit":"each","pack":3},{"name":"mint","query":"fresh mint","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"chicken-katsu-curry","name":"Chicken Katsu Curry","tier":"medium","mins":45,"servings":4,"ingredients":[{"name":"chicken breast","query":"chicken breast fillets","qty":600,"unit":"g","pack":650},{"name":"panko breadcrumbs","query":"panko breadcrumbs","qty":100,"unit":"g","pack":200},{"name":"eggs","query":"free range eggs 6 pack","qty":2,"unit":"each","pack":6},{"name":"katsu curry sauce","query":"katsu curry sauce","qty":1,"unit":"pack","pack":1},{"name":"jasmine rice","query":"jasmine rice 1kg","qty":300,"unit":"g","pack":1000},{"name":"plain flour","query":"plain flour 1.5kg","qty":50,"unit":"g","pack":1500}],"meal":"dinner"},{"id":"pan-fried-salmon-with-lemon-butter-and-asparagus","name":"Pan-Fried Salmon with Lemon Butter and Asparagus","tier":"medium","mins":30,"servings":2,"ingredients":[{"name":"salmon fillets","query":"salmon fillets 2 pack","qty":2,"unit":"each","pack":2},{"name":"asparagus","query":"asparagus tips","qty":1,"unit":"pack","pack":1},{"name":"butter","query":"butter 250g","qty":50,"unit":"g","pack":250},{"name":"lemons","query":"unwaxed lemons 4 pack","qty":1,"unit":"each","pack":4},{"name":"new potatoes","query":"new potatoes 750g","qty":400,"unit":"g","pack":750}],"meal":"dinner"},{"id":"beef-ragu-with-pappardelle","name":"Beef Ragu with Pappardelle","tier":"medium","mins":180,"servings":4,"ingredients":[{"name":"braising steak","query":"diced braising steak","qty":500,"unit":"g","pack":500},{"name":"pappardelle","query":"pappardelle pasta","qty":300,"unit":"g","pack":500},{"name":"chopped tomatoes","query":"chopped tomatoes 400g tin","qty":2,"unit":"each","pack":1},{"name":"red wine","query":"red wine 75cl","qty":1,"unit":"pack","pack":1},{"name":"carrots","query":"carrots 1kg","qty":150,"unit":"g","pack":1000},{"name":"onions","query":"brown onions 1kg bag","qty":1,"unit":"each","pack":6},{"name":"parmesan","query":"parmesan block","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"chicken-and-chorizo-paella","name":"Chicken and Chorizo Paella","tier":"medium","mins":50,"servings":4,"ingredients":[{"name":"paella rice","query":"paella rice","qty":300,"unit":"g","pack":500},{"name":"chicken thighs","query":"boneless chicken thigh fillets","qty":400,"unit":"g","pack":650},{"name":"chorizo","query":"chorizo ring","qty":225,"unit":"g","pack":225},{"name":"peppers","query":"mixed peppers 3 pack","qty":1,"unit":"each","pack":1},{"name":"frozen peas","query":"frozen garden peas 900g","qty":100,"unit":"g","pack":900},{"name":"chicken stock cubes","query":"chicken stock cubes","qty":1,"unit":"pack","pack":1},{"name":"smoked paprika","query":"smoked paprika","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"mushroom-and-spinach-lasagne","name":"Mushroom and Spinach Lasagne","tier":"medium","mins":75,"servings":4,"ingredients":[{"name":"lasagne sheets","query":"lasagne sheets 250g","qty":250,"unit":"g","pack":250},{"name":"chestnut mushrooms","query":"chestnut mushrooms 400g","qty":400,"unit":"g","pack":400},{"name":"baby spinach","query":"baby spinach 240g","qty":200,"unit":"g","pack":240},{"name":"white sauce","query":"white sauce","qty":1,"unit":"pack","pack":1},{"name":"ricotta","query":"ricotta 250g","qty":250,"unit":"g","pack":250},{"name":"mature cheddar","query":"mature cheddar 350g","qty":150,"unit":"g","pack":350}],"meal":"dinner"},{"id":"honey-mustard-pork-chops-with-apple-mash","name":"Honey Mustard Pork Chops with Apple Mash","tier":"medium","mins":45,"servings":4,"ingredients":[{"name":"pork loin steaks","query":"pork loin steaks 4 pack","qty":4,"unit":"each","pack":4},{"name":"runny honey","query":"runny honey","qty":1,"unit":"pack","pack":1},{"name":"wholegrain mustard","query":"wholegrain mustard","qty":1,"unit":"pack","pack":1},{"name":"potatoes","query":"maris piper potatoes 2kg","qty":800,"unit":"g","pack":2000},{"name":"apples","query":"braeburn apples","qty":2,"unit":"each","pack":6},{"name":"butter","query":"butter 250g","qty":50,"unit":"g","pack":250}],"meal":"dinner"},{"id":"smoked-haddock-kedgeree","name":"Smoked Haddock Kedgeree","tier":"medium","mins":35,"servings":4,"ingredients":[{"name":"smoked haddock","query":"smoked haddock fillets","qty":400,"unit":"g","pack":440},{"name":"basmati rice","query":"basmati rice 1kg","qty":300,"unit":"g","pack":1000},{"name":"eggs","query":"free range eggs 6 pack","qty":4,"unit":"each","pack":6},{"name":"curry powder","query":"medium curry powder","qty":1,"unit":"pack","pack":1},{"name":"frozen peas","query":"frozen garden peas 900g","qty":100,"unit":"g","pack":900},{"name":"onions","query":"brown onions 1kg bag","qty":1,"unit":"each","pack":6},{"name":"flat leaf parsley","query":"flat leaf parsley","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"chicken-parmigiana","name":"Chicken Parmigiana","tier":"medium","mins":50,"servings":4,"ingredients":[{"name":"chicken breast","query":"chicken breast fillets","qty":600,"unit":"g","pack":650},{"name":"passata","query":"passata 500g","qty":500,"unit":"g","pack":500},{"name":"mozzarella","query":"mozzarella ball","qty":2,"unit":"each","pack":1},{"name":"panko breadcrumbs","query":"panko breadcrumbs","qty":100,"unit":"g","pack":200},{"name":"eggs","query":"free range eggs 6 pack","qty":1,"unit":"each","pack":6},{"name":"parmesan","query":"parmesan block","qty":1,"unit":"pack","pack":1},{"name":"spaghetti","query":"spaghetti 500g","qty":300,"unit":"g","pack":500}],"meal":"dinner"},{"id":"chicken-satay-skewers-with-rice","name":"Chicken Satay Skewers with Rice","tier":"medium","mins":40,"servings":4,"ingredients":[{"name":"chicken breast","query":"chicken breast fillets","qty":600,"unit":"g","pack":650},{"name":"peanut butter","query":"smooth peanut butter","qty":1,"unit":"pack","pack":1},{"name":"coconut milk","query":"coconut milk 400ml tin","qty":200,"unit":"ml","pack":400},{"name":"soy sauce","query":"soy sauce","qty":1,"unit":"pack","pack":1},{"name":"limes","query":"limes","qty":1,"unit":"each","pack":4},{"name":"jasmine rice","query":"jasmine rice 1kg","qty":300,"unit":"g","pack":1000}],"meal":"dinner"},{"id":"spanish-chorizo-and-butter-bean-stew","name":"Spanish Chorizo and Butter Bean Stew","tier":"medium","mins":40,"servings":4,"ingredients":[{"name":"chorizo","query":"chorizo ring","qty":225,"unit":"g","pack":225},{"name":"butter beans","query":"butter beans tin","qty":2,"unit":"each","pack":1},{"name":"chopped tomatoes","query":"chopped tomatoes 400g tin","qty":2,"unit":"each","pack":1},{"name":"peppers","query":"mixed peppers 3 pack","qty":1,"unit":"each","pack":1},{"name":"baby spinach","query":"baby spinach 240g","qty":120,"unit":"g","pack":240},{"name":"smoked paprika","query":"smoked paprika","qty":1,"unit":"pack","pack":1},{"name":"crusty bread","query":"crusty bread loaf","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"lemon-and-herb-roast-chicken-with-potatoes","name":"Lemon and Herb Roast Chicken with Potatoes","tier":"medium","mins":100,"servings":4,"ingredients":[{"name":"whole chicken","query":"whole chicken 1.6kg","qty":1,"unit":"each","pack":1},{"name":"potatoes","query":"maris piper potatoes 2kg","qty":800,"unit":"g","pack":2000},{"name":"lemons","query":"unwaxed lemons 4 pack","qty":2,"unit":"each","pack":4},{"name":"rosemary","query":"fresh rosemary","qty":1,"unit":"pack","pack":1},{"name":"garlic","query":"garlic bulb","qty":1,"unit":"pack","pack":1},{"name":"carrots","query":"carrots 1kg","qty":300,"unit":"g","pack":1000}],"meal":"dinner"},{"id":"aubergine-parmigiana","name":"Aubergine Parmigiana","tier":"medium","mins":75,"servings":4,"ingredients":[{"name":"aubergines","query":"aubergines","qty":3,"unit":"each","pack":3},{"name":"passata","query":"passata 500g","qty":1000,"unit":"g","pack":500},{"name":"mozzarella","query":"mozzarella ball","qty":2,"unit":"each","pack":1},{"name":"parmesan","query":"parmesan block","qty":1,"unit":"pack","pack":1},{"name":"basil","query":"fresh basil","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"classic-french-bouillabaisse","name":"Classic French Bouillabaisse","tier":"hard","mins":90,"servings":4,"ingredients":[{"name":"white fish fillets","query":"cod or haddock fillets","qty":500,"unit":"g","pack":600},{"name":"mussels","query":"fresh mussels 1kg","qty":500,"unit":"g","pack":1000},{"name":"king prawns","query":"raw king prawns 250g","qty":250,"unit":"g","pack":250},{"name":"fennel","query":"fennel bulb","qty":1,"unit":"each","pack":1},{"name":"chopped tomatoes","query":"chopped tomatoes 400g tin","qty":1,"unit":"each","pack":1},{"name":"saffron","query":"saffron","qty":1,"unit":"pack","pack":1},{"name":"fish stock","query":"fish stock pots","qty":1,"unit":"pack","pack":1},{"name":"white wine","query":"dry white wine 75cl","qty":1,"unit":"pack","pack":1},{"name":"baguette","query":"french baguette","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"dauphinoise-potatoes","name":"Dauphinoise Potatoes","tier":"hard","mins":100,"servings":6,"ingredients":[{"name":"potatoes","query":"maris piper potatoes 2kg","qty":1000,"unit":"g","pack":2000},{"name":"double cream","query":"double cream 300ml","qty":600,"unit":"ml","pack":300},{"name":"milk","query":"semi skimmed milk 2 pint","qty":200,"unit":"ml","pack":1136},{"name":"garlic","query":"garlic bulb","qty":1,"unit":"pack","pack":1},{"name":"nutmeg","query":"ground nutmeg","qty":1,"unit":"pack","pack":1},{"name":"gruyere","query":"gruyere cheese","qty":100,"unit":"g","pack":200}],"meal":"dinner"},{"id":"authentic-tonkotsu-ramen","name":"Authentic Tonkotsu Ramen","tier":"hard","mins":240,"servings":2,"ingredients":[{"name":"pork belly","query":"pork belly joint","qty":500,"unit":"g","pack":500},{"name":"pork ribs","query":"pork ribs","qty":500,"unit":"g","pack":700},{"name":"ramen noodles","query":"ramen noodles","qty":2,"unit":"each","pack":2},{"name":"eggs","query":"free range eggs 6 pack","qty":2,"unit":"each","pack":6},{"name":"spring onions","query":"spring onions","qty":1,"unit":"pack","pack":1},{"name":"miso paste","query":"white miso paste","qty":1,"unit":"pack","pack":1},{"name":"nori","query":"nori sheets","qty":1,"unit":"pack","pack":1},{"name":"mirin","query":"mirin","qty":1,"unit":"pack","pack":1},{"name":"soy sauce","query":"soy sauce","qty":1,"unit":"pack","pack":1},{"name":"garlic","query":"garlic bulb","qty":1,"unit":"pack","pack":1},{"name":"ginger","query":"root ginger","qty":1,"unit":"pack","pack":1},{"name":"shiitake mushrooms","query":"shiitake mushrooms","qty":100,"unit":"g","pack":100}],"meal":"dinner"},{"id":"coq-au-vin","name":"Coq au Vin","tier":"hard","mins":120,"servings":4,"ingredients":[{"name":"chicken thighs and drumsticks","query":"bone in chicken thighs","qty":1000,"unit":"g","pack":1000},{"name":"red wine","query":"red wine 75cl","qty":1,"unit":"pack","pack":1},{"name":"bacon lardons","query":"smoked bacon lardons","qty":1,"unit":"pack","pack":1},{"name":"shallots","query":"shallots","qty":1,"unit":"pack","pack":1},{"name":"chestnut mushrooms","query":"chestnut mushrooms 250g","qty":250,"unit":"g","pack":250},{"name":"chicken stock cubes","query":"chicken stock cubes","qty":1,"unit":"pack","pack":1},{"name":"thyme","query":"fresh thyme","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"crispy-duck-breast-with-cherry-sauce","name":"Crispy Duck Breast with Cherry Sauce","tier":"hard","mins":45,"servings":2,"ingredients":[{"name":"duck breasts","query":"duck breasts 2 pack","qty":2,"unit":"each","pack":2},{"name":"frozen cherries","query":"frozen dark cherries","qty":150,"unit":"g","pack":350},{"name":"red wine","query":"red wine 75cl","qty":1,"unit":"pack","pack":1},{"name":"balsamic vinegar","query":"balsamic vinegar","qty":1,"unit":"pack","pack":1},{"name":"new potatoes","query":"new potatoes 750g","qty":400,"unit":"g","pack":750},{"name":"tenderstem broccoli","query":"tenderstem broccoli 200g","qty":200,"unit":"g","pack":200}],"meal":"dinner"},{"id":"beef-bourguignon","name":"Beef Bourguignon","tier":"hard","mins":210,"servings":6,"ingredients":[{"name":"braising steak","query":"diced braising steak","qty":1000,"unit":"g","pack":500},{"name":"red wine","query":"red wine 75cl","qty":1,"unit":"pack","pack":1},{"name":"bacon lardons","query":"smoked bacon lardons","qty":1,"unit":"pack","pack":1},{"name":"shallots","query":"shallots","qty":1,"unit":"pack","pack":1},{"name":"chestnut mushrooms","query":"chestnut mushrooms 250g","qty":250,"unit":"g","pack":250},{"name":"carrots","query":"carrots 1kg","qty":300,"unit":"g","pack":1000},{"name":"tomato puree","query":"tomato puree","qty":1,"unit":"pack","pack":1},{"name":"beef stock","query":"beef stock cubes","qty":1,"unit":"pack","pack":1},{"name":"thyme","query":"fresh thyme","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"slow-braised-lamb-shanks","name":"Slow-Braised Lamb Shanks","tier":"hard","mins":210,"servings":4,"ingredients":[{"name":"lamb shanks","query":"lamb shanks 2 pack","qty":4,"unit":"each","pack":2},{"name":"red wine","query":"red wine 75cl","qty":1,"unit":"pack","pack":1},{"name":"chopped tomatoes","query":"chopped tomatoes 400g tin","qty":1,"unit":"each","pack":1},{"name":"carrots","query":"carrots 1kg","qty":300,"unit":"g","pack":1000},{"name":"onions","query":"brown onions 1kg bag","qty":2,"unit":"each","pack":6},{"name":"rosemary","query":"fresh rosemary","qty":1,"unit":"pack","pack":1},{"name":"beef stock","query":"beef stock cubes","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"fresh-pasta-with-wild-mushroom-ragu","name":"Fresh Pasta with Wild Mushroom Ragu","tier":"hard","mins":90,"servings":4,"ingredients":[{"name":"00 flour","query":"tipo 00 flour 1kg","qty":400,"unit":"g","pack":1000},{"name":"eggs","query":"free range eggs 6 pack","qty":4,"unit":"each","pack":6},{"name":"mixed mushrooms","query":"mixed wild mushrooms 250g","qty":400,"unit":"g","pack":250},{"name":"double cream","query":"double cream 300ml","qty":150,"unit":"ml","pack":300},{"name":"parmesan","query":"parmesan block","qty":1,"unit":"pack","pack":1},{"name":"shallots","query":"shallots","qty":1,"unit":"pack","pack":1},{"name":"thyme","query":"fresh thyme","qty":1,"unit":"pack","pack":1},{"name":"white wine","query":"dry white wine 75cl","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"pan-roasted-scallops-with-pea-puree","name":"Pan-Roasted Scallops with Pea Puree","tier":"hard","mins":40,"servings":2,"ingredients":[{"name":"king scallops","query":"king scallops 6 pack","qty":6,"unit":"each","pack":6},{"name":"frozen peas","query":"frozen garden peas 900g","qty":200,"unit":"g","pack":900},{"name":"butter","query":"butter 250g","qty":50,"unit":"g","pack":250},{"name":"pancetta","query":"pancetta cubes","qty":1,"unit":"pack","pack":1},{"name":"mint","query":"fresh mint","qty":1,"unit":"pack","pack":1},{"name":"lemons","query":"unwaxed lemons 4 pack","qty":1,"unit":"each","pack":4}],"meal":"dinner"},{"id":"slow-cooked-beef-massaman-curry","name":"Slow-Cooked Beef Massaman Curry","tier":"hard","mins":210,"servings":4,"ingredients":[{"name":"braising steak","query":"diced braising steak","qty":800,"unit":"g","pack":500},{"name":"massaman curry paste","query":"massaman curry paste","qty":1,"unit":"pack","pack":1},{"name":"coconut milk","query":"coconut milk 400ml tin","qty":800,"unit":"ml","pack":400},{"name":"new potatoes","query":"new potatoes 750g","qty":400,"unit":"g","pack":750},{"name":"roasted peanuts","query":"roasted salted peanuts","qty":1,"unit":"pack","pack":1},{"name":"onions","query":"brown onions 1kg bag","qty":2,"unit":"each","pack":6},{"name":"jasmine rice","query":"jasmine rice 1kg","qty":300,"unit":"g","pack":1000}],"meal":"dinner"},{"id":"homemade-chicken-kiev","name":"Homemade Chicken Kiev","tier":"hard","mins":75,"servings":4,"ingredients":[{"name":"chicken breast","query":"chicken breast fillets","qty":600,"unit":"g","pack":650},{"name":"butter","query":"butter 250g","qty":125,"unit":"g","pack":250},{"name":"garlic","query":"garlic bulb","qty":1,"unit":"pack","pack":1},{"name":"flat leaf parsley","query":"flat leaf parsley","qty":1,"unit":"pack","pack":1},{"name":"panko breadcrumbs","query":"panko breadcrumbs","qty":100,"unit":"g","pack":200},{"name":"eggs","query":"free range eggs 6 pack","qty":2,"unit":"each","pack":6},{"name":"plain flour","query":"plain flour 1.5kg","qty":50,"unit":"g","pack":1500},{"name":"oven chips","query":"oven chips","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"salmon-en-croute","name":"Salmon en Croute","tier":"hard","mins":75,"servings":6,"ingredients":[{"name":"salmon side","query":"salmon side fillet","qty":700,"unit":"g","pack":700},{"name":"puff pastry","query":"ready rolled puff pastry","qty":1,"unit":"pack","pack":1},{"name":"baby spinach","query":"baby spinach 240g","qty":200,"unit":"g","pack":240},{"name":"cream cheese","query":"full fat soft cheese 200g","qty":150,"unit":"g","pack":200},{"name":"lemons","query":"unwaxed lemons 4 pack","qty":1,"unit":"each","pack":4},{"name":"eggs","query":"free range eggs 6 pack","qty":1,"unit":"each","pack":6}],"meal":"dinner"},{"id":"sushi-platter-at-home","name":"Sushi Platter at Home","tier":"hard","mins":90,"servings":4,"ingredients":[{"name":"sushi rice","query":"sushi rice","qty":300,"unit":"g","pack":500},{"name":"nori","query":"nori sheets","qty":1,"unit":"pack","pack":1},{"name":"rice vinegar","query":"rice vinegar","qty":1,"unit":"pack","pack":1},{"name":"smoked salmon","query":"smoked salmon 120g","qty":240,"unit":"g","pack":120},{"name":"cucumber","query":"cucumber","qty":1,"unit":"each","pack":1},{"name":"avocados","query":"ripe avocados 2 pack","qty":2,"unit":"each","pack":2},{"name":"pickled ginger","query":"pickled sushi ginger","qty":1,"unit":"pack","pack":1},{"name":"wasabi","query":"wasabi paste","qty":1,"unit":"pack","pack":1},{"name":"soy sauce","query":"soy sauce","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"saffron-seafood-risotto","name":"Saffron Seafood Risotto","tier":"hard","mins":55,"servings":2,"ingredients":[{"name":"arborio rice","query":"arborio risotto rice","qty":200,"unit":"g","pack":500},{"name":"seafood mix","query":"frozen seafood mix","qty":300,"unit":"g","pack":300},{"name":"white wine","query":"dry white wine 75cl","qty":1,"unit":"pack","pack":1},{"name":"shallots","query":"shallots","qty":1,"unit":"pack","pack":1},{"name":"fish stock","query":"fish stock pots","qty":1,"unit":"pack","pack":1},{"name":"saffron","query":"saffron","qty":1,"unit":"pack","pack":1},{"name":"flat leaf parsley","query":"flat leaf parsley","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"crispy-pork-belly-with-apple-sauce","name":"Crispy Pork Belly with Apple Sauce","tier":"hard","mins":210,"servings":4,"ingredients":[{"name":"pork belly joint","query":"pork belly joint","qty":1000,"unit":"g","pack":1000},{"name":"apples","query":"braeburn apples","qty":2,"unit":"each","pack":6},{"name":"potatoes","query":"maris piper potatoes 2kg","qty":800,"unit":"g","pack":2000},{"name":"carrots","query":"carrots 1kg","qty":300,"unit":"g","pack":1000},{"name":"fennel seeds","query":"fennel seeds","qty":1,"unit":"pack","pack":1},{"name":"chicken stock cubes","query":"chicken stock cubes","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"herb-crusted-rack-of-lamb","name":"Herb-Crusted Rack of Lamb","tier":"hard","mins":60,"servings":2,"ingredients":[{"name":"rack of lamb","query":"rack of lamb","qty":1,"unit":"each","pack":1},{"name":"panko breadcrumbs","query":"panko breadcrumbs","qty":60,"unit":"g","pack":200},{"name":"dijon mustard","query":"dijon mustard","qty":1,"unit":"pack","pack":1},{"name":"rosemary","query":"fresh rosemary","qty":1,"unit":"pack","pack":1},{"name":"new potatoes","query":"new potatoes 750g","qty":400,"unit":"g","pack":750},{"name":"tenderstem broccoli","query":"tenderstem broccoli 200g","qty":200,"unit":"g","pack":200},{"name":"garlic","query":"garlic bulb","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"duck-and-sausage-cassoulet","name":"Duck and Sausage Cassoulet","tier":"hard","mins":180,"servings":4,"ingredients":[{"name":"duck legs","query":"duck legs 2 pack","qty":2,"unit":"each","pack":2},{"name":"pork sausages","query":"pork sausages 8 pack","qty":6,"unit":"each","pack":8},{"name":"haricot beans","query":"haricot beans tin","qty":2,"unit":"each","pack":1},{"name":"bacon lardons","query":"smoked bacon lardons","qty":1,"unit":"pack","pack":1},{"name":"chopped tomatoes","query":"chopped tomatoes 400g tin","qty":1,"unit":"each","pack":1},{"name":"onions","query":"brown onions 1kg bag","qty":2,"unit":"each","pack":6},{"name":"garlic","query":"garlic bulb","qty":1,"unit":"pack","pack":1},{"name":"thyme","query":"fresh thyme","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"creme-brulee","name":"Creme Brulee","tier":"hard","mins":90,"servings":6,"ingredients":[{"name":"double cream","query":"double cream 300ml","qty":600,"unit":"ml","pack":300},{"name":"eggs","query":"free range eggs 6 pack","qty":6,"unit":"each","pack":6},{"name":"caster sugar","query":"caster sugar 1kg","qty":100,"unit":"g","pack":1000},{"name":"vanilla extract","query":"vanilla extract","qty":1,"unit":"pack","pack":1}],"meal":"dinner"},{"id":"classic-tiramisu","name":"Classic Tiramisu","tier":"hard","mins":45,"servings":6,"ingredients":[{"name":"mascarpone","query":"mascarpone 250g","qty":500,"unit":"g","pack":250},{"name":"sponge fingers","query":"savoiardi sponge fingers","qty":200,"unit":"g","pack":200},{"name":"eggs","query":"free range eggs 6 pack","qty":3,"unit":"each","pack":6},{"name":"instant coffee","query":"instant espresso coffee","qty":1,"unit":"pack","pack":1},{"name":"cocoa powder","query":"cocoa powder","qty":1,"unit":"pack","pack":1},{"name":"caster sugar","query":"caster sugar 1kg","qty":100,"unit":"g","pack":1000}],"meal":"dinner"},{"id":"b-scrambled-eggs-on-toast","name":"Scrambled Eggs on Toast","tier":"easy","meal":"breakfast","mins":10,"servings":2,"ingredients":[{"name":"eggs","query":"free range eggs 6 pack","qty":4,"unit":"each","pack":6},{"name":"bread","query":"wholemeal bread loaf","qty":4,"unit":"each","pack":18},{"name":"butter","query":"butter 250g","qty":20,"unit":"g","pack":250}]},{"id":"b-overnight-oats","name":"Overnight Oats","tier":"easy","meal":"breakfast","mins":10,"servings":2,"ingredients":[{"name":"porridge oats","query":"porridge oats 1kg","qty":100,"unit":"g","pack":1000},{"name":"milk","query":"semi skimmed milk 2 pint","qty":300,"unit":"ml","pack":1136},{"name":"greek yoghurt","query":"greek yoghurt 500g","qty":1,"unit":"pack","pack":1},{"name":"mixed berries","query":"mixed berries 300g","qty":150,"unit":"g","pack":300},{"name":"runny honey","query":"runny honey","qty":1,"unit":"pack","pack":1}]},{"id":"b-banana-oat-pancakes","name":"Banana Oat Pancakes","tier":"easy","meal":"breakfast","mins":20,"servings":2,"ingredients":[{"name":"bananas","query":"bananas 5 pack","qty":2,"unit":"each","pack":5},{"name":"porridge oats","query":"porridge oats 1kg","qty":60,"unit":"g","pack":1000},{"name":"eggs","query":"free range eggs 6 pack","qty":2,"unit":"each","pack":6},{"name":"maple syrup","query":"maple syrup","qty":1,"unit":"pack","pack":1}]},{"id":"b-smashed-avocado-toast","name":"Smashed Avocado Toast","tier":"easy","meal":"breakfast","mins":10,"servings":2,"ingredients":[{"name":"avocados","query":"ripe avocados 2 pack","qty":2,"unit":"each","pack":2},{"name":"bread","query":"wholemeal bread loaf","qty":4,"unit":"each","pack":18},{"name":"eggs","query":"free range eggs 6 pack","qty":2,"unit":"each","pack":6},{"name":"chilli flakes","query":"chilli flakes","qty":1,"unit":"pack","pack":1},{"name":"lemons","query":"unwaxed lemons 4 pack","qty":1,"unit":"each","pack":4}]},{"id":"b-bacon-butties","name":"Bacon Butties","tier":"easy","meal":"breakfast","mins":15,"servings":2,"ingredients":[{"name":"bacon","query":"smoked back bacon 8 pack","qty":4,"unit":"each","pack":8},{"name":"soft white rolls","query":"soft white rolls 6 pack","qty":2,"unit":"each","pack":6},{"name":"brown sauce","query":"brown sauce","qty":1,"unit":"pack","pack":1},{"name":"butter","query":"butter 250g","qty":20,"unit":"g","pack":250}]},{"id":"b-full-english-breakfast","name":"Full English Breakfast","tier":"medium","meal":"breakfast","mins":35,"servings":2,"ingredients":[{"name":"pork sausages","query":"pork sausages 8 pack","qty":4,"unit":"each","pack":8},{"name":"bacon","query":"smoked back bacon 8 pack","qty":4,"unit":"each","pack":8},{"name":"eggs","query":"free range eggs 6 pack","qty":2,"unit":"each","pack":6},{"name":"baked beans","query":"baked beans tin","qty":1,"unit":"pack","pack":1},{"name":"chestnut mushrooms","query":"chestnut mushrooms 250g","qty":100,"unit":"g","pack":250},{"name":"tomatoes","query":"salad tomatoes","qty":2,"unit":"each","pack":6},{"name":"bread","query":"wholemeal bread loaf","qty":2,"unit":"each","pack":18}]},{"id":"b-eggs-benedict","name":"Eggs Benedict","tier":"medium","meal":"breakfast","mins":25,"servings":2,"ingredients":[{"name":"eggs","query":"free range eggs 6 pack","qty":4,"unit":"each","pack":6},{"name":"english muffins","query":"english muffins 4 pack","qty":2,"unit":"each","pack":4},{"name":"thick cut ham","query":"thick cut ham slices","qty":1,"unit":"pack","pack":1},{"name":"hollandaise sauce","query":"hollandaise sauce","qty":1,"unit":"pack","pack":1}]},{"id":"b-buttermilk-pancakes","name":"Buttermilk Pancakes","tier":"medium","meal":"breakfast","mins":30,"servings":4,"ingredients":[{"name":"plain flour","query":"plain flour 1.5kg","qty":200,"unit":"g","pack":1500},{"name":"buttermilk","query":"buttermilk 284ml","qty":280,"unit":"ml","pack":284},{"name":"eggs","query":"free range eggs 6 pack","qty":2,"unit":"each","pack":6},{"name":"butter","query":"butter 250g","qty":50,"unit":"g","pack":250},{"name":"maple syrup","query":"maple syrup","qty":1,"unit":"pack","pack":1},{"name":"mixed berries","query":"mixed berries 300g","qty":150,"unit":"g","pack":300}]},{"id":"b-huevos-rancheros","name":"Huevos Rancheros","tier":"medium","meal":"breakfast","mins":30,"servings":2,"ingredients":[{"name":"eggs","query":"free range eggs 6 pack","qty":4,"unit":"each","pack":6},{"name":"tortilla wraps","query":"tortilla wraps 8 pack","qty":4,"unit":"each","pack":8},{"name":"black beans","query":"black beans tin","qty":1,"unit":"each","pack":1},{"name":"chopped tomatoes","query":"chopped tomatoes 400g tin","qty":1,"unit":"each","pack":1},{"name":"avocados","query":"ripe avocados 2 pack","qty":1,"unit":"each","pack":2},{"name":"smoked paprika","query":"smoked paprika","qty":1,"unit":"pack","pack":1}]},{"id":"b-french-toast-with-berries","name":"French Toast with Berries","tier":"medium","meal":"breakfast","mins":20,"servings":2,"ingredients":[{"name":"brioche loaf","query":"sliced brioche loaf","qty":1,"unit":"pack","pack":1},{"name":"eggs","query":"free range eggs 6 pack","qty":2,"unit":"each","pack":6},{"name":"milk","query":"semi skimmed milk 2 pint","qty":100,"unit":"ml","pack":1136},{"name":"mixed berries","query":"mixed berries 300g","qty":150,"unit":"g","pack":300},{"name":"maple syrup","query":"maple syrup","qty":1,"unit":"pack","pack":1},{"name":"butter","query":"butter 250g","qty":30,"unit":"g","pack":250}]},{"id":"b-homemade-croissants","name":"Homemade Croissants","tier":"hard","meal":"breakfast","mins":300,"servings":6,"ingredients":[{"name":"strong bread flour","query":"strong white bread flour 1.5kg","qty":500,"unit":"g","pack":1500},{"name":"butter","query":"butter 250g","qty":250,"unit":"g","pack":250},{"name":"fast action yeast","query":"fast action dried yeast","qty":1,"unit":"pack","pack":1},{"name":"milk","query":"semi skimmed milk 2 pint","qty":150,"unit":"ml","pack":1136},{"name":"caster sugar","query":"caster sugar 1kg","qty":50,"unit":"g","pack":1000},{"name":"eggs","query":"free range eggs 6 pack","qty":1,"unit":"each","pack":6}]},{"id":"b-eggs-royale-with-homemade-hollandaise","name":"Eggs Royale with Homemade Hollandaise","tier":"hard","meal":"breakfast","mins":35,"servings":2,"ingredients":[{"name":"eggs","query":"free range eggs 6 pack","qty":6,"unit":"each","pack":6},{"name":"english muffins","query":"english muffins 4 pack","qty":2,"unit":"each","pack":4},{"name":"smoked salmon","query":"smoked salmon 120g","qty":120,"unit":"g","pack":120},{"name":"butter","query":"butter 250g","qty":150,"unit":"g","pack":250},{"name":"lemons","query":"unwaxed lemons 4 pack","qty":1,"unit":"each","pack":4},{"name":"white wine vinegar","query":"white wine vinegar","qty":1,"unit":"pack","pack":1}]},{"id":"b-cinnamon-rolls","name":"Cinnamon Rolls","tier":"hard","meal":"breakfast","mins":180,"servings":8,"ingredients":[{"name":"strong bread flour","query":"strong white bread flour 1.5kg","qty":500,"unit":"g","pack":1500},{"name":"fast action yeast","query":"fast action dried yeast","qty":1,"unit":"pack","pack":1},{"name":"butter","query":"butter 250g","qty":100,"unit":"g","pack":250},{"name":"light brown sugar","query":"light brown sugar 500g","qty":150,"unit":"g","pack":500},{"name":"ground cinnamon","query":"ground cinnamon","qty":1,"unit":"pack","pack":1},{"name":"cream cheese","query":"full fat soft cheese 200g","qty":200,"unit":"g","pack":200},{"name":"milk","query":"semi skimmed milk 2 pint","qty":250,"unit":"ml","pack":1136},{"name":"eggs","query":"free range eggs 6 pack","qty":1,"unit":"each","pack":6}]},{"id":"b-tamagoyaki-japanese-breakfast-set","name":"Tamagoyaki Japanese Breakfast Set","tier":"hard","meal":"breakfast","mins":45,"servings":2,"ingredients":[{"name":"eggs","query":"free range eggs 6 pack","qty":4,"unit":"each","pack":6},{"name":"mirin","query":"mirin","qty":1,"unit":"pack","pack":1},{"name":"soy sauce","query":"soy sauce","qty":1,"unit":"pack","pack":1},{"name":"sushi rice","query":"sushi rice","qty":150,"unit":"g","pack":500},{"name":"miso paste","query":"white miso paste","qty":1,"unit":"pack","pack":1},{"name":"nori","query":"nori sheets","qty":1,"unit":"pack","pack":1}]},{"id":"b-buttermilk-biscuits-with-sausage-gravy","name":"Buttermilk Biscuits with Sausage Gravy","tier":"hard","meal":"breakfast","mins":60,"servings":4,"ingredients":[{"name":"plain flour","query":"plain flour 1.5kg","qty":300,"unit":"g","pack":1500},{"name":"butter","query":"butter 250g","qty":120,"unit":"g","pack":250},{"name":"buttermilk","query":"buttermilk 284ml","qty":250,"unit":"ml","pack":284},{"name":"pork sausages","query":"pork sausages 8 pack","qty":6,"unit":"each","pack":8},{"name":"milk","query":"semi skimmed milk 2 pint","qty":500,"unit":"ml","pack":1136}]},{"id":"l-ham-and-cheese-toasties","name":"Ham and Cheese Toasties","tier":"easy","meal":"lunch","mins":10,"servings":2,"ingredients":[{"name":"bread","query":"wholemeal bread loaf","qty":4,"unit":"each","pack":18},{"name":"thick cut ham","query":"thick cut ham slices","qty":1,"unit":"pack","pack":1},{"name":"mature cheddar","query":"mature cheddar 350g","qty":100,"unit":"g","pack":350},{"name":"butter","query":"butter 250g","qty":30,"unit":"g","pack":250}]},{"id":"l-tuna-sweetcorn-mayo-sandwiches","name":"Tuna Sweetcorn Mayo Sandwiches","tier":"easy","meal":"lunch","mins":10,"servings":2,"ingredients":[{"name":"tuna tins","query":"tuna chunks in brine 4 pack","qty":1,"unit":"each","pack":4},{"name":"sweetcorn","query":"sweetcorn tin","qty":1,"unit":"pack","pack":1},{"name":"mayonnaise","query":"mayonnaise","qty":1,"unit":"pack","pack":1},{"name":"bread","query":"wholemeal bread loaf","qty":4,"unit":"each","pack":18}]},{"id":"l-tomato-soup-with-grilled-cheese","name":"Tomato Soup with Grilled Cheese","tier":"easy","meal":"lunch","mins":15,"servings":2,"ingredients":[{"name":"fresh tomato soup","query":"fresh tomato soup 600g","qty":600,"unit":"g","pack":600},{"name":"bread","query":"wholemeal bread loaf","qty":4,"unit":"each","pack":18},{"name":"mature cheddar","query":"mature cheddar 350g","qty":100,"unit":"g","pack":350},{"name":"butter","query":"butter 250g","qty":30,"unit":"g","pack":250}]},{"id":"l-greek-salad-pitta","name":"Greek Salad Pitta","tier":"easy","meal":"lunch","mins":15,"servings":2,"ingredients":[{"name":"pitta breads","query":"white pitta breads","qty":1,"unit":"pack","pack":1},{"name":"cucumber","query":"cucumber","qty":1,"unit":"each","pack":1},{"name":"cherry tomatoes","query":"cherry tomatoes 250g","qty":150,"unit":"g","pack":250},{"name":"feta","query":"feta cheese 200g","qty":100,"unit":"g","pack":200},{"name":"black olives","query":"pitted black olives","qty":1,"unit":"pack","pack":1},{"name":"red onion","query":"red onions","qty":1,"unit":"each","pack":3}]},{"id":"l-egg-mayo-wraps","name":"Egg Mayo Wraps","tier":"easy","meal":"lunch","mins":15,"servings":2,"ingredients":[{"name":"eggs","query":"free range eggs 6 pack","qty":4,"unit":"each","pack":6},{"name":"mayonnaise","query":"mayonnaise","qty":1,"unit":"pack","pack":1},{"name":"tortilla wraps","query":"tortilla wraps 8 pack","qty":2,"unit":"each","pack":8},{"name":"mustard and cress","query":"mustard and cress","qty":1,"unit":"pack","pack":1}]},{"id":"l-cheesy-beans-on-toast","name":"Cheesy Beans on Toast","tier":"easy","meal":"lunch","mins":10,"servings":2,"ingredients":[{"name":"baked beans","query":"baked beans tin","qty":1,"unit":"pack","pack":1},{"name":"bread","query":"wholemeal bread loaf","qty":2,"unit":"each","pack":18},{"name":"mature cheddar","query":"mature cheddar 350g","qty":50,"unit":"g","pack":350}]},{"id":"l-pesto-chicken-pasta-salad","name":"Pesto Chicken Pasta Salad","tier":"easy","meal":"lunch","mins":25,"servings":4,"ingredients":[{"name":"fusilli","query":"fusilli pasta 500g","qty":200,"unit":"g","pack":500},{"name":"green pesto","query":"green pesto jar","qty":1,"unit":"pack","pack":1},{"name":"cherry tomatoes","query":"cherry tomatoes 250g","qty":250,"unit":"g","pack":250},{"name":"cooked chicken","query":"cooked chicken breast slices","qty":240,"unit":"g","pack":240},{"name":"rocket","query":"wild rocket 60g","qty":60,"unit":"g","pack":60}]},{"id":"l-hummus-and-veg-wraps","name":"Hummus and Veg Wraps","tier":"easy","meal":"lunch","mins":10,"servings":2,"ingredients":[{"name":"hummus","query":"houmous","qty":1,"unit":"pack","pack":1},{"name":"tortilla wraps","query":"tortilla wraps 8 pack","qty":2,"unit":"each","pack":8},{"name":"carrots","query":"carrots 1kg","qty":100,"unit":"g","pack":1000},{"name":"cucumber","query":"cucumber","qty":1,"unit":"each","pack":1},{"name":"baby spinach","query":"baby spinach 240g","qty":60,"unit":"g","pack":240}]},{"id":"l-chicken-noodle-soup","name":"Chicken Noodle Soup","tier":"easy","meal":"lunch","mins":30,"servings":4,"ingredients":[{"name":"chicken breast","query":"chicken breast fillets","qty":300,"unit":"g","pack":650},{"name":"egg noodles","query":"medium egg noodles","qty":150,"unit":"g","pack":250},{"name":"carrots","query":"carrots 1kg","qty":150,"unit":"g","pack":1000},{"name":"stock cubes","query":"chicken stock cubes","qty":1,"unit":"pack","pack":1},{"name":"celery","query":"celery","qty":1,"unit":"pack","pack":1}]},{"id":"l-cheese-omelette-with-salad","name":"Cheese Omelette with Salad","tier":"easy","meal":"lunch","mins":10,"servings":2,"ingredients":[{"name":"eggs","query":"free range eggs 6 pack","qty":4,"unit":"each","pack":6},{"name":"mature cheddar","query":"mature cheddar 350g","qty":50,"unit":"g","pack":350},{"name":"mixed salad","query":"mixed salad bag","qty":1,"unit":"pack","pack":1}]},{"id":"l-classic-club-sandwich","name":"Classic Club Sandwich","tier":"medium","meal":"lunch","mins":25,"servings":2,"ingredients":[{"name":"bread","query":"white bread loaf","qty":6,"unit":"each","pack":18},{"name":"bacon","query":"smoked back bacon 8 pack","qty":4,"unit":"each","pack":8},{"name":"cooked chicken","query":"cooked chicken breast slices","qty":120,"unit":"g","pack":240},{"name":"tomatoes","query":"salad tomatoes","qty":2,"unit":"each","pack":6},{"name":"baby gem lettuce","query":"baby gem lettuce 2 pack","qty":1,"unit":"each","pack":2},{"name":"mayonnaise","query":"mayonnaise","qty":1,"unit":"pack","pack":1}]},{"id":"l-mushroom-and-spinach-frittata","name":"Mushroom and Spinach Frittata","tier":"medium","meal":"lunch","mins":30,"servings":4,"ingredients":[{"name":"eggs","query":"free range eggs 6 pack","qty":6,"unit":"each","pack":6},{"name":"chestnut mushrooms","query":"chestnut mushrooms 250g","qty":250,"unit":"g","pack":250},{"name":"baby spinach","query":"baby spinach 240g","qty":120,"unit":"g","pack":240},{"name":"feta","query":"feta cheese 200g","qty":100,"unit":"g","pack":200},{"name":"onions","query":"brown onions 1kg bag","qty":1,"unit":"each","pack":6}]},{"id":"l-pea-and-ham-soup","name":"Pea and Ham Soup","tier":"medium","meal":"lunch","mins":60,"servings":4,"ingredients":[{"name":"ham hock","query":"ham hock","qty":1,"unit":"pack","pack":1},{"name":"frozen peas","query":"frozen garden peas 900g","qty":500,"unit":"g","pack":900},{"name":"onions","query":"brown onions 1kg bag","qty":1,"unit":"each","pack":6},{"name":"potatoes","query":"maris piper potatoes 2kg","qty":200,"unit":"g","pack":2000},{"name":"stock cubes","query":"chicken stock cubes","qty":1,"unit":"pack","pack":1}]},{"id":"l-falafel-wraps-with-hummus","name":"Falafel Wraps with Hummus","tier":"medium","meal":"lunch","mins":25,"servings":4,"ingredients":[{"name":"falafel","query":"falafel","qty":1,"unit":"pack","pack":1},{"name":"tortilla wraps","query":"tortilla wraps 8 pack","qty":4,"unit":"each","pack":8},{"name":"hummus","query":"houmous","qty":1,"unit":"pack","pack":1},{"name":"tzatziki","query":"tzatziki","qty":1,"unit":"pack","pack":1},{"name":"cucumber","query":"cucumber","qty":1,"unit":"each","pack":1},{"name":"tomatoes","query":"salad tomatoes","qty":2,"unit":"each","pack":6}]},{"id":"l-quinoa-salad-with-halloumi","name":"Quinoa Salad with Halloumi","tier":"medium","meal":"lunch","mins":25,"servings":2,"ingredients":[{"name":"quinoa","query":"quinoa 500g","qty":150,"unit":"g","pack":500},{"name":"halloumi","query":"halloumi 225g","qty":225,"unit":"g","pack":225},{"name":"cherry tomatoes","query":"cherry tomatoes 250g","qty":150,"unit":"g","pack":250},{"name":"cucumber","query":"cucumber","qty":1,"unit":"each","pack":1},{"name":"lemons","query":"unwaxed lemons 4 pack","qty":1,"unit":"each","pack":4},{"name":"mint","query":"fresh mint","qty":1,"unit":"pack","pack":1}]},{"id":"l-thai-beef-salad","name":"Thai Beef Salad","tier":"medium","meal":"lunch","mins":30,"servings":2,"ingredients":[{"name":"sirloin steaks","query":"sirloin steak 2 pack","qty":2,"unit":"each","pack":2},{"name":"mixed salad","query":"mixed salad bag","qty":1,"unit":"pack","pack":1},{"name":"cucumber","query":"cucumber","qty":1,"unit":"each","pack":1},{"name":"limes","query":"limes","qty":1,"unit":"each","pack":4},{"name":"fish sauce","query":"fish sauce","qty":1,"unit":"pack","pack":1},{"name":"mint","query":"fresh mint","qty":1,"unit":"pack","pack":1},{"name":"coriander","query":"fresh coriander","qty":1,"unit":"pack","pack":1}]},{"id":"l-spanish-tortilla","name":"Spanish Tortilla","tier":"medium","meal":"lunch","mins":45,"servings":4,"ingredients":[{"name":"eggs","query":"free range eggs 6 pack","qty":6,"unit":"each","pack":6},{"name":"potatoes","query":"maris piper potatoes 2kg","qty":500,"unit":"g","pack":2000},{"name":"onions","query":"brown onions 1kg bag","qty":2,"unit":"each","pack":6}]},{"id":"l-prawn-and-avocado-salad","name":"Prawn and Avocado Salad","tier":"medium","meal":"lunch","mins":15,"servings":2,"ingredients":[{"name":"cooked prawns","query":"cooked king prawns 200g","qty":200,"unit":"g","pack":200},{"name":"avocados","query":"ripe avocados 2 pack","qty":1,"unit":"each","pack":2},{"name":"marie rose sauce","query":"marie rose sauce","qty":1,"unit":"pack","pack":1},{"name":"baby gem lettuce","query":"baby gem lettuce 2 pack","qty":1,"unit":"each","pack":2},{"name":"lemons","query":"unwaxed lemons 4 pack","qty":1,"unit":"each","pack":4}]},{"id":"l-leek-and-potato-soup","name":"Leek and Potato Soup","tier":"medium","meal":"lunch","mins":40,"servings":4,"ingredients":[{"name":"leeks","query":"leeks 2 pack","qty":3,"unit":"each","pack":2},{"name":"potatoes","query":"maris piper potatoes 2kg","qty":500,"unit":"g","pack":2000},{"name":"vegetable stock","query":"vegetable stock cubes","qty":1,"unit":"pack","pack":1},{"name":"single cream","query":"single cream 300ml","qty":100,"unit":"ml","pack":300},{"name":"butter","query":"butter 250g","qty":30,"unit":"g","pack":250}]},{"id":"l-croque-monsieur","name":"Croque Monsieur","tier":"medium","meal":"lunch","mins":30,"servings":2,"ingredients":[{"name":"bread","query":"white bread loaf","qty":4,"unit":"each","pack":18},{"name":"thick cut ham","query":"thick cut ham slices","qty":1,"unit":"pack","pack":1},{"name":"gruyere","query":"gruyere cheese","qty":100,"unit":"g","pack":200},{"name":"butter","query":"butter 250g","qty":40,"unit":"g","pack":250},{"name":"plain flour","query":"plain flour 1.5kg","qty":20,"unit":"g","pack":1500},{"name":"milk","query":"semi skimmed milk 2 pint","qty":200,"unit":"ml","pack":1136},{"name":"dijon mustard","query":"dijon mustard","qty":1,"unit":"pack","pack":1}]},{"id":"l-french-onion-soup","name":"French Onion Soup","tier":"hard","meal":"lunch","mins":90,"servings":4,"ingredients":[{"name":"onions","query":"brown onions 1kg bag","qty":6,"unit":"each","pack":6},{"name":"butter","query":"butter 250g","qty":50,"unit":"g","pack":250},{"name":"beef stock","query":"beef stock cubes","qty":1,"unit":"pack","pack":1},{"name":"white wine","query":"dry white wine 75cl","qty":1,"unit":"pack","pack":1},{"name":"baguette","query":"french baguette","qty":1,"unit":"pack","pack":1},{"name":"gruyere","query":"gruyere cheese","qty":150,"unit":"g","pack":200},{"name":"thyme","query":"fresh thyme","qty":1,"unit":"pack","pack":1}]},{"id":"l-fresh-crab-linguine","name":"Fresh Crab Linguine","tier":"hard","meal":"lunch","mins":30,"servings":2,"ingredients":[{"name":"linguine","query":"linguine 500g","qty":200,"unit":"g","pack":500},{"name":"white crab meat","query":"fresh white crab meat","qty":1,"unit":"pack","pack":1},{"name":"red chillies","query":"red chillies","qty":1,"unit":"each","pack":1},{"name":"garlic","query":"garlic bulb","qty":1,"unit":"pack","pack":1},{"name":"lemons","query":"unwaxed lemons 4 pack","qty":1,"unit":"each","pack":4},{"name":"flat leaf parsley","query":"flat leaf parsley","qty":1,"unit":"pack","pack":1}]},{"id":"l-chicken-liver-parfait","name":"Chicken Liver Parfait","tier":"hard","meal":"lunch","mins":120,"servings":6,"ingredients":[{"name":"chicken livers","query":"chicken livers","qty":400,"unit":"g","pack":500},{"name":"butter","query":"butter 250g","qty":200,"unit":"g","pack":250},{"name":"brandy","query":"brandy","qty":1,"unit":"pack","pack":1},{"name":"shallots","query":"shallots","qty":1,"unit":"pack","pack":1},{"name":"thyme","query":"fresh thyme","qty":1,"unit":"pack","pack":1},{"name":"double cream","query":"double cream 300ml","qty":100,"unit":"ml","pack":300},{"name":"sourdough","query":"sourdough loaf","qty":1,"unit":"pack","pack":1}]},{"id":"l-falafel-mezze-platter","name":"Falafel Mezze Platter","tier":"hard","meal":"lunch","mins":75,"servings":4,"ingredients":[{"name":"chickpeas","query":"chickpeas tin","qty":2,"unit":"each","pack":1},{"name":"ground cumin","query":"ground cumin","qty":1,"unit":"pack","pack":1},{"name":"coriander","query":"fresh coriander","qty":1,"unit":"pack","pack":1},{"name":"tahini","query":"tahini","qty":1,"unit":"pack","pack":1},{"name":"garlic","query":"garlic bulb","qty":1,"unit":"pack","pack":1},{"name":"pitta breads","query":"white pitta breads","qty":1,"unit":"pack","pack":1},{"name":"lemons","query":"unwaxed lemons 4 pack","qty":1,"unit":"each","pack":4},{"name":"plain flour","query":"plain flour 1.5kg","qty":30,"unit":"g","pack":1500}]},{"id":"l-beef-pho","name":"Beef Pho","tier":"hard","meal":"lunch","mins":120,"servings":4,"ingredients":[{"name":"sirloin steak","query":"sirloin steak","qty":300,"unit":"g","pack":300},{"name":"rice noodles","query":"flat rice noodles","qty":200,"unit":"g","pack":250},{"name":"star anise","query":"star anise","qty":1,"unit":"pack","pack":1},{"name":"beef stock","query":"beef stock cubes","qty":1,"unit":"pack","pack":1},{"name":"ginger","query":"root ginger","qty":1,"unit":"pack","pack":1},{"name":"onions","query":"brown onions 1kg bag","qty":2,"unit":"each","pack":6},{"name":"beansprouts","query":"beansprouts","qty":1,"unit":"pack","pack":1},{"name":"limes","query":"limes","qty":2,"unit":"each","pack":4},{"name":"fish sauce","query":"fish sauce","qty":1,"unit":"pack","pack":1},{"name":"coriander","query":"fresh coriander","qty":1,"unit":"pack","pack":1}]},{"id":"l-quiche-lorraine","name":"Quiche Lorraine","tier":"hard","meal":"lunch","mins":120,"servings":6,"ingredients":[{"name":"plain flour","query":"plain flour 1.5kg","qty":250,"unit":"g","pack":1500},{"name":"butter","query":"butter 250g","qty":125,"unit":"g","pack":250},{"name":"eggs","query":"free range eggs 6 pack","qty":5,"unit":"each","pack":6},{"name":"bacon lardons","query":"smoked bacon lardons","qty":1,"unit":"pack","pack":1},{"name":"double cream","query":"double cream 300ml","qty":300,"unit":"ml","pack":300},{"name":"gruyere","query":"gruyere cheese","qty":100,"unit":"g","pack":200}]},{"id":"l-homemade-pork-dumplings","name":"Homemade Pork Dumplings","tier":"hard","meal":"lunch","mins":100,"servings":4,"ingredients":[{"name":"pork mince","query":"pork mince 500g","qty":300,"unit":"g","pack":500},{"name":"plain flour","query":"plain flour 1.5kg","qty":250,"unit":"g","pack":1500},{"name":"spring onions","query":"spring onions","qty":1,"unit":"pack","pack":1},{"name":"ginger","query":"root ginger","qty":1,"unit":"pack","pack":1},{"name":"soy sauce","query":"soy sauce","qty":1,"unit":"pack","pack":1},{"name":"sesame oil","query":"sesame oil","qty":1,"unit":"pack","pack":1},{"name":"rice vinegar","query":"rice vinegar","qty":1,"unit":"pack","pack":1}]},{"id":"l-scotch-eggs","name":"Scotch Eggs","tier":"hard","meal":"lunch","mins":60,"servings":4,"ingredients":[{"name":"eggs","query":"free range eggs 6 pack","qty":5,"unit":"each","pack":6},{"name":"sausage meat","query":"pork sausage meat 454g","qty":454,"unit":"g","pack":454},{"name":"panko breadcrumbs","query":"panko breadcrumbs","qty":100,"unit":"g","pack":200},{"name":"plain flour","query":"plain flour 1.5kg","qty":50,"unit":"g","pack":1500},{"name":"english mustard","query":"english mustard","qty":1,"unit":"pack","pack":1}]},{"id":"l-chicken-shawarma-flatbreads","name":"Chicken Shawarma Flatbreads","tier":"hard","meal":"lunch","mins":90,"servings":4,"ingredients":[{"name":"chicken thigh fillets","query":"boneless chicken thigh fillets","qty":600,"unit":"g","pack":650},{"name":"plain flour","query":"plain flour 1.5kg","qty":300,"unit":"g","pack":1500},{"name":"natural yoghurt","query":"natural yoghurt 500g","qty":1,"unit":"pack","pack":1},{"name":"ground cumin","query":"ground cumin","qty":1,"unit":"pack","pack":1},{"name":"smoked paprika","query":"smoked paprika","qty":1,"unit":"pack","pack":1},{"name":"garlic","query":"garlic bulb","qty":1,"unit":"pack","pack":1},{"name":"lemons","query":"unwaxed lemons 4 pack","qty":1,"unit":"each","pack":4},{"name":"cucumber","query":"cucumber","qty":1,"unit":"each","pack":1},{"name":"tomatoes","query":"salad tomatoes","qty":2,"unit":"each","pack":6}]},{"id":"l-goat-s-cheese-and-caramelised-onion-tart","name":"Goat's Cheese and Caramelised Onion Tart","tier":"hard","meal":"lunch","mins":70,"servings":4,"ingredients":[{"name":"puff pastry","query":"ready rolled puff pastry","qty":1,"unit":"pack","pack":1},{"name":"goats cheese","query":"goats cheese log","qty":150,"unit":"g","pack":150},{"name":"onions","query":"brown onions 1kg bag","qty":4,"unit":"each","pack":6},{"name":"balsamic vinegar","query":"balsamic vinegar","qty":1,"unit":"pack","pack":1},{"name":"thyme","query":"fresh thyme","qty":1,"unit":"pack","pack":1},{"name":"eggs","query":"free range eggs 6 pack","qty":1,"unit":"each","pack":6},{"name":"rocket","query":"wild rocket 60g","qty":60,"unit":"g","pack":60}]}];
+const ESSENTIALS = [
+  ["Household", [
+    ["tp", "Toilet roll", "toilet tissue 9 pack"], ["kr", "Kitchen roll", "kitchen roll 2 pack"],
+    ["bb", "Bin bags", "bin bags"], ["wu", "Washing-up liquid", "washing up liquid"],
+    ["dt", "Dishwasher tablets", "dishwasher tablets"], ["ld", "Laundry liquid / capsules", "laundry capsules", "e.g. Persil bio"],
+    ["fc", "Fabric conditioner", "fabric conditioner"], ["as", "Antibacterial spray", "antibacterial kitchen spray"],
+    ["sp", "Sponges / scourers", "sponge scourers"], ["fo", "Foil / cling film", "kitchen foil"],
+  ]],
+  ["Baby", [
+    ["nap", "Nappies", "nappies", "e.g. Pampers size 5"], ["bw", "Baby wipes", "baby wipes"], ["ns", "Nappy bags", "nappy sacks"],
+  ]],
+  ["Personal care", [
+    ["tpa", "Toothpaste", "toothpaste", "e.g. Sensodyne Pronamel"], ["tb", "Toothbrushes", "toothbrush"], ["sg", "Shower gel", "shower gel"],
+    ["sh", "Shampoo", "shampoo", "e.g. Head & Shoulders"], ["de", "Deodorant", "deodorant", "e.g. Right Guard"], ["hw", "Hand wash", "hand wash"], ["ft", "Tissues", "facial tissues"],
+  ]],
+  ["Weekly food", [
+    ["mk", "Milk", "semi skimmed milk 4 pint", "e.g. skimmed, 2 pint, oat"], ["br", "Bread", "wholemeal bread loaf", "e.g. Warburtons seeded"], ["eg", "Eggs", "free range eggs 12"],
+    ["bu", "Butter", "butter 250g"], ["ba", "Bananas", "bananas 5 pack"], ["ap", "Apples", "apples 6 pack"],
+    ["po", "Potatoes", "maris piper potatoes 2kg"], ["on", "Onions", "brown onions 1kg bag"], ["ca", "Carrots", "carrots 1kg"],
+    ["tea", "Tea bags", "tea bags 80"], ["co", "Coffee", "instant coffee"], ["ce", "Cereal", "breakfast cereal"],
+    ["oj", "Orange juice", "orange juice 1l"], ["ch", "Cheese", "mature cheddar 350g"], ["yo", "Yoghurt", "natural yoghurt 500g"],
+  ]],
+].flatMap(([cat, items]) => items.map(([id, name, query, ph]) => ({ id, cat, name, query, ph })));
+/*
+ * Dietary tags worked out from ingredient names (so your own recipes get tagged too).
+ * A guide only: it can't see inside packaged products, so always check labels.
+ * Conservative: when an ingredient is commonly NOT suitable (e.g. parmesan, soy sauce) it counts against the tag.
+ */
+const Diet = (() => {
+  const re = (words) => new RegExp("\\b(" + words.join("|") + ")", "i");
+
+  const MEAT = re(["chicken", "beef", "lamb", "pork", "bacon", "ham\\b", "ham hock", "gammon", "sausage", "chorizo", "pepperoni", "mince\\b",
+    "steak", "duck", "turkey", "pancetta", "lardons", "prosciutto", "parma", "brisket", "ribs", "burger", "liver", "meatball", "venison", "veal",
+    "bouillon", "gelatin"]);
+  const FISH = re(["fish", "cod\\b", "haddock", "salmon", "tuna", "prawn", "shrimp", "mussel", "crab", "scallop", "seafood", "anchov", "squid",
+    "worcestershire", "caesar", "pad thai sauce", "green curry paste", "red curry paste", "massaman", "oyster"]);
+  const NOT_VEG_CHEESE = re(["parmesan", "gruyere", "pesto"]);      // traditionally made with animal rennet
+  const EGG = re(["egg", "mayo", "hollandaise", "brioche", "tagliatelle", "pappardelle", "marie rose", "egg noodle", "ramen", "yolk"]);
+  const DAIRY = re(["milk", "cheese", "cheddar", "mozzarella", "parmesan", "feta", "halloumi", "gruyere", "ricotta", "mascarpone", "cream",
+    "butter", "buttermilk", "yoghurt", "yogurt", "tzatziki", "hollandaise", "pesto", "caesar", "white sauce", "brioche", "naan", "croissant",
+    "gravy granules", "custard"]);
+  const NOT_DAIRY = re(["coconut milk", "coconut cream", "(oat|almond|soy|soya|rice) milk", "peanut butter", "almond butter", "nut butter", "butter beans?", "butternut", "cocoa butter", "dairy.?free"]);
+  const HONEY = re(["honey"]);
+  const GLUTEN = re(["penne", "fusilli", "rigatoni", "spaghetti", "linguine", "tagliatelle", "macaroni", "pappardelle", "lasagne", "pasta",
+    "noodle", "ramen", "flour", "bread", "loaf", "baguette", "bun\\b", "buns\\b", "rolls?\\b", "wrap", "tortilla", "naan", "pitta", "flatbread",
+    "muffin", "brioche", "sourdough", "croissant", "crusty", "sponge finger", "panko", "breadcrumb", "pastry", "gnocchi", "couscous", "oats",
+    "cereal", "soy sauce", "teriyaki", "katsu", "gravy granules", "worcestershire", "sausage", "dumpling", "fish cake", "biscuit"]);
+  const GLUTEN_FREE_EXCEPTIONS = re(["rice noodle", "rice flour", "gluten.?free"]);
+
+  const text = (r) => r.ingredients.map((i) => `${i.name} ${i.query || ""}`).join(" | ").toLowerCase();
+
+  function classify(r) {
+    // test ingredient by ingredient so one ingredient's words can't mix with another's
+    let meat = false, fish = false, rennet = false, egg = false, dairy = false, honey = false, gluten = false;
+    for (const i of r.ingredients) {
+      const t = `${i.name} ${i.query || ""}`.toLowerCase();
+      if (MEAT.test(t)) meat = true;
+      if (FISH.test(t)) fish = true;
+      if (NOT_VEG_CHEESE.test(t)) rennet = true;
+      if (EGG.test(t)) egg = true;
+      if (DAIRY.test(t) && !NOT_DAIRY.test(t)) dairy = true;
+      if (HONEY.test(t)) honey = true;
+      if (GLUTEN.test(t) && !GLUTEN_FREE_EXCEPTIONS.test(t)) gluten = true;
+    }
+    const vegetarian = !meat && !fish && !rennet;
+    return {
+      vegetarian,
+      vegan: vegetarian && !egg && !dairy && !honey,
+      glutenFree: !gluten,
+      dairyFree: !dairy,
+      quick: r.mins > 0 && r.mins <= 30,
+    };
+  }
+
+  const cache = new WeakMap();
+  function tags(r) {
+    let c = cache.get(r.ingredients);
+    if (!c || c.mins !== r.mins) { c = { ...classify(r), mins: r.mins }; cache.set(r.ingredients, c); }
+    return c;
+  }
+
+  return { classify, tags, text };
+})();
+
+
+
+const MEAL_LABEL = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner" };
+const TIER_LABEL = { easy: "Easy", medium: "Medium", hard: "Hard", custom: "Mine" };
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const FILTERS = [["vegetarian", "Veggie"], ["vegan", "Vegan"], ["glutenFree", "Gluten-free"], ["dairyFree", "Dairy-free"], ["quick", "≤30 min"]];
+const STAR = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 2.6l2.85 6 6.55.85-4.8 4.55 1.25 6.5L12 17.3 6.15 20.5l1.25-6.5L2.6 9.45l6.55-.85z"/></svg>';
+const ICONS = {
+  meals: '<svg viewBox="0 0 24 24"><path d="M5 3v8a3 3 0 0 0 3 3v7M8 3v6M11 3v8a3 3 0 0 1-3 3M17 21V3c-2 1-3.5 4-3.5 8h3.5"/></svg>',
+  week: '<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
+  shop: '<svg viewBox="0 0 24 24"><path d="M3 4h2.5l2.2 10.5h9.6L19.5 7H6.3"/><circle cx="9" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></svg>',
+  ess: '<svg viewBox="0 0 24 24"><path d="M4 8l8-4 8 4v9l-8 4-8-4zM4 8l8 4 8-4M12 12v9"/></svg>',
+  more: '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg>',
+};
+const NAV = [["meals", "Meals"], ["week", "Week"], ["shop", "Shop"], ["ess", "Extras"], ["more", "More"]];
+
+// ---------- state ----------
+const blank = () => ({
+  selected: [], recipeSkip: [], swaps: [], skipped: [], ticked: [], extra: [], custom: [], favs: [], ess: [], essNotes: {}, essWeekly: [],
+  essCustom: [], pantry: [], pantryBuy: [], plans: {}, filters: [], ui: { meal: "dinner", tier: "easy", sort: "az", tab: "meals" }, ts: 0,
+});
+let S = blank();
+const selected = new Map(), recipeSkip = new Map(), swaps = new Map(), skipped = new Set(), ticked = new Set(), favs = new Set(),
+  essSel = new Map(), weekly = new Map(), pantry = new Set(), pantryBuy = new Set(), filters = new Set();
+let custom = [], extra = [], essCustom = [], essNotes = {}, plans = {}, ui = { meal: "dinner", tier: "easy", sort: "az", tab: "meals" };
+let query = "", planWeek = 0, expanded = new Set(), ccMeal = "all";
+
+function hydrate(o) {
+  const d = Object.assign(blank(), o || {});
+  selected.clear(); recipeSkip.clear(); swaps.clear(); skipped.clear(); ticked.clear(); favs.clear(); essSel.clear(); weekly.clear(); pantry.clear(); pantryBuy.clear(); filters.clear();
+  custom = (d.custom || []).map((r) => ({ ...r, meal: r.meal || "dinner" })); extra = d.extra || []; essCustom = d.essCustom || []; essNotes = d.essNotes || {};
+  plans = d.plans || {}; ui = Object.assign({ meal: "dinner", tier: "easy", sort: "az", tab: "meals" }, d.ui || {});
+  d.selected.forEach(([id, n]) => byId(id) && selected.set(id, n));
+  d.recipeSkip.forEach(([id, ks]) => byId(id) && recipeSkip.set(id, new Set(ks)));
+  d.swaps.forEach(([id, es]) => byId(id) && swaps.set(id, new Map(es)));
+  d.skipped.forEach((k) => skipped.add(k)); d.ticked.forEach((k) => ticked.add(k)); d.favs.forEach((k) => favs.add(k));
+  d.ess.forEach(([id, n]) => essSel.set(id, n)); d.essWeekly.forEach(([id, n]) => weekly.set(id, n));
+  d.pantry.forEach((k) => pantry.add(k)); d.pantryBuy.forEach((k) => pantryBuy.add(k)); d.filters.forEach((k) => filters.add(k));
+  S.ts = d.ts || 0;
+}
+function snapshot() {
+  return { selected: [...selected], recipeSkip: [...recipeSkip].map(([i, s]) => [i, [...s]]), swaps: [...swaps].map(([i, m]) => [i, [...m]]),
+    skipped: [...skipped], ticked: [...ticked], extra, custom, favs: [...favs], ess: [...essSel], essNotes, essWeekly: [...weekly], essCustom,
+    pantry: [...pantry], pantryBuy: [...pantryBuy], plans, filters: [...filters], ui, ts: Date.now() };
+}
+
+// ---------- storage: this browser always; synced across your devices when signed in ----------
+const LS = "mealcart-planner-v1";
+let dbDoc = null, saveTimer = null, lastSaved = 0;
+const setSync = (t) => { const e = document.getElementById("sync"); if (e) e.textContent = t; };
+function persist() {
+  const snap = snapshot(); S.ts = snap.ts;
+  try { localStorage.setItem(LS, JSON.stringify(snap)); } catch (_) {}
+  if (dbDoc) { clearTimeout(saveTimer); setSync("Saving…"); saveTimer = setTimeout(async () => {
+    try { await dbDoc.set({ json: JSON.stringify(snap), ts: snap.ts }); lastSaved = snap.ts; setSync("Synced"); } catch (_) { setSync("Saved on this device"); } }, 700); }
+  else setSync("Saved on this device");
+}
+async function loadAll() {
+  let local = null;
+  try { local = JSON.parse(localStorage.getItem(LS) || "null"); } catch (_) {}
+  hydrate(local);
+  try {
+    const [db, user] = await Promise.all([window.claude?.use("db"), window.claude?.use("user")]);
+    const id = user && (await user.id());
+    if (db && id) {
+      dbDoc = db.doc("data/users/" + id + "/planner");
+      await pullRemote();
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) pullRemote(true); });
+    }
+  } catch (_) { dbDoc = null; }
+  setSync(dbDoc ? "Synced" : "Saved on this device");
+}
+async function pullRemote(rerender) {
+  if (!dbDoc) return;
+  try {
+    const snap = await dbDoc.get();
+    const r = snap.exists && snap.data();
+    if (r && r.json && (r.ts || 0) > (S.ts || 0)) {
+      hydrate(JSON.parse(r.json));
+      try { localStorage.setItem(LS, r.json); } catch (_) {}
+      if (rerender) render();
+    } else if (!r || (r.ts || 0) < (S.ts || 0)) { if (S.ts) persist(); }
+  } catch (_) {}
+}
+
+// ---------- helpers ----------
+const $ = (id) => document.getElementById(id);
+const all = () => RECIPES.concat(custom);
+const byId = (id) => all().find((r) => r.id === id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const ingKey = (i) => i.query;
+const pantryName = (i) => String(i.name || "").trim().toLowerCase();
+const inPantry = (i) => pantry.has(pantryName(i)) && !pantryBuy.has(pantryName(i));
+const fmtNum = (n) => String(Math.round(n * 10) / 10);
+function fmtQty(i, scale) { const q = i.qty * scale; if (i.unit === "each" || i.unit === "pack") return q === 1 && i.unit === "pack" ? "1 pack" : "× " + fmtNum(q); return fmtNum(q) + " " + i.unit; }
+function toast(t) { const e = $("toast"); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (e.hidden = true), 2600); }
+const weekStart = (ts) => { const d = new Date(ts); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); };
+const shiftWeek = (ws, n) => { const d = new Date(ws); d.setDate(d.getDate() + 7 * n); return weekStart(d.getTime()); };
+const fmtDay = (ts) => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+const passes = (r) => { if (!filters.size) return true; const t = Diet.tags(r); return [...filters].every((f) => t[f]); };
+
+// Everyday dried pasta shapes and everyday rices can stand in for each other.
+const FAMILIES = [
+  { id: "pasta", re: /^(penne|fusilli|rigatoni|spaghetti|linguine|tagliatelle|macaroni|farfalle|conchiglie)( pasta)?$/i },
+  { id: "rice", re: /^(basmati|jasmine|long[- ]grain)( rice)?$/i },
+];
+const famOf = (i) => { const n = String(i.name || "").trim(); const f = FAMILIES.find((x) => x.re.test(n)); return f && i.unit === "g" ? f.id : null; };
+const swapOf = (id, i) => (swaps.get(id) || new Map()).get(ingKey(i)) || null;
+
+// ---------- shopping list ----------
+const essList = () => ESSENTIALS.concat(essCustom.map((c) => ({ ...c, cat: "My items" })));
+const essDisplay = (e) => { const n = (essNotes[e.id] || "").trim(); return { name: n ? e.name + " (" + n + ")" : e.name, query: n ? e.query + " " + n : e.query }; };
+function buildItems() {
+  const totals = new Map();
+  for (const [id, sv] of selected) {
+    const r = byId(id); if (!r) continue;
+    const scale = sv / r.servings, skip = recipeSkip.get(id);
+    for (const ing of r.ingredients) {
+      if (skip && skip.has(ingKey(ing))) continue;
+      if (inPantry(ing)) continue;
+      const sw = swapOf(id, ing);
+      const eff = sw ? { ...ing, name: sw.name, query: sw.query, pack: sw.pack, unit: sw.unit } : ing;
+      const key = ingKey(eff);
+      const t = totals.get(key) || { ...eff, need: 0, from: [] };
+      t.need += ing.qty * scale; if (!t.from.includes(r.name)) t.from.push(r.name);
+      totals.set(key, t);
+    }
+  }
+  for (const [id, qty] of essSel) {
+    const e = essList().find((x) => x.id === id); if (!e) continue;
+    const { name, query } = essDisplay(e);
+    totals.set("ess:" + id, { name, query, qty: 0, unit: "each", pack: 1, need: qty, from: [], ess: e.cat });
+  }
+  for (const x of extra) totals.set("x:" + x.id, { name: x.name, query: x.name, qty: 0, unit: "each", pack: 1, need: x.qty || 1, from: [], extra: true });
+  return [...totals.entries()].map(([key, t]) => ({ key, name: t.name, query: t.query, unit: t.unit, pack: t.pack, need: t.need, from: t.from, ess: t.ess, extra: t.extra,
+    count: Math.max(1, Math.ceil(t.need / t.pack - 1e-9)) }));
+}
+const AISLES = [
+  ["Fruit & veg", /onion|garlic|potato|carrot|pepper|tomato|cucumber|lettuce|salad|rocket|spinach|broccoli|cabbage|mushroom|courgette|aubergine|avocado|lemon|lime|apple|banana|berr|grape|orange|mango|pineapple|spring onion|celery|leek|squash|sweet potato|beans?\b.*(green|fine)|green beans|peas\b(?!.*frozen)|chilli|ginger|herb|coriander|parsley|basil|mint|thyme|rosemary|dill|chive|shallot|beansprout|sweetcorn|kale|pak choi|cauliflower|asparagus|bananas|apples/i],
+  ["Meat & fish", /chicken|beef|lamb|pork|bacon|ham\b|sausage|chorizo|mince|steak|duck|turkey|pancetta|salmon|cod\b|haddock|tuna|prawn|fish|seafood|mussel|crab|burger|meatball|brisket|ribs|gammon|pepperoni|salami|squid/i],
+  ["Dairy & eggs", /milk|cheese|cheddar|mozzarella|parmesan|feta|halloumi|ricotta|mascarpone|cream|butter\b|yoghurt|yogurt|egg|crème|creme|soured/i],
+  ["Bakery", /bread|loaf|bun\b|buns|roll|wrap|tortilla|naan|pitta|baguette|bagel|crumpet|muffin|brioche|flatbread|croissant|toast|pancake/i],
+  ["Frozen", /frozen|ice cream/i],
+  ["Pasta, rice & dry", /pasta|penne|fusilli|rigatoni|spaghetti|linguine|tagliatelle|macaroni|pappardelle|lasagne|noodle|rice|couscous|oats|cereal|flour|breadcrumb|panko|sugar|lentil|quinoa|bulgur|granola|polenta|cornflour|baking|tea bags|coffee/i],
+  ["Tins, jars & sauces", /tin\b|tins\b|tinned|passata|puree|paste|sauce|stock|pesto|chopped tomatoes|beans|chickpea|kidney|coconut milk|olive|jar|mayo|ketchup|mustard|vinegar|oil\b|honey|jam|peanut|syrup|mirin|miso|soy|curry|dressing|nori|tuna/i],
+  ["Herbs, spices & drinks", /spice|paprika|cumin|garam|cinnamon|nutmeg|seasoning|saffron|star anise|wine|juice|water|cola|beer|cider/i],
+];
+function aisleOf(it) {
+  if (it.ess === "Household" || it.ess === "Baby" || it.ess === "Personal care") return "Household & baby";
+  if (it.extra) return "Other";
+  // order matters: frozen before veg so "frozen peas" lands in Frozen; bakery before meat so "burger buns" are bread
+  const order = ["Frozen", "Bakery", "Dairy & eggs", "Meat & fish", "Pasta, rice & dry", "Tins, jars & sauces", "Fruit & veg", "Herbs, spices & drinks"];
+  for (const t of [it.name.toLowerCase(), (it.name + " " + (it.query || "")).toLowerCase()])   // the name first, then the search text
+    for (const n of order) if (AISLES.find((a) => a[0] === n)[1].test(t)) return n;
+  return "Other";
+}
+const AISLE_ORDER = ["Fruit & veg", "Bakery", "Meat & fish", "Dairy & eggs", "Frozen", "Pasta, rice & dry", "Tins, jars & sauces", "Herbs, spices & drinks", "Household & baby", "Other"];
+
+function leftovers() {
+  const m = new Map();
+  for (const it of buildItems()) {
+    if (skipped.has(it.key) || it.extra || it.ess) continue;
+    const left = it.count * it.pack - it.need;
+    const worth = it.unit === "g" || it.unit === "ml" ? left >= it.pack * 0.25 - 1e-9 : it.pack > 1 && left >= 1 - 1e-9;
+    if (worth) m.set(it.key, { ...it, left });
+  }
+  return m;
+}
+function suggestions() {
+  const lo = leftovers(); if (!lo.size) return { lo, list: [] };
+  const list = [];
+  for (const r of all()) {
+    if (selected.has(r.id)) continue;
+    if (ccMeal !== "all" && r.meal !== ccMeal) continue;
+    if (!passes(r)) continue;
+    let best = null;
+    for (let sv = r.servings; sv >= Math.max(1, Math.ceil(r.servings / 2)); sv--) {
+      const scale = sv / r.servings, used = [], extraI = [], taken = new Set();
+      for (const ing of r.ingredients) {
+        let l = lo.get(ingKey(ing)), swap = false;
+        if (!(l && l.left >= ing.qty * scale - 1e-9)) {
+          const fam = famOf(ing);
+          l = fam ? [...lo.values()].find((x) => !taken.has(x.key) && famOf(x) === fam && x.unit === ing.unit && x.left >= ing.qty * scale - 1e-9) : null;
+          swap = !!l;
+        }
+        if (l) { taken.add(l.key); used.push({ ing, l, swap }); }
+        else if (!skipped.has(ingKey(ing)) && !inPantry(ing)) extraI.push(ing);
+      }
+      if (!used.length) continue;
+      const score = used.length / (used.length + extraI.length);
+      if (!best || score > best.score + 1e-9) best = { r, used, extra: extraI, score, servings: sv };
+    }
+    if (best) list.push(best);
+  }
+  list.sort((a, b) => b.score - a.score || a.extra.length - b.extra.length || b.used.length - a.used.length || a.r.name.localeCompare(b.r.name));
+  return { lo, list };
+}
+
+// ---------- planner data ----------
+const dayList = (ws, d, create) => {
+  const k = String(ws);
+  if (!plans[k]) { if (!create) return []; plans[k] = {}; }
+  if (!Array.isArray(plans[k][d])) { if (!create) return []; plans[k][d] = []; }
+  return plans[k][d];
+};
+const planCount = (ws) => [0, 1, 2, 3, 4, 5, 6].reduce((a, d) => a + dayList(ws, d).filter((e) => byId(e.id)).length, 0);
+
+// ---------- chrome: nav + header ----------
+function renderNav() {
+  const nav = $("nav"); nav.innerHTML = "";
+  const items = buildItems();
+  const left = items.filter((i) => !skipped.has(i.key) && !ticked.has(i.key)).length;
+  for (const [id, label] of NAV) {
+    const b = el("button"); b.type = "button"; b.setAttribute("aria-selected", String(ui.tab === id));
+    b.innerHTML = ICONS[id]; b.append(label);
+    if (id === "shop") { const bd = el("span", "badge", left ? String(left) : ""); b.append(bd); }
+    if (id === "meals" && selected.size) { b.append(el("span", "badge", String(selected.size))); }
+    b.addEventListener("click", () => { ui.tab = id; persist(); render(); window.scrollTo(0, 0); });
+    nav.append(b);
+  }
+}
+
+function render() {
+  const hx = $("hextra"); hx.innerHTML = ""; hx.hidden = true;
+  const main = $("main"); main.innerHTML = "";
+  ({ meals: viewMeals, week: viewWeek, shop: viewShop, ess: viewEss, more: viewMore })[ui.tab](main, hx);
+  renderNav();
+}
+// re-render keeping scroll
+function rr() { const y = window.scrollY; render(); window.scrollTo(0, y); }
+
+// ---------- Meals ----------
+function recipeRows() {
+  let rows;
+  if (ui.tier === "favs") rows = all().filter((r) => favs.has(r.id));
+  else if (ui.tier === "picked") rows = all().filter((r) => selected.has(r.id));
+  else rows = all().filter((r) => r.meal === ui.meal && r.tier === ui.tier);
+  const q = query.trim().toLowerCase();
+  const m = (r) => passes(r) && (!q || r.name.toLowerCase().includes(q) || r.ingredients.some((i) => i.name.toLowerCase().includes(q)));
+  let out = rows.filter(m);
+  if (q && !out.length && ui.tier !== "favs" && ui.tier !== "picked") out = all().filter(m);
+  out.sort((a, b) => ui.sort === "quick" ? (a.mins || 999) - (b.mins || 999) || a.name.localeCompare(b.name)
+    : ui.sort === "slow" ? (b.mins || 0) - (a.mins || 0) || a.name.localeCompare(b.name) : a.name.localeCompare(b.name));
+  return out;
+}
+function segButtons(parent, cls, pairs, cur, on) {
+  const s = el("div", "seg " + cls);
+  s.setAttribute("role", "tablist");
+  for (const [v, label] of pairs) {
+    const b = el("button", null, label); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", String(cur === v));
+    b.addEventListener("click", () => on(v)); s.append(b);
+  }
+  parent.append(s);
+}
+function viewMeals(main) {
+  const hx = main;   // controls scroll with the list so the phone screen isn't eaten by a tall sticky header
+  segButtons(hx, "meal", Object.entries(MEAL_LABEL), ui.meal, (v) => { ui.meal = v; if (["favs", "picked"].includes(ui.tier)) ui.tier = "easy"; persist(); render(); });
+  segButtons(hx, "", [["easy", "Easy"], ["medium", "Medium"], ["hard", "Hard"], ["custom", "Mine"], ["favs", "★"], ["picked", "Picked" + (selected.size ? " (" + selected.size + ")" : "")]],
+    ui.tier, (v) => { ui.tier = v; persist(); render(); });
+  const tools = el("div", "tools");
+  const q = el("input"); q.type = "text"; q.id = "q"; q.placeholder = "Search meals or ingredients"; q.value = query; q.setAttribute("aria-label", "Search");
+  q.addEventListener("input", () => { query = q.value; renderRecipes(); });
+  const so = el("select"); so.id = "sort"; so.setAttribute("aria-label", "Sort");
+  [["az", "A–Z"], ["quick", "Quickest"], ["slow", "Slowest"]].forEach(([v, l]) => { const o = new Option(l, v); o.selected = ui.sort === v; so.append(o); });
+  so.addEventListener("change", () => { ui.sort = so.value; persist(); renderRecipes(); });
+  tools.append(q, so); hx.append(tools);
+  const chips = el("div", "chips");
+  for (const [k, l] of FILTERS) {
+    const c = el("button", "chip", l); c.type = "button"; c.setAttribute("aria-pressed", String(filters.has(k)));
+    c.addEventListener("click", () => { filters.has(k) ? filters.delete(k) : filters.add(k); persist(); render(); });
+    chips.append(c);
+  }
+  hx.append(chips);
+  const bar = el("div", "hrow"); bar.style.marginTop = "6px";
+  const nw = el("button", "link", "+ New recipe"); nw.type = "button"; nw.addEventListener("click", () => openEditor(null));
+  bar.append(nw); hx.append(bar);
+  const ul = el("ul", "recipes"); ul.id = "recipes"; main.append(ul);
+  renderRecipes();
+}
+function renderRecipes() {
+  const ul = $("recipes"); if (!ul) return; ul.innerHTML = "";
+  const rows = recipeRows();
+  if (!rows.length) {
+    const e = el("p", "empty", ui.tier === "favs" ? "No favourites yet. Tap the star on any meal." : ui.tier === "picked" ? "Nothing picked yet. Tick meals on the other tabs."
+      : ui.tier === "custom" && !query ? "No recipes of your own yet. Use “+ New recipe”." : filters.size ? "No meals match your filters. Try turning one off." : "No meals match.");
+    ul.append(e); return;
+  }
+  rows.forEach((r) => ul.append(recipeLi(r)));
+}
+function recipeLi(r) {
+  const li = el("li"); const on = selected.has(r.id); li.classList.toggle("on", on);
+  const row = el("div", "rrow");
+  const cb = el("input"); cb.type = "checkbox"; cb.checked = on; cb.setAttribute("aria-label", "Pick " + r.name);
+  const g = el("div", "grow"); g.style.cursor = "pointer";
+  g.append(el("div", "rname", r.name));
+  const m = el("div", "rmeta"); const mn = r.mins;
+  m.append(el("span", null, (mn ? (mn >= 90 ? Math.floor(mn / 60) + "h" + (mn % 60 ? " " + (mn % 60) + "m" : "") : mn + " min") + " · " : "") + r.ingredients.length + " ingredients"));
+  const t = Diet.tags(r);
+  if (t.vegan) m.append(el("span", "dt", "Vegan")); else if (t.vegetarian) m.append(el("span", "dt", "Veggie"));
+  if (t.glutenFree) m.append(el("span", "dt", "GF")); if (t.dairyFree) m.append(el("span", "dt", "DF"));
+  if (ui.tier === "favs" || ui.tier === "picked" || query) m.append(el("span", null, MEAL_LABEL[r.meal] + " · " + TIER_LABEL[r.tier]));
+  g.append(m);
+  const star = el("button", "star"); star.type = "button"; star.innerHTML = STAR; star.setAttribute("aria-pressed", String(favs.has(r.id)));
+  star.setAttribute("aria-label", favs.has(r.id) ? "Remove from favourites" : "Add to favourites");
+  star.addEventListener("click", () => { favs.has(r.id) ? favs.delete(r.id) : favs.add(r.id); persist(); if (ui.tier === "favs") renderRecipes(); else { star.setAttribute("aria-pressed", String(favs.has(r.id))); } });
+  const toggle = () => {
+    if (selected.has(r.id)) { selected.delete(r.id); recipeSkip.delete(r.id); swaps.delete(r.id); expanded.delete(r.id); }
+    else { selected.set(r.id, r.servings); expanded.add(r.id); }
+    persist(); if (ui.tier === "picked") renderRecipes(); else li.replaceWith(recipeLi(r)); renderNav();
+  };
+  cb.addEventListener("change", toggle); g.addEventListener("click", toggle);
+  row.append(cb, g, star); li.append(row);
+  if (on) {
+    const ex = el("div", "rextra");
+    const r2 = el("div", "row2");
+    const sv = selected.get(r.id);
+    const st = el("div", "stepper"); const dn = el("button", null, "−"), up = el("button", null, "+"), n = el("span", null, String(sv));
+    dn.type = up.type = "button"; dn.setAttribute("aria-label", "Fewer servings"); up.setAttribute("aria-label", "More servings");
+    const setSv = (v) => { selected.set(r.id, Math.max(1, Math.min(24, v))); persist(); li.replaceWith(recipeLi(r)); renderNav(); };
+    dn.addEventListener("click", () => setSv(selected.get(r.id) - 1)); up.addEventListener("click", () => setSv(selected.get(r.id) + 1));
+    st.append(dn, n, up); r2.append(el("span", "rmeta", "Servings"), st);
+    const plan = el("select"); plan.setAttribute("aria-label", "Plan for a day"); plan.append(new Option("Plan for…", ""));
+    DAYS.forEach((d, i) => plan.append(new Option(d, String(i))));
+    plan.addEventListener("change", () => { if (plan.value === "") return; const ws = planWeek || weekStart(Date.now());
+      dayList(ws, Number(plan.value), true).push({ id: r.id, servings: selected.get(r.id) }); persist(); toast(r.name + " planned for " + DAYS[Number(plan.value)]); plan.value = ""; });
+    r2.append(plan);
+    const tg = el("button", "link", expanded.has(r.id) ? "Hide ingredients" : "Ingredients"); tg.type = "button";
+    tg.addEventListener("click", () => { expanded.has(r.id) ? expanded.delete(r.id) : expanded.add(r.id); li.replaceWith(recipeLi(r)); });
+    r2.append(tg); ex.append(r2);
+    if (expanded.has(r.id)) ex.append(ingList(r, li));
+    li.append(ex);
+  }
+  return li;
+}
+function ingList(r, li) {
+  const ul = el("ul", "ings"); const scale = selected.get(r.id) / r.servings; const skip = recipeSkip.get(r.id) || new Set();
+  r.ingredients.forEach((ing) => {
+    const pn = pantryName(ing), pItem = pantry.has(pn);
+    const off = pItem ? !pantryBuy.has(pn) : skip.has(ingKey(ing));
+    const row = el("li"); row.classList.toggle("off", off);
+    const cb = el("input"); cb.type = "checkbox"; cb.checked = !off; cb.setAttribute("aria-label", ing.name);
+    cb.addEventListener("change", () => {
+      if (pItem) { cb.checked ? pantryBuy.add(pn) : pantryBuy.delete(pn); }
+      else { let s = recipeSkip.get(r.id); if (!s) recipeSkip.set(r.id, (s = new Set())); cb.checked ? s.delete(ingKey(ing)) : s.add(ingKey(ing)); if (!s.size) recipeSkip.delete(r.id); }
+      row.classList.toggle("off", !cb.checked); persist(); renderNav();
+    });
+    const sw = swapOf(r.id, ing);
+    const nm = el("span", "iname", sw ? sw.name : ing.name);
+    if (sw) { nm.append(el("span", "tag", "instead of " + ing.name));
+      const u = el("button", "link", "undo"); u.type = "button"; u.addEventListener("click", () => { const m = swaps.get(r.id); m.delete(ingKey(ing)); if (!m.size) swaps.delete(r.id); persist(); li.replaceWith(recipeLi(r)); renderNav(); }); nm.append(u); }
+    if (pItem) nm.append(el("span", "tag", "pantry"));
+    row.append(cb, nm, el("span", "iqty", fmtQty(ing, scale))); ul.append(row);
+  });
+  if (r.tier === "custom") {
+    const li2 = el("li"); const ed = el("button", "link", "Edit recipe"), de = el("button", "link danger", "Delete recipe"); ed.type = de.type = "button";
+    ed.addEventListener("click", () => openEditor(r.id));
+    de.addEventListener("click", () => { if (de.dataset.sure) { custom = custom.filter((x) => x.id !== r.id); selected.delete(r.id); recipeSkip.delete(r.id); favs.delete(r.id); persist(); render(); } else { de.dataset.sure = 1; de.textContent = "Tap again to delete"; } });
+    li2.append(ed, de); ul.append(li2);
+  }
+  return ul;
+}
+
+// ---------- sheet + editor ----------
+function openSheet(title, build) {
+  const s = $("sheet"); s.innerHTML = ""; s.hidden = false;
+  const box = el("div", "box"); box.setAttribute("role", "dialog"); box.setAttribute("aria-label", title);
+  const top = el("div", "hrow"); top.append(el("h1", null, title));
+  const x = el("button", "link", "Close"); x.type = "button"; x.addEventListener("click", closeSheet); top.append(x);
+  const sb = el("div", "sb"); box.append(top, sb); s.append(box); build(sb, box);
+  s.onclick = (e) => { if (e.target === s) closeSheet(); };
+}
+function closeSheet() { const s = $("sheet"); s.hidden = true; s.innerHTML = ""; }
+function openPicker(onPick) {
+  openSheet("Add a meal", (sb) => {
+    const q = el("input"); q.type = "text"; q.placeholder = "Search meals"; q.setAttribute("aria-label", "Search meals"); sb.append(q);
+    const list = el("div"); sb.append(list);
+    const draw = () => { list.innerHTML = ""; const t = q.value.trim().toLowerCase();
+      all().filter((r) => !t || r.name.toLowerCase().includes(t)).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 60).forEach((r) => {
+        const b = el("button", "pick"); b.type = "button"; b.append(el("span", null, r.name), el("span", "rmeta", MEAL_LABEL[r.meal] + " · " + TIER_LABEL[r.tier]));
+        b.addEventListener("click", () => { onPick(r); closeSheet(); }); list.append(b); }); };
+    q.addEventListener("input", draw); draw();
+  });
+}
+function parseIngredients(text) {
+  const out = [];
+  for (const line of text.split("\n").map((l) => l.trim()).filter(Boolean)) {
+    const m = line.match(/^(\d+(?:\.\d+)?)\s*(kg|g|ml|l|x|each|tins?|packs?)?\s+(.+)$/i);
+    let qty = 1, unit = "each", name = line;
+    if (m) { qty = parseFloat(m[1]); let u = (m[2] || "").toLowerCase(); name = m[3];
+      if (u === "kg") { qty *= 1000; u = "g"; } if (u === "l") { qty *= 1000; u = "ml"; }
+      unit = u === "g" || u === "ml" ? u : u.startsWith("pack") ? "pack" : "each"; }
+    out.push({ name, query: name, qty, unit, pack: unit === "g" || unit === "ml" ? Math.max(500, qty) : 1 });
+  }
+  return out;
+}
+function openEditor(id) {
+  const r = id ? custom.find((x) => x.id === id) : null;
+  openSheet(r ? "Edit recipe" : "New recipe", (sb, box) => {
+    const f = (label, node) => { const l = el("label"); l.style.display = "block"; l.style.margin = "0 0 10px"; l.append(el("div", "hint", label), node); sb.append(l); return node; };
+    const name = f("Name", Object.assign(el("input"), { type: "text", id: "ed-name", value: r ? r.name : "" }));
+    const meal = f("Meal", el("select")); meal.id = "ed-meal"; Object.entries(MEAL_LABEL).forEach(([v, l]) => { const o = new Option(l, v); o.selected = (r ? r.meal : ui.meal) === v; meal.append(o); });
+    const sv = f("Serves", Object.assign(el("input"), { type: "number", id: "ed-serves", min: 1, max: 24, value: r ? r.servings : 4 }));
+    const mins = f("Minutes (optional)", Object.assign(el("input"), { type: "number", id: "ed-mins", min: 0, max: 600, value: r ? r.mins || "" : "" }));
+    const ta = f("Ingredients, one per line, e.g. “300 g penne”, “2 tins chopped tomatoes”, “garlic”", el("textarea")); ta.id = "ed-ings"; ta.rows = 7;
+    ta.value = r ? r.ingredients.map((i) => (i.unit === "each" || i.unit === "pack" ? (i.qty === 1 ? "" : i.qty + " ") : i.qty + " " + i.unit + " ") + i.name).join("\n") : "";
+    const msg = el("p", "hint"); msg.setAttribute("role", "alert");
+    const save = el("button", "btn primary", "Save recipe"); save.type = "button"; save.id = "ed-save"; save.style.width = "100%";
+    save.addEventListener("click", () => {
+      const ings = parseIngredients(ta.value);
+      if (!name.value.trim()) { msg.textContent = "Give the recipe a name."; return; }
+      if (!ings.length) { msg.textContent = "Add at least one ingredient."; return; }
+      const data = { name: name.value.trim(), meal: meal.value, servings: Math.max(1, Number(sv.value) || 4), mins: Number(mins.value) || 0, ingredients: ings };
+      if (r) { Object.assign(r, data); recipeSkip.delete(r.id); if (selected.has(r.id)) selected.set(r.id, data.servings); }
+      else { const nr = { id: "c" + Date.now().toString(36), tier: "custom", ...data }; custom.push(nr); ui.meal = nr.meal; ui.tier = "custom"; }
+      persist(); closeSheet(); render(); toast("Recipe saved");
+    });
+    sb.append(msg, save);
+  });
+}
+
+// ---------- Week ----------
+function viewWeek(main) {
+  if (!planWeek) planWeek = weekStart(Date.now());
+  const thisWeek = weekStart(Date.now());
+  const head = el("div", "pl-head");
+  const pv = el("button", null, "‹"), nx = el("button", null, "›"); pv.type = nx.type = "button"; pv.setAttribute("aria-label", "Previous week"); nx.setAttribute("aria-label", "Next week");
+  pv.addEventListener("click", () => { planWeek = shiftWeek(planWeek, -1); rr(); }); nx.addEventListener("click", () => { planWeek = shiftWeek(planWeek, 1); rr(); });
+  head.append(pv, el("h2", null, planWeek === thisWeek ? "This week · from " + fmtDay(planWeek) : planWeek === shiftWeek(thisWeek, 1) ? "Next week · from " + fmtDay(planWeek) : "Week of " + fmtDay(planWeek)), nx);
+  main.append(head);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  for (let d = 0; d < 7; d++) {
+    const date = new Date(planWeek); date.setDate(date.getDate() + d);
+    const box = el("div", "day"); box.classList.toggle("today", date.getTime() === today.getTime());
+    const h = el("h4", null, DAYS[d]); h.append(el("small", null, date.toLocaleDateString("en-GB", { day: "numeric", month: "short" })));
+    const ul = el("ul");
+    dayList(planWeek, d).forEach((e, idx) => {
+      const r = byId(e.id); if (!r) return;
+      const li = el("li"); li.append(el("span", "nm", r.name));
+      const st = el("div", "stepper"); const dn = el("button", null, "−"), up = el("button", null, "+"); dn.type = up.type = "button";
+      dn.setAttribute("aria-label", "Fewer servings"); up.setAttribute("aria-label", "More servings");
+      dn.addEventListener("click", () => { e.servings = Math.max(1, e.servings - 1); persist(); rr(); }); up.addEventListener("click", () => { e.servings = Math.min(24, e.servings + 1); persist(); rr(); });
+      st.append(dn, el("span", null, String(e.servings)), up);
+      const x = el("button", "link muted", "✕"); x.type = "button"; x.setAttribute("aria-label", "Remove " + r.name);
+      x.addEventListener("click", () => { dayList(planWeek, d).splice(idx, 1); persist(); rr(); });
+      li.append(st, x); ul.append(li);
+    });
+    const add = el("button", "add", "+ Add a meal"); add.type = "button";
+    add.addEventListener("click", () => openPicker((r) => { dayList(planWeek, d, true).push({ id: r.id, servings: r.servings }); persist(); rr(); }));
+    box.append(h, ul, add); main.append(box);
+  }
+  const n = planCount(planWeek);
+  const act = el("div", "hrow"); act.style.marginTop = "8px";
+  const pick = el("button", "btn primary", "Pick all planned meals"); pick.type = "button"; pick.disabled = !n; pick.id = "pl-pick";
+  pick.addEventListener("click", () => {
+    const tot = new Map();
+    for (let d = 0; d < 7; d++) for (const e of dayList(planWeek, d)) if (byId(e.id)) tot.set(e.id, (tot.get(e.id) || 0) + e.servings);
+    for (const [id, v] of tot) { selected.set(id, Math.min(v, 24)); expanded.delete(id); }
+    ui.tab = "shop"; persist(); render(); window.scrollTo(0, 0); toast("Picked " + tot.size + " planned meal" + (tot.size === 1 ? "" : "s") + ". Servings are added up if a meal repeats.");
+  });
+  const clr = el("button", "link danger", "Clear week"); clr.type = "button"; clr.hidden = !n;
+  clr.addEventListener("click", () => { if (clr.dataset.sure) { delete plans[String(planWeek)]; persist(); rr(); } else { clr.dataset.sure = 1; clr.textContent = "Tap again to clear"; } });
+  act.append(pick, clr); main.append(act);
+  main.append(el("p", "hint", "“Pick all planned meals” puts them on your shopping list. Meals on the plan stay here until you clear the week."));
+}
+
+// ---------- Shop ----------
+function viewShop(main, hx) {
+  const items = buildItems();
+  const buying = items.filter((i) => !skipped.has(i.key));
+  const have = items.filter((i) => skipped.has(i.key));
+  const done = buying.filter((i) => ticked.has(i.key)).length;
+  hx.hidden = false;
+  const top = el("div", "shop-top");
+  top.append(el("div", "hint", buying.length ? done + " of " + buying.length + " in the trolley" : "Nothing on the list yet"));
+  const hide = el("button", "chip", "Hide ticked"); hide.type = "button"; hide.setAttribute("aria-pressed", String(!!ui.hideTicked));
+  hide.addEventListener("click", () => { ui.hideTicked = !ui.hideTicked; persist(); rr(); }); top.append(hide);
+  hx.append(top);
+  const p = el("div", "prog"); const bar = el("i"); bar.style.width = buying.length ? Math.round((done / buying.length) * 100) + "%" : "0"; p.append(bar); hx.append(p);
+
+  if (!items.length) {
+    main.append(el("p", "empty", "Pick meals on the Meals or Week tab, or add extras, and your list builds here."));
+  }
+  const groups = new Map();
+  for (const it of buying) { const a = aisleOf(it); if (!groups.has(a)) groups.set(a, []); groups.get(a).push(it); }
+  for (const a of AISLE_ORDER) {
+    const g = groups.get(a); if (!g) continue;
+    const vis = g.filter((i) => !(ui.hideTicked && ticked.has(i.key)));
+    if (!vis.length) continue;
+    const sec = el("div", "aisle"); const h = el("h3", null, a); h.append(el("span", null, g.filter((i) => ticked.has(i.key)).length + "/" + g.length)); sec.append(h);
+    const ul = el("ul");
+    vis.sort((x, y) => (ticked.has(x.key) - ticked.has(y.key)) || x.name.localeCompare(y.name)).forEach((it) => ul.append(itemLi(it)));
+    sec.append(ul); main.append(sec);
+  }
+  const add = el("div", "addrow"); const inp = el("input"); inp.type = "text"; inp.id = "xadd"; inp.placeholder = "Add something else (e.g. lightbulbs)"; inp.setAttribute("aria-label", "Add an extra item");
+  const ab = el("button", "btn", "Add"); ab.type = "button";
+  const go = () => { const v = inp.value.trim(); if (!v) return; extra.push({ id: Date.now().toString(36), name: v, qty: 1 }); persist(); rr(); };
+  ab.addEventListener("click", go); inp.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); }); add.append(inp, ab); main.append(add);
+
+  if (have.length) {
+    main.append(el("h3", null, "Not buying (you have it)"));
+    const ul = el("ul");
+    have.forEach((it) => { const li = el("li", "item"); li.append(el("span", "nm", it.name)); const b = el("button", "link", "Put back"); b.type = "button";
+      b.addEventListener("click", () => { skipped.delete(it.key); persist(); rr(); }); li.append(b); ul.append(li); });
+    main.append(ul);
+  }
+  if (items.length) {
+    const row = el("div", "hrow"); row.style.cssText = "margin-top:18px;flex-wrap:wrap";
+    const cp = el("button", "btn small", "Copy list"); cp.type = "button";
+    cp.addEventListener("click", async () => {
+      const lines = []; for (const a of AISLE_ORDER) { const g = groups.get(a); if (!g) continue; lines.push(a.toUpperCase()); g.forEach((i) => lines.push((ticked.has(i.key) ? "[x] " : "[ ] ") + i.name + " × " + i.count)); lines.push(""); }
+      try { await navigator.clipboard.writeText(lines.join("\n")); toast("List copied"); } catch (_) { toast("Couldn’t copy on this device"); }
+    });
+    const rt = el("button", "btn small", "Untick all"); rt.type = "button"; rt.addEventListener("click", () => { ticked.clear(); persist(); rr(); });
+    const fin = el("button", "btn small", "Finished shopping"); fin.type = "button";
+    fin.addEventListener("click", () => {
+      if (!fin.dataset.sure) { fin.dataset.sure = 1; fin.textContent = "Tap again: clear picks and list"; return; }
+      selected.clear(); recipeSkip.clear(); swaps.clear(); skipped.clear(); ticked.clear(); essSel.clear(); pantryBuy.clear(); extra = [];
+      persist(); render(); toast("List cleared. Your plan and recipes are kept.");
+    });
+    row.append(cp, rt, fin); main.append(row);
+  }
+}
+function itemLi(it) {
+  const li = el("li", "item"); const d = ticked.has(it.key); li.classList.toggle("done", d);
+  const lab = el("label"); const cb = el("input"); cb.type = "checkbox"; cb.checked = d; cb.setAttribute("aria-label", it.name);
+  const nm = el("span", "nm", it.name);
+  const detail = it.extra || it.ess ? "" : (it.unit === "g" || it.unit === "ml" ? "uses " + Math.round(it.need) + " " + it.unit : "") + (it.from.length ? (it.unit === "g" || it.unit === "ml" ? " · " : "") + it.from.slice(0, 2).join(", ") + (it.from.length > 2 ? " +" + (it.from.length - 2) : "") : "");
+  if (detail) nm.append(el("small", null, detail));
+  lab.append(cb, nm);
+  cb.addEventListener("change", () => { cb.checked ? ticked.add(it.key) : ticked.delete(it.key); persist(); rr(); });
+  li.append(lab);
+  if (it.count > 1) li.append(el("span", "ct", "× " + it.count));
+  const x = el("button", "x", it.extra ? "Remove" : "Have it"); x.type = "button"; x.setAttribute("aria-label", (it.extra ? "Remove " : "I already have ") + it.name);
+  x.addEventListener("click", () => { if (it.extra) extra = extra.filter((e) => "x:" + e.id !== it.key); else skipped.add(it.key); ticked.delete(it.key); persist(); rr(); });
+  li.append(x);
+  return li;
+}
+
+// ---------- Extras (essentials) ----------
+let weeklyOpen = false;
+function viewEss(main) {
+  main.append(el("p", "hint", "Everyday things you buy most weeks. Tick what you need and it joins your shopping list. Add a brand or type under any ticked item."));
+  const list = essList();
+  const wk = list.filter((e) => weekly.has(e.id));
+  const box = el("div", "weeklybox");
+  const hd = el("div", "hrow"); hd.append(el("strong", null, "Your weekly list" + (wk.length ? " (" + wk.length + ")" : "")));
+  hd.firstChild.style.flex = "1";
+  const tb = el("button", "btn small", wk.length ? "Tick them all" : "Empty"); tb.type = "button"; tb.disabled = !wk.length;
+  tb.addEventListener("click", () => { wk.forEach((e) => essSel.set(e.id, weekly.get(e.id) || 1)); persist(); rr(); toast("Weekly list ticked"); });
+  hd.append(tb); box.append(hd);
+  box.append(el("p", "hint", wk.length ? wk.map((e) => e.name).join(", ") : "Tap the star on an item below to build a list you can tick in one go."));
+  main.append(box);
+  const cats = [...new Set(list.map((e) => e.cat))];
+  for (const c of cats) {
+    main.append(el("h3", null, c));
+    for (const e of list.filter((x) => x.cat === c)) {
+      const row = el("div", "crow"); const on = essSel.has(e.id);
+      const cb = el("input"); cb.type = "checkbox"; cb.checked = on; cb.setAttribute("aria-label", e.name);
+      const g = el("div", "grow"); g.append(el("div", null, e.name));
+      if (on) {
+        const n = el("input"); n.type = "text"; n.value = essNotes[e.id] || ""; n.placeholder = e.ph || "Brand or type (optional)"; n.setAttribute("aria-label", "Brand or type for " + e.name);
+        n.addEventListener("input", () => { essNotes[e.id] = n.value; persist(); }); g.append(n);
+      }
+      cb.addEventListener("change", () => { cb.checked ? essSel.set(e.id, weekly.get(e.id) || 1) : essSel.delete(e.id); persist(); rr(); });
+      row.append(cb, g);
+      if (on) {
+        const st = el("div", "stepper"); const dn = el("button", null, "−"), up = el("button", null, "+"); dn.type = up.type = "button";
+        dn.setAttribute("aria-label", "Fewer"); up.setAttribute("aria-label", "More");
+        dn.addEventListener("click", () => { essSel.set(e.id, Math.max(1, essSel.get(e.id) - 1)); persist(); rr(); }); up.addEventListener("click", () => { essSel.set(e.id, Math.min(20, essSel.get(e.id) + 1)); persist(); rr(); });
+        st.append(dn, el("span", null, String(essSel.get(e.id))), up); row.append(st);
+      }
+      const star = el("button", "star"); star.type = "button"; star.innerHTML = STAR; star.setAttribute("aria-pressed", String(weekly.has(e.id))); star.setAttribute("aria-label", weekly.has(e.id) ? "Remove from weekly list" : "Add to weekly list");
+      star.addEventListener("click", () => { weekly.has(e.id) ? weekly.delete(e.id) : weekly.set(e.id, essSel.get(e.id) || 1); persist(); rr(); });
+      row.append(star); main.append(row);
+    }
+  }
+  main.append(el("h3", null, "Add your own item"));
+  const ar = el("div", "addrow"); const inp = el("input"); inp.type = "text"; inp.id = "ess-add"; inp.placeholder = "e.g. Cat food"; inp.setAttribute("aria-label", "New extra item");
+  const ab = el("button", "btn", "Add"); ab.type = "button";
+  ab.addEventListener("click", () => { const v = inp.value.trim(); if (!v) return; const id = "u" + Date.now().toString(36); essCustom.push({ id, name: v, query: v }); essSel.set(id, 1); persist(); rr(); });
+  ar.append(inp, ab); main.append(ar);
+}
+
+// ---------- More: use up leftovers, pantry, backup ----------
+function viewMore(main) {
+  main.append(el("h2", null, "Use up what’s left"));
+  const { lo, list } = suggestions();
+  const seg = el("div", "chips");
+  [["all", "Any meal"], ...Object.entries(MEAL_LABEL)].forEach(([v, l]) => { const c = el("button", "chip", l); c.type = "button"; c.setAttribute("aria-pressed", String(ccMeal === v)); c.addEventListener("click", () => { ccMeal = v; rr(); }); seg.append(c); });
+  main.append(seg);
+  main.append(el("p", "hint", !selected.size ? "Pick some meals first. This shows meals that would use up what’s left in the packs you’re buying."
+    : !lo.size ? "Nothing much left over from your picks." : "Left over from your picks: " + [...lo.values()].map((l) => l.name + " (" + (l.unit === "g" || l.unit === "ml" ? Math.round(l.left) + " " + l.unit : fmtNum(l.left) + " left") + ")").join(", ")));
+  const ul = el("ul", "cc");
+  list.slice(0, 12).forEach(({ r, used, extra: ex, servings }) => {
+    const li = el("li"); const h = el("div", "head"); const nm = el("div", "rname", r.name); nm.append(el("span", "tag", MEAL_LABEL[r.meal] + " · " + TIER_LABEL[r.tier]));
+    if (servings !== r.servings) nm.append(el("span", "tag", "for " + servings));
+    const add = el("button", "btn small", "+ Add"); add.type = "button";
+    add.addEventListener("click", () => {
+      selected.set(r.id, servings); const sw = used.filter((x) => x.swap);
+      if (sw.length) swaps.set(r.id, new Map(sw.map((x) => [ingKey(x.ing), { query: x.l.query, name: x.l.name, pack: x.l.pack, unit: x.l.unit, orig: x.ing.name }])));
+      persist(); rr(); toast(r.name + " added to your picks");
+    });
+    h.append(nm, add); li.append(h);
+    li.append(el("p", null, "Uses: " + used.map((x) => x.swap ? x.l.name + " (instead of " + x.ing.name + ")" : x.ing.name).join(", ")));
+    li.append(ex.length ? el("p", null, "Still need " + ex.length + ": " + ex.slice(0, 4).map((x) => x.name).join(", ") + (ex.length > 4 ? ", +" + (ex.length - 4) + " more" : "")) : el("p", "free", "Nothing else to buy!"));
+    ul.append(li);
+  });
+  main.append(ul);
+  if (lo.size && !list.length) main.append(el("p", "hint", "No other meals fit right now. Try “Any meal”."));
+
+  main.append(el("h2", null, "Pantry"));
+  main.append(el("p", "hint", "Things you always have. They stay off your list (you can still tick them in a recipe to buy anyway)."));
+  const pw = el("div", "pantry");
+  [...pantry].sort().forEach((n) => { const c = el("button", "chip", n + " ✕"); c.type = "button"; c.setAttribute("aria-label", "Remove " + n + " from pantry"); c.addEventListener("click", () => { pantry.delete(n); pantryBuy.delete(n); persist(); rr(); }); pw.append(c); });
+  if (!pantry.size) pw.append(el("span", "hint", "Nothing yet."));
+  main.append(pw);
+  const sug = new Set(); const HINT = /flour|sugar|soy sauce|^garlic|cumin|paprika|garam|curry powder|tomato puree|vinegar|stock|mustard|nutmeg|cinnamon|chilli flakes|honey|maple|dijon|worcestershire|star anise|yeast|cocoa|vanilla|mirin|sesame|salt|pepper|oil/i;
+  all().forEach((r) => r.ingredients.forEach((i) => { const n = pantryName(i); if (HINT.test(n) && !pantry.has(n)) sug.add(n); }));
+  if (sug.size) { main.append(el("h3", null, "Tap to add")); const sw = el("div", "pantry"); [...sug].sort().slice(0, 16).forEach((n) => { const c = el("button", "chip", "+ " + n); c.type = "button"; c.addEventListener("click", () => { pantry.add(n); persist(); rr(); }); sw.append(c); }); main.append(sw); }
+  const pa = el("div", "addrow"); const pi = el("input"); pi.type = "text"; pi.id = "pantry-add"; pi.placeholder = "Add a pantry item"; pi.setAttribute("aria-label", "Add a pantry item");
+  const pb = el("button", "btn", "Add"); pb.type = "button"; pb.addEventListener("click", () => { const v = pi.value.trim().toLowerCase(); if (!v) return; pantry.add(v); persist(); rr(); });
+  pa.append(pi, pb); main.append(pa);
+
+  main.append(el("h2", null, "Backup and moving between devices"));
+  main.append(el("p", "hint", "Signed in, your plan and lists sync between your devices automatically. You can also copy everything as text and paste it somewhere safe."));
+  const bk = el("div", "hrow"); bk.style.flexWrap = "wrap";
+  const ex = el("button", "btn small", "Copy backup"); ex.type = "button";
+  ex.addEventListener("click", async () => { try { await navigator.clipboard.writeText(JSON.stringify({ app: "meal-cart-planner", data: snapshot() })); toast("Backup copied"); } catch (_) { toast("Couldn’t copy here"); } });
+  bk.append(ex); main.append(bk);
+  const ta = el("textarea"); ta.id = "restore"; ta.rows = 3; ta.placeholder = "Paste a backup here to restore it"; ta.style.marginTop = "8px"; main.append(ta);
+  const rs = el("button", "btn small", "Restore from pasted backup"); rs.type = "button"; rs.style.marginTop = "6px";
+  const msg = el("p", "hint"); msg.setAttribute("role", "status");
+  rs.addEventListener("click", () => {
+    try { const o = JSON.parse(ta.value); if (!o || o.app !== "meal-cart-planner" || typeof o.data !== "object") throw 0;
+      if (!rs.dataset.sure) { rs.dataset.sure = 1; rs.textContent = "Tap again to replace everything saved here"; return; }
+      hydrate(o.data); persist(); render(); toast("Backup restored"); } catch (_) { msg.textContent = "That doesn’t look like a Meal Cart backup."; }
+  });
+  main.append(rs, msg);
+  const note = el("p", "hint", "Tip: on iPhone or Android, use Share or the browser menu → Add to Home Screen to open this like an app."); main.append(note);
+}
+
+(async function start() {
+  render();
+  await loadAll();
+  render();
+})();
+</script>
