@@ -258,7 +258,11 @@ const ICONS = {
   ess: '<svg viewBox="0 0 24 24"><path d="M4 8l8-4 8 4v9l-8 4-8-4zM4 8l8 4 8-4M12 12v9"/></svg>',
   more: '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg>',
 };
-const NAV = [["meals", "Meals"], ["week", "Week"], ["shop", "Shop"], ["ess", "Extras"], ["more", "More"]];
+const NAV = [["meals", "Meals"], ["ess", "Extras"], ["shop", "Shop"], ["week", "Week"], ["more", "More"]];
+const COURSES = [["breakfast", "Breakfast"], ["lunch", "Lunch"], ["dinner", "Dinner"], ["snack", "Snack"]];
+const COURSE_LABEL = Object.fromEntries(COURSES);
+const COURSE_ORDER = { breakfast: 0, lunch: 1, dinner: 2, snack: 3 };
+const QUICK_OUT = ["Eating out", "Takeaway", "HelloFresh", "Leftovers", "Cooking something else"];
 
 // ---------- state ----------
 const blank = () => ({
@@ -443,13 +447,16 @@ function suggestions() {
 }
 
 // ---------- planner data ----------
+const courseOf = (e) => e.course || (byId(e.id) ? byId(e.id).meal : "dinner");
 const dayList = (ws, d, create) => {
   const k = String(ws);
   if (!plans[k]) { if (!create) return []; plans[k] = {}; }
   if (!Array.isArray(plans[k][d])) { if (!create) return []; plans[k][d] = []; }
   return plans[k][d];
 };
-const planCount = (ws) => [0, 1, 2, 3, 4, 5, 6].reduce((a, d) => a + dayList(ws, d).filter((e) => byId(e.id)).length, 0);
+const validEntry = (e) => (e.text ? true : !!byId(e.id));
+const planCount = (ws) => [0, 1, 2, 3, 4, 5, 6].reduce((a, d) => a + dayList(ws, d).filter(validEntry).length, 0);
+const planRecipeCount = (ws) => [0, 1, 2, 3, 4, 5, 6].reduce((a, d) => a + dayList(ws, d).filter((e) => !e.text && byId(e.id)).length, 0);
 
 // ---------- chrome: nav + header ----------
 function renderNav() {
@@ -568,7 +575,7 @@ function recipeLi(r) {
     const plan = el("select"); plan.setAttribute("aria-label", "Plan for a day"); plan.append(new Option("Plan for…", ""));
     DAYS.forEach((d, i) => plan.append(new Option(d, String(i))));
     plan.addEventListener("change", () => { if (plan.value === "") return; const ws = planWeek || weekStart(Date.now());
-      dayList(ws, Number(plan.value), true).push({ id: r.id, servings: selected.get(r.id) }); persist(); toast(r.name + " planned for " + DAYS[Number(plan.value)]); plan.value = ""; });
+      dayList(ws, Number(plan.value), true).push({ id: r.id, servings: selected.get(r.id), course: r.meal }); persist(); toast(r.name + " planned for " + DAYS[Number(plan.value)]); plan.value = ""; });
     r2.append(plan);
     const tg = el("button", "link", expanded.has(r.id) ? "Hide ingredients" : "Ingredients"); tg.type = "button";
     tg.addEventListener("click", () => { expanded.has(r.id) ? expanded.delete(r.id) : expanded.add(r.id); li.replaceWith(recipeLi(r)); });
@@ -616,14 +623,40 @@ function openSheet(title, build) {
   s.onclick = (e) => { if (e.target === s) closeSheet(); };
 }
 function closeSheet() { const s = $("sheet"); s.hidden = true; s.innerHTML = ""; }
-function openPicker(onPick) {
-  openSheet("Add a meal", (sb) => {
+// Sheet for adding to a day: what's already in your cart first, then eating out / takeaway, then every recipe.
+function openDayPicker(d) {
+  openSheet("Add to " + DAYS[d], (sb) => {
+    let chosen = null;                                   // course picked by hand; otherwise it follows the meal
+    const courseHint = el("p", "hint"); const seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Course");
+    const drawSeg = () => { seg.innerHTML = ""; courseHint.textContent = chosen ? "Course: " + COURSE_LABEL[chosen] : "Course follows the meal. Tap one to choose it yourself.";
+      COURSES.forEach(([v, l]) => { const b = el("button", null, l); b.type = "button"; b.setAttribute("aria-pressed", String(chosen === v)); b.setAttribute("aria-selected", String(chosen === v));
+        b.addEventListener("click", () => { chosen = chosen === v ? null : v; drawSeg(); }); seg.append(b); }); };
+    drawSeg(); sb.append(seg, courseHint);
+    const add = (entry) => { dayList(planWeek, d, true).push(entry); persist(); closeSheet(); rr(); toast("Added to " + DAYS[d]); };
+    const pickRecipe = (r, sv) => add({ id: r.id, servings: sv || r.servings, course: chosen || r.meal });
+
+    const cart = [...selected].map(([id, sv]) => [byId(id), sv]).filter(([r]) => r);
+    if (cart.length) {
+      sb.append(el("h3", null, "In your cart (" + cart.length + ")"));
+      cart.forEach(([r, sv]) => { const b = el("button", "pick"); b.type = "button"; b.append(el("span", null, r.name), el("span", "rmeta", MEAL_LABEL[r.meal] + " · serves " + sv));
+        b.addEventListener("click", () => pickRecipe(r, sv)); sb.append(b); });
+    }
+    sb.append(el("h3", null, "Eating out, takeaway, meal kits"));
+    const chips = el("div", "chips");
+    QUICK_OUT.forEach((q) => { const c = el("button", "chip", q); c.type = "button"; c.addEventListener("click", () => add({ text: q, course: chosen || "dinner" })); chips.append(c); });
+    sb.append(chips);
+    const row = el("div", "addrow"); const ti = el("input"); ti.type = "text"; ti.id = "pl-text"; ti.placeholder = "Or type it, e.g. Nando’s with Sam"; ti.setAttribute("aria-label", "Meal not in the list");
+    const tb = el("button", "btn", "Add"); tb.type = "button";
+    const go = () => { const v = ti.value.trim(); if (v) add({ text: v, course: chosen || "dinner" }); };
+    tb.addEventListener("click", go); ti.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); }); row.append(ti, tb); sb.append(row);
+
+    sb.append(el("h3", null, "All meals"));
     const q = el("input"); q.type = "text"; q.placeholder = "Search meals"; q.setAttribute("aria-label", "Search meals"); sb.append(q);
     const list = el("div"); sb.append(list);
-    const draw = () => { list.innerHTML = ""; const t = q.value.trim().toLowerCase();
-      all().filter((r) => !t || r.name.toLowerCase().includes(t)).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 60).forEach((r) => {
+    const draw = () => { list.innerHTML = ""; const s = q.value.trim().toLowerCase();
+      all().filter((r) => !s || r.name.toLowerCase().includes(s)).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 60).forEach((r) => {
         const b = el("button", "pick"); b.type = "button"; b.append(el("span", null, r.name), el("span", "rmeta", MEAL_LABEL[r.meal] + " · " + TIER_LABEL[r.tier]));
-        b.addEventListener("click", () => { onPick(r); closeSheet(); }); list.append(b); }); };
+        b.addEventListener("click", () => pickRecipe(r)); list.append(b); }); };
     q.addEventListener("input", draw); draw();
   });
 }
@@ -679,34 +712,39 @@ function viewWeek(main) {
     const box = el("div", "day"); box.classList.toggle("today", date.getTime() === today.getTime());
     const h = el("h4", null, DAYS[d]); h.append(el("small", null, date.toLocaleDateString("en-GB", { day: "numeric", month: "short" })));
     const ul = el("ul");
-    dayList(planWeek, d).forEach((e, idx) => {
-      const r = byId(e.id); if (!r) return;
-      const li = el("li"); li.append(el("span", "nm", r.name));
-      const st = el("div", "stepper"); const dn = el("button", null, "−"), up = el("button", null, "+"); dn.type = up.type = "button";
-      dn.setAttribute("aria-label", "Fewer servings"); up.setAttribute("aria-label", "More servings");
-      dn.addEventListener("click", () => { e.servings = Math.max(1, e.servings - 1); persist(); rr(); }); up.addEventListener("click", () => { e.servings = Math.min(24, e.servings + 1); persist(); rr(); });
-      st.append(dn, el("span", null, String(e.servings)), up);
-      const x = el("button", "link muted", "✕"); x.type = "button"; x.setAttribute("aria-label", "Remove " + r.name);
+    dayList(planWeek, d).map((e, idx) => ({ e, idx })).filter(({ e }) => validEntry(e))
+      .sort((a, b) => (COURSE_ORDER[courseOf(a.e)] ?? 9) - (COURSE_ORDER[courseOf(b.e)] ?? 9) || a.idx - b.idx).forEach(({ e, idx }) => {
+      const r = e.text ? null : byId(e.id);
+      const li = el("li"); const nm = el("span", "nm", r ? r.name : e.text); nm.append(el("span", "tag", COURSE_LABEL[courseOf(e)] || "Dinner"));
+      if (!r) nm.append(el("span", "tag", "no shopping"));
+      li.append(nm);
+      if (r) {
+        const st = el("div", "stepper"); const dn = el("button", null, "−"), up = el("button", null, "+"); dn.type = up.type = "button";
+        dn.setAttribute("aria-label", "Fewer servings"); up.setAttribute("aria-label", "More servings");
+        dn.addEventListener("click", () => { e.servings = Math.max(1, e.servings - 1); persist(); rr(); }); up.addEventListener("click", () => { e.servings = Math.min(24, e.servings + 1); persist(); rr(); });
+        st.append(dn, el("span", null, String(e.servings)), up); li.append(st);
+      }
+      const x = el("button", "link muted", "✕"); x.type = "button"; x.setAttribute("aria-label", "Remove " + (r ? r.name : e.text));
       x.addEventListener("click", () => { dayList(planWeek, d).splice(idx, 1); persist(); rr(); });
-      li.append(st, x); ul.append(li);
+      li.append(x); ul.append(li);
     });
     const add = el("button", "add", "+ Add a meal"); add.type = "button";
-    add.addEventListener("click", () => openPicker((r) => { dayList(planWeek, d, true).push({ id: r.id, servings: r.servings }); persist(); rr(); }));
+    add.addEventListener("click", () => openDayPicker(d));
     box.append(h, ul, add); main.append(box);
   }
-  const n = planCount(planWeek);
+  const n = planCount(planWeek), nr = planRecipeCount(planWeek);
   const act = el("div", "hrow"); act.style.marginTop = "8px";
-  const pick = el("button", "btn primary", "Pick all planned meals"); pick.type = "button"; pick.disabled = !n; pick.id = "pl-pick";
+  const pick = el("button", "btn primary", "Pick all planned meals"); pick.type = "button"; pick.disabled = !nr; pick.id = "pl-pick";
   pick.addEventListener("click", () => {
     const tot = new Map();
-    for (let d = 0; d < 7; d++) for (const e of dayList(planWeek, d)) if (byId(e.id)) tot.set(e.id, (tot.get(e.id) || 0) + e.servings);
+    for (let d = 0; d < 7; d++) for (const e of dayList(planWeek, d)) if (!e.text && byId(e.id)) tot.set(e.id, (tot.get(e.id) || 0) + e.servings);
     for (const [id, v] of tot) { selected.set(id, Math.min(v, 24)); expanded.delete(id); }
     ui.tab = "shop"; persist(); render(); window.scrollTo(0, 0); toast("Picked " + tot.size + " planned meal" + (tot.size === 1 ? "" : "s") + ". Servings are added up if a meal repeats.");
   });
   const clr = el("button", "link danger", "Clear week"); clr.type = "button"; clr.hidden = !n;
   clr.addEventListener("click", () => { if (clr.dataset.sure) { delete plans[String(planWeek)]; persist(); rr(); } else { clr.dataset.sure = 1; clr.textContent = "Tap again to clear"; } });
   act.append(pick, clr); main.append(act);
-  main.append(el("p", "hint", "“Pick all planned meals” puts them on your shopping list. Meals on the plan stay here until you clear the week."));
+  main.append(el("p", "hint", "“Pick all planned meals” puts the recipes on your shopping list. Eating out and takeaways stay on the plan only. Meals stay here until you clear the week."));
 }
 
 // ---------- Shop ----------
