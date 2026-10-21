@@ -479,7 +479,7 @@ function suggestions() {
   const list = [];
   for (const r of all()) {
     if (selected.has(r.id)) continue;
-    if (ccMeal !== "all" && r.meal !== ccMeal) continue;
+    if (r.meal !== ui.meal) continue;                 // follows the Breakfast / Lunch / Dinner row
     if (!passes(r)) continue;
     let best = null;
     for (let sv = r.servings; sv >= Math.max(1, Math.ceil(r.servings / 2)); sv--) {
@@ -608,8 +608,8 @@ function usualBlock() {
 }
 function viewMeals(main) {
   const hx = main;   // controls scroll with the list so the phone screen isn't eaten by a tall sticky header
-  if (ui.tier !== "useup") segButtons(hx, "meal", Object.entries(MEAL_LABEL), ui.meal, (v) => { ui.meal = v; if (["favs", "picked"].includes(ui.tier)) ui.tier = "all"; persist(); render(); });
-  segButtons(hx, "", [["all", "All"], ["useup", "Complete cart"], ["favs", "★"], ["picked", "Picked" + (selected.size ? " (" + selected.size + ")" : "")]],
+  segButtons(hx, "meal", Object.entries(MEAL_LABEL), ui.meal, (v) => { ui.meal = v; if (["favs", "picked"].includes(ui.tier)) ui.tier = "all"; persist(); render(); });
+  segButtons(hx, "", [["all", "All"], ["useup", "Complete cart"], ["favs", "Favorites"], ["picked", "Meals in Cart" + (selected.size ? " (" + selected.size + ")" : "")]],
     ui.tier, (v) => { ui.tier = v; persist(); render(); });
   if (ui.tier === "useup") { useUpBlock(main); return; }
   const tools = el("div", "tools");
@@ -643,7 +643,7 @@ function viewMeals(main) {
     chips.append(c);
   }
   hx.append(chips);
-  if (ui.tier === "favs") { main.append(usualBlock()); main.append(el("h3", null, "Favourite meals")); }
+  if (ui.tier === "favs") { main.append(usualBlock()); main.append(el("h3", null, "Favorite meals")); }
   const ul = el("ul", "recipes"); ul.id = "recipes"; main.append(ul);
   renderRecipes();
 }
@@ -651,7 +651,7 @@ function renderRecipes() {
   const ul = $("recipes"); if (!ul) return; ul.innerHTML = "";
   const rows = recipeRows();
   if (!rows.length) {
-    const e = el("p", "empty", ui.tier === "favs" ? "No favourites yet. Tap the star on any meal." : ui.tier === "picked" ? "Nothing picked yet. Tick meals on the other tabs."
+    const e = el("p", "empty", ui.tier === "favs" ? "No favorites yet. Tap the star on any meal." : ui.tier === "picked" ? "No meals in your cart yet. Tick meals on the other tabs."
       : filters.size || ui.levels.length ? "No meals match your filters. Try turning one off." : "No meals match.");
     ul.append(e); return;
   }
@@ -1045,9 +1045,6 @@ function useUpBlock(main) {
   main.append(el("h2", null, "Complete your cart"));
   main.append(el("p", "hint", "Meals that use up what’s left in the packs you’re buying."));
   const { lo, list } = suggestions();
-  const seg = el("div", "chips");
-  [["all", "Any meal"], ...Object.entries(MEAL_LABEL)].forEach(([v, l]) => { const c = el("button", "chip", l); c.type = "button"; c.setAttribute("aria-pressed", String(ccMeal === v)); c.addEventListener("click", () => { ccMeal = v; rr(); }); seg.append(c); });
-  main.append(seg);
   main.append(el("p", "hint", !selected.size ? "Pick some meals first. This shows meals that would use up what’s left in the packs you’re buying."
     : !lo.size ? "Nothing much left over from your picks." : "Left over from your picks: " + [...lo.values()].map((l) => l.name + " (" + (l.unit === "g" || l.unit === "ml" ? Math.round(l.left) + " " + l.unit : fmtNum(l.left) + " left") + ")").join(", ")));
   const ul = el("ul", "cc");
