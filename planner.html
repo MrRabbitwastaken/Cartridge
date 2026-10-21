@@ -163,6 +163,8 @@ nav button[aria-selected="true"] { color: var(--leaf); font-weight: 700; }
 #sheet .box { background: var(--paper); width: 100%; max-width: 640px; max-height: 88%; display: flex; flex-direction: column; border-radius: 14px 14px 0 0;
   padding: 14px max(16px, env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 #sheet .sb { overflow-y: auto; flex: 1; min-height: 0; margin: 10px 0; }
+#sheet .pick.planned { opacity: .5; }
+#sheet .pick .ptag { display: block; font-size: 12px; font-weight: 600; color: var(--muted); }
 #sheet .pick { display: flex; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 10px 0; gap: 8px; justify-content: space-between; align-items: center; }
 #toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(72px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--paper); border-radius: 999px; padding: 8px 16px; font-size: 13.5px; z-index: 50; max-width: 90%; }
 .sync { font-size: 12px; color: var(--muted); }
@@ -736,6 +738,14 @@ function openSheet(title, build) {
 }
 function closeSheet() { const s = $("sheet"); s.hidden = true; s.innerHTML = ""; try { if (wakeLock) { wakeLock.release(); wakeLock = null; } } catch (_) {} }
 // Sheet for adding to a day: what's already in your cart first, then eating out / takeaway, then every recipe.
+// days (this week) a meal is already planned on, so the day picker can grey it out
+const plannedDays = (id) => DAYS.map((_, i) => i).filter((i) => dayList(planWeek, i, false).some((e) => e.id === id));
+const markPlanned = (b, r) => {
+  const ds = plannedDays(r.id); if (!ds.length) return;
+  b.classList.add("planned"); const names = ds.map((i) => DAYS[i]);
+  b.title = "Already planned for " + names.join(" and ") + ". Tap to add it again.";
+  b.append(el("span", "ptag", "Planned " + ds.map((i) => DAYS[i].slice(0, 3)).join(", ")));
+};
 function openDayPicker(d) {
   openSheet("Add to " + DAYS[d], (sb) => {
     let chosen = null;                                   // course picked by hand; otherwise it follows the meal
@@ -751,7 +761,7 @@ function openDayPicker(d) {
     if (cart.length) {
       sb.append(el("h3", null, "In your cart (" + cart.length + ")"));
       cart.forEach(([r, sv]) => { const b = el("button", "pick"); b.type = "button"; b.append(el("span", null, r.name), el("span", "rmeta", MEAL_LABEL[r.meal] + " · serves " + sv));
-        b.addEventListener("click", () => pickRecipe(r, sv)); sb.append(b); });
+        markPlanned(b, r); b.addEventListener("click", () => pickRecipe(r, sv)); sb.append(b); });
     }
     sb.append(el("h3", null, "Eating out, takeaway, meal kits"));
     const chips = el("div", "chips");
@@ -768,7 +778,7 @@ function openDayPicker(d) {
     const draw = () => { list.innerHTML = ""; const s = q.value.trim().toLowerCase();
       all().filter((r) => !s || r.name.toLowerCase().includes(s)).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 60).forEach((r) => {
         const b = el("button", "pick"); b.type = "button"; b.append(el("span", null, r.name), el("span", "rmeta", MEAL_LABEL[r.meal] + " · " + TIER_LABEL[r.tier]));
-        b.addEventListener("click", () => pickRecipe(r)); list.append(b); }); };
+        markPlanned(b, r); b.addEventListener("click", () => pickRecipe(r)); list.append(b); }); };
     q.addEventListener("input", draw); draw();
   });
 }
