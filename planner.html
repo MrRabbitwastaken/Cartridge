@@ -232,13 +232,30 @@ const Diet = (() => {
     "cereal", "soy sauce", "teriyaki", "katsu", "gravy granules", "worcestershire", "sausage", "dumpling", "fish cake", "biscuit"]);
   const GLUTEN_FREE_EXCEPTIONS = re(["rice noodle", "rice flour", "gluten.?free"]);
 
+  // "has this ingredient" tags for the extra filters (stock cubes, gravy etc. don't count as the meat itself)
+  const NOT_THE_MEAT = re(["stock", "bouillon", "cube", "gravy", "seasoning", "flavou?r"]);
+  const HAS = {
+    chicken: re(["chicken", "poultry"]),
+    beef: re(["beef", "steak", "brisket", "burger", "mince\\b.*beef", "beef.*mince"]),
+    pork: re(["pork", "bacon", "ham\\b", "gammon", "sausage", "chorizo", "pancetta", "lardons", "prosciutto", "pepperoni", "ribs"]),
+    lamb: re(["lamb"]),
+    seafood: re(["fish", "cod\\b", "haddock", "salmon", "tuna", "prawn", "shrimp", "mussel", "crab", "scallop", "seafood", "squid", "anchov", "mackerel", "trout", "sardine"]),
+    pasta: re(["penne", "fusilli", "rigatoni", "spaghetti", "linguine", "tagliatelle", "macaroni", "pappardelle", "lasagne", "pasta", "orzo", "gnocchi"]),
+    rice: re(["rice\\b"]),
+    potato: re(["potato", "potatoes", "jacket", "chips\\b", "fries"]),
+    eggs: re(["\\beggs?\\b"]),
+  };
+  const NOT_RICE = re(["rice noodle", "rice flour", "rice vinegar", "rice wine", "rice paper"]);
+
   const text = (r) => r.ingredients.map((i) => `${i.name} ${i.query || ""}`).join(" | ").toLowerCase();
 
   function classify(r) {
     // test ingredient by ingredient so one ingredient's words can't mix with another's
+    const has = {}; for (const k in HAS) has[k] = false;
     let meat = false, fish = false, rennet = false, egg = false, dairy = false, honey = false, gluten = false;
     for (const i of r.ingredients) {
       const t = `${i.name} ${i.query || ""}`.toLowerCase();
+      for (const k in HAS) if (!has[k] && HAS[k].test(t) && !(["chicken", "beef", "pork", "lamb", "seafood"].includes(k) && NOT_THE_MEAT.test(t)) && !(k === "rice" && NOT_RICE.test(t))) has[k] = true;
       if (MEAT.test(t)) meat = true;
       if (FISH.test(t)) fish = true;
       if (NOT_VEG_CHEESE.test(t)) rennet = true;
@@ -254,6 +271,8 @@ const Diet = (() => {
       glutenFree: !gluten,
       dairyFree: !dairy,
       quick: r.mins > 0 && r.mins <= 30,
+      veryQuick: r.mins > 0 && r.mins <= 15,
+      ...has,
     };
   }
 
@@ -272,7 +291,10 @@ const Diet = (() => {
 const MEAL_LABEL = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner" };
 const TIER_LABEL = { easy: "Easy", medium: "Medium", hard: "Hard", custom: "Mine" };
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-const FILTERS = [["vegetarian", "Veggie"], ["vegan", "Vegan"], ["glutenFree", "Gluten-free"], ["dairyFree", "Dairy-free"], ["quick", "≤30 min"]];
+const FILTERS = [["vegetarian", "Veggie"]];
+const FILTERS_MORE = [["vegan", "Vegan"], ["glutenFree", "Gluten-free"], ["dairyFree", "Dairy-free"], ["quick", "≤30 min"], ["veryQuick", "≤15 min"], ["chicken", "Chicken"], ["beef", "Beef"], ["pork", "Pork"],
+  ["lamb", "Lamb"], ["seafood", "Fish & seafood"], ["pasta", "Pasta"], ["rice", "Rice"], ["potato", "Potatoes"], ["eggs", "Eggs"]];
+let moreOpen = null;
 const STAR = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 2.6l2.85 6 6.55.85-4.8 4.55 1.25 6.5L12 17.3 6.15 20.5l1.25-6.5L2.6 9.45l6.55-.85z"/></svg>';
 const ICONS = {
   meals: '<svg viewBox="0 0 24 24"><path d="M5 3v8a3 3 0 0 0 3 3v7M8 3v6M11 3v8a3 3 0 0 1-3 3M17 21V3c-2 1-3.5 4-3.5 8h3.5"/></svg>',
@@ -290,12 +312,12 @@ const QUICK_OUT = ["Eating out", "Takeaway", "HelloFresh", "Leftovers", "Cooking
 // ---------- state ----------
 const blank = () => ({
   selected: [], recipeSkip: [], swaps: [], skipped: [], ticked: [], extra: [], custom: [], usual: [], favs: [], ess: [], essNotes: {}, essWeekly: [],
-  essCustom: [], pantry: [], pantryBuy: [], plans: {}, filters: [], ui: { meal: "dinner", tier: "easy", sort: "az", tab: "meals" }, ts: 0,
+  essCustom: [], pantry: [], pantryBuy: [], plans: {}, filters: [], ui: { meal: "dinner", tier: "all", levels: [], sort: "az", tab: "meals" }, ts: 0,
 });
 let S = blank();
 const selected = new Map(), recipeSkip = new Map(), swaps = new Map(), skipped = new Set(), ticked = new Set(), favs = new Set(),
   essSel = new Map(), weekly = new Map(), pantry = new Set(), pantryBuy = new Set(), filters = new Set();
-let usual = [], custom = [], extra = [], essCustom = [], essNotes = {}, plans = {}, ui = { meal: "dinner", tier: "easy", sort: "az", tab: "meals" };
+let usual = [], custom = [], extra = [], essCustom = [], essNotes = {}, plans = {}, ui = { meal: "dinner", tier: "all", levels: [], sort: "az", tab: "meals" };
 let query = "", planWeek = 0, expanded = new Set(), ccMeal = "all";
 
 function hydrate(o) {
@@ -303,7 +325,8 @@ function hydrate(o) {
   selected.clear(); recipeSkip.clear(); swaps.clear(); skipped.clear(); ticked.clear(); favs.clear(); essSel.clear(); weekly.clear(); pantry.clear(); pantryBuy.clear(); filters.clear();
   usual = Array.isArray(d.usual) ? d.usual : [];
   custom = (d.custom || []).map((r) => ({ ...r, meal: r.meal || "dinner" })); extra = d.extra || []; essCustom = d.essCustom || []; essNotes = d.essNotes || {};
-  plans = d.plans || {}; ui = Object.assign({ meal: "dinner", tier: "easy", sort: "az", tab: "meals" }, d.ui || {});
+  plans = d.plans || {}; ui = Object.assign({ meal: "dinner", tier: "all", levels: [], sort: "az", tab: "meals" }, d.ui || {});
+  if (!["all", "custom", "favs", "picked"].includes(ui.tier)) ui.tier = "all"; if (!Array.isArray(ui.levels)) ui.levels = [];
   d.selected.forEach(([id, n]) => byId(id) && selected.set(id, n));
   d.recipeSkip.forEach(([id, ks]) => byId(id) && recipeSkip.set(id, new Set(ks)));
   d.swaps.forEach(([id, es]) => byId(id) && swaps.set(id, new Map(es)));
@@ -371,7 +394,7 @@ function toast(t) { const e = $("toast"); e.textContent = t; e.hidden = false; c
 const weekStart = (ts) => { const d = new Date(ts); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); };
 const shiftWeek = (ws, n) => { const d = new Date(ws); d.setDate(d.getDate() + 7 * n); return weekStart(d.getTime()); };
 const fmtDay = (ts) => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-const passes = (r) => { if (!filters.size) return true; const t = Diet.tags(r); return [...filters].every((f) => t[f]); };
+const passes = (r) => { if (ui.levels.length && r.tier !== "custom" && !ui.levels.includes(r.tier)) return false; if (!filters.size) return true; const t = Diet.tags(r); return [...filters].every((f) => t[f]); };
 
 // Everyday dried pasta shapes and everyday rices can stand in for each other.
 const FAMILIES = [
@@ -511,7 +534,7 @@ function recipeRows() {
   let rows;
   if (ui.tier === "favs") rows = all().filter((r) => favs.has(r.id));
   else if (ui.tier === "picked") rows = all().filter((r) => selected.has(r.id));
-  else rows = all().filter((r) => r.meal === ui.meal && r.tier === ui.tier);
+  else rows = all().filter((r) => r.meal === ui.meal && (ui.tier === "custom" ? r.tier === "custom" : true));
   const q = query.trim().toLowerCase();
   const m = (r) => passes(r) && (!q || r.name.toLowerCase().includes(q) || r.ingredients.some((i) => i.name.toLowerCase().includes(q)));
   let out = rows.filter(m);
@@ -574,8 +597,8 @@ function usualBlock() {
 }
 function viewMeals(main) {
   const hx = main;   // controls scroll with the list so the phone screen isn't eaten by a tall sticky header
-  segButtons(hx, "meal", Object.entries(MEAL_LABEL), ui.meal, (v) => { ui.meal = v; if (["favs", "picked"].includes(ui.tier)) ui.tier = "easy"; persist(); render(); });
-  segButtons(hx, "", [["easy", "Easy"], ["medium", "Medium"], ["hard", "Hard"], ["custom", "Mine"], ["favs", "★"], ["picked", "Picked" + (selected.size ? " (" + selected.size + ")" : "")]],
+  segButtons(hx, "meal", Object.entries(MEAL_LABEL), ui.meal, (v) => { ui.meal = v; if (["favs", "picked"].includes(ui.tier)) ui.tier = "all"; persist(); render(); });
+  segButtons(hx, "", [["all", "All"], ["custom", "Mine"], ["favs", "★"], ["picked", "Picked" + (selected.size ? " (" + selected.size + ")" : "")]],
     ui.tier, (v) => { ui.tier = v; persist(); render(); });
   const tools = el("div", "tools");
   const q = el("input"); q.type = "text"; q.id = "q"; q.placeholder = "Search meals or ingredients"; q.value = query; q.setAttribute("aria-label", "Search");
@@ -585,7 +608,24 @@ function viewMeals(main) {
   so.addEventListener("change", () => { ui.sort = so.value; persist(); renderRecipes(); });
   tools.append(q, so); hx.append(tools);
   const chips = el("div", "chips");
-  for (const [k, l] of FILTERS) {
+  for (const [k, l] of [["easy", "Easy"], ["medium", "Medium"], ["hard", "Hard"]]) {
+    const c = el("button", "chip", l); c.type = "button"; c.dataset.level = k; c.setAttribute("aria-pressed", String(ui.levels.includes(k)));
+    c.addEventListener("click", () => { ui.levels = ui.levels.includes(k) ? ui.levels.filter((x) => x !== k) : [...ui.levels, k]; persist(); render(); });
+    chips.append(c);
+  }
+  const nMore = FILTERS_MORE.filter(([k]) => filters.has(k)).length;
+  if (moreOpen === null) moreOpen = nMore > 0;
+  const fchip = (k, l) => {
+    const c = el("button", "chip", l); c.type = "button"; c.setAttribute("aria-pressed", String(filters.has(k)));
+    c.addEventListener("click", () => { filters.has(k) ? filters.delete(k) : filters.add(k); persist(); render(); });
+    return c;
+  };
+  for (const [k, l] of FILTERS) chips.append(fchip(k, l));
+  const mb = el("button", "chip more", moreOpen ? "Less ▴" : "More ▾" + (nMore ? " (" + nMore + ")" : "")); mb.type = "button"; mb.id = "fmore"; mb.setAttribute("aria-expanded", String(moreOpen));
+  mb.addEventListener("click", () => { moreOpen = !moreOpen; render(); });
+  chips.append(mb);
+  if (moreOpen) for (const [k, l] of FILTERS_MORE) chips.append(fchip(k, l));
+  for (const [k, l] of []) {
     const c = el("button", "chip", l); c.type = "button"; c.setAttribute("aria-pressed", String(filters.has(k)));
     c.addEventListener("click", () => { filters.has(k) ? filters.delete(k) : filters.add(k); persist(); render(); });
     chips.append(c);
@@ -603,7 +643,7 @@ function renderRecipes() {
   const rows = recipeRows();
   if (!rows.length) {
     const e = el("p", "empty", ui.tier === "favs" ? "No favourites yet. Tap the star on any meal." : ui.tier === "picked" ? "Nothing picked yet. Tick meals on the other tabs."
-      : ui.tier === "custom" && !query ? "No recipes of your own yet. Use “+ New recipe”." : filters.size ? "No meals match your filters. Try turning one off." : "No meals match.");
+      : ui.tier === "custom" && !query ? "No recipes of your own yet. Use “+ New recipe”." : filters.size || ui.levels.length ? "No meals match your filters. Try turning one off." : "No meals match.");
     ul.append(e); return;
   }
   rows.forEach((r) => ul.append(recipeLi(r)));
@@ -619,7 +659,7 @@ function recipeLi(r) {
   const t = Diet.tags(r);
   if (t.vegan) m.append(el("span", "dt", "Vegan")); else if (t.vegetarian) m.append(el("span", "dt", "Veggie"));
   if (t.glutenFree) m.append(el("span", "dt", "GF")); if (t.dairyFree) m.append(el("span", "dt", "DF"));
-  if (ui.tier === "favs" || ui.tier === "picked" || query) m.append(el("span", null, MEAL_LABEL[r.meal] + " · " + TIER_LABEL[r.tier]));
+  m.append(el("span", null, MEAL_LABEL[r.meal] + " · " + TIER_LABEL[r.tier]));
   g.append(m);
   if (r.method && r.method.length) {
     const ml = el("button", "mlink", "Method"); ml.type = "button"; ml.setAttribute("aria-label", "Open the method for " + r.name);
