@@ -113,6 +113,10 @@ input[type=checkbox] { accent-color: var(--leaf); width: 22px; height: 22px; fle
 .crow { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .crow .grow { flex: 1; min-width: 0; }
 .crow input[type=text] { margin-top: 4px; min-height: 34px; padding: 5px 8px; font-size: 14px; }
+.hidex { flex: none; border: 0; background: none; color: var(--muted); font-size: 16px; padding: 6px 8px; cursor: pointer; min-width: 36px; min-height: 36px; }
+.hidbox { margin: 14px 0; border: 1px solid var(--line); border-radius: 10px; background: var(--card); padding: 4px 12px; }
+.hidbox summary { cursor: pointer; padding: 8px 0; font-weight: 700; }
+.hidrow { display: flex; align-items: center; gap: 8px; padding: 4px 0; } .hidrow span { flex: 1; }
 .weeklybox { border: 1px solid var(--line); border-radius: 10px; background: var(--card); padding: 8px 12px; }
 
 /* cook mode */
@@ -472,13 +476,14 @@ const QUICK_OUT = ["Eating out", "Takeaway", "HelloFresh", "Leftovers", "Cooking
 
 // ---------- state ----------
 const blank = () => ({
-  selected: [], recipeSkip: [], swaps: [], skipped: [], ticked: [], extra: [], custom: [], usual: [], favs: [], ess: [], essNotes: {}, essTypes: {}, household: { adult: true, kids: false, baby: false }, essWeekly: [], essCounts: {},
+  selected: [], recipeSkip: [], swaps: [], skipped: [], ticked: [], extra: [], custom: [], usual: [], favs: [], ess: [], essNotes: {}, essTypes: {}, household: { adult: true, kids: false, baby: false }, essWeekly: [], essCounts: {}, hiddenRec: [], hiddenEss: [],
   essCustom: [], pantry: [], pantryBuy: [], plans: {}, filters: [], ui: { meal: "dinner", tier: "all", levels: [], sort: "az", tab: "meals" }, ts: 0,
 });
 let S = blank();
 const selected = new Map(), recipeSkip = new Map(), swaps = new Map(), skipped = new Set(), ticked = new Set(), favs = new Set(),
   essSel = new Map(), weekly = new Map(), pantry = new Set(), pantryBuy = new Set(), filters = new Set();
-let essCounts = {}, regularMsg = "";
+let essCounts = {}, regularMsg = "", showHidden = false, hiddenOpen = false;
+const hiddenRec = new Set(), hiddenEss = new Set();
 const REGULAR_MIN = 2;
 let usual = [], custom = [], extra = [], essCustom = [], essNotes = {}, essTypes = {}, household = { adult: true, kids: false, baby: false }, plans = {}, ui = { meal: "dinner", tier: "all", levels: [], sort: "az", tab: "meals" };
 let query = "", planWeek = 0, expanded = new Set(), ccMeal = "all";
@@ -495,6 +500,7 @@ function hydrate(o) {
   d.recipeSkip.forEach(([id, ks]) => byId(id) && recipeSkip.set(id, new Set(ks)));
   d.swaps.forEach(([id, es]) => byId(id) && swaps.set(id, new Map(es)));
   d.skipped.forEach((k) => skipped.add(k)); d.ticked.forEach((k) => ticked.add(k)); d.favs.forEach((k) => favs.add(k));
+  hiddenRec.clear(); hiddenEss.clear(); (d.hiddenRec || []).forEach((k) => hiddenRec.add(k)); (d.hiddenEss || []).forEach((k) => hiddenEss.add(k));
   essCounts = d.essCounts && typeof d.essCounts === "object" ? { ...d.essCounts } : {};
   d.ess.forEach(([id, n]) => essSel.set(id, n)); d.essWeekly.forEach(([id, n]) => weekly.set(id, n));
   d.pantry.forEach((k) => pantry.add(k)); d.pantryBuy.forEach((k) => pantryBuy.add(k)); d.filters.forEach((k) => filters.add(k));
@@ -502,7 +508,7 @@ function hydrate(o) {
 }
 function snapshot() {
   return { selected: [...selected], recipeSkip: [...recipeSkip].map(([i, s]) => [i, [...s]]), swaps: [...swaps].map(([i, m]) => [i, [...m]]),
-    skipped: [...skipped], ticked: [...ticked], extra, custom, usual, favs: [...favs], ess: [...essSel], essNotes, essTypes, household, essWeekly: [...weekly], essCounts, essCustom,
+    skipped: [...skipped], ticked: [...ticked], extra, custom, usual, favs: [...favs], ess: [...essSel], essNotes, essTypes, household, essWeekly: [...weekly], essCounts, hiddenRec: [...hiddenRec], hiddenEss: [...hiddenEss], essCustom,
     pantry: [...pantry], pantryBuy: [...pantryBuy], plans, filters: [...filters], ui, ts: Date.now() };
 }
 
@@ -578,7 +584,7 @@ const essDisplay = (e) => {
   return { name: n + " " + bn.toLowerCase(), query: n + " " + bq };
 };
 // Extras shown: everyday ones always, the rest when their group is ticked (or already picked / on your weekly list).
-const essShown = (e) => essVisibleFor(e, household) || essSel.has(e.id) || weekly.has(e.id);
+const essShown = (e) => !hiddenEss.has(e.id) && (essVisibleFor(e, household) || essSel.has(e.id) || weekly.has(e.id));
 function buildItems() {
   const totals = new Map();
   for (const [id, sv] of selected) {
@@ -711,6 +717,7 @@ function recipeRows() {
   const m = (r) => passes(r) && (!q || r.name.toLowerCase().includes(q) || r.ingredients.some((i) => i.name.toLowerCase().includes(q)));
   let out = rows.filter(m);
   if (q && !out.length && ui.tier !== "favs" && ui.tier !== "picked") out = all().filter(m);
+  out = showHidden ? all().filter((r) => hiddenRec.has(r.id) && m(r)) : out.filter((r) => !hiddenRec.has(r.id));
   out.sort((a, b) => ui.sort === "quick" ? (a.mins || 999) - (b.mins || 999) || a.name.localeCompare(b.name)
     : ui.sort === "slow" ? (b.mins || 0) - (a.mins || 0) || a.name.localeCompare(b.name) : a.name.localeCompare(b.name));
   return out;
@@ -794,6 +801,11 @@ function viewMeals(main) {
     return c;
   };
   for (const [k, l] of FILTERS) chips.append(fchip(k, l));
+  if (!hiddenRec.size) showHidden = false;
+  if (hiddenRec.size) {
+    const hc = el("button", "chip", "Hidden (" + hiddenRec.size + ")"); hc.type = "button"; hc.id = "fhidden"; hc.setAttribute("aria-pressed", String(showHidden));
+    hc.addEventListener("click", () => { showHidden = !showHidden; render(); }); chips.append(hc);
+  }
   const mb = el("button", "chip more", moreOpen ? "Less ▴" : "More ▾" + (nMore ? " (" + nMore + ")" : "")); mb.type = "button"; mb.id = "fmore"; mb.setAttribute("aria-expanded", String(moreOpen));
   mb.addEventListener("click", () => { moreOpen = !moreOpen; render(); });
   chips.append(mb);
@@ -844,7 +856,14 @@ function recipeLi(r) {
     persist(); if (ui.tier === "picked") renderRecipes(); else li.replaceWith(recipeLi(r)); renderNav();
   };
   cb.addEventListener("change", toggle); g.addEventListener("click", toggle);
-  row.append(cb, g, star); li.append(row);
+  const hx = el("button", "hidex", showHidden ? "↩" : "✕"); hx.type = "button";
+  hx.setAttribute("aria-label", showHidden ? "Show " + r.name + " again" : "Hide " + r.name + " (I never want it)"); hx.title = showHidden ? "Show again" : "Hide this meal";
+  hx.addEventListener("click", () => {
+    if (showHidden) hiddenRec.delete(r.id);
+    else { hiddenRec.add(r.id); selected.delete(r.id); recipeSkip.delete(r.id); swaps.delete(r.id); expanded.delete(r.id); favs.delete(r.id); }
+    persist(); rr();
+  });
+  row.append(cb, g, star, hx); li.append(row);
   if (on) {
     const ex = el("div", "rextra");
     const r2 = el("div", "row2");
@@ -944,7 +963,7 @@ function openDayPicker(d) {
     const q = el("input"); q.type = "text"; q.placeholder = "Search meals"; q.setAttribute("aria-label", "Search meals"); sb.append(q);
     const list = el("div"); sb.append(list);
     const draw = () => { list.innerHTML = ""; const s = q.value.trim().toLowerCase();
-      all().filter((r) => !s || r.name.toLowerCase().includes(s)).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 60).forEach((r) => {
+      all().filter((r) => !hiddenRec.has(r.id) && (!s || r.name.toLowerCase().includes(s))).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 60).forEach((r) => {
         const b = el("button", "pick"); b.type = "button"; b.append(el("span", null, r.name), el("span", "rmeta", MEAL_LABEL[r.meal] + " · " + TIER_LABEL[r.tier]));
         markPlanned(b, r); b.addEventListener("click", () => pickRecipe(r)); list.append(b); }); };
     q.addEventListener("input", draw); draw();
@@ -1158,7 +1177,7 @@ function viewEss(main) {
   const rm = el("p", "hint", regularMsg); rm.id = "ess-regular-msg";
   rb.addEventListener("click", () => {
     const ids = new Set(fullList.map((e) => e.id));
-    const fresh = Object.entries(essCounts).filter(([id, n]) => n >= REGULAR_MIN && ids.has(id) && !weekly.has(id)).map(([id]) => id);
+    const fresh = Object.entries(essCounts).filter(([id, n]) => n >= REGULAR_MIN && ids.has(id) && !weekly.has(id) && !hiddenEss.has(id)).map(([id]) => id);
     if (!fresh.length) { regularMsg = Object.entries(essCounts).some(([id, n]) => n >= REGULAR_MIN && ids.has(id)) ? "Nothing new: your regular items are already in the list." : "Nothing yet. Items bought in " + REGULAR_MIN + "+ shops show up here once you tap Finished shopping."; rm.textContent = regularMsg; return; }
     fresh.forEach((id) => weekly.set(id, 1));
     regularMsg = "Added " + fresh.length + " item" + (fresh.length === 1 ? "" : "s") + " you buy often."; persist(); rr();
@@ -1200,8 +1219,21 @@ function viewEss(main) {
       }
       const star = el("button", "star"); star.type = "button"; star.innerHTML = STAR; star.setAttribute("aria-pressed", String(weekly.has(e.id))); star.setAttribute("aria-label", weekly.has(e.id) ? "Remove from weekly list" : "Add to weekly list");
       star.addEventListener("click", () => { weekly.has(e.id) ? weekly.delete(e.id) : weekly.set(e.id, essSel.get(e.id) || 1); persist(); rr(); });
-      row.append(star); main.append(row);
+      const hx = el("button", "hidex", "✕"); hx.type = "button"; hx.setAttribute("aria-label", "Hide " + e.name + " (I never buy it)"); hx.title = "Hide: I never buy this";
+      hx.addEventListener("click", () => { hiddenEss.add(e.id); essSel.delete(e.id); weekly.delete(e.id); persist(); rr(); });
+      row.append(star, hx); main.append(row);
     }
+  }
+  const hidList = fullList.filter((e) => hiddenEss.has(e.id));
+  if (hidList.length) {
+    const dt = el("details", "hidbox"); dt.open = hiddenOpen; dt.addEventListener("toggle", () => { hiddenOpen = dt.open; });
+    dt.append(el("summary", null, "Hidden items (" + hidList.length + ")"));
+    for (const e of hidList) {
+      const r2 = el("div", "hidrow"); r2.append(el("span", null, essDisplay(e).name));
+      const b = el("button", "btn small", "Show again"); b.type = "button"; b.addEventListener("click", () => { hiddenEss.delete(e.id); hiddenOpen = true; persist(); rr(); });
+      r2.append(b); dt.append(r2);
+    }
+    main.append(dt);
   }
   main.append(el("h3", null, "Add your own item"));
   const ar = el("div", "addrow"); const inp = el("input"); inp.type = "text"; inp.id = "ess-add"; inp.placeholder = "e.g. Cat food"; inp.setAttribute("aria-label", "New extra item");
