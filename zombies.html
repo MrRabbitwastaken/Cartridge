@@ -462,6 +462,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:var(--tex
   <div class="setRow"><label>MOUSE SENSITIVITY <span id="sensVal">1.00</span></label><input type="range" id="sens" min="0.2" max="3" step="0.05"></div>
   <div class="setRow"><label>MASTER VOLUME <span id="volVal">70%</span></label><input type="range" id="vol" min="0" max="1" step="0.01"></div>
   <div class="setRow"><label>MUSIC VOLUME <span id="musicVal">50%</span></label><input type="range" id="musicVol" min="0" max="1" step="0.01"></div>
+  <div class="setRow"><label>FIELD OF VIEW <span id="fovVal">75°</span></label><input type="range" id="fovSlider" min="60" max="110" step="1"></div>
   <div class="setRow"><label>GRAPHICS QUALITY</label><div class="seg" id="qualSeg"><button data-q="low">LOW</button><button data-q="medium">MEDIUM</button><button data-q="high">HIGH</button></div></div>
   <div class="setRow"><label>HUD STYLE</label><div class="seg" id="hudSeg"><button data-v="full">FULL</button><button data-v="clean">CLEAN</button></div></div>
   <p style="font-size:13px;color:var(--dim);margin-top:-10px">Clean hides health, points, round and weapon panels. Ammo appears when you press R. Prompts, notifications and the crosshair stay.</p>
@@ -5000,7 +5001,7 @@ class WeaponSystem {
     vm.root.rotation.set(rx + out.rx, ry + out.ry, rz + out.rz);
     const adsFov = d.zoomVariable ? 70 / (this.zoomK || 4) : d.adsFov;
     this.zoomSens = a > 0.5 ? clamp(adsFov / 55, 0.25, 1) : 1;              // slower aim when magnified
-    const cam = this.game.camera, targetFov = lerp(75, adsFov, a) + s * 6 + this.fovPunch.x;
+    const cam = this.game.camera, targetFov = lerp(Settings.fov || 75, adsFov, a) + s * 6 + this.fovPunch.x;
     if (Math.abs(cam.fov - targetFov) > 0.01) { cam.fov = targetFov; cam.updateProjectionMatrix(); }
     const wf = lerp(58, d.wAdsFov, a);
     if (Math.abs(this.game.wCam.fov - wf) > 0.01) { this.game.wCam.fov = wf; this.game.wCam.updateProjectionMatrix(); }
@@ -8249,7 +8250,7 @@ class Game {
     this.show('mainMenu', false); this.show('pauseMenu', false); this.show('gameOver', false); $('gameOver').classList.remove('on');
     this.show('hud', true);
     this.state = 'playing';
-    this.camera.fov = 75; this.camera.updateProjectionMatrix();
+    this.camera.fov = Settings.fov || 75; this.camera.updateProjectionMatrix();
     this.scene.fog.density = this.fogDensity(false);
     this.requestLock();
   }
@@ -14826,9 +14827,9 @@ class BossBar {
     if (this.el) return;
     try {
       const st = document.createElement('style');
-      st.textContent = '#bossBar{position:absolute;top:64px;left:50%;transform:translateX(-50%);width:min(560px,70vw);text-align:center;pointer-events:none;opacity:0;transition:opacity .4s}#bossBar.on{opacity:1}#bossBar .bn{font:700 20px "Black Ops One",Oswald,sans-serif;letter-spacing:6px;color:#ffd8d0;text-shadow:0 0 10px #a00,0 2px 2px #000}#bossBar .bt{height:12px;margin-top:4px;background:rgba(0,0,0,.6);border:1px solid rgba(255,120,100,.5)}#bossBar .bf{height:100%;width:100%;background:linear-gradient(90deg,#7a0a0a,#e02a1a);transition:width .15s}#hud.exo #bossBar,#hud.clean #bossBar{display:none}';
+      st.textContent = '#mapBossBar{position:absolute;top:64px;left:50%;transform:translateX(-50%);width:min(560px,70vw);text-align:center;pointer-events:none;opacity:0;transition:opacity .4s}#mapBossBar.on{opacity:1}#mapBossBar .bn{font:700 20px "Black Ops One",Oswald,sans-serif;letter-spacing:6px;color:#ffd8d0;text-shadow:0 0 10px #a00,0 2px 2px #000}#mapBossBar .bt{height:12px;margin-top:4px;background:rgba(0,0,0,.6);border:1px solid rgba(255,120,100,.5)}#mapBossBar .bf{height:100%;width:100%;background:linear-gradient(90deg,#7a0a0a,#e02a1a);transition:width .15s}#hud.exo #mapBossBar,#hud.clean #mapBossBar{display:none}';
       document.head.appendChild(st);
-      this.el = document.createElement('div'); this.el.id = 'bossBar'; this.el.innerHTML = '<div class="bn"></div><div class="bt"><div class="bf"></div></div>';
+      this.el = document.createElement('div'); this.el.id = 'mapBossBar'; this.el.innerHTML = '<div class="bn"></div><div class="bt"><div class="bf"></div></div>';
       (document.getElementById('hud') || document.body).appendChild(this.el);
       this.nameEl = this.el.querySelector ? this.el.querySelector('.bn') : null; this.fillEl = this.el.querySelector ? this.el.querySelector('.bf') : null;
     } catch (e) { this.el = { classList: { toggle() {} } }; }
@@ -15618,6 +15619,95 @@ class Career {
 { const B = MysteryBox.prototype, _u = B.use; B.use = function (...a) { const r = _u.apply(this, a); if (this.game && this.game.career) this.game.career.onBox(); return r; }; }
 { const R = RoundManager.prototype, _u = R.update;
   R.update = function (dt) { const was = this.state; const r = _u.call(this, dt); if (was === 'active' && this.state === 'break' && this.game.career) this.game.career.onRoundEnd(this.round); return r; }; }
+
+/* =====================================================================
+   ON-SCREEN TEXT LIMIT — no subtitle, notification or prompt stays up
+   longer than 5 seconds. A message comes back only when its text changes
+   (a new prompt, a new objective, a new subtitle). Conversations with
+   choices stay open while you are in them; health, ammo counts, timers
+   and boss bars are not text prompts and are left alone.
+   ===================================================================== */
+const TEXT_CAP = 5;
+{ const H = HUD.prototype, _n = H.notify;
+  H.notify = function (title, sub, dur) { return _n.call(this, title, sub, Math.min(dur == null || !(dur >= 0) ? 3 : dur, TEXT_CAP)); };
+}
+{ const U = StoryUI.prototype, _u = U.update;
+  U.update = function (dt) { _u.call(this, dt); for (const s of this.subs) if (!s._cap) { s._cap = true; s.t = Math.min(s.t, TEXT_CAP); } if (this.toastT > TEXT_CAP) this.toastT = TEXT_CAP; if (this.bannerT > TEXT_CAP) this.bannerT = TEXT_CAP; };
+}
+class TextGuard {
+  constructor(game) { this.game = game; this.seen = new Map(); this.age = new WeakMap(); this.styled = false; }
+  style() {
+    if (this.styled) return; this.styled = true;
+    try { const st = document.createElement('style'); st.textContent = '.capped{opacity:0 !important;pointer-events:none !important;transition:opacity .35s !important}'; document.head.appendChild(st); } catch (e) {}
+  }
+  reset() { for (const [, s] of this.seen) if (s.el && s.el.classList) s.el.classList.remove('capped'); this.seen.clear(); }
+  /** Hide `el` once the same message (sig) has been showing for 5 s. */
+  track(key, el, visible, sig, now) {
+    if (!el || !el.classList) return;
+    let s = this.seen.get(key);
+    if (!visible) { if (s) { el.classList.remove('capped'); this.seen.delete(key); } return; }
+    if (!s || s.sig !== sig) { s = { sig, t: now, el }; this.seen.set(key, s); el.classList.remove('capped'); }
+    else if (now - s.t > TEXT_CAP) el.classList.add('capped');
+  }
+  update() {
+    this.style();
+    const g = this.game, now = g.time, $e = id => (typeof $ === 'function' ? $(id) : null);
+    const on = e => !!(e && e.classList && e.classList.contains && e.classList.contains('on'));
+    const txt = e => (e && typeof e.textContent === 'string' ? e.textContent : '');
+    const noDigits = t => String(t).replace(/[\d.:]+/g, '#');
+    const p = $e('prompt'); this.track('prompt', p, on(p), p && p.innerHTML, now);
+    const n = $e('notify'); this.track('notify', n, on(n), txt($e('notifyTitle')) + '|' + txt($e('notifySub')), now);
+    const t = $e('storyToast'); this.track('toast', t, on(t), txt(t), now);
+    const qb = $e('questBanner'); this.track('qbanner', qb, on(qb), txt($e('qbTitle')) + '|' + txt($e('qbSub')), now);
+    const eb = $e('eventBanner'); this.track('event', eb, on(eb), noDigits(txt(eb)), now);
+    const qt = $e('questTracker'); this.track('tracker', qt, on(qt), txt($e('qtTitle')) + '|' + txt($e('qtObj')), now);
+    const rt = $e('reloadTag'); this.track('reload', rt, on(rt), noDigits(txt(rt)), now);
+    const ex = $e('exWarn'); this.track('exwarn', ex, on(ex), txt(ex), now);
+    const cap = $e('cineCap'); this.track('cine', cap, !!txt(cap), txt(cap), now);
+    const hb = $e('hintBar'); this.track('hints', hb, true, 'hints', now);
+    // Between-round countdown: only the last five seconds are shown
+    const cd = $e('countdown');
+    if (cd && cd.classList) { const m = /IN (\d+)/.exec(txt(cd)); cd.classList.toggle('capped', !!m && +m[1] > TEXT_CAP); }
+    // Each subtitle line on its own clock
+    const subs = $e('subs');
+    if (subs && subs.children && subs.children.length !== undefined) for (const c of Array.from(subs.children)) {
+      if (!c || typeof c !== 'object' || !c.classList) continue;
+      let a = this.age.get(c); if (a == null) { a = now; this.age.set(c, a); }
+      if (now - a > TEXT_CAP) { try { c.remove ? c.remove() : subs.removeChild(c); } catch (e) {} }
+    }
+    // A dialogue box with no conversation behind it is closed
+    const S = g.story, dl = $e('dialogue');
+    if (S && S.ui && on(dl) && !S.dlg) { this.orphan = (this.orphan || 0) + 1; if (this.orphan > 30) { S.ui.hideDialogue(); this.orphan = 0; } } else this.orphan = 0;
+  }
+}
+{ const G0 = Game.prototype;
+  const _ug = G0.updateGame;
+  G0.updateGame = function (dt) { _ug.call(this, dt); if (!this.textGuard) this.textGuard = new TextGuard(this); this.textGuard.update(); };
+  const _st = G0.startGame;
+  G0.startGame = function () { const r = _st.call(this); if (this.textGuard) this.textGuard.reset(); return r; };
+}
+
+/* =====================================================================
+   FIELD OF VIEW — Settings slider, 60°–110° (default 75°). Aiming down
+   sights still zooms to each weapon's own sight; the gun model itself
+   keeps its own view so it never looks stretched.
+   ===================================================================== */
+const FOV_RANGE = [60, 110];
+Settings.fov = (() => { try { const v = parseFloat(localStorage.getItem('undead_fov')); return isNaN(v) ? 75 : clamp(v, FOV_RANGE[0], FOV_RANGE[1]); } catch (e) { return 75; } })();
+{ const G0 = Game.prototype, _bind = G0.bindUI;
+  G0.bindUI = function () {
+    _bind.call(this);
+    const el = typeof $ === 'function' ? $('fovSlider') : null; if (!el || !el.addEventListener) return;
+    const show = () => { const v = $('fovVal'); if (v) v.textContent = Math.round(Settings.fov) + '°'; };
+    el.value = Settings.fov; show();
+    el.addEventListener('input', () => {
+      Settings.fov = clamp(parseFloat(el.value) || 75, FOV_RANGE[0], FOV_RANGE[1]);
+      try { localStorage.setItem('undead_fov', String(Settings.fov)); } catch (e) {}
+      if (this.state !== 'menu') { this.camera.fov = Settings.fov; this.camera.updateProjectionMatrix(); }
+      show();
+    });
+  };
+}
 
 /* =====================================================================
    BOOT — wait briefly for fonts so canvas signs render in Oswald
