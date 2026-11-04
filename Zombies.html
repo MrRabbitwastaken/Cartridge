@@ -15483,7 +15483,7 @@ function camoMaterial(base, id) {
     const skip = PAP_SKIP();
     roots.forEach(r => r.traverse(m => {
       if (!m.isMesh || !m.material || Array.isArray(m.material) || skip.has(m.material)) return;
-      const mt = m.material; if (mt.isMeshBasicMaterial === true || mt.transparent === true || mt.type === 'MeshBasicMaterial') return;   // sights, glass, glow and flashes keep their look
+      const mt = m.material; if (mt.isMeshBasicMaterial === true || mt.transparent === true || mt.type === 'MeshBasicMaterial' || mt.visible === false) return;   // sights, glass, glow and flashes keep their look
       m.userData.preCamo = mt; m.material = camoMaterial(mt, camo);
     }));
   };
@@ -15957,6 +15957,332 @@ class TwistSystem {
     const nh = h.replace(/<span class="sub">[\s\S]*?<\/span>\s*$/, '') + ` <span class="sub" data-tw="1">${extra}</span>`;
     e.innerHTML = nh; if (this.hud.cache) this.hud.cache.prompt = nh;
   };
+}
+
+/* =====================================================================
+   HIGH-DETAIL WEAPONS — stage 1: shared materials, hands and sleeves for
+   every gun, plus fully detailed M1911, M4 and Trench 12.
+   The original blocky parts stay in place as invisible "proxies": the
+   Gunsmith, reload animations and sights keep measuring and moving them
+   exactly as before, and each detailed piece is parented to the proxy it
+   replaces, so when an attachment hides a factory part its detail goes too.
+   ===================================================================== */
+const HD = { textures: {} };
+/* ---------- Procedural textures ---------- */
+function hdCanvasTex(key, size, draw, repeat = 1) {
+  if (HD.textures[key]) return HD.textures[key];
+  const c = makeCanvas(size), g = c.getContext('2d'); draw(g, size);
+  const t = texFrom(c, true); if (t.repeat && t.repeat.set) t.repeat.set(repeat, repeat);
+  return (HD.textures[key] = t);
+}
+const hdBrushed = r => hdCanvasTex('brushed' + r, 256, (g, s) => { g.fillStyle = '#808080'; g.fillRect(0, 0, s, s); for (let i = 0; i < 900; i++) { const y = Math.random() * s, v = 100 + Math.random() * 60; g.strokeStyle = `rgba(${v},${v},${v},0.35)`; g.lineWidth = Math.random() * 1.2 + 0.3; g.beginPath(); g.moveTo(Math.random() * s * 0.3 - 20, y); g.lineTo(Math.random() * s * 0.7 + s * 0.3 + 20, y + rand(-1, 1)); g.stroke(); } for (let i = 0; i < 40; i++) { g.strokeStyle = 'rgba(200,200,200,0.4)'; g.lineWidth = 0.6; g.beginPath(); const x = Math.random() * s, y = Math.random() * s; g.moveTo(x, y); g.lineTo(x + rand(-14, 14), y + rand(-14, 14)); g.stroke(); } }, r);
+const hdStipple = r => hdCanvasTex('stipple' + r, 128, (g, s) => { g.fillStyle = '#7a7a7a'; g.fillRect(0, 0, s, s); for (let i = 0; i < 2600; i++) { const v = Math.random() < 0.5 ? 40 : 200; g.fillStyle = `rgba(${v},${v},${v},0.55)`; g.fillRect(Math.random() * s, Math.random() * s, 1.6, 1.6); } }, r);
+const hdChecker = r => hdCanvasTex('checker' + r, 128, (g, s) => { g.fillStyle = '#909090'; g.fillRect(0, 0, s, s); g.strokeStyle = '#303030'; g.lineWidth = 2.2; for (let i = -s; i < 2 * s; i += 8) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i + s, s); g.stroke(); g.beginPath(); g.moveTo(i + s, 0); g.lineTo(i, s); g.stroke(); } }, r);
+const hdGrain = (key, base, dark, r) => hdCanvasTex(key + r, 256, (g, s) => {
+  g.fillStyle = base; g.fillRect(0, 0, s, s);
+  for (let i = 0; i < 70; i++) { g.strokeStyle = dark; g.globalAlpha = rand(0.08, 0.3); g.lineWidth = rand(0.6, 2.4); g.beginPath(); let y = Math.random() * s; g.moveTo(0, y); for (let x = 0; x <= s; x += 16) { y += rand(-2.5, 2.5); g.lineTo(x, y + Math.sin(x * 0.03 + i) * 3); } g.stroke(); }
+  g.globalAlpha = 0.18; for (let i = 0; i < 6; i++) { g.fillStyle = dark; g.beginPath(); g.ellipse(Math.random() * s, Math.random() * s, rand(6, 18), rand(2, 5), rand(-0.3, 0.3), 0, 7); g.fill(); } g.globalAlpha = 1;
+}, r);
+function hdEngrave(text, w = 512, h = 64, color = '#c8c8c0') { return hdCanvasTex('eng:' + text, 512, (g, s) => { g.clearRect(0, 0, s, s); g.fillStyle = color; fitFont(g, text, s - 20, 600, 46, 'Oswald, Arial, sans-serif'); g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, s / 2, s / 2); }); }
+function hdScroll() { return hdCanvasTex('scroll', 256, (g, s) => { g.clearRect(0, 0, s, s); g.strokeStyle = 'rgba(220,215,200,0.85)'; g.lineWidth = 2; for (let k = 0; k < 7; k++) { const cx = 20 + k * 36, cy = s / 2 + (k % 2 ? 22 : -22); g.beginPath(); for (let a = 0; a < 12; a += 0.25) { const r = 3 + a * 1.7; g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } g.stroke(); } g.strokeRect(6, s / 2 - 60, s - 12, 120); g.strokeRect(12, s / 2 - 54, s - 24, 108); }); }
+/* ---------- Studio reflection for metal ---------- */
+function hdEnvCube() {
+  if (HD.env) return HD.env;
+  const face = (top, bottom, strip, spot) => { const c = makeCanvas(64), g = c.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, 64); gr.addColorStop(0, top); gr.addColorStop(1, bottom); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); if (strip) { g.fillStyle = 'rgba(255,250,240,0.85)'; g.fillRect(strip, 6, 9, 52); } if (spot) { const r = g.createRadialGradient(32, 32, 2, 32, 32, 26); r.addColorStop(0, 'rgba(255,255,255,0.95)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); } return c; };
+  const imgs = [face('#3a3c40', '#17181a', 18), face('#34363a', '#141516', 40), face('#cfcfcc', '#8a8a88', 0, true), face('#18191a', '#0b0b0c'), face('#2e3034', '#121314', 30), face('#262729', '#101112', 12)];
+  try { HD.env = new THREE.CubeTexture(imgs); HD.env.needsUpdate = true; } catch (e) { HD.env = null; }
+  return HD.env;
+}
+/* ---------- Materials ---------- */
+function hdMaterials() {
+  const env = hdEnvCube(), mix = THREE.MixOperation;
+  const metal = (m, refl, bump) => { if (!m) return; m.envMap = env; m.combine = mix; m.reflectivity = refl; if (bump) { m.bumpMap = bump; m.bumpScale = 0.35; } m.needsUpdate = true; };
+  metal(VMM.blued, 0.22, hdBrushed(2)); metal(VMM.dark, 0.12, hdBrushed(2)); metal(VMM.steel, 0.45, hdBrushed(1)); metal(VMM.alu, 0.35, hdBrushed(1)); metal(VMM.brass, 0.4);
+  if (VMM.polymer) { VMM.polymer.bumpMap = hdStipple(3); VMM.polymer.bumpScale = 0.4; VMM.polymer.needsUpdate = true; }
+  if (VMM.wood) { VMM.wood.bumpMap = hdGrain('woodB', '#808080', '#202020', 1); VMM.wood.bumpScale = 0.3; VMM.wood.needsUpdate = true; }
+  const P = o => new THREE.MeshPhongMaterial(Object.assign({ shininess: 30, specular: 0x222222 }, o));
+  VMM.ghost = new THREE.MeshBasicMaterial({ visible: false });
+  VMM.hdBlued = P({ map: hdBrushed(6), color: 0x3a3e46, shininess: 90, specular: 0x8a8f98, envMap: env, combine: mix, reflectivity: 0.24, bumpMap: hdBrushed(6), bumpScale: 0.25 });
+  VMM.hdParker = P({ map: hdStipple(10), color: 0x2a2c2f, shininess: 28, specular: 0x333333, envMap: env, combine: mix, reflectivity: 0.06, bumpMap: hdStipple(10), bumpScale: 0.3 });
+  VMM.hdAnod = P({ map: hdBrushed(8), color: 0x1f2124, shininess: 55, specular: 0x555a60, envMap: env, combine: mix, reflectivity: 0.12, bumpMap: hdBrushed(8), bumpScale: 0.2 });
+  VMM.hdSteel = P({ color: 0xa8adb4, shininess: 130, specular: 0xffffff, envMap: env, combine: mix, reflectivity: 0.5, bumpMap: hdBrushed(3), bumpScale: 0.2 });
+  VMM.hdPoly = P({ map: hdStipple(14), color: 0x262729, shininess: 14, specular: 0x1a1a1a, bumpMap: hdStipple(14), bumpScale: 0.5 });
+  VMM.hdRubber = P({ map: hdStipple(18), color: 0x1a1a1b, shininess: 6, specular: 0x0a0a0a, bumpMap: hdStipple(18), bumpScale: 0.6 });
+  VMM.hdWalnut = P({ map: hdGrain('walnut', '#d8d0c8', '#3a2a20', 18), color: 0x8a5430, shininess: 45, specular: 0x3a2a1a, bumpMap: hdGrain('walnutB', '#808080', '#202020', 18), bumpScale: 0.15 });
+  VMM.hdChecker = P({ map: hdGrain('walnutC', '#d0c8c0', '#3a2a20', 30), color: 0x74451f, shininess: 25, specular: 0x221a10, bumpMap: hdChecker(30), bumpScale: 0.9 });
+  VMM.hdGripCheck = P({ map: hdChecker(24), color: 0x2a2d32, shininess: 40, specular: 0x444444, bumpMap: hdChecker(24), bumpScale: 0.8 });
+  VMM.hdBore = new THREE.MeshBasicMaterial({ color: 0x050505 });
+  VMM.hdDot = new THREE.MeshBasicMaterial({ color: 0xf2f2e8 });
+  VMM.hdTrit = new THREE.MeshBasicMaterial({ color: 0x9cff7a });
+  VMM.hdBrass = P({ color: 0xd4ad58, shininess: 110, specular: 0xffe8a8, envMap: env, combine: mix, reflectivity: 0.35 });
+  VMM.hdLens = new THREE.MeshPhongMaterial({ color: 0x5a8ab0, transparent: true, opacity: 0.35, shininess: 140, specular: 0xffffff, envMap: env, combine: mix, reflectivity: 0.6, depthWrite: false });
+  // gloves and sleeves
+  VMM.hdGlove = P({ map: hdStipple(6), color: 0x2f2d27, shininess: 10, specular: 0x111111, bumpMap: hdStipple(6), bumpScale: 0.5 });
+  VMM.hdGloveKnuckle = P({ color: 0x1c1c1a, shininess: 25, specular: 0x222222 });
+  VMM.hdGlovePalm = P({ map: hdStipple(10), color: 0x45423a, shininess: 8, bumpMap: hdStipple(10), bumpScale: 0.6 });
+  VMM.hdStitch = P({ color: 0x6a6658, shininess: 4 });
+}
+{ const _ivm = initViewmodelMaterials; initViewmodelMaterials = function () { _ivm(); try { hdMaterials(); } catch (e) { console.error('HD materials', e); } }; }
+
+/* ---------- Geometry helpers (all flagged as detail: the Gunsmith never measures them) ---------- */
+function hdFlag(m) { m.userData.detail = true; return m; }
+/** Extruded profile. axis 'x': pts are [forward, up] (forward = -Z) extruded across the gun's width; axis 'z': pts are [x, y] extruded along the barrel. */
+function hdEx(parent, pts, depth, mat, x = 0, y = 0, z = 0, o = {}) {
+  const sh = new THREE.Shape(); pts.forEach((p, i) => i ? sh.lineTo(p[0], p[1]) : sh.moveTo(p[0], p[1])); sh.closePath && sh.closePath();
+  const bev = o.bevel == null ? 0.0012 : o.bevel, d = Math.max(0.0005, depth - 2 * bev);
+  const geo = new THREE.ExtrudeGeometry(sh, { depth: d, bevelEnabled: bev > 0, bevelThickness: bev, bevelSize: bev, bevelSegments: o.segs || 2, steps: 1, curveSegments: 4 });
+  if (typeof geo.parameters === 'function') { geo.parameters = null; geo.__size = null; geo.p = { t: 'extrude', pts, depth, axis: o.axis || 'x' }; }
+  else { geo.translate(0, 0, -d / 2); if ((o.axis || 'x') === 'x') geo.rotateY(Math.PI / 2); if (o.uv !== false) hdBoxUV(geo, o.uvScale || 30); }
+  const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (o.rx) m.rotation.x = o.rx; if (o.ry) m.rotation.y = o.ry; if (o.rz) m.rotation.z = o.rz;
+  parent.add(m); return hdFlag(m);
+}
+/** World-scale planar UVs so tiling textures look the same size on every extruded part. */
+function hdBoxUV(geo, k) {
+  const pos = geo.attributes && geo.attributes.position, uv = geo.attributes && geo.attributes.uv, nor = (geo.computeVertexNormals(), geo.attributes.normal);
+  if (!pos || !uv || !nor) return;
+  for (let i = 0; i < pos.count; i++) {
+    const nx = Math.abs(nor.getX(i)), ny = Math.abs(nor.getY(i)), nz = Math.abs(nor.getZ(i)), x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    if (nx >= ny && nx >= nz) uv.setXY(i, z * k, y * k); else if (ny >= nz) uv.setXY(i, x * k, z * k); else uv.setXY(i, x * k, y * k);
+  }
+  uv.needsUpdate = true;
+}
+const hdB = (...a) => hdFlag(B(...a));
+const hdCZ = (...a) => hdFlag(CZ(...a));
+/** Cylinder along X (pins, screws, buttons). */
+function hdCX(parent, r, len, mat, x = 0, y = 0, z = 0, seg = 12) { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, seg), mat); m.rotation.z = Math.PI / 2; m.position.set(x, y, z); parent.add(m); return hdFlag(m); }
+function hdSph(parent, r, mat, x = 0, y = 0, z = 0, sx = 1, sy = 1, sz = 1) { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); parent.add(m); return hdFlag(m); }
+function hdDecal(parent, tex, w, h, x, y, z, ry, opacity = 0.85) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity, depthWrite: false })); m.position.set(x, y, z); m.rotation.y = ry; parent.add(m); return hdFlag(m); }
+/** Screw head on a side face (x = side), with a slot. */
+function hdScrew(parent, x, y, z, r = 0.0032, mat) { const s = Math.sign(x) || 1; hdCX(parent, r, 0.0016, mat || VMM.hdSteel, x, y, z, 10); hdB(parent, 0.0006, r * 1.7, 0.0007, VMM.hdBore, x + s * 0.0008, y, z, 0.6); }
+const hdArc = (cx, cy, r, a0, a1, n = 6) => { const o = []; for (let i = 0; i <= n; i++) { const a = a0 + (a1 - a0) * i / n; o.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); } return o; };
+/** A rounded rectangle outline (for cross-sections). */
+const hdRRect = (w, h, r, n = 3) => [...hdArc(w / 2 - r, h / 2 - r, r, 0, Math.PI / 2, n), ...hdArc(-w / 2 + r, h / 2 - r, r, Math.PI / 2, Math.PI, n), ...hdArc(-w / 2 + r, -h / 2 + r, r, Math.PI, 1.5 * Math.PI, n), ...hdArc(w / 2 - r, -h / 2 + r, r, 1.5 * Math.PI, 2 * Math.PI, n)];
+/** A group inside `proxy` whose coordinates are those of `frame` (default: the gun root), so detail can be laid out in gun coordinates. */
+function hdIn(proxy, frame) {
+  const chain = []; let n = proxy; while (n && n !== frame && n.parent) { chain.unshift(n); n = n.parent; }
+  let M = _M4.id(); for (const c of chain) M = _M4.mul(M, _M4.local(c));
+  // invert the rigid transform
+  const R = [M[0], M[1], M[2], M[4], M[5], M[6], M[8], M[9], M[10]], t = [M[3], M[7], M[11]];
+  const Rt = [R[0], R[3], R[6], R[1], R[4], R[7], R[2], R[5], R[8]];
+  const ti = [-(Rt[0] * t[0] + Rt[1] * t[1] + Rt[2] * t[2]), -(Rt[3] * t[0] + Rt[4] * t[1] + Rt[5] * t[2]), -(Rt[6] * t[0] + Rt[7] * t[1] + Rt[8] * t[2])];
+  // Euler XYZ from Rt
+  const m13 = Rt[2], ry = Math.asin(clamp(m13, -1, 1)); let rx, rz;
+  if (Math.abs(m13) < 0.9999999) { rx = Math.atan2(-Rt[5], Rt[8]); rz = Math.atan2(-Rt[1], Rt[0]); } else { rx = Math.atan2(Rt[7], Rt[4]); rz = 0; }
+  const g = new THREE.Group(); g.position.set(ti[0], ti[1], ti[2]); g.rotation.set(rx, ry, rz); g.userData.detail = true; proxy.add(g); return g;
+}
+/** Hide a factory part visually but keep it for measuring (Gunsmith, sights, animation). */
+function hdGhost(m) { if (m && m.isMesh) { m.userData.hdGhost = true; m.userData.baseMat = undefined; m.material = VMM.ghost; } return m; }
+const hdAt = (root, path) => { let o = root; for (const i of path.split('/').filter(Boolean)) o = o && o.children[+i]; return o; };
+// The Gunsmith and fitting code measure only real parts
+{ const _bi = boxesIn; boxesIn = function (root, o) { return _bi(root, o).filter(b => !(b.o.userData && (b.o.userData.detail || b.o.userData.hdHand))); };
+  const _pb = partBoxes; partBoxes = function (root) { return _pb(root).filter(b => !(b.o.userData && (b.o.userData.detail || b.o.userData.hdHand))); }; }
+
+/* ---------- Hands and sleeves (every weapon) ---------- */
+{ const _glove = glove;
+  glove = function (parent, side, x, y, z, rx = 0, ry = 0, rz = 0, s = 1) {
+    const h = _glove(parent, side, x, y, z, rx, ry, rz, s);
+    h.children.slice(0, 3).forEach(m => { m.material = VMM.ghost; m.userData.hdHand = true; });
+    const D = new THREE.Group(); D.userData.detail = true; h.add(D);
+    const k = s;
+    // back of the hand and palm: a rounded block
+    hdEx(D, hdRRect(0.066 * k, 0.08 * k, 0.014 * k, 3), 0.082 * k, VMM.hdGlove, 0, 0, 0, { axis: 'z', bevel: 0.002 * k });
+    // padded knuckle guard
+    hdEx(D, hdRRect(0.06 * k, 0.018 * k, 0.007 * k, 2), 0.05 * k, VMM.hdGloveKnuckle, 0, 0.042 * k, -0.008 * k, { axis: 'z', bevel: 0.002 * k });
+    for (let i = 0; i < 4; i++) hdSph(D, 0.0075 * k, VMM.hdGloveKnuckle, (-0.022 + i * 0.0148) * k * side, 0.044 * k, -0.03 * k, 1, 0.7, 1);
+    // curled fingers wrapping the front, one row each
+    for (let i = 0; i < 4; i++) { const fy = (0.024 - i * 0.017) * k, fl = (0.062 - Math.abs(i - 1.2) * 0.004) * k; hdEx(D, hdRRect(fl, 0.016 * k, 0.0075 * k, 3), 0.02 * k, i % 2 ? VMM.hdGlove : VMM.hdGlovePalm, 0, fy, -0.044 * k, { axis: 'z', bevel: 0.0015 * k }); hdB(D, fl * 0.9, 0.0012 * k, 0.0012 * k, VMM.hdStitch, 0, fy + 0.0078 * k, -0.054 * k); }
+    // thumb along the side
+    hdEx(D, hdRRect(0.02 * k, 0.026 * k, 0.009 * k, 3), 0.062 * k, VMM.hdGlove, -side * 0.041 * k, 0.026 * k, -0.02 * k, { axis: 'z', bevel: 0.002 * k, rz: side * 0.3 });
+    hdSph(D, 0.011 * k, VMM.hdGlovePalm, -side * 0.043 * k, 0.03 * k, -0.052 * k, 0.85, 0.8, 0.9);
+    // wrist strap
+    hdEx(D, hdRRect(0.07 * k, 0.07 * k, 0.016 * k, 3), 0.018 * k, VMM.hdGloveKnuckle, 0, -0.004 * k, 0.04 * k, { axis: 'z', bevel: 0.0015 * k });
+    D.traverse(m => { if (m.isMesh) m.userData.hdHand = true; });
+    return h;
+  };
+  const _fore = forearm;
+  forearm = function (parent, x, y, z, rx, ry, rz = 0, len = 0.42) {
+    const a = _fore(parent, x, y, z, rx, ry, rz, len);
+    a.children.slice(0, 2).forEach(m => { m.material = VMM.ghost; m.userData.hdHand = true; });
+    const D = new THREE.Group(); D.userData.detail = true; a.add(D);
+    const sl = new THREE.Mesh(new THREE.CylinderGeometry(0.047, 0.05, len, 18), VMM.sleeve); sl.rotation.x = Math.PI / 2; sl.position.z = len / 2; D.add(sl); hdFlag(sl);
+    for (const f of [0.2, 0.42, 0.66]) { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.0492, 0.0498, 0.03, 18), VMM.sleeve); r.rotation.set(Math.PI / 2, 0, f * 2); r.position.set(0, 0.0008, len * f); D.add(r); hdFlag(r); }   // bunched folds
+    const cf = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.051, 0.05, 18), VMM.cuff); cf.rotation.x = Math.PI / 2; cf.position.z = 0.03; D.add(cf); hdFlag(cf);
+    hdB(D, 0.03, 0.006, 0.04, VMM.hdGloveKnuckle, 0, 0.05, 0.03);   // cuff tab
+    D.traverse(m => { if (m.isMesh) m.userData.hdHand = true; });
+    return a;
+  };
+}
+
+/* ---------- M1911 ---------- */
+function hdPistol(root, P) {
+  const A = p => hdAt(root, p);
+  // Slide
+  const slideP = hdGhost(A('/0/0')); ['/0/1', '/0/2', '/0/3', '/0/4', '/0/5', '/0/6', '/0/10'].forEach(p => hdGhost(A(p)));
+  const S = hdIn(slideP);
+  hdEx(S, [[-0.095, 0.0255], [-0.095, 0.064], [-0.091, 0.0685], [0.139, 0.0685], [0.1445, 0.064], [0.1445, 0.031], [0.14, 0.0255]], 0.05, VMM.hdBlued, 0, 0, 0, { bevel: 0.0022, segs: 3 });
+  for (let i = 0; i < 9; i++) for (const sx of [-1, 1]) hdB(S, 0.0012, 0.031, 0.0016, VMM.hdBore, sx * 0.0252, 0.047, 0.062 + i * 0.0036);
+  // ejection port, extractor, barrel hood inside
+  hdB(S, 0.0012, 0.0145, 0.036, VMM.hdBore, 0.0253, 0.0558, -0.012); hdB(S, 0.0012, 0.009, 0.03, VMM.hdSteel, 0.0249, 0.0555, -0.012);
+  hdEx(S, [[-0.02, 0.0575], [-0.02, 0.0615], [0.03, 0.0615], [0.034, 0.0595], [0.03, 0.0575]], 0.0028, VMM.hdBlued, 0.0258, 0, 0, { bevel: 0.0004 });
+  // markings
+  hdDecal(S, hdEngrave('M1911-A1  ·  CAL .45 AUTO'), 0.1, 0.012, -0.0259, 0.044, -0.045, -Math.PI / 2, 0.55);
+  hdDecal(S, hdEngrave('WIDOWMAKER ARMS  ·  SER. 0417'), 0.075, 0.009, 0.0259, 0.04, 0.03, Math.PI / 2, 0.45);
+  // front: bushing, bore, recoil spring plug
+  hdCZ(S, 0.0115, 0.006, VMM.hdSteel, 0, 0.046, -0.1465, 18); hdCZ(S, 0.0098, 0.004, VMM.hdBlued, 0, 0.046, -0.15, 16); hdCZ(S, 0.0052, 0.006, VMM.hdBore, 0, 0.046, -0.151, 12);
+  hdCZ(S, 0.0068, 0.005, VMM.hdSteel, 0, 0.031, -0.1465, 14); hdCZ(S, 0.0028, 0.003, VMM.hdBore, 0, 0.031, -0.149, 8);
+  // sights: three white dots
+  hdSph(S, 0.0013, VMM.hdDot, 0, 0.0765, -0.1292); for (const sx of [-1, 1]) hdSph(S, 0.0012, VMM.hdDot, sx * 0.0105, 0.0775, 0.0818);
+  // Frame and dust cover
+  [ '/2', '/3', '/6', '/7' ].forEach(p => hdGhost(A(p)));
+  const F = new THREE.Group(); F.userData.detail = true; root.add(F);
+  hdEx(F, [[-0.083, -0.001], [-0.083, 0.0245], [0.119, 0.0245], [0.121, 0.022], [0.121, 0.001], [0.115, -0.001]], 0.045, VMM.hdBlued, 0, 0, 0, { bevel: 0.0018 });
+  hdEx(F, [[0.04, 0.0], [0.042, -0.009], [0.118, -0.0105], [0.121, -0.006], [0.121, 0.0]], 0.031, VMM.hdBlued, 0, 0, 0, { bevel: 0.0015 });
+  // trigger guard (one C-shaped band)
+  hdEx(F, [[0.029, 0.0], [0.033, -0.016], [0.028, -0.029], [0.018, -0.034], [-0.012, -0.0345], [-0.026, -0.031], [-0.03, -0.024], [-0.023, -0.022], [-0.012, -0.0285], [0.016, -0.028], [0.022, -0.024], [0.025, -0.015], [0.023, 0.0]], 0.012, VMM.hdBlued, 0, 0, 0, { bevel: 0.0012 });
+  // slide stop, thumb safety, magazine release, pins
+  hdEx(F, [[0.04, 0.012], [0.042, 0.022], [0.012, 0.0245], [-0.002, 0.02], [0.002, 0.014]], 0.003, VMM.hdBlued, -0.0242, 0, 0, { bevel: 0.0005 });
+  for (let i = 0; i < 4; i++) hdB(F, 0.0006, 0.007, 0.0008, VMM.hdBore, -0.0258, 0.019, 0.032 - i * 0.003);
+  hdCX(F, 0.0032, 0.05, VMM.hdSteel, 0, 0.016, 0.036, 10);
+  hdEx(F, [[-0.058, 0.0175], [-0.06, 0.027], [-0.08, 0.0285], [-0.083, 0.024], [-0.07, 0.019]], 0.003, VMM.hdBlued, -0.0245, 0, 0, { bevel: 0.0006 });
+  hdCX(F, 0.0046, 0.004, VMM.hdGripCheck, -0.0245, -0.006, -0.02, 14);
+  hdCX(F, 0.0024, 0.05, VMM.hdSteel, 0, 0.004, -0.072, 8);
+  // Grip frame: front strap, mainspring housing and beavertail (built in the grip's own tilted frame)
+  const gp = hdGhost(A('/4')), G2 = new THREE.Group(); G2.userData.detail = true; gp.add(G2);
+  hdEx(G2, [[0.03, 0.065], [0.032, 0.02], [0.031, -0.04], [0.028, -0.06], [0.022, -0.065], [-0.026, -0.065], [-0.032, -0.058], [-0.034, -0.02], [-0.033, 0.065]], 0.042, VMM.hdBlued, 0, 0, 0, { bevel: 0.0025, segs: 3 });
+  hdEx(G2, [[0.031, 0.04], [0.0325, -0.05], [0.029, -0.058], [0.0275, 0.04]], 0.03, VMM.hdGripCheck, 0, 0, 0, { bevel: 0.0008 });
+  hdEx(G2, [[-0.0345, 0.0], [-0.0352, -0.056], [-0.03, -0.063], [-0.03, 0.0]], 0.034, VMM.hdGripCheck, 0, 0, 0, { bevel: 0.0008 });
+  hdCX(G2, 0.0016, 0.044, VMM.hdSteel, 0, -0.058, -0.028, 6);
+  const tang = hdIn(gp); hdEx(tang, [[-0.083, 0.024], [-0.083, 0.013], [-0.098, 0.006], [-0.114, 0.012], [-0.112, 0.02], [-0.098, 0.024]], 0.032, VMM.hdBlued, 0, 0, 0, { bevel: 0.0015 });
+  // Grip panels: checkered walnut with screws (they hide with the factory grips)
+  const wp = hdGhost(A('/5')), W2 = new THREE.Group(); W2.userData.detail = true; wp.add(W2);
+  for (const sx of [-1, 1]) {
+    hdEx(W2, [[0.023, 0.047], [0.024, -0.04], [0.019, -0.048], [-0.02, -0.048], [-0.024, -0.042], [-0.024, 0.047]], 0.0045, VMM.hdChecker, sx * 0.0245, 0, 0, { bevel: 0.0012 });
+    hdScrew(W2, sx * 0.0272, 0.036, 0.0, 0.0032); hdScrew(W2, sx * 0.0272, -0.036, 0.0, 0.0032);
+    hdEx(W2, hdArc(0, 0, 0.007, 0, 6.283, 10).map(p => [p[0] * 1.2, p[1]]), 0.0012, VMM.hdWalnut, sx * 0.0274, 0.0, 0.0, { bevel: 0.0003 });
+  }
+  // Hammer spur and lanyard loop
+  if (P.hammer) { hdB(P.hammer, 0.012, 0.004, 0.012, VMM.hdGripCheck, 0, 0.011, 0.003); hdCX(P.hammer, 0.0045, 0.0146, VMM.hdBore, 0, 0.004, 0, 10); }
+  const lan = new THREE.Mesh(new THREE.TorusGeometry(0.005, 0.0013, 6, 12), VMM.hdSteel); lan.position.set(0, -0.069, -0.03); G2.add(hdFlag(lan));
+}
+
+/* ---------- M4 carbine ---------- */
+function hdRifle(root, P) {
+  const A = p => hdAt(root, p);
+  // Upper receiver
+  const up = hdGhost(A('/0')), U = hdIn(up);
+  hdEx(U, [[-0.085, 0.006], [-0.085, 0.055], [0.165, 0.055], [0.165, 0.012], [0.16, 0.006]], 0.05, VMM.hdAnod, 0, 0, 0, { bevel: 0.002 });
+  hdEx(U, [[-0.02, 0.034], [-0.045, 0.034], [-0.055, 0.052], [-0.02, 0.052]], 0.008, VMM.hdAnod, 0.026, 0, 0, { bevel: 0.0015 });             // brass deflector
+  hdCX(U, 0.0028, 0.052, VMM.hdSteel, 0, 0.012, 0.075, 8);                                                                                     // rear takedown pin
+  hdDecal(U, hdEngrave('CAL 5.56 MM  ·  M4 CARBINE'), 0.09, 0.011, -0.0262, 0.03, -0.06, -Math.PI / 2, 0.5);
+  // ejection port cover: hinge rod and snap
+  hdCZ(U, 0.0013, 0.058, VMM.hdSteel, 0.0262, 0.019, -0.03, 6); hdB(U, 0.0016, 0.004, 0.006, VMM.hdAnod, 0.0272, 0.038, -0.01);
+  // forward assist button
+  hdCZ(U, 0.0085, 0.008, VMM.hdAnod, 0.03, 0.04, 0.062, 14); for (let i = 0; i < 6; i++) hdB(U, 0.0006, 0.0025, 0.0085, VMM.hdBore, 0.03 + Math.cos(i) * 0.0082, 0.04 + Math.sin(i) * 0.0082, 0.062);
+  // Top rail: sharper, finer teeth
+  for (let i = 2; i <= 15; i++) hdGhost(A('/' + i));
+  const rail = A('/1'); if (rail) { rail.material = VMM.hdAnod; const R = hdIn(rail); for (let z = -0.245; z <= 0.066; z += 0.0105) hdB(R, 0.0286, 0.0034, 0.0055, VMM.hdAnod, 0, 0.0687, z); for (let z = -0.25; z <= 0.07; z += 0.0105) hdB(R, 0.0024, 0.0028, 0.0016, VMM.hdBore, 0, 0.0715, z + 0.005); }
+  // Lower receiver and magazine well
+  hdGhost(A('/16')); hdGhost(A('/17'));
+  const L = new THREE.Group(); L.userData.detail = true; root.add(L);
+  hdEx(L, [[-0.055, 0.0105], [0.115, 0.0105], [0.115, -0.03], [0.112, -0.064], [0.106, -0.0675], [0.034, -0.0675], [0.031, -0.035], [-0.04, -0.035], [-0.055, -0.024]], 0.046, VMM.hdAnod, 0, 0, 0, { bevel: 0.0022 });
+  hdEx(L, [[0.112, -0.064], [0.118, -0.07], [0.03, -0.0705], [0.034, -0.0675]], 0.05, VMM.hdAnod, 0, 0, 0, { bevel: 0.0012 });          // magwell flare
+  hdDecal(L, hdEngrave('SAFE · SEMI · AUTO'), 0.04, 0.007, -0.0242, -0.015, -0.03, -Math.PI / 2, 0.6);
+  hdEx(L, [[-0.022, -0.002], [-0.03, 0.002], [-0.043, -0.004], [-0.04, -0.011], [-0.026, -0.008]], 0.003, VMM.hdAnod, -0.0245, 0, 0, { bevel: 0.0006 });     // selector
+  hdCX(L, 0.0045, 0.004, VMM.hdAnod, -0.0245, -0.006, -0.032, 12);
+  hdEx(L, [[0.012, 0.004], [0.028, 0.004], [0.031, -0.012], [0.016, -0.015]], 0.003, VMM.hdAnod, -0.0245, 0, 0, { bevel: 0.0006 });   // bolt catch
+  hdCX(L, 0.0042, 0.004, VMM.hdAnod, 0.0245, -0.022, 0.03, 12);                                                                       // mag release
+  hdCX(L, 0.0028, 0.05, VMM.hdSteel, 0, 0.006, 0.106, 8);                                                                              // pivot pin
+  // trigger guard
+  hdGhost(A('/28')); hdGhost(A('/29'));
+  hdEx(L, [[0.037, -0.035], [0.037, -0.043], [0.03, -0.0445], [-0.025, -0.0445], [-0.025, -0.039], [0.028, -0.039], [0.031, -0.035]], 0.012, VMM.hdAnod, 0, 0, 0, { bevel: 0.0009 });
+  // Pistol grip (in its own tilted frame)
+  const gp = hdGhost(A('/27')), GG = new THREE.Group(); GG.userData.detail = true; gp.add(GG);
+  hdEx(GG, [[0.024, 0.05], [0.027, 0.03], [0.021, 0.018], [0.027, 0.004], [0.021, -0.008], [0.027, -0.022], [0.025, -0.046], [0.018, -0.05], [-0.024, -0.05], [-0.027, -0.04], [-0.026, 0.05]], 0.033, VMM.hdPoly, 0, 0, 0, { bevel: 0.0025, segs: 3 });
+  hdEx(GG, [[-0.026, 0.035], [-0.032, 0.03], [-0.034, 0.0], [-0.028, -0.03], [-0.026, -0.03]], 0.026, VMM.hdPoly, 0, 0, 0, { bevel: 0.0015 });
+  // Handguard: octagonal tube with M-LOK slots and a full-length top rail
+  hdGhost(A('/18')); for (let i = 19; i <= 23; i++) hdGhost(A('/' + i));
+  const hg = A('/18'), H = hdIn(hg);
+  hdEx(H, [[-0.032, 0.011], [-0.022, -0.003], [0.022, -0.003], [0.032, 0.011], [0.032, 0.045], [0.022, 0.0575], [-0.022, 0.0575], [-0.032, 0.045]], 0.3, VMM.hdAnod, 0, 0, -0.315, { axis: 'z', bevel: 0.0015 });
+  for (let k = 0; k < 5; k++) { const z = -0.2 - k * 0.055; for (const sx of [-1, 1]) hdEx(H, hdRRect(0.03, 0.01, 0.0045, 2), 0.0012, VMM.hdBore, sx * 0.0326, 0.028, z, { axis: 'x', bevel: 0, uv: false }); hdEx(H, hdRRect(0.03, 0.01, 0.0045, 2).map(p => [p[0], p[1]]), 0.0012, VMM.hdBore, 0, -0.0034, z, { axis: 'x', bevel: 0, uv: false, rz: Math.PI / 2 }); }
+  hdB(H, 0.026, 0.008, 0.3, VMM.hdAnod, 0, 0.0615, -0.315); for (let z = -0.462; z <= -0.17; z += 0.0105) hdB(H, 0.0286, 0.0034, 0.0055, VMM.hdAnod, 0, 0.0672, z);
+  hdCZ(H, 0.0305, 0.006, VMM.hdAnod, 0, 0.027, -0.4655, 16); hdCZ(H, 0.03, 0.008, VMM.hdAnod, 0, 0.027, -0.163, 16);
+  // Barrel: gas block and A-frame front sight (on the front sight proxy)
+  const fs = hdGhost(A('/25')), FSg = hdIn(fs);
+  hdEx(FSg, [[0.488, 0.018], [0.512, 0.018], [0.512, 0.034], [0.503, 0.064], [0.497, 0.064], [0.488, 0.034]], 0.02, VMM.hdParker, 0, 0, 0, { bevel: 0.0015 });
+  hdB(FSg, 0.004, 0.012, 0.004, VMM.hdParker, 0, 0.069, -0.5); hdCZ(FSg, 0.014, 0.022, VMM.hdParker, 0, 0.028, -0.5, 16);
+  hdCZ(FSg, 0.0018, 0.03, VMM.hdSteel, 0, 0.043, -0.49, 6);
+  // Barrel: parkerised finish, bore
+  const brl = A('/24'); if (brl) brl.material = VMM.hdParker;
+  // Flash hider (hides with any muzzle device)
+  const mz = hdGhost(A('/26')), MZ = hdIn(mz);
+  hdCZ(MZ, 0.0112, 0.055, VMM.hdParker, 0, 0.028, -0.69, 16); hdCZ(MZ, 0.0125, 0.012, VMM.hdParker, 0, 0.028, -0.668, 16);
+  for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i - 2) * 0.62; hdB(MZ, 0.003, 0.0024, 0.03, VMM.hdBore, Math.cos(a) * 0.0108, 0.028 + Math.sin(-a) * 0.0108, -0.698, 0, 0, a); }
+  hdCZ(MZ, 0.0056, 0.003, VMM.hdBore, 0, 0.028, -0.7175, 10);
+  // Buffer tube and castle nut
+  const bt = A('/31'); if (bt) { bt.material = VMM.hdAnod; const BT = hdIn(bt); hdCZ(BT, 0.0195, 0.011, VMM.hdAnod, 0, 0.022, 0.092, 16); for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283; hdB(BT, 0.003, 0.003, 0.012, VMM.hdBore, Math.cos(a) * 0.019, 0.022 + Math.sin(a) * 0.019, 0.092, 0, 0, a); } hdB(BT, 0.008, 0.006, 0.15, VMM.hdAnod, 0, 0.004, 0.17); for (let i = 0; i < 6; i++) hdB(BT, 0.0042, 0.0015, 0.005, VMM.hdBore, 0, 0.001, 0.12 + i * 0.022); }
+  // Collapsible stock (hides with stock swaps)
+  const st = hdGhost(A('/32')), ST = hdIn(st);
+  hdEx(ST, [[-0.2, 0.034], [-0.355, 0.042], [-0.36, 0.036], [-0.36, -0.05], [-0.345, -0.052], [-0.28, -0.03], [-0.215, -0.008], [-0.2, -0.004]], 0.046, VMM.hdPoly, 0, 0, 0, { bevel: 0.003, segs: 3 });
+  hdEx(ST, [[-0.352, 0.046], [-0.366, 0.046], [-0.368, -0.054], [-0.352, -0.056]], 0.05, VMM.hdRubber, 0, 0, 0, { bevel: 0.002 });
+  for (let i = 0; i < 5; i++) hdB(ST, 0.051, 0.0015, 0.004, VMM.hdBore, 0, 0.03 - i * 0.02, 0.367);
+  hdB(ST, 0.012, 0.006, 0.03, VMM.hdPoly, 0, -0.004, 0.225); hdB(ST, 0.002, 0.012, 0.03, VMM.hdBore, 0.0236, -0.03, 0.31);
+  // Magazine: curved STANAG body with ribs and a round on top (in the magazine group's frame, so it follows reloads)
+  const m0 = A('/37/0'); if (m0) { [ '/37/0', '/37/1', '/37/2' ].forEach(p => hdGhost(A(p))); const MG = hdIn(m0, P.mag);
+    hdEx(MG, [[0.033, 0.005], [0.0335, -0.05], [0.038, -0.09], [0.05, -0.135], [0.058, -0.158], [0.004, -0.165], [-0.004, -0.14], [-0.022, -0.09], [-0.03, -0.05], [-0.033, 0.005]], 0.027, VMM.hdAnod, 0, 0, 0, { bevel: 0.0015 });
+    for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) { const u0 = 0.016 - i * 0.011; hdEx(MG, [[u0 + 0.004, -0.015], [u0 + 0.004 + (i === 0 ? 0.012 : 0.008), -0.105], [u0 + (i === 0 ? 0.012 : 0.008), -0.105], [u0, -0.015]], 0.0016, VMM.hdParker, sx * 0.0138, 0, 0, { bevel: 0 }); }
+    hdEx(MG, [[0.061, -0.155], [0.064, -0.163], [0.002, -0.172], [0.0, -0.163]], 0.031, VMM.hdPoly, 0, 0, 0, { bevel: 0.0015 });
+    hdCZ(MG, 0.0028, 0.022, VMM.hdBrass, 0, 0.007, -0.005, 8); }
+  // Red dot: turrets and lens ring (hide with the factory optic)
+  const rd = A('/41'); if (rd) { const RD = hdIn(rd); const t1 = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.008, 14), VMM.hdAnod); t1.position.set(0, 0.131, -0.03); RD.add(hdFlag(t1)); hdCX(RD, 0.006, 0.008, VMM.hdAnod, 0.027, 0.1, -0.03, 14); hdCZ(RD, 0.0255, 0.004, VMM.hdAnod, 0, 0.1, -0.066, 18); }
+  const gl = A('/42'); if (gl) gl.material = VMM.hdLens;
+}
+
+/* ---------- Trench 12 pump shotgun ---------- */
+function hdShotgun(root, P) {
+  const A = p => hdAt(root, p);
+  // Receiver with engraved side panels
+  const rc = hdGhost(A('/0')), R = hdIn(rc); hdGhost(A('/2')); hdGhost(A('/3'));
+  hdEx(R, [[-0.08, -0.008], [-0.08, 0.034], [-0.07, 0.042], [0.155, 0.044], [0.16, 0.04], [0.16, -0.02], [0.152, -0.026], [-0.05, -0.026]], 0.056, VMM.hdBlued, 0, 0, 0, { bevel: 0.003, segs: 3 });
+  hdDecal(R, hdScroll(), 0.1, 0.04, -0.0286, 0.01, -0.03, -Math.PI / 2, 0.55);
+  hdDecal(R, hdEngrave('TRENCH 12  ·  12 GA  ·  2¾ IN'), 0.07, 0.008, -0.0286, -0.017, -0.03, -Math.PI / 2, 0.55);
+  hdB(R, 0.0012, 0.026, 0.062, VMM.hdBore, 0.0285, 0.012, -0.07); hdB(R, 0.0014, 0.003, 0.064, VMM.hdBlued, 0.0287, 0.026, -0.07);   // ejection port
+  hdB(R, 0.026, 0.0012, 0.072, VMM.hdBore, 0, -0.0272, -0.03); hdB(R, 0.02, 0.003, 0.05, VMM.hdSteel, 0, -0.0262, -0.012);           // loading port and carrier
+  for (const sx of [-1, 1]) { hdScrew(R, sx * 0.0294, 0.026, 0.06, 0.0028); hdScrew(R, sx * 0.0294, -0.016, 0.064, 0.0028); }
+  hdCX(R, 0.0042, 0.058, VMM.hdSteel, 0, -0.018, 0.03, 12);                                                                                 // cross-bolt safety
+  // Trigger guard
+  hdGhost(A('/8')); hdGhost(A('/9'));
+  const F = new THREE.Group(); F.userData.detail = true; root.add(F);
+  hdEx(F, [[-0.021, -0.014], [-0.024, -0.03], [-0.03, -0.042], [-0.04, -0.0435], [-0.076, -0.0435], [-0.08, -0.038], [-0.074, -0.037], [-0.042, -0.0375], [-0.034, -0.035], [-0.028, -0.026], [-0.026, -0.014]], 0.012, VMM.hdBlued, 0, 0, 0, { bevel: 0.0012 });
+  // Barrel: heat shield with cooling holes and a bayonet lug (hides with barrel swaps)
+  const br = A('/4'); if (br) { const BR = hdIn(br);
+    const hs = new THREE.Mesh(new THREE.CylinderGeometry(0.0195, 0.0195, 0.3, 20, 1, true), VMM.hdParker); hs.rotation.x = Math.PI / 2; hs.position.set(0, 0.029, -0.33); hs.scale.set(1, 1, 0.82); BR.add(hdFlag(hs));
+    for (const z of [-0.18, -0.48]) hdCZ(BR, 0.0205, 0.008, VMM.hdBlued, 0, 0.029, z, 20);
+    for (let row = 0; row < 3; row++) for (let i = 0; i < 9; i++) { const a = (row - 1) * 0.8, z = -0.2 - i * 0.031 - (row % 2) * 0.015; hdB(BR, 0.0042, 0.0012, 0.0062, VMM.hdBore, Math.sin(a) * 0.0196, 0.029 + Math.cos(a) * 0.016, z, 0, 0, -a); }
+    hdB(BR, 0.008, 0.008, 0.03, VMM.hdBlued, 0, 0.012, -0.645); hdCZ(BR, 0.0072, 0.004, VMM.hdBore, 0, 0.027, -0.681, 12); }
+  // Magazine tube cap, barrel band and sling swivel
+  const mt = A('/5'); if (mt) { const MT = hdIn(mt); hdCZ(MT, 0.0136, 0.014, VMM.hdBlued, 0, -0.006, -0.586, 16); hdCZ(MT, 0.006, 0.0025, VMM.hdSteel, 0, -0.006, -0.5935, 10); }
+  const band = A('/6'); if (band) { const BD = hdIn(band); const sw = new THREE.Mesh(new THREE.TorusGeometry(0.008, 0.0016, 6, 14), VMM.hdSteel); sw.position.set(0, -0.024, -0.6); sw.rotation.y = Math.PI / 2; BD.add(hdFlag(sw)); }
+  // Pump: rounded walnut forend with grooves
+  const pb = A('/14/0'); if (pb) { hdGhost(pb); for (let i = 1; i <= 7; i++) hdGhost(A('/14/' + i)); const PF = hdIn(pb, P.pump);
+    hdEx(PF, hdRRect(0.06, 0.054, 0.02, 4), 0.168, VMM.hdWalnut, 0, 0, 0, { axis: 'z', bevel: 0.003, segs: 3 });
+    for (let i = 0; i < 9; i++) { const z = -0.064 + i * 0.016; hdB(PF, 0.0014, 0.03, 0.0035, VMM.hdBore, 0.0304, -0.004, z); hdB(PF, 0.0014, 0.03, 0.0035, VMM.hdBore, -0.0304, -0.004, z); hdB(PF, 0.03, 0.0014, 0.0035, VMM.hdBore, 0, -0.0274, z); }
+    hdCZ(PF, 0.0145, 0.172, VMM.hdBore, 0, 0.0, 0, 14); }
+  // Stock: walnut with a checkered wrist and a ventilated recoil pad
+  const wr = A('/11'); if (wr) { hdGhost(wr); const WR = new THREE.Group(); WR.userData.detail = true; wr.add(WR); hdEx(WR, hdRRect(0.042, 0.066, 0.016, 4), 0.132, VMM.hdChecker, 0, 0, 0, { axis: 'z', bevel: 0.002 }); }
+  const sk = A('/12'); if (sk) { hdGhost(sk); const SK = new THREE.Group(); SK.userData.detail = true; sk.add(SK);
+    hdEx(SK, [[0.13, 0.034], [0.06, 0.045], [-0.12, 0.05], [-0.13, 0.046], [-0.13, -0.05], [-0.1, -0.05], [0.05, -0.03], [0.13, -0.016]], 0.044, VMM.hdWalnut, 0, 0, 0, { bevel: 0.004, segs: 3 });
+    const sl = new THREE.Mesh(new THREE.TorusGeometry(0.006, 0.0015, 6, 12), VMM.hdSteel); sl.position.set(0, -0.045, 0.06); sl.rotation.y = Math.PI / 2; SK.add(hdFlag(sl)); }
+  const pad = A('/13'); if (pad) { hdGhost(pad); const PD = new THREE.Group(); PD.userData.detail = true; pad.add(PD);
+    hdEx(PD, hdRRect(0.048, 0.104, 0.012, 3), 0.02, VMM.hdRubber, 0, 0, 0, { axis: 'z', bevel: 0.002 });
+    for (let i = 0; i < 6; i++) hdB(PD, 0.05, 0.002, 0.012, VMM.hdBore, 0, 0.035 - i * 0.014, 0.0); for (const yy of [0.03, -0.03]) hdCZ(PD, 0.0035, 0.002, VMM.hdSteel, 0, yy, 0.0105, 10); }
+  // finishes
+  const rib = A('/1'); if (rib) rib.material = VMM.hdBlued; const brl = A('/4'); if (brl) brl.material = VMM.hdBlued; if (A('/5')) A('/5').material = VMM.hdBlued;
+}
+/* ---------- Install ---------- */
+const HD_BUILDERS = { pistol: hdPistol, rifle: hdRifle, shotgun: hdShotgun };
+for (const id in HD_BUILDERS) {
+  const _b = WEAPON_BUILDERS[id]; if (!_b) continue;
+  WEAPON_BUILDERS[id] = function (...a) { const r = _b.apply(this, a); try { HD_BUILDERS[id](r.root, r.P); } catch (e) { console.error('HD ' + id, e); } return r; };
 }
 
 /* =====================================================================
