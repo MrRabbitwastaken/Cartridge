@@ -463,6 +463,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:var(--tex
   <div class="setRow"><label>MASTER VOLUME <span id="volVal">70%</span></label><input type="range" id="vol" min="0" max="1" step="0.01"></div>
   <div class="setRow"><label>MUSIC VOLUME <span id="musicVal">50%</span></label><input type="range" id="musicVol" min="0" max="1" step="0.01"></div>
   <div class="setRow"><label>FIELD OF VIEW <span id="fovVal">75°</span></label><input type="range" id="fovSlider" min="60" max="110" step="1"></div>
+  <div class="setRow"><label>WEAPON FIELD OF VIEW <span id="vmFovVal">58°</span></label><input type="range" id="vmFovSlider" min="40" max="80" step="1"></div>
   <div class="setRow"><label>GRAPHICS QUALITY</label><div class="seg" id="qualSeg"><button data-q="low">LOW</button><button data-q="medium">MEDIUM</button><button data-q="high">HIGH</button></div></div>
   <div class="setRow"><label>HUD STYLE</label><div class="seg" id="hudSeg"><button data-v="full">FULL</button><button data-v="clean">CLEAN</button></div></div>
   <p style="font-size:13px;color:var(--dim);margin-top:-10px">Clean hides health, points, round and weapon panels. Ammo appears when you press R. Prompts, notifications and the crosshair stay.</p>
@@ -1313,7 +1314,7 @@ const WALL_BUYS = [
   { weapon: 'shotgun', axis: 'x', at: -8, along: 16.8, inward: 1,  cost: 500,  ammoCost: 250 },
   { weapon: 'rifle',   axis: 'z', at: 24, along: 4.2,  inward: -1, cost: 1200, ammoCost: 600 },
   { weapon: 'smg',     axis: 'x', at: -3, along: -2,   inward: 1,  cost: 1000, ammoCost: 500 },
-  { weapon: 'gl', ammoOnly: true, label: 'GRENADES', axis: 'x', at: 3, along: 2, inward: 1, ammoCost: 1200 },
+  { weapon: 'gl', ammoOnly: true, label: 'GRENADES', axis: 'x', at: 3, along: 4.2, inward: 1, ammoCost: 1200 },   // clear of the power cell and notebook on the cabinets
   { weapon: 'lever', story: 'grid', axis: 'x', at: -8, along: -25.5, inward: 1, cost: 1500, ammoCost: 750 },   // appears when the underground grid is restored
 ];
 // Mystery box locations. It starts in the Main Corridor and relocates when the bear appears.
@@ -5003,7 +5004,7 @@ class WeaponSystem {
     this.zoomSens = a > 0.5 ? clamp(adsFov / 55, 0.25, 1) : 1;              // slower aim when magnified
     const cam = this.game.camera, targetFov = lerp(Settings.fov || 75, adsFov, a) + s * 6 + this.fovPunch.x;
     if (Math.abs(cam.fov - targetFov) > 0.01) { cam.fov = targetFov; cam.updateProjectionMatrix(); }
-    const wf = lerp(58, d.wAdsFov, a);
+    const wf = lerp(Settings.vmFov || 58, d.wAdsFov, a);
     if (Math.abs(this.game.wCam.fov - wf) > 0.01) { this.game.wCam.fov = wf; this.game.wCam.updateProjectionMatrix(); }
   }
 }
@@ -5842,10 +5843,10 @@ const PICKUPS = {
   keycard:  { name: 'Master Keycard', kind: 'card', x: 11, y: 0.93, z: -6, item: true },
   cell1:    { name: 'Power Cell', kind: 'cell', x: 4.0, y: 1.12, z: 1.0, item: 'cell', when: s => s.qs('mq3') === 'active' },
   cell2:    { name: 'Power Cell', kind: 'cell', x: -7.6, y: 0.02, z: -12.4, item: 'cell', when: s => s.qs('mq3') === 'active' },
-  cell3:    { name: 'Power Cell', kind: 'cell', x: 18.6, y: 0.02, z: -7.5, item: 'cell', when: s => s.qs('mq3') === 'active' },
+  cell3:    { name: 'Power Cell', kind: 'cell', x: 17.4, y: 0.02, z: -6.4, item: 'cell', when: s => s.qs('mq3') === 'active' },
   tags:     { name: "Mason's Dog Tags", kind: 'tags', x: -15.5, y: 0.02, z: -7.75, item: true, when: s => s.qs('sqTags') === 'active' },
   notebook: { name: "Elena's Notebook", kind: 'book', x: 5.2, y: 0.92, z: 0.9, item: true, doc: 'notebook', when: s => s.qs('sqNotebook') === 'active' },
-  cutters:  { name: 'Bolt Cutters', kind: 'cutters', x: -11.5, y: 0.02, z: -1.5, item: true, when: s => s.qs('sqSurvivor') === 'active' },
+  cutters:  { name: 'Bolt Cutters', kind: 'cutters', x: -12.6, y: 0.02, z: -3.2, item: true, when: s => s.qs('sqSurvivor') === 'active' },
   tape1:    { name: 'Audio Tape', kind: 'tape', x: 2.4, y: 1.12, z: 16.6, doc: 'tape1' },
   tape2:    { name: 'Audio Tape', kind: 'tape', x: -15.8, y: 0.93, z: 8.2, doc: 'tape2' },
   tape3:    { name: 'Audio Tape', kind: 'tape', x: 17.4, y: 0.02, z: 10.6, doc: 'tape3' },
@@ -5854,7 +5855,7 @@ const PICKUPS = {
   badge:    { name: 'ID Badge', kind: 'badge', x: 2.4, y: 0.02, z: -25.4, doc: 'pz3' },
   rlog:     { name: 'Reactor Shift Log', kind: 'paper', x: -3.35, y: 0.78, z: -18.45, doc: 'rlog' },
   dossier:  { name: 'Subject File S-07', kind: 'paper', x: 3.6, y: 0.78, z: -18.45, doc: 'dossier' },
-  memo:     { name: 'Crowe Memo', kind: 'paper', x: 10.2, y: 0.93, z: -21.5, doc: 'memo' },
+  memo:     { name: 'Crowe Memo', kind: 'paper', x: 9.65, y: 0.93, z: -21.45, doc: 'memo' },
   clue1:    { name: 'Torn Photograph', kind: 'paper', x: 0, y: 0.02, z: 0, doc: 'clue1', dynamic: true },
   clue2:    { name: 'Scrawled Note', kind: 'paper', x: 0, y: 0.02, z: 0, doc: 'clue2', dynamic: true },
   clue3:    { name: 'Cut Hospital Band', kind: 'band', x: 0, y: 0.02, z: 0, doc: 'clue3', dynamic: true },
@@ -5876,13 +5877,13 @@ const ROUTINES = {
   ],
   elenaLab: [
     { x: -11, z: 10.75, yaw: 0, anim: 'type', dur: [7, 12] },
-    { x: -9.6, z: 10.75, yaw: 0, anim: 'type', dur: [5, 9] },
+    { x: -16.0, z: 5.25, yaw: Math.PI, anim: 'examine', dur: [5, 9] },
     { x: -14, z: 5.25, yaw: Math.PI, anim: 'examine', dur: [6, 10] },
     { x: -17.4, z: 10.1, yaw: -1.2, anim: 'watch', dur: [4, 7] },
     { x: -7.7, z: 1.35, yaw: Math.PI, anim: 'type', dur: [6, 9] },
   ],
   elenaComms: [
-    { x: 13.1, z: 21.3, yaw: Math.PI, anim: 'type', dur: [7, 12] },
+    { x: 10.6, z: 21.45, yaw: Math.PI, anim: 'type', dur: [7, 12] },
     { x: 10.6, z: 22.85, yaw: 0, anim: 'watch', dur: [5, 9] },
     { x: 9.4, z: 21.6, yaw: -1.2, anim: 'examine', dur: [5, 8] },
   ],
@@ -5892,7 +5893,7 @@ const ROUTINES = {
   ],
   ortizComms: [
     { x: 11.75, z: 21.05, yaw: 0, anim: 'sitLow', dur: [8, 14] },
-    { x: 12.9, z: 21.3, yaw: Math.PI, anim: 'type', dur: [5, 9] },
+    { x: 12.0, z: 21.45, yaw: Math.PI, anim: 'type', dur: [5, 9] },
   ],
 };
 const STRANGER_SPOTS = [
@@ -6919,9 +6920,9 @@ class Story {
     // NPCs
     for (const id in this.npcs) {
       const n = this.npcs[id]; if (!n.present || n.vanishing > 0 || (id === 'stranger' && !this.strangerTalkable())) continue;
-      const d = n.dist(p), reach = id === 'mason' && !this.f.commsOpen ? 3.4 : 2.6;
+      const d = n.dist(p), reach = id === 'mason' && !this.f.commsOpen ? 3.4 : 2.2;
       if (n.downed) { if (d < 1.9) consider(d - 0.5, `Hold ${E} to revive <b>${n.name}</b>` + (this.reviveNpc === n ? ` <b>${Math.round(this.reviveT / 2.5 * 100)}%</b>` : '') + `<span class="sub">${Math.ceil(n.bleed)}s before they retreat</span>`, null); continue; }
-      if (d < reach) { const mark = this.npcMark(id); consider(d * 0.4, `Press ${E} to talk to <b>${n.name}</b>${mark ? ` <b class="qmark">${mark}</b>` : ''}`, () => this.talkTo(n)); }
+      if (d < reach) { const mark = this.npcMark(id); consider(d * (id === 'mason' && !this.f.commsOpen ? 0.4 : 0.85), `Press ${E} to talk to <b>${n.name}</b>${mark ? ` <b class="qmark">${mark}</b>` : ''}`, () => this.talkTo(n)); }
     }
     // Pickups
     for (const id in this.pickups) {
@@ -10126,7 +10127,11 @@ function fitAttachments(root, P, id, att, stats) {
   const mt = gunsmithMounts(id), M = VMM, g = new THREE.Group(); g.name = 'attachments'; root.add(g);
   const undo = { hidden: [], mats: [], muzzle: P.muzzle ? P.muzzle.position.clone() : null, muzzle2: P.muzzle2 ? P.muzzle2.position.clone() : null, lHome: P.lHome ? P.lHome.slice() : null, scales: [], moves: [], adds: [] };
   const hide = o => { if (o.visible) { o.visible = false; undo.hidden.push(o); } };
-  const remat = (o, m) => { undo.mats.push([o, o.material]); o.material = m; };
+  const remat = (o, m) => {   // an HD proxy passes the new finish to the detail it carries
+    const one = q => { if (!undo._rm) undo._rm = new Set(); if (!undo._rm.has(q)) { undo._rm.add(q); undo.mats.push([q, q.material]); } q.material = m; };
+    if (o.userData && o.userData.hdGhost) o.traverse(c => { if (c !== o && c.isMesh && c.userData.detail && !c.material.isMeshBasicMaterial) one(c); });
+    else if (!(o.userData && o.userData.detail && o.material && o.material.isMeshBasicMaterial)) one(o);
+  };
   const addTo = (parent, o) => { o.userData.att = true; parent.add(o); undo.adds.push(o); return o; };
   const it = cat => attItem(cat, allowedAtt(id, cat, att[cat]));
   const skip = new Set([g]);
@@ -14135,7 +14140,7 @@ Object.assign(World.prototype, {
    ===================================================================== */
 const LOADOUT = { base: 3, mule: 4 };
 PERKS.mule = { name: 'PACK MULE', short: 'PM', cost: 4000, color: 0x1f8a6e, css: '#5fe8c0', desc: 'Carry a fourth gun',
-  spot: IS_RANGE ? { x: 13.4, z: -13.5, rotY: -Math.PI / 2 }
+  spot: IS_RANGE ? { x: 13.4, z: -16.5, rotY: -Math.PI / 2 }
     : IS_WEST ? { x: -20, z: 29.4, rotY: Math.PI }                // Dry goods store, back wall
     : IS_PARK ? { x: -24.6, z: -10, rotY: -Math.PI / 2 }          // House of Horrors, east wall
     : { x: 12.4, z: 11.4, rotY: Math.PI } };                       // Generator Room, south wall
@@ -15482,8 +15487,8 @@ function camoMaterial(base, id) {
     if (!camo || camo === 'none' || !camoUnlocked(car.data.stats.weaponKills[id], camo)) return;
     const skip = PAP_SKIP();
     roots.forEach(r => r.traverse(m => {
-      if (!m.isMesh || !m.material || Array.isArray(m.material) || skip.has(m.material)) return;
-      const mt = m.material; if (mt.isMeshBasicMaterial === true || mt.transparent === true || mt.type === 'MeshBasicMaterial') return;   // sights, glass, glow and flashes keep their look
+      if (!m.isMesh || !m.material || Array.isArray(m.material) || skip.has(m.material) || m.userData.hdHand) return;
+      const mt = m.material; if (mt.isMeshBasicMaterial === true || mt.transparent === true || mt.type === 'MeshBasicMaterial' || mt.visible === false) return;   // sights, glass, glow and flashes keep their look
       m.userData.preCamo = mt; m.material = camoMaterial(mt, camo);
     }));
   };
@@ -15692,8 +15697,10 @@ class TextGuard {
    sights still zooms to each weapon's own sight; the gun model itself
    keeps its own view so it never looks stretched.
    ===================================================================== */
-const FOV_RANGE = [60, 110];
+const FOV_RANGE = [60, 110], VMFOV_RANGE = [40, 80];
 Settings.fov = (() => { try { const v = parseFloat(localStorage.getItem('undead_fov')); return isNaN(v) ? 75 : clamp(v, FOV_RANGE[0], FOV_RANGE[1]); } catch (e) { return 75; } })();
+// Weapon field of view: lower brings the gun closer and bigger, higher pushes it away and smaller
+Settings.vmFov = (() => { try { const v = parseFloat(localStorage.getItem('undead_vmfov')); return isNaN(v) ? 58 : clamp(v, VMFOV_RANGE[0], VMFOV_RANGE[1]); } catch (e) { return 58; } })();
 { const G0 = Game.prototype, _bind = G0.bindUI;
   G0.bindUI = function () {
     _bind.call(this);
@@ -15706,6 +15713,786 @@ Settings.fov = (() => { try { const v = parseFloat(localStorage.getItem('undead_
       if (this.state !== 'menu') { this.camera.fov = Settings.fov; this.camera.updateProjectionMatrix(); }
       show();
     });
+    const vm = $('vmFovSlider'); if (!vm || !vm.addEventListener) return;
+    const showV = () => { const v = $('vmFovVal'); if (v) v.textContent = Math.round(Settings.vmFov) + '°'; };
+    vm.value = Settings.vmFov; showV();
+    vm.addEventListener('input', () => { Settings.vmFov = clamp(parseFloat(vm.value) || 58, VMFOV_RANGE[0], VMFOV_RANGE[1]); try { localStorage.setItem('undead_vmfov', String(Settings.vmFov)); } catch (e) {} showV(); });
+  };
+}
+
+/* =====================================================================
+   CRUCIBLE TWISTS — every upgraded weapon gets its own trick on top of the
+   stat boost. The Crucible keeps the twist a secret until you have upgraded
+   that gun once; after that its prompt tells you what it does.
+   ===================================================================== */
+const TWIST_SEEN_KEY = 'undead_twists_seen';
+const TWISTS = {
+  pistol:      { desc: 'Ricochet: every hit bounces on to the nearest other zombie' },
+  shotgun:     { desc: 'Hellfire: burning kills burst into flame and set their neighbours alight' },
+  rifle:       { desc: 'Stormbringer: every 5th hit calls lightning down on the target' },
+  smg:         { desc: 'Venom: hits poison zombies, and the poison jumps to the next one when they die' },
+  dual:        { desc: 'Explosive rounds: every bullet bursts on impact' },
+  lever:       { desc: 'Chain lightning, and headshot kills put a round back in the tube' },
+  hmg:         { desc: 'Tidal wave: every kill sends out a shockwave that knocks the crowd back' },
+  gl:          { desc: 'Cluster shells: each blast scatters four bomblets' },
+  garand:      { desc: 'Explosive rounds, and the last round of every clip is a thunderclap' },
+  p90:         { desc: 'Swarm: every kill releases three seeking darts' },
+  m249:        { desc: 'Heat: keep hitting and damage climbs to double, and full heat pierces' },
+  spas:        { desc: 'Dragon\'s breath: pellets leave the floor burning' },
+  ksg:         { desc: 'Hydra: every hit grows two more heads that bite the nearest zombies' },
+  minigun:     { desc: 'Airburst: every 25th hit rings the target with explosions' },
+  ripsaw:      { desc: 'Bloodlust: saw kills heal you and cut the cooldown' },
+  flamer:      { desc: 'Blue nova: zombies you set alight explode in blue fire when they die' },
+  twinbore:    { desc: 'Storm front: the lightning chains through four zombies' },
+  deagles:     { desc: 'Judge & jury: headshots execute zombies under half health, kills stagger everyone nearby' },
+  aa12:        { desc: 'Concussive incendiary slugs hurl zombies backwards' },
+  akdrum:      { desc: 'Red tide: each kill stacks +10% damage (up to +100%) and puts a round back' },
+  pdws:        { desc: 'Hornet nest: hits poison, and poisoned zombies spread it when they die' },
+  rpk:         { desc: 'Anvil: hits sometimes drop an anvil out of the sky' },
+  marauder:    { desc: 'Warlord: kills make you faster and reload quicker for a few seconds (stacks)' },
+  hailstorm:   { desc: 'Monsoon: hits chill zombies, three hits freeze them, frozen kills shatter' },
+  ravager:     { desc: 'Aftershock: kills set off a second, bigger blast a moment later' },
+  butcher:     { desc: 'Abattoir: blade kills fling two more blades at the nearest zombies' },
+  impaler:     { desc: 'Crucifier: impaled zombies explode a moment later' },
+  stormcaller: { desc: 'Tempest: kills leave a storm cloud that keeps zapping for four seconds' },
+  dissector:   { desc: 'Refraction: beam kills bounce the beam into the next zombie' },
+  eraser:      { desc: 'Oblivion: every disintegration restores health and a round' },
+  sunspot:     { desc: 'Supernova: zombies you burn go supernova when they die' },
+  extinction:  { desc: 'Event horizon: collapses sometimes spit out a power-up' },
+  meatgrinder: { desc: 'Bonemill: kills pay double points and grind ammo back into the belt' },
+};
+for (const id in TWISTS) if (CRUCIBLE_UPGRADES[id]) CRUCIBLE_UPGRADES[id].twist = TWISTS[id].desc;
+function twistSeen() { try { return JSON.parse(localStorage.getItem(TWIST_SEEN_KEY) || '{}') || {}; } catch (e) { return {}; } }
+function markTwistSeen(id) { try { const s = twistSeen(); s[id] = 1; localStorage.setItem(TWIST_SEEN_KEY, JSON.stringify(s)); } catch (e) {} }
+
+class TwistSystem {
+  constructor(game) { this.game = game; this.reset(); }
+  reset() { this.later = []; this.zones = []; this.count = {}; this.heat = 0; this.heatT = 0; this.stacks = 0; this.stackT = 0; this.buff = 0; this.buffT = 0; this.anvils = []; for (const a of this.anvilMeshes || []) this.game.scene.remove(a); this.anvilMeshes = []; this.lastCluster = -9; }
+  W() { return this.game.weapons; }
+  stats(id) { return this.W().statsFor(id); }
+  /** A weapon's punch for twist effects (flamers, saws and launchers have no plain bullet damage). */
+  power(id) { const d = this.stats(id); return Math.max(d.damage || 0, (d.flameDps || 0) * 0.4, d.projectile ? (d.projectile.splash || 0) * 0.5 : 0, d.chainsaw ? 150 : 0, 40); }
+  live(z) { return z && z.active && z.state !== 'dead' && z.state !== 'off' && z.state !== 'idle'; }
+  nearest(p, r, n = 1, skip) { const out = []; for (const q of this.game.activeZombies) { if (!this.live(q) || (skip && skip.has(q))) continue; const d = Math.hypot(q.pos.x - p.x, q.pos.z - p.z); if (d < r) out.push([d, q]); } return out.sort((a, b) => a[0] - b[0]).slice(0, n).map(x => x[1]); }
+  chest(z) { return Object.assign(z.pos.clone(), { y: (z.pos.y || 0) + 1.2 * (z.sizeScale || 1) }); }
+  hit(id, z, dmg, o = {}) {
+    if (!this.live(z)) return; const p = this.chest(z), dir = Object.assign(z.pos.clone(), { x: o.dx || 0, y: 0, z: o.dz || 1 });
+    this.game.hitZombie(z, dmg, o.part || 'torso', p, dir, Object.assign({ weapon: id, twist: true, quiet: true, armorPierce: true }, o));
+  }
+  tracer(a, b, c = [1, 0.8, 0.4]) { const g = this.game; for (let i = 0; i <= 8; i++) { const k = i / 8; g.sparks.emit(lerp(a.x, b.x, k), lerp(a.y, b.y, k), lerp(a.z, b.z, k), 0, 0, 0, rand(0.08, 0.18), c[0], c[1], c[2], 0); } }
+  /** A blast that only hurts zombies. */
+  blast(id, pos, r, dmg, col = [1, 0.6, 0.2], o = {}) {
+    const g = this.game;
+    for (let i = 0; i < 26; i++) { const a = Math.random() * 6.28, e = rand(-0.2, 1.1), s = rand(2, 6) * r / 2; g.sparks.emit(pos.x, pos.y, pos.z, Math.cos(a) * Math.cos(e) * s, Math.sin(e) * s + 1, Math.sin(a) * Math.cos(e) * s, rand(0.2, 0.5), col[0], col[1], col[2], 5); }
+    for (let i = 0; i < 8; i++) g.dust.emit(pos.x + rand(-0.4, 0.4), pos.y, pos.z + rand(-0.4, 0.4), rand(-1, 1), rand(0.4, 1.2), rand(-1, 1), rand(0.8, 1.5), 0.3, 0.28, 0.27, -0.4);
+    g.muzzleLight.position.set(pos.x, pos.y, pos.z); g.muzzleLight.color && g.muzzleLight.color.setRGB && g.muzzleLight.color.setRGB(col[0], col[1], col[2]); g.muzzleLight.intensity = Math.max(g.muzzleLight.intensity || 0, 2 + r);
+    const [v, pan] = g.spatial(pos); g.audio.explosion(Math.max(0.15, v) * Math.min(1, r / 3), pan);
+    for (const q of g.activeZombies.slice()) {
+      if (!this.live(q) || q === o.skip) continue;
+      const d = Math.hypot(q.pos.x - pos.x, q.pos.z - pos.z); if (d > r || Math.abs((q.pos.y || 0) - (pos.y - 1)) > 2.5) continue;
+      if (d > 1 && g.nav && !g.nav.lineClear(pos.x, pos.z, q.pos.x, q.pos.z)) continue;
+      const L = d || 1; this.hit(id, q, dmg * (1 - 0.5 * d / r), Object.assign({ explosive: true, impulse: 1.5 + 2 * (1 - d / r), dx: (q.pos.x - pos.x) / L, dz: (q.pos.z - pos.z) / L }, o.hit || {}));
+    }
+  }
+  bolt(id, z, dmg) {   // lightning from the sky
+    const g = this.game, p = this.chest(z), top = { x: p.x + rand(-0.5, 0.5), y: p.y + 9, z: p.z + rand(-0.5, 0.5) };
+    for (let i = 0; i <= 18; i++) { const k = i / 18; g.sparks.emit(lerp(top.x, p.x, k) + rand(-0.25, 0.25), lerp(top.y, p.y, k), lerp(top.z, p.z, k) + rand(-0.25, 0.25), 0, 0, 0, rand(0.1, 0.25), 0.7, 0.85, 1, 0); }
+    g.muzzleLight.position.set(p.x, p.y + 2, p.z); g.muzzleLight.intensity = 7;
+    const [v, pan] = g.spatial(p); g.audio.zap && g.audio.zap(Math.max(0.4, v), pan); g.audio.explosion(Math.max(0.2, v) * 0.5, pan);
+    this.hit(id, z, dmg, { impulse: 2 });
+    for (const q of this.nearest(z.pos, 4, 2, new Set([z]))) { this.tracer(p, this.chest(q), [0.7, 0.85, 1]); this.hit(id, q, dmg * 0.5); }
+  }
+  status(z) { return z.tw || (z.tw = { poison: 0, pdps: 0, chill: 0, frozen: 0, hits: 0, mark: null }); }
+  poison(id, z, dps, t) { const s = this.status(z); s.poison = Math.max(s.poison, t); s.pdps = Math.max(s.pdps, dps); s.pid = id; }
+  ignite(z, dps, t) { if (!this.live(z)) return; if (!(z.burnT > 0)) z.burnDps = 0; z.burnT = Math.max(z.burnT || 0, t); z.burnDps = Math.max(z.burnDps || 0, dps); }
+  freeze(z, t) { const s = this.status(z); const boss = z.T && z.T.boss; if (boss) { s.chill = Math.max(s.chill, t); return; } s.frozen = Math.max(s.frozen, t); this.tint(z, 0x9ad8ff); }
+  tint(z, hex) { if (!z.skin || !z.skin.color) return; const s = this.status(z); if (s.skin0 == null) s.skin0 = z.skin.color.getHex ? z.skin.color.getHex() : null; if (z.skin.color.setHex) z.skin.color.setHex(hex); }
+  untint(z) { const s = z.tw; if (s && s.skin0 != null && z.skin && z.skin.color && z.skin.color.setHex) { z.skin.color.setHex(s.skin0); s.skin0 = null; } }
+  dropAnvil(id, z) {
+    const g = this.game, m = new THREE.Group(), mat = new THREE.MeshPhongMaterial({ color: 0x2a2a2e, shininess: 60, specular: 0x555555 });
+    const a = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.3, 0.35), mat); a.position.y = 0.45; m.add(a);
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.3, 0.3), mat); b.position.y = 0.15; m.add(b);
+    const h = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.4, 8), mat); h.rotation.z = Math.PI / 2; h.position.set(0.52, 0.48, 0); m.add(h);
+    m.position.set(z.pos.x, (z.pos.y || 0) + 9, z.pos.z); g.scene.add(m); this.anvilMeshes.push(m);
+    this.anvils.push({ m, z, id, t: 0, x: z.pos.x, zz: z.pos.z, y0: (z.pos.y || 0) });
+  }
+  /* ---- the twists ---- */
+  onHit(id, z, amount, part, point, o) {
+    const g = this.game, W = this.W(), d = this.stats(id), D = this.power(id), P = point || this.chest(z), boss = z.T && z.T.boss, base = Math.min(amount, D * 2.5);
+    const c = this.count[id] = (this.count[id] || 0) + 1;
+    switch (id) {
+      case 'pistol': { const q = this.nearest(z.pos, 8, 1, new Set([z]))[0]; if (q) { this.tracer(P, this.chest(q), [1, 0.9, 0.6]); this.hit(id, q, base * 0.7); } break; }
+      case 'rifle': if (c % 5 === 0) this.bolt(id, z, D * 4); break;
+      case 'smg': case 'pdws': this.poison(id, z, D * (id === 'pdws' ? 1.6 : 1.2), 4); this.tint(z, 0x6aa040); break;
+      case 'dual': this.blast(id, P, 1.6, D * 0.8, [1, 0.55, 0.15], { skip: null }); break;
+      case 'garand': if (W.inv.garand.ammo === 0) this.blast(id, P, 4.5, D * 3, [1, 0.9, 0.6]); break;
+      case 'm249': this.heat = Math.min(1, this.heat + 0.04); this.heatT = 0.35; break;
+      case 'spas': if (!o.pelletZone) this.zones.push({ id, kind: 'fire', x: P.x, y: (z.pos.y || 0), z: P.z, r: 1.4, t: 3, dps: D * 2.5, fx: 0 }); break;
+      case 'ksg': for (const q of this.nearest(z.pos, 6, 2, new Set([z]))) { this.tracer(P, this.chest(q), [0.6, 1, 0.6]); this.hit(id, q, base * 0.45); } break;
+      case 'twinbore': { let from = z, seen = new Set([z]); for (let k = 0; k < 4; k++) { const q = this.nearest(from.pos, 5, 1, seen)[0]; if (!q) break; seen.add(q); this.tracer(this.chest(from), this.chest(q), [0.6, 0.8, 1]); this.hit(id, q, base * 0.5); from = q; } break; }
+      case 'minigun': if (c % 25 === 0) for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283; this.later.push({ t: 0.08 * i, fn: () => this.blast(id, { x: z.pos.x + Math.cos(a) * 1.8, y: (z.pos.y || 0) + 0.8, z: z.pos.z + Math.sin(a) * 1.8 }, 2, D * 6) }); } break;
+      case 'flamer': case 'sunspot': if (!o.dot) this.status(z).mark = id; break;
+      case 'aa12': if (!boss && this.live(z)) { const dx = z.pos.x - g.player.pos.x, dz = z.pos.z - g.player.pos.z, L = Math.hypot(dx, dz) || 1; z.knock.x += dx / L * 7; z.knock.z += dz / L * 7; z.stagger = Math.max(z.stagger || 0, 0.6); } break;
+      case 'deagles': if (part === 'head' && !boss && this.live(z) && z.health < z.maxHealth * 0.5) this.hit(id, z, z.health + 1, { part: 'head' }); break;
+      case 'rpk': if (Math.random() < 0.12 && !this.anvils.some(a => a.z === z)) this.dropAnvil(id, z); break;
+      case 'hailstorm': { const s = this.status(z); s.chill = Math.max(s.chill, 2.5); s.hits++; if (s.hits >= 3 && !s.frozen) { s.hits = 0; this.freeze(z, 1.6); } else if (!s.frozen) this.tint(z, 0xb8e0f0); break; }
+      case 'impaler': if (!this.status(z).fuse) { this.status(z).fuse = 1; this.later.push({ t: 1.3, fn: () => { const s = z.tw; if (s) s.fuse = 0; this.blast(id, this.live(z) ? this.chest(z) : P, 2.6, D * 2.2, [1, 0.4, 0.2]); } }); } break;
+    }
+  }
+  onKill(id, z, part, o) {
+    const g = this.game, W = this.W(), d = this.stats(id), D = this.power(id), P = this.chest(z), p = g.player;
+    switch (id) {
+      case 'shotgun': if (z.burnT > 0 || o.fire) { this.blast(id, P, 2.4, D * 1.5, [1, 0.5, 0.1]); for (const q of this.nearest(z.pos, 3, 3)) this.ignite(q, D * 2, 3); } break;
+      case 'lever': if (part === 'head') { const inv = W.inv.lever, s = this.stats('lever'); if (inv.ammo < s.mag) W.setAmmo('lever', inv.ammo + 1); } break;
+      case 'hmg': for (const q of this.nearest(z.pos, 5, 12)) { if (q.T && q.T.boss) continue; const dx = q.pos.x - z.pos.x, dz = q.pos.z - z.pos.z, L = Math.hypot(dx, dz) || 1; q.knock.x += dx / L * 9; q.knock.z += dz / L * 9; q.stagger = Math.max(q.stagger || 0, 0.7); } for (let i = 0; i < 24; i++) { const a = i / 24 * 6.283; g.dust.emit(z.pos.x, 0.15, z.pos.z, Math.cos(a) * 6, 0.3, Math.sin(a) * 6, 0.6, 0.6, 0.7, 0.9, 0); } break;
+      case 'p90': { let k = 0; for (const q of this.nearest(z.pos, 12, 3)) { this.later.push({ t: 0.08 * (++k), fn: () => { if (this.live(q)) { this.tracer(P, this.chest(q), [0.5, 1, 0.9]); this.hit(id, q, D * 2); } } }); } break; }
+      case 'ripsaw': p.health = Math.min(p.maxHealth, p.health + 8); if (W.sawCool > 0) W.sawCool *= 0.5; break;
+      case 'deagles': for (const q of this.nearest(z.pos, 4, 8)) { if (q.T && q.T.boss) continue; q.stagger = Math.max(q.stagger || 0, 0.9); } break;
+      case 'akdrum': { this.stacks = Math.min(10, this.stacks + 1); this.stackT = 4; const inv = W.inv.akdrum, s = this.stats('akdrum'); if (inv.ammo < s.mag) W.setAmmo('akdrum', inv.ammo + 1); break; }
+      case 'marauder': this.buff = Math.min(3, this.buff + 1); this.buffT = 4; break;
+      case 'ravager': this.later.push({ t: 0.45, fn: () => this.blast(id, P, 3.2, D * 2.5, [1, 0.7, 0.3]) }); break;
+      case 'butcher': for (const q of this.nearest(z.pos, 10, 2)) { this.tracer(P, this.chest(q), [0.9, 0.9, 1]); this.hit(id, q, D * 1.5, { part: 'torso' }); } break;
+      case 'stormcaller': this.zones.push({ id, kind: 'storm', x: z.pos.x, y: (z.pos.y || 0), z: z.pos.z, r: 4, t: 4, dps: 0, fx: 0, zap: 0 }); break;
+      case 'dissector': { const q = this.nearest(z.pos, 14, 1)[0]; if (q) { this.tracer(P, this.chest(q), [1, 0.3, 0.3]); this.hit(id, q, D * 1.2); } break; }
+      case 'eraser': { p.health = Math.min(p.maxHealth, p.health + 3); const inv = W.inv.eraser, s = this.stats('eraser'); if (inv && inv.ammo < s.mag) W.setAmmo('eraser', inv.ammo + 1); break; }
+      case 'extinction': if (g.drops && Math.random() < 0.04) g.drops.spawn(g.drops.roll(), { x: z.pos.x, y: z.pos.y || 0, z: z.pos.z }); break;
+      case 'meatgrinder': { g.addScore(60, 'BONEMILL'); const inv = W.inv.meatgrinder, s = this.stats('meatgrinder'); if (inv) inv.reserve = Math.min(s.maxReserve, inv.reserve + 2); break; }
+      case 'gl': break;
+    }
+  }
+  /** Status effects that act when a zombie dies, whatever killed it. */
+  onDeath(z) {
+    const s = z.tw; if (!s) return;
+    const g = this.game, P = this.chest(z);
+    if (s.poison > 0 && s.pid) { const q = this.nearest(z.pos, 5, 1)[0]; if (q) { this.tracer(P, this.chest(q), [0.5, 1, 0.3]); this.poison(s.pid, q, s.pdps, 4); this.tint(q, 0x6aa040); } }
+    if (s.frozen > 0) { for (let i = 0; i < 24; i++) g.sparks.emit(P.x, P.y, P.z, rand(-4, 4), rand(0, 4), rand(-4, 4), rand(0.3, 0.6), 0.75, 0.9, 1, 9.8); this.blast('hailstorm', P, 2.5, this.power('hailstorm') * 2.5, [0.7, 0.9, 1]); }
+    if (s.mark === 'flamer' || s.mark === 'sunspot') { const sun = s.mark === 'sunspot', D = this.power(s.mark); this.blast(s.mark, P, sun ? 3 : 2.6, D * (sun ? 3 : 2), sun ? [1, 1, 0.8] : [0.4, 0.6, 1]); for (const q of this.nearest(z.pos, 3, 3)) { this.ignite(q, D * 2, 3); this.status(q).mark = s.mark; } }
+    this.untint(z); z.tw = null;
+  }
+  /** Grenade clusters: hooked from the explosion of an upgraded launcher shell. */
+  cluster(pos) {
+    const g = this.game; if (g.time - this.lastCluster < 0.3) return; this.lastCluster = g.time;
+    const D = this.power('gl') * 2;
+    for (let i = 0; i < 4; i++) { const a = Math.random() * 6.283, r = rand(1.6, 3); this.later.push({ t: 0.25 + 0.12 * i, fn: () => this.blast('gl', { x: pos.x + Math.cos(a) * r, y: pos.y, z: pos.z + Math.sin(a) * r }, 2, D * 0.35, [1, 0.8, 0.3]) }); }
+  }
+  get damageMult() { return 1 + (this.W().current === 'm249' && this.W().inv.m249.pap > 0 ? this.heat : 0) + (this.W().current === 'akdrum' && this.W().inv.akdrum.pap > 0 ? this.stacks * 0.1 : 0); }
+  update(dt) {
+    const g = this.game;
+    for (const L of this.later.slice()) { L.t -= dt; if (L.t <= 0) { this.later.splice(this.later.indexOf(L), 1); try { L.fn(); } catch (e) { console.error(e); } } }
+    this.heatT -= dt; if (this.heatT <= 0) this.heat = Math.max(0, this.heat - dt * 0.8);
+    this.stackT -= dt; if (this.stackT <= 0) this.stacks = 0;
+    this.buffT -= dt; if (this.buffT <= 0) this.buff = 0;
+    for (const z of g.activeZombies) {
+      const s = z.tw; if (!s) continue;
+      if (!this.live(z)) continue;
+      if (s.poison > 0) { s.poison -= dt; s.pacc = (s.pacc || 0) + s.pdps * dt; if (Math.random() < dt * 8) g.dust.emit(z.pos.x, (z.pos.y || 0) + rand(0.8, 1.8), z.pos.z, 0, 0.4, 0, 0.6, 0.4, 0.8, 0.2, -0.3); if (s.pacc > 5 || s.poison <= 0) { const a = s.pacc; s.pacc = 0; this.hit(s.pid, z, a, { dot: true }); } if (s.poison <= 0 && !s.frozen) this.untint(z); }
+      if (s.frozen > 0) { s.frozen -= dt; if (s.frozen <= 0) { this.untint(z); s.chill = 1; } }
+      else if (s.chill > 0) { s.chill -= dt; if (s.chill <= 0 && !(s.poison > 0)) this.untint(z); }
+    }
+    for (const Z of this.zones.slice()) {
+      Z.t -= dt; if (Z.t <= 0) { this.zones.splice(this.zones.indexOf(Z), 1); continue; }
+      if (Z.kind === 'fire') {
+        if (Math.random() < dt * 25) g.flames.emit(Z.x + rand(-Z.r, Z.r) * 0.7, Z.y + 0.1, Z.z + rand(-Z.r, Z.r) * 0.7, 0, rand(1, 2), 0, rand(0.3, 0.6), 1, 0.5, 0.1, -1);
+        for (const q of g.activeZombies) if (this.live(q) && Math.hypot(q.pos.x - Z.x, q.pos.z - Z.z) < Z.r && Math.abs((q.pos.y || 0) - Z.y) < 0.6) this.ignite(q, Z.dps, 1.5);
+      } else if (Z.kind === 'storm') {
+        if (Math.random() < dt * 10) g.dust.emit(Z.x + rand(-1.5, 1.5), Z.y + 3.2, Z.z + rand(-1.5, 1.5), rand(-0.3, 0.3), 0, rand(-0.3, 0.3), 0.8, 0.35, 0.38, 0.45, 0);
+        Z.zap -= dt; if (Z.zap <= 0) { Z.zap = 0.5; const q = this.nearest({ x: Z.x, z: Z.z }, Z.r, 1)[0]; if (q) this.bolt(Z.id, q, this.power(Z.id) * 1.2); }
+      }
+    }
+    for (const A of this.anvils.slice()) {
+      A.t += dt; const k = Math.min(1, A.t / 0.55);
+      if (this.live(A.z)) { A.x = A.z.pos.x; A.zz = A.z.pos.z; A.y0 = A.z.pos.y || 0; }
+      A.m.position.set(A.x, A.y0 + 9 * (1 - k * k), A.zz); A.m.rotation.y += dt * 4;
+      if (k >= 1) {
+        this.anvils.splice(this.anvils.indexOf(A), 1);
+        const pos = { x: A.x, y: A.y0 + 0.6, z: A.zz }, D = this.power(A.id), boss = A.z.T && A.z.T.boss;
+        if (this.live(A.z)) this.hit(A.id, A.z, boss ? A.z.maxHealth * 0.03 : A.z.health + 1, { impulse: 3 });
+        this.blast(A.id, pos, 1.8, D * 3, [0.8, 0.8, 0.8]); g.player.shake = Math.max(g.player.shake || 0, 0.25);
+        const [v, pan] = g.spatial(pos); g.audio.stomp(Math.max(0.4, v), pan);
+        this.later.push({ t: 1.2, fn: () => { g.scene.remove(A.m); this.anvilMeshes = this.anvilMeshes.filter(m => m !== A.m); } });
+      }
+    }
+  }
+}
+/* ---------- Hooks ---------- */
+{ const G0 = Game.prototype;
+  const _hit = G0.hitZombie;
+  G0.hitZombie = function (z, amount, part, point, dir, o = {}) {
+    const T = this.twists, W = this.weapons, id = o.weapon, inv = id && W && W.inv[id];
+    const live = z && z.active && z.state !== 'dead' && z.state !== 'off';
+    const on = T && live && inv && inv.pap > 0 && TWISTS[id] && !o.twist && !o.noPoints && !o.npc;
+    if (on && !o.dot) amount *= T.damageMult;
+    if (on && id === 'm249' && T.heat >= 1) o = Object.assign({}, o, { armorPierce: true });
+    const r = _hit.call(this, z, amount, part, point, dir, o);
+    if (T && live) {
+      if (on && !o.dot) { try { T.onHit(id, z, amount, part, point, o); } catch (e) { console.error('twist hit', e); } }
+      if (z.state === 'dead') { if (on || (o.twist && TWISTS[id])) { try { if (!o.twist || id !== 'p90') T.onKill(id, z, part, o); } catch (e) { console.error('twist kill', e); } } try { T.onDeath(z); } catch (e) {} }
+    }
+    return r;
+  };
+  const _start = G0.startGame;
+  G0.startGame = function () { if (!this.twists) this.twists = new TwistSystem(this); this.twists.reset(); return _start.call(this); };
+  const _ug = G0.updateGame;
+  G0.updateGame = function (dt) { _ug.call(this, dt); if (this.twists && this.state === 'playing') this.twists.update(dt); };
+}
+// Frozen zombies stand still; chilled ones move at half speed
+{ const Z = Zombie.prototype, _u = Z.update;
+  Z.update = function (dt) { const s = this.tw; if (s && this.state !== 'dead') { if (s.frozen > 0) { this.vel.set(0, 0, 0); return; } if (s.chill > 0) dt *= 0.5; } return _u.call(this, dt); };
+  const _r = Z.release; Z.release = function () { if (this.tw && this.game.twists) this.game.twists.untint(this); this.tw = null; return _r.call(this); };
+}
+// Upgraded grenade-launcher shells scatter bomblets
+{ const E = ExplosionManager.prototype, _ex = E.explode;
+  E.explode = function (pos, o = {}) { const r = _ex.call(this, pos, o); const g = this.game, inv = g.weapons && g.weapons.inv.gl; if (!o.hostile && !o.twist && g.twists && inv && inv.pap > 0 && o.splash > 0 && g.weapons.current === 'gl') g.twists.cluster(pos); return r; };
+}
+// Warlord: faster movement and reloads while the kill streak lasts
+{ const P = PerkSystem.prototype;
+  const dR = Object.getOwnPropertyDescriptor(P, 'reloadMult'), dM = Object.getOwnPropertyDescriptor(P, 'moveMult');
+  const boost = ps => { const T = ps.game.twists; return T && T.buff > 0 ? T.buff : 0; };
+  Object.defineProperty(P, 'reloadMult', { get() { return dR.get.call(this) * (1 + 0.25 * boost(this)); }, configurable: true });
+  Object.defineProperty(P, 'moveMult', { get() { return dM.get.call(this) * (1 + 0.06 * boost(this)); }, configurable: true });
+}
+// The Crucible keeps the twist secret until you've seen it once; the reveal comes with the upgrade
+{ const W = WeaponSystem.prototype, _ru = W.receiveUpgrade;
+  W.receiveUpgrade = function (id) {
+    const r = _ru.call(this, id);
+    const tw = TWISTS[id]; if (tw) { markTwistSeen(id); this.game.hud.notify(this.statsFor(id).name, tw.desc.toUpperCase(), 4.5); }
+    return r;
+  };
+  const _iu = Game.prototype.updateInteract;
+  Game.prototype.updateInteract = function () {
+    _iu.call(this);
+    const e = typeof $ === 'function' ? $('prompt') : null, w = this.weapons, cid = w && w.current;
+    if (!e || !cid || !TWISTS[cid] || typeof e.innerHTML !== 'string') return;
+    const h = e.innerHTML; if (h.indexOf('to upgrade <b>') < 0 || h.indexOf('data-tw') >= 0) return;
+    const seen = twistSeen()[cid], extra = seen ? TWISTS[cid].desc : '??? — upgrade it to find out what it does';
+    const nh = h.replace(/<span class="sub">[\s\S]*?<\/span>\s*$/, '') + ` <span class="sub" data-tw="1">${extra}</span>`;
+    e.innerHTML = nh; if (this.hud.cache) this.hud.cache.prompt = nh;
+  };
+}
+
+/* =====================================================================
+   HIGH-DETAIL WEAPONS — stage 1: shared materials, hands and sleeves for
+   every gun, plus fully detailed M1911, M4 and Trench 12.
+   The original blocky parts stay in place as invisible "proxies": the
+   Gunsmith, reload animations and sights keep measuring and moving them
+   exactly as before, and each detailed piece is parented to the proxy it
+   replaces, so when an attachment hides a factory part its detail goes too.
+   ===================================================================== */
+const HD = { textures: {} };
+/* ---------- Procedural textures ---------- */
+function hdCanvasTex(key, size, draw, repeat = 1) {
+  if (HD.textures[key]) return HD.textures[key];
+  const c = makeCanvas(size), g = c.getContext('2d'); draw(g, size);
+  const t = texFrom(c, true); if (t.repeat && t.repeat.set) t.repeat.set(repeat, repeat);
+  return (HD.textures[key] = t);
+}
+const hdBrushed = r => hdCanvasTex('brushed' + r, 256, (g, s) => { g.fillStyle = '#808080'; g.fillRect(0, 0, s, s); for (let i = 0; i < 900; i++) { const y = Math.random() * s, v = 100 + Math.random() * 60; g.strokeStyle = `rgba(${v},${v},${v},0.35)`; g.lineWidth = Math.random() * 1.2 + 0.3; g.beginPath(); g.moveTo(Math.random() * s * 0.3 - 20, y); g.lineTo(Math.random() * s * 0.7 + s * 0.3 + 20, y + rand(-1, 1)); g.stroke(); } for (let i = 0; i < 40; i++) { g.strokeStyle = 'rgba(200,200,200,0.4)'; g.lineWidth = 0.6; g.beginPath(); const x = Math.random() * s, y = Math.random() * s; g.moveTo(x, y); g.lineTo(x + rand(-14, 14), y + rand(-14, 14)); g.stroke(); } }, r);
+const hdStipple = r => hdCanvasTex('stipple' + r, 128, (g, s) => { g.fillStyle = '#7a7a7a'; g.fillRect(0, 0, s, s); for (let i = 0; i < 2600; i++) { const v = Math.random() < 0.5 ? 40 : 200; g.fillStyle = `rgba(${v},${v},${v},0.55)`; g.fillRect(Math.random() * s, Math.random() * s, 1.6, 1.6); } }, r);
+const hdChecker = r => hdCanvasTex('checker' + r, 128, (g, s) => { g.fillStyle = '#a4a4a4'; g.fillRect(0, 0, s, s); g.strokeStyle = '#646464'; g.lineWidth = 1.6; for (let i = -s; i < 2 * s; i += 8) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i + s, s); g.stroke(); g.beginPath(); g.moveTo(i + s, 0); g.lineTo(i, s); g.stroke(); } }, r);
+const hdGrain = (key, base, dark, r) => hdCanvasTex(key + r, 256, (g, s) => {
+  g.fillStyle = base; g.fillRect(0, 0, s, s);
+  for (let i = 0; i < 70; i++) { g.strokeStyle = dark; g.globalAlpha = rand(0.08, 0.3); g.lineWidth = rand(0.6, 2.4); g.beginPath(); let y = Math.random() * s; g.moveTo(0, y); for (let x = 0; x <= s; x += 16) { y += rand(-2.5, 2.5); g.lineTo(x, y + Math.sin(x * 0.03 + i) * 3); } g.stroke(); }
+  g.globalAlpha = 0.18; for (let i = 0; i < 6; i++) { g.fillStyle = dark; g.beginPath(); g.ellipse(Math.random() * s, Math.random() * s, rand(6, 18), rand(2, 5), rand(-0.3, 0.3), 0, 7); g.fill(); } g.globalAlpha = 1;
+}, r);
+function hdEngrave(text, w = 512, h = 64, color = '#c8c8c0') { return hdCanvasTex('eng:' + text, 512, (g, s) => { g.clearRect(0, 0, s, s); g.fillStyle = color; fitFont(g, text, s - 20, 600, 46, 'Oswald, Arial, sans-serif'); g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, s / 2, s / 2); }); }
+function hdScroll() { return hdCanvasTex('scroll', 256, (g, s) => { g.clearRect(0, 0, s, s); g.strokeStyle = 'rgba(220,215,200,0.85)'; g.lineWidth = 2; for (let k = 0; k < 7; k++) { const cx = 20 + k * 36, cy = s / 2 + (k % 2 ? 22 : -22); g.beginPath(); for (let a = 0; a < 12; a += 0.25) { const r = 3 + a * 1.7; g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } g.stroke(); } g.strokeRect(6, s / 2 - 60, s - 12, 120); g.strokeRect(12, s / 2 - 54, s - 24, 108); }); }
+/* ---------- Studio reflection for metal ---------- */
+function hdEnvCube() {
+  if (HD.env) return HD.env;
+  const face = (top, bottom, strip, spot) => { const c = makeCanvas(64), g = c.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, 64); gr.addColorStop(0, top); gr.addColorStop(1, bottom); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); if (strip) { g.fillStyle = 'rgba(255,250,240,0.85)'; g.fillRect(strip, 6, 9, 52); } if (spot) { const r = g.createRadialGradient(32, 32, 2, 32, 32, 26); r.addColorStop(0, 'rgba(255,255,255,0.95)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); } return c; };
+  const imgs = [face('#6a6d72', '#3a3c40', 18), face('#64676c', '#36383c', 40), face('#e0e0dc', '#a8a8a4', 0, true), face('#3a3b3e', '#2a2b2d'), face('#5a5d62', '#323438', 30), face('#4e5054', '#2e3033', 12)];
+  try { HD.env = new THREE.CubeTexture(imgs); HD.env.needsUpdate = true; } catch (e) { HD.env = null; }
+  return HD.env;
+}
+/* ---------- Materials ---------- */
+function hdMaterials() {
+  // Smooth finishes: no fine bump noise (it sparkled), gentle reflections, and colours bright enough to read in dark rooms.
+  const env = hdEnvCube(), mix = THREE.MixOperation;
+  const P = o => new THREE.MeshPhongMaterial(Object.assign({ shininess: 40, specular: 0x2a2c30 }, o));
+  const metal = (color, shin, spec, refl) => P({ color, shininess: shin, specular: spec, envMap: env, combine: mix, reflectivity: refl });
+  VMM.ghost = new THREE.MeshBasicMaterial({ visible: false });
+  VMM.hdBlued = metal(0x4b505a, 60, 0x50555e, 0.1);
+  VMM.hdParker = metal(0x44474b, 22, 0x26282b, 0.04);
+  VMM.hdAnod = metal(0x3d4046, 38, 0x3a3e44, 0.06);
+  VMM.hdSteel = metal(0x9da2a9, 80, 0x9a9ea6, 0.22);
+  VMM.hdPoly = P({ color: 0x313236, shininess: 12, specular: 0x161616 });
+  VMM.hdRubber = P({ color: 0x232325, shininess: 4, specular: 0x0a0a0a });
+  VMM.hdWalnut = P({ map: hdGrain('walnut', '#e2d6cc', '#5a4030', 1), color: 0x93592f, shininess: 30, specular: 0x2a1d12 });
+  VMM.hdChecker = P({ map: hdChecker(1), color: 0x7a4822, shininess: 18, specular: 0x1d140c });
+  VMM.hdGripCheck = P({ map: hdChecker(1), color: 0x4a4e56, shininess: 30, specular: 0x2a2c30 });
+  VMM.hdBore = new THREE.MeshBasicMaterial({ color: 0x0b0b0c });
+  VMM.hdDot = new THREE.MeshBasicMaterial({ color: 0xf2f2e8 });
+  VMM.hdTrit = new THREE.MeshBasicMaterial({ color: 0x9cff7a });
+  VMM.hdBrass = metal(0xc9a252, 70, 0x9a8048, 0.18);
+  // gloves and sleeves
+  VMM.hdGlove = P({ color: 0x3a372f, shininess: 8, specular: 0x101010 });
+  VMM.hdGloveKnuckle = P({ color: 0x232321, shininess: 20, specular: 0x1c1c1c });
+  VMM.hdGlovePalm = P({ color: 0x4d493f, shininess: 6, specular: 0x0c0c0c });
+  VMM.hdStitch = P({ color: 0x6a6658, shininess: 4 });
+}
+{ const _ivm = initViewmodelMaterials; initViewmodelMaterials = function () { _ivm(); try { hdMaterials(); } catch (e) { console.error('HD materials', e); } }; }
+
+/* ---------- Geometry helpers (all flagged as detail: the Gunsmith never measures them) ---------- */
+function hdFlag(m) { m.userData.detail = true; return m; }
+/** Extruded profile. axis 'x': pts are [forward, up] (forward = -Z) extruded across the gun's width; axis 'z': pts are [x, y] extruded along the barrel. */
+function hdEx(parent, pts, depth, mat, x = 0, y = 0, z = 0, o = {}) {
+  const sh = new THREE.Shape(); pts.forEach((p, i) => i ? sh.lineTo(p[0], p[1]) : sh.moveTo(p[0], p[1])); sh.closePath && sh.closePath();
+  const bev = o.bevel == null ? 0.0012 : o.bevel, d = Math.max(0.0005, depth - 2 * bev);
+  const geo = new THREE.ExtrudeGeometry(sh, { depth: d, bevelEnabled: bev > 0, bevelThickness: bev, bevelSize: bev, bevelSegments: o.segs || 2, steps: 1, curveSegments: 4 });
+  if (typeof geo.parameters === 'function') { geo.parameters = null; geo.__size = null; geo.p = { t: 'extrude', pts, depth, axis: o.axis || 'x' }; }
+  else { geo.translate(0, 0, -d / 2); if ((o.axis || 'x') === 'x') geo.rotateY(Math.PI / 2); if (o.uv !== false) hdBoxUV(geo, o.uvScale || 8); }
+  const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (o.rx) m.rotation.x = o.rx; if (o.ry) m.rotation.y = o.ry; if (o.rz) m.rotation.z = o.rz;
+  parent.add(m); return hdFlag(m);
+}
+/** World-scale planar UVs so tiling textures look the same size on every extruded part. */
+function hdBoxUV(geo, k) {
+  const pos = geo.attributes && geo.attributes.position, uv = geo.attributes && geo.attributes.uv, nor = (geo.computeVertexNormals(), geo.attributes.normal);
+  if (!pos || !uv || !nor) return;
+  for (let i = 0; i < pos.count; i++) {
+    const nx = Math.abs(nor.getX(i)), ny = Math.abs(nor.getY(i)), nz = Math.abs(nor.getZ(i)), x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    if (nx >= ny && nx >= nz) uv.setXY(i, z * k, y * k); else if (ny >= nz) uv.setXY(i, x * k, z * k); else uv.setXY(i, x * k, y * k);
+  }
+  uv.needsUpdate = true;
+}
+const hdB = (...a) => hdFlag(B(...a));
+const hdCZ = (...a) => hdFlag(CZ(...a));
+/** Cylinder along X (pins, screws, buttons). */
+function hdCX(parent, r, len, mat, x = 0, y = 0, z = 0, seg = 12) { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, seg), mat); m.rotation.z = Math.PI / 2; m.position.set(x, y, z); parent.add(m); return hdFlag(m); }
+function hdSph(parent, r, mat, x = 0, y = 0, z = 0, sx = 1, sy = 1, sz = 1) { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); parent.add(m); return hdFlag(m); }
+function hdDecal(parent, tex, w, h, x, y, z, ry, opacity = 0.85) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity, depthWrite: false })); m.position.set(x, y, z); m.rotation.y = ry; parent.add(m); return hdFlag(m); }
+/** Screw head on a side face (x = side), with a slot. */
+function hdScrew(parent, x, y, z, r = 0.0032, mat) { const s = Math.sign(x) || 1; hdCX(parent, r, 0.0016, mat || VMM.hdSteel, x, y, z, 10); hdB(parent, 0.0006, r * 1.7, 0.0007, VMM.hdBore, x + s * 0.0008, y, z, 0.6); }
+const hdArc = (cx, cy, r, a0, a1, n = 6) => { const o = []; for (let i = 0; i <= n; i++) { const a = a0 + (a1 - a0) * i / n; o.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); } return o; };
+/** A rounded rectangle outline (for cross-sections). */
+const hdRRect = (w, h, r, n = 3) => [...hdArc(w / 2 - r, h / 2 - r, r, 0, Math.PI / 2, n), ...hdArc(-w / 2 + r, h / 2 - r, r, Math.PI / 2, Math.PI, n), ...hdArc(-w / 2 + r, -h / 2 + r, r, Math.PI, 1.5 * Math.PI, n), ...hdArc(w / 2 - r, -h / 2 + r, r, 1.5 * Math.PI, 2 * Math.PI, n)];
+/** A group inside `proxy` whose coordinates are those of `frame` (default: the gun root), so detail can be laid out in gun coordinates. */
+function hdIn(proxy, frame) {
+  const chain = []; let n = proxy; while (n && n !== frame && n.parent) { chain.unshift(n); n = n.parent; }
+  let M = _M4.id(); for (const c of chain) M = _M4.mul(M, _M4.local(c));
+  // invert the rigid transform
+  const R = [M[0], M[1], M[2], M[4], M[5], M[6], M[8], M[9], M[10]], t = [M[3], M[7], M[11]];
+  const Rt = [R[0], R[3], R[6], R[1], R[4], R[7], R[2], R[5], R[8]];
+  const ti = [-(Rt[0] * t[0] + Rt[1] * t[1] + Rt[2] * t[2]), -(Rt[3] * t[0] + Rt[4] * t[1] + Rt[5] * t[2]), -(Rt[6] * t[0] + Rt[7] * t[1] + Rt[8] * t[2])];
+  // Euler XYZ from Rt
+  const m13 = Rt[2], ry = Math.asin(clamp(m13, -1, 1)); let rx, rz;
+  if (Math.abs(m13) < 0.9999999) { rx = Math.atan2(-Rt[5], Rt[8]); rz = Math.atan2(-Rt[1], Rt[0]); } else { rx = Math.atan2(Rt[7], Rt[4]); rz = 0; }
+  const g = new THREE.Group(); g.position.set(ti[0], ti[1], ti[2]); g.rotation.set(rx, ry, rz); g.userData.detail = true; proxy.add(g); return g;
+}
+/** Hide a factory part visually but keep it for measuring (Gunsmith, sights, animation). */
+function hdGhost(m) { if (m && m.isMesh) { m.userData.hdGhost = true; m.userData.baseMat = undefined; m.material = VMM.ghost; } return m; }
+const hdAt = (root, path) => { let o = root; for (const i of path.split('/').filter(Boolean)) o = o && o.children[+i]; return o; };
+// The Gunsmith and fitting code measure only real parts
+{ const _bi = boxesIn; boxesIn = function (root, o) { return _bi(root, o).filter(b => !(b.o.userData && (b.o.userData.detail || b.o.userData.hdHand))); };
+  const _pb = partBoxes; partBoxes = function (root) { return _pb(root).filter(b => !(b.o.userData && (b.o.userData.detail || b.o.userData.hdHand))); }; }
+
+/* ---------- Hands and sleeves (every weapon) ---------- */
+{ const _glove = glove;
+  glove = function (parent, side, x, y, z, rx = 0, ry = 0, rz = 0, s = 1) {
+    const h = _glove(parent, side, x, y, z, rx, ry, rz, s);
+    h.children.slice(0, 3).forEach(m => { m.material = VMM.ghost; m.userData.hdHand = true; });
+    const D = new THREE.Group(); D.userData.detail = true; h.add(D);
+    const k = s;
+    // back of the hand and palm: a rounded block
+    hdEx(D, hdRRect(0.066 * k, 0.08 * k, 0.014 * k, 3), 0.082 * k, VMM.hdGlove, 0, 0, 0, { axis: 'z', bevel: 0.002 * k });
+    // padded knuckle guard
+    hdEx(D, hdRRect(0.06 * k, 0.018 * k, 0.007 * k, 2), 0.05 * k, VMM.hdGloveKnuckle, 0, 0.042 * k, -0.008 * k, { axis: 'z', bevel: 0.002 * k });
+    for (let i = 0; i < 4; i++) hdSph(D, 0.0075 * k, VMM.hdGloveKnuckle, (-0.022 + i * 0.0148) * k * side, 0.044 * k, -0.03 * k, 1, 0.7, 1);
+    // curled fingers wrapping the front, one row each
+    for (let i = 0; i < 4; i++) { const fy = (0.024 - i * 0.017) * k, fl = (0.062 - Math.abs(i - 1.2) * 0.004) * k; hdEx(D, hdRRect(fl, 0.016 * k, 0.0075 * k, 3), 0.02 * k, i % 2 ? VMM.hdGlove : VMM.hdGlovePalm, 0, fy, -0.044 * k, { axis: 'z', bevel: 0.0015 * k }); hdB(D, fl * 0.9, 0.0012 * k, 0.0012 * k, VMM.hdStitch, 0, fy + 0.0078 * k, -0.054 * k); }
+    // thumb along the side
+    hdEx(D, hdRRect(0.02 * k, 0.026 * k, 0.009 * k, 3), 0.062 * k, VMM.hdGlove, -side * 0.041 * k, 0.026 * k, -0.02 * k, { axis: 'z', bevel: 0.002 * k, rz: side * 0.3 });
+    hdSph(D, 0.011 * k, VMM.hdGlovePalm, -side * 0.043 * k, 0.03 * k, -0.052 * k, 0.85, 0.8, 0.9);
+    // wrist strap
+    hdEx(D, hdRRect(0.07 * k, 0.07 * k, 0.016 * k, 3), 0.018 * k, VMM.hdGloveKnuckle, 0, -0.004 * k, 0.04 * k, { axis: 'z', bevel: 0.0015 * k });
+    D.traverse(m => { if (m.isMesh) m.userData.hdHand = true; });
+    return h;
+  };
+  const _fore = forearm;
+  forearm = function (parent, x, y, z, rx, ry, rz = 0, len = 0.42) {
+    const a = _fore(parent, x, y, z, rx, ry, rz, len);
+    a.children.slice(0, 2).forEach(m => { m.material = VMM.ghost; m.userData.hdHand = true; });
+    const D = new THREE.Group(); D.userData.detail = true; a.add(D);
+    const sl = new THREE.Mesh(new THREE.CylinderGeometry(0.047, 0.05, len, 18), VMM.sleeve); sl.rotation.x = Math.PI / 2; sl.position.z = len / 2; D.add(sl); hdFlag(sl);
+    for (const f of [0.2, 0.42, 0.66]) { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.0492, 0.0498, 0.03, 18), VMM.sleeve); r.rotation.set(Math.PI / 2, 0, f * 2); r.position.set(0, 0.0008, len * f); D.add(r); hdFlag(r); }   // bunched folds
+    const cf = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.051, 0.05, 18), VMM.cuff); cf.rotation.x = Math.PI / 2; cf.position.z = 0.03; D.add(cf); hdFlag(cf);
+    hdB(D, 0.03, 0.006, 0.04, VMM.hdGloveKnuckle, 0, 0.05, 0.03);   // cuff tab
+    D.traverse(m => { if (m.isMesh) m.userData.hdHand = true; });
+    return a;
+  };
+}
+
+/* ---------- M1911 ---------- */
+function hdPistol(root, P) {
+  const A = p => hdAt(root, p);
+  // Slide
+  const slideP = hdGhost(A('/0/0')); ['/0/1', '/0/2', '/0/3', '/0/4', '/0/5', '/0/6', '/0/10'].forEach(p => hdGhost(A(p)));
+  const S = hdIn(slideP);
+  hdEx(S, [[-0.095, 0.0255], [-0.095, 0.064], [-0.091, 0.0685], [0.139, 0.0685], [0.1445, 0.064], [0.1445, 0.031], [0.14, 0.0255]], 0.05, VMM.hdBlued, 0, 0, 0, { bevel: 0.0022, segs: 3 });
+  for (let i = 0; i < 9; i++) for (const sx of [-1, 1]) hdB(S, 0.0012, 0.031, 0.0016, VMM.hdBore, sx * 0.0252, 0.047, 0.062 + i * 0.0036);
+  // ejection port, extractor, barrel hood inside
+  hdB(S, 0.0012, 0.0145, 0.036, VMM.hdBore, 0.0253, 0.0558, -0.012); hdB(S, 0.0012, 0.009, 0.03, VMM.hdSteel, 0.0249, 0.0555, -0.012);
+  hdEx(S, [[-0.02, 0.0575], [-0.02, 0.0615], [0.03, 0.0615], [0.034, 0.0595], [0.03, 0.0575]], 0.0028, VMM.hdBlued, 0.0258, 0, 0, { bevel: 0.0004 });
+  // markings
+  hdDecal(S, hdEngrave('M1911-A1  ·  CAL .45 AUTO'), 0.1, 0.012, -0.0259, 0.044, -0.045, -Math.PI / 2, 0.55);
+  hdDecal(S, hdEngrave('WIDOWMAKER ARMS  ·  SER. 0417'), 0.075, 0.009, 0.0259, 0.04, 0.03, Math.PI / 2, 0.45);
+  // front: bushing, bore, recoil spring plug
+  hdCZ(S, 0.0115, 0.006, VMM.hdSteel, 0, 0.046, -0.1465, 18); hdCZ(S, 0.0098, 0.004, VMM.hdBlued, 0, 0.046, -0.15, 16); hdCZ(S, 0.0052, 0.006, VMM.hdBore, 0, 0.046, -0.151, 12);
+  hdCZ(S, 0.0068, 0.005, VMM.hdSteel, 0, 0.031, -0.1465, 14); hdCZ(S, 0.0028, 0.003, VMM.hdBore, 0, 0.031, -0.149, 8);
+  // sights: three white dots
+  hdSph(S, 0.0013, VMM.hdDot, 0, 0.0765, -0.1292); for (const sx of [-1, 1]) hdSph(S, 0.0012, VMM.hdDot, sx * 0.0105, 0.0775, 0.0818);
+  // Frame and dust cover
+  [ '/2', '/3', '/6', '/7' ].forEach(p => hdGhost(A(p)));
+  const F = new THREE.Group(); F.userData.detail = true; root.add(F);
+  hdEx(F, [[-0.083, -0.001], [-0.083, 0.0245], [0.119, 0.0245], [0.121, 0.022], [0.121, 0.001], [0.115, -0.001]], 0.045, VMM.hdBlued, 0, 0, 0, { bevel: 0.0018 });
+  hdEx(F, [[0.04, 0.0], [0.042, -0.009], [0.118, -0.0105], [0.121, -0.006], [0.121, 0.0]], 0.031, VMM.hdBlued, 0, 0, 0, { bevel: 0.0015 });
+  // trigger guard (one C-shaped band)
+  hdEx(F, [[0.029, 0.0], [0.033, -0.016], [0.028, -0.029], [0.018, -0.034], [-0.012, -0.0345], [-0.026, -0.031], [-0.03, -0.024], [-0.023, -0.022], [-0.012, -0.0285], [0.016, -0.028], [0.022, -0.024], [0.025, -0.015], [0.023, 0.0]], 0.012, VMM.hdBlued, 0, 0, 0, { bevel: 0.0012 });
+  // slide stop, thumb safety, magazine release, pins
+  hdEx(F, [[0.04, 0.012], [0.042, 0.022], [0.012, 0.0245], [-0.002, 0.02], [0.002, 0.014]], 0.003, VMM.hdBlued, -0.0242, 0, 0, { bevel: 0.0005 });
+  for (let i = 0; i < 4; i++) hdB(F, 0.0006, 0.007, 0.0008, VMM.hdBore, -0.0258, 0.019, 0.032 - i * 0.003);
+  hdCX(F, 0.0032, 0.05, VMM.hdSteel, 0, 0.016, 0.036, 10);
+  hdEx(F, [[-0.058, 0.0175], [-0.06, 0.027], [-0.08, 0.0285], [-0.083, 0.024], [-0.07, 0.019]], 0.003, VMM.hdBlued, -0.0245, 0, 0, { bevel: 0.0006 });
+  hdCX(F, 0.0046, 0.004, VMM.hdGripCheck, -0.0245, -0.006, -0.02, 14);
+  hdCX(F, 0.0024, 0.05, VMM.hdSteel, 0, 0.004, -0.072, 8);
+  // Grip frame: front strap, mainspring housing and beavertail (built in the grip's own tilted frame)
+  const gp = hdGhost(A('/4')), G2 = new THREE.Group(); G2.userData.detail = true; gp.add(G2);
+  hdEx(G2, [[0.03, 0.065], [0.032, 0.02], [0.031, -0.04], [0.028, -0.06], [0.022, -0.065], [-0.026, -0.065], [-0.032, -0.058], [-0.034, -0.02], [-0.033, 0.065]], 0.042, VMM.hdBlued, 0, 0, 0, { bevel: 0.0025, segs: 3 });
+  hdEx(G2, [[0.031, 0.04], [0.0325, -0.05], [0.029, -0.058], [0.0275, 0.04]], 0.03, VMM.hdGripCheck, 0, 0, 0, { bevel: 0.0008 });
+  hdEx(G2, [[-0.0345, 0.0], [-0.0352, -0.056], [-0.03, -0.063], [-0.03, 0.0]], 0.034, VMM.hdGripCheck, 0, 0, 0, { bevel: 0.0008 });
+  hdCX(G2, 0.0016, 0.044, VMM.hdSteel, 0, -0.058, -0.028, 6);
+  const tang = hdIn(gp); hdEx(tang, [[-0.083, 0.024], [-0.083, 0.013], [-0.098, 0.006], [-0.114, 0.012], [-0.112, 0.02], [-0.098, 0.024]], 0.032, VMM.hdBlued, 0, 0, 0, { bevel: 0.0015 });
+  // Grip panels: checkered walnut with screws (they hide with the factory grips)
+  const wp = hdGhost(A('/5')), W2 = new THREE.Group(); W2.userData.detail = true; wp.add(W2);
+  for (const sx of [-1, 1]) {
+    hdEx(W2, [[0.023, 0.047], [0.024, -0.04], [0.019, -0.048], [-0.02, -0.048], [-0.024, -0.042], [-0.024, 0.047]], 0.0045, VMM.hdChecker, sx * 0.0245, 0, 0, { bevel: 0.0012 });
+    hdScrew(W2, sx * 0.0272, 0.036, 0.0, 0.0032); hdScrew(W2, sx * 0.0272, -0.036, 0.0, 0.0032);
+    hdEx(W2, hdArc(0, 0, 0.007, 0, 6.283, 10).map(p => [p[0] * 1.2, p[1]]), 0.0012, VMM.hdWalnut, sx * 0.0274, 0.0, 0.0, { bevel: 0.0003 });
+  }
+  // Hammer spur and lanyard loop
+  if (P.hammer) { hdB(P.hammer, 0.012, 0.004, 0.012, VMM.hdGripCheck, 0, 0.011, 0.003); hdCX(P.hammer, 0.0045, 0.0146, VMM.hdBore, 0, 0.004, 0, 10); }
+  const lan = new THREE.Mesh(new THREE.TorusGeometry(0.005, 0.0013, 6, 12), VMM.hdSteel); lan.position.set(0, -0.069, -0.03); G2.add(hdFlag(lan));
+}
+
+/* ---------- M4 carbine ---------- */
+function hdRifle(root, P) {
+  const A = p => hdAt(root, p);
+  // Upper receiver
+  const up = hdGhost(A('/0')), U = hdIn(up);
+  hdEx(U, [[-0.085, 0.006], [-0.085, 0.055], [0.165, 0.055], [0.165, 0.012], [0.16, 0.006]], 0.05, VMM.hdAnod, 0, 0, 0, { bevel: 0.002 });
+  hdEx(U, [[-0.02, 0.034], [-0.045, 0.034], [-0.055, 0.052], [-0.02, 0.052]], 0.008, VMM.hdAnod, 0.026, 0, 0, { bevel: 0.0015 });             // brass deflector
+  hdCX(U, 0.0028, 0.052, VMM.hdSteel, 0, 0.012, 0.075, 8);                                                                                     // rear takedown pin
+  hdDecal(U, hdEngrave('CAL 5.56 MM  ·  M4 CARBINE'), 0.09, 0.011, -0.0262, 0.03, -0.06, -Math.PI / 2, 0.5);
+  // ejection port cover: hinge rod and snap
+  hdCZ(U, 0.0013, 0.058, VMM.hdSteel, 0.0262, 0.019, -0.03, 6); hdB(U, 0.0016, 0.004, 0.006, VMM.hdAnod, 0.0272, 0.038, -0.01);
+  // forward assist button
+  hdCZ(U, 0.0085, 0.008, VMM.hdAnod, 0.03, 0.04, 0.062, 14); for (let i = 0; i < 6; i++) hdB(U, 0.0006, 0.0025, 0.0085, VMM.hdBore, 0.03 + Math.cos(i) * 0.0082, 0.04 + Math.sin(i) * 0.0082, 0.062);
+  // Top rail: sharper, finer teeth
+  for (let i = 2; i <= 15; i++) hdGhost(A('/' + i));
+  const rail = A('/1'); if (rail) { rail.material = VMM.hdAnod; const R = hdIn(rail); for (let z = -0.245; z <= 0.066; z += 0.0105) hdB(R, 0.0286, 0.0034, 0.0055, VMM.hdAnod, 0, 0.0687, z); for (let z = -0.25; z <= 0.07; z += 0.0105) hdB(R, 0.0024, 0.0028, 0.0016, VMM.hdBore, 0, 0.0715, z + 0.005); }
+  // Lower receiver and magazine well
+  hdGhost(A('/16')); hdGhost(A('/17'));
+  const L = new THREE.Group(); L.userData.detail = true; root.add(L);
+  hdEx(L, [[-0.055, 0.0105], [0.115, 0.0105], [0.115, -0.03], [0.112, -0.064], [0.106, -0.0675], [0.034, -0.0675], [0.031, -0.035], [-0.04, -0.035], [-0.055, -0.024]], 0.046, VMM.hdAnod, 0, 0, 0, { bevel: 0.0022 });
+  hdEx(L, [[0.112, -0.064], [0.118, -0.07], [0.03, -0.0705], [0.034, -0.0675]], 0.05, VMM.hdAnod, 0, 0, 0, { bevel: 0.0012 });          // magwell flare
+  hdDecal(L, hdEngrave('SAFE · SEMI · AUTO'), 0.04, 0.007, -0.0242, -0.015, -0.03, -Math.PI / 2, 0.6);
+  hdEx(L, [[-0.022, -0.002], [-0.03, 0.002], [-0.043, -0.004], [-0.04, -0.011], [-0.026, -0.008]], 0.003, VMM.hdAnod, -0.0245, 0, 0, { bevel: 0.0006 });     // selector
+  hdCX(L, 0.0045, 0.004, VMM.hdAnod, -0.0245, -0.006, -0.032, 12);
+  hdEx(L, [[0.012, 0.004], [0.028, 0.004], [0.031, -0.012], [0.016, -0.015]], 0.003, VMM.hdAnod, -0.0245, 0, 0, { bevel: 0.0006 });   // bolt catch
+  hdCX(L, 0.0042, 0.004, VMM.hdAnod, 0.0245, -0.022, 0.03, 12);                                                                       // mag release
+  hdCX(L, 0.0028, 0.05, VMM.hdSteel, 0, 0.006, 0.106, 8);                                                                              // pivot pin
+  // trigger guard
+  hdGhost(A('/28')); hdGhost(A('/29'));
+  hdEx(L, [[0.037, -0.035], [0.037, -0.043], [0.03, -0.0445], [-0.025, -0.0445], [-0.025, -0.039], [0.028, -0.039], [0.031, -0.035]], 0.012, VMM.hdAnod, 0, 0, 0, { bevel: 0.0009 });
+  // Pistol grip (in its own tilted frame)
+  const gp = hdGhost(A('/27')), GG = new THREE.Group(); GG.userData.detail = true; gp.add(GG);
+  hdEx(GG, [[0.024, 0.05], [0.027, 0.03], [0.021, 0.018], [0.027, 0.004], [0.021, -0.008], [0.027, -0.022], [0.025, -0.046], [0.018, -0.05], [-0.024, -0.05], [-0.027, -0.04], [-0.026, 0.05]], 0.033, VMM.hdPoly, 0, 0, 0, { bevel: 0.0025, segs: 3 });
+  hdEx(GG, [[-0.026, 0.035], [-0.032, 0.03], [-0.034, 0.0], [-0.028, -0.03], [-0.026, -0.03]], 0.026, VMM.hdPoly, 0, 0, 0, { bevel: 0.0015 });
+  // Handguard: octagonal tube with M-LOK slots and a full-length top rail
+  hdGhost(A('/18')); for (let i = 19; i <= 23; i++) hdGhost(A('/' + i));
+  const hg = A('/18'), H = hdIn(hg);
+  hdEx(H, [[-0.032, 0.011], [-0.022, -0.003], [0.022, -0.003], [0.032, 0.011], [0.032, 0.045], [0.022, 0.0575], [-0.022, 0.0575], [-0.032, 0.045]], 0.3, VMM.hdAnod, 0, 0, -0.315, { axis: 'z', bevel: 0.0015 });
+  for (let k = 0; k < 5; k++) { const z = -0.2 - k * 0.055; for (const sx of [-1, 1]) hdEx(H, hdRRect(0.03, 0.01, 0.0045, 2), 0.0012, VMM.hdBore, sx * 0.0326, 0.028, z, { axis: 'x', bevel: 0, uv: false }); hdEx(H, hdRRect(0.03, 0.01, 0.0045, 2).map(p => [p[0], p[1]]), 0.0012, VMM.hdBore, 0, -0.0034, z, { axis: 'x', bevel: 0, uv: false, rz: Math.PI / 2 }); }
+  hdB(H, 0.026, 0.008, 0.3, VMM.hdAnod, 0, 0.0615, -0.315); for (let z = -0.462; z <= -0.17; z += 0.0105) hdB(H, 0.0286, 0.0034, 0.0055, VMM.hdAnod, 0, 0.0672, z);
+  hdCZ(H, 0.0305, 0.006, VMM.hdAnod, 0, 0.027, -0.4655, 16); hdCZ(H, 0.03, 0.008, VMM.hdAnod, 0, 0.027, -0.163, 16);
+  // Barrel: gas block and A-frame front sight (on the front sight proxy)
+  const fs = hdGhost(A('/25')), FSg = hdIn(fs);
+  hdEx(FSg, [[0.49, 0.018], [0.51, 0.018], [0.51, 0.032], [0.503, 0.06], [0.497, 0.06], [0.49, 0.032]], 0.018, VMM.hdParker, 0, 0, 0, { bevel: 0.0012 });
+  hdB(FSg, 0.0035, 0.008, 0.0035, VMM.hdParker, 0, 0.0645, -0.5); hdCZ(FSg, 0.014, 0.022, VMM.hdParker, 0, 0.028, -0.5, 16);
+  hdCZ(FSg, 0.0018, 0.03, VMM.hdSteel, 0, 0.043, -0.49, 6);
+  // Barrel: parkerised finish, bore
+  const brl = A('/24'); if (brl) brl.material = VMM.hdParker;
+  // Flash hider (hides with any muzzle device)
+  const mz = hdGhost(A('/26')), MZ = hdIn(mz);
+  hdCZ(MZ, 0.0112, 0.055, VMM.hdParker, 0, 0.028, -0.69, 16); hdCZ(MZ, 0.0125, 0.012, VMM.hdParker, 0, 0.028, -0.668, 16);
+  for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i - 2) * 0.62; hdB(MZ, 0.003, 0.0024, 0.03, VMM.hdBore, Math.cos(a) * 0.0108, 0.028 + Math.sin(-a) * 0.0108, -0.698, 0, 0, a); }
+  hdCZ(MZ, 0.0056, 0.003, VMM.hdBore, 0, 0.028, -0.7175, 10);
+  // Buffer tube and castle nut
+  const bt = A('/31'); if (bt) { bt.material = VMM.hdAnod; const BT = hdIn(bt); hdCZ(BT, 0.0195, 0.011, VMM.hdAnod, 0, 0.022, 0.092, 16); for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283; hdB(BT, 0.003, 0.003, 0.012, VMM.hdBore, Math.cos(a) * 0.019, 0.022 + Math.sin(a) * 0.019, 0.092, 0, 0, a); } hdB(BT, 0.008, 0.006, 0.15, VMM.hdAnod, 0, 0.004, 0.17); for (let i = 0; i < 6; i++) hdB(BT, 0.0042, 0.0015, 0.005, VMM.hdBore, 0, 0.001, 0.12 + i * 0.022); }
+  // Collapsible stock (hides with stock swaps)
+  const st = hdGhost(A('/32')), ST = hdIn(st);
+  hdEx(ST, [[-0.2, 0.034], [-0.355, 0.042], [-0.36, 0.036], [-0.36, -0.05], [-0.345, -0.052], [-0.28, -0.03], [-0.215, -0.008], [-0.2, -0.004]], 0.046, VMM.hdPoly, 0, 0, 0, { bevel: 0.003, segs: 3 });
+  hdEx(ST, [[-0.352, 0.046], [-0.366, 0.046], [-0.368, -0.054], [-0.352, -0.056]], 0.05, VMM.hdRubber, 0, 0, 0, { bevel: 0.002 });
+  for (let i = 0; i < 5; i++) hdB(ST, 0.051, 0.0015, 0.004, VMM.hdBore, 0, 0.03 - i * 0.02, 0.367);
+  hdB(ST, 0.012, 0.006, 0.03, VMM.hdPoly, 0, -0.004, 0.225); hdB(ST, 0.002, 0.012, 0.03, VMM.hdBore, 0.0236, -0.03, 0.31);
+  // Magazine: curved STANAG body with ribs and a round on top (in the magazine group's frame, so it follows reloads)
+  const m0 = A('/37/0'); if (m0) { [ '/37/0', '/37/1', '/37/2' ].forEach(p => hdGhost(A(p))); const MG = hdIn(m0, P.mag);
+    hdEx(MG, [[0.033, 0.005], [0.0335, -0.05], [0.038, -0.09], [0.05, -0.135], [0.058, -0.158], [0.004, -0.165], [-0.004, -0.14], [-0.022, -0.09], [-0.03, -0.05], [-0.033, 0.005]], 0.027, VMM.hdAnod, 0, 0, 0, { bevel: 0.0015 });
+    for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) { const u0 = 0.016 - i * 0.011; hdEx(MG, [[u0 + 0.004, -0.015], [u0 + 0.004 + (i === 0 ? 0.012 : 0.008), -0.105], [u0 + (i === 0 ? 0.012 : 0.008), -0.105], [u0, -0.015]], 0.0016, VMM.hdParker, sx * 0.0138, 0, 0, { bevel: 0 }); }
+    hdEx(MG, [[0.061, -0.155], [0.064, -0.163], [0.002, -0.172], [0.0, -0.163]], 0.031, VMM.hdPoly, 0, 0, 0, { bevel: 0.0015 });
+    hdCZ(MG, 0.0028, 0.022, VMM.hdBrass, 0, 0.007, -0.005, 8); }
+  // Red dot: turrets and lens ring (hide with the factory optic)
+  const rd = A('/41'); if (rd) { const RD = hdIn(rd); const t1 = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.008, 14), VMM.hdAnod); t1.position.set(0, 0.131, -0.03); RD.add(hdFlag(t1)); hdCX(RD, 0.006, 0.008, VMM.hdAnod, 0.027, 0.1, -0.03, 14); hdCZ(RD, 0.0255, 0.004, VMM.hdAnod, 0, 0.1, -0.066, 18); }
+  P._hdOptic = { top: A('/41'), glass: A('/42'), dot: A('/43') };
+}
+
+/* ---------- Trench 12 pump shotgun ---------- */
+function hdShotgun(root, P) {
+  const A = p => hdAt(root, p);
+  // Receiver with engraved side panels
+  const rc = hdGhost(A('/0')), R = hdIn(rc); hdGhost(A('/2')); hdGhost(A('/3'));
+  hdEx(R, [[-0.08, -0.008], [-0.08, 0.034], [-0.07, 0.042], [0.155, 0.044], [0.16, 0.04], [0.16, -0.02], [0.152, -0.026], [-0.05, -0.026]], 0.056, VMM.hdBlued, 0, 0, 0, { bevel: 0.003, segs: 3 });
+  hdDecal(R, hdScroll(), 0.1, 0.04, -0.0286, 0.01, -0.03, -Math.PI / 2, 0.55);
+  hdDecal(R, hdEngrave('TRENCH 12  ·  12 GA  ·  2¾ IN'), 0.07, 0.008, -0.0286, -0.017, -0.03, -Math.PI / 2, 0.55);
+  hdB(R, 0.0012, 0.026, 0.062, VMM.hdBore, 0.0285, 0.012, -0.07); hdB(R, 0.0014, 0.003, 0.064, VMM.hdBlued, 0.0287, 0.026, -0.07);   // ejection port
+  hdB(R, 0.026, 0.0012, 0.072, VMM.hdBore, 0, -0.0272, -0.03); hdB(R, 0.02, 0.003, 0.05, VMM.hdSteel, 0, -0.0262, -0.012);           // loading port and carrier
+  for (const sx of [-1, 1]) { hdScrew(R, sx * 0.0294, 0.026, 0.06, 0.0028); hdScrew(R, sx * 0.0294, -0.016, 0.064, 0.0028); }
+  hdCX(R, 0.0042, 0.058, VMM.hdSteel, 0, -0.018, 0.03, 12);                                                                                 // cross-bolt safety
+  // Trigger guard
+  hdGhost(A('/8')); hdGhost(A('/9'));
+  const F = new THREE.Group(); F.userData.detail = true; root.add(F);
+  hdEx(F, [[-0.021, -0.014], [-0.024, -0.03], [-0.03, -0.042], [-0.04, -0.0435], [-0.076, -0.0435], [-0.08, -0.038], [-0.074, -0.037], [-0.042, -0.0375], [-0.034, -0.035], [-0.028, -0.026], [-0.026, -0.014]], 0.012, VMM.hdBlued, 0, 0, 0, { bevel: 0.0012 });
+  // Barrel: heat shield with cooling holes and a bayonet lug (hides with barrel swaps)
+  const br = A('/4'); if (br) { const BR = hdIn(br);
+    const hs = new THREE.Mesh(new THREE.CylinderGeometry(0.0195, 0.0195, 0.3, 20, 1, true), VMM.hdParker); hs.rotation.x = Math.PI / 2; hs.position.set(0, 0.029, -0.33); hs.scale.set(1, 1, 0.82); BR.add(hdFlag(hs));
+    for (const z of [-0.18, -0.48]) hdCZ(BR, 0.0205, 0.008, VMM.hdBlued, 0, 0.029, z, 20);
+    for (let row = 0; row < 3; row++) for (let i = 0; i < 9; i++) { const a = (row - 1) * 0.8, z = -0.2 - i * 0.031 - (row % 2) * 0.015; hdB(BR, 0.0042, 0.0012, 0.0062, VMM.hdBore, Math.sin(a) * 0.0196, 0.029 + Math.cos(a) * 0.016, z, 0, 0, -a); }
+    hdB(BR, 0.008, 0.008, 0.03, VMM.hdBlued, 0, 0.012, -0.645); hdCZ(BR, 0.0072, 0.004, VMM.hdBore, 0, 0.027, -0.681, 12); }
+  // Magazine tube cap, barrel band and sling swivel
+  const mt = A('/5'); if (mt) { const MT = hdIn(mt); hdCZ(MT, 0.0136, 0.014, VMM.hdBlued, 0, -0.006, -0.586, 16); hdCZ(MT, 0.006, 0.0025, VMM.hdSteel, 0, -0.006, -0.5935, 10); }
+  const band = A('/6'); if (band) { const BD = hdIn(band); const sw = new THREE.Mesh(new THREE.TorusGeometry(0.008, 0.0016, 6, 14), VMM.hdSteel); sw.position.set(0, -0.024, -0.6); sw.rotation.y = Math.PI / 2; BD.add(hdFlag(sw)); }
+  // Pump: rounded walnut forend with grooves
+  const pb = A('/14/0'); if (pb) { hdGhost(pb); for (let i = 1; i <= 7; i++) hdGhost(A('/14/' + i)); const PF = hdIn(pb, P.pump);
+    hdEx(PF, hdRRect(0.06, 0.054, 0.02, 4), 0.168, VMM.hdWalnut, 0, 0, 0, { axis: 'z', bevel: 0.003, segs: 3 });
+    for (let i = 0; i < 9; i++) { const z = -0.064 + i * 0.016; hdB(PF, 0.0014, 0.03, 0.0035, VMM.hdBore, 0.0304, -0.004, z); hdB(PF, 0.0014, 0.03, 0.0035, VMM.hdBore, -0.0304, -0.004, z); hdB(PF, 0.03, 0.0014, 0.0035, VMM.hdBore, 0, -0.0274, z); }
+    hdCZ(PF, 0.0145, 0.172, VMM.hdBore, 0, 0.0, 0, 14); }
+  // Stock: walnut with a checkered wrist and a ventilated recoil pad
+  const wr = A('/11'); if (wr) { hdGhost(wr); const WR = new THREE.Group(); WR.userData.detail = true; wr.add(WR); hdEx(WR, hdRRect(0.042, 0.066, 0.016, 4), 0.132, VMM.hdChecker, 0, 0, 0, { axis: 'z', bevel: 0.002 }); }
+  const sk = A('/12'); if (sk) { hdGhost(sk); const SK = new THREE.Group(); SK.userData.detail = true; sk.add(SK);
+    hdEx(SK, [[0.13, 0.034], [0.06, 0.045], [-0.12, 0.05], [-0.13, 0.046], [-0.13, -0.05], [-0.1, -0.05], [0.05, -0.03], [0.13, -0.016]], 0.044, VMM.hdWalnut, 0, 0, 0, { bevel: 0.004, segs: 3 });
+    const sl = new THREE.Mesh(new THREE.TorusGeometry(0.006, 0.0015, 6, 12), VMM.hdSteel); sl.position.set(0, -0.045, 0.06); sl.rotation.y = Math.PI / 2; SK.add(hdFlag(sl)); }
+  const pad = A('/13'); if (pad) { hdGhost(pad); const PD = new THREE.Group(); PD.userData.detail = true; pad.add(PD);
+    hdEx(PD, hdRRect(0.048, 0.104, 0.012, 3), 0.02, VMM.hdRubber, 0, 0, 0, { axis: 'z', bevel: 0.002 });
+    for (let i = 0; i < 6; i++) hdB(PD, 0.05, 0.002, 0.012, VMM.hdBore, 0, 0.035 - i * 0.014, 0.0); for (const yy of [0.03, -0.03]) hdCZ(PD, 0.0035, 0.002, VMM.hdSteel, 0, yy, 0.0105, 10); }
+  // finishes
+  const rib = A('/1'); if (rib) rib.material = VMM.hdBlued; const brl = A('/4'); if (brl) brl.material = VMM.hdBlued; if (A('/5')) A('/5').material = VMM.hdBlued;
+}
+/* The factory red dot's glass and dot go away with its housing when another optic is fitted */
+{ const _fit = fitAttachments;
+  fitAttachments = function (root, P, id, cfg, ...rest) { const r = _fit(root, P, id, cfg, ...rest); const o = P && P._hdOptic; if (o && o.top) { const on = o.top.visible !== false; if (o.glass) o.glass.visible = on; if (o.dot) o.dot.visible = on; } return r; }; }
+/* ---------- Install ---------- */
+const HD_BUILDERS = { pistol: hdPistol, rifle: hdRifle, shotgun: hdShotgun };
+for (const id in HD_BUILDERS) {
+  const _b = WEAPON_BUILDERS[id]; if (!_b) continue;
+  WEAPON_BUILDERS[id] = function (...a) { const r = _b.apply(this, a); try { HD_BUILDERS[id](r.root, r.P); } catch (e) { console.error('HD ' + id, e); } return r; };
+}
+
+/* =====================================================================
+   INTERACTION AIM — what you're facing wins. Prompts are measured from a
+   point a little in front of you, so when two things are close together
+   (a quest item beside a wall gun, someone standing by a machine) the one
+   you're looking at is the one you get.
+   ===================================================================== */
+const INTERACT_LEAD = 0.4;
+{ const G0 = Game.prototype, _ui = G0.updateInteract;
+  G0.updateInteract = function () {
+    const p = this.player.pos, yaw = this.player.yaw || 0, fx = -Math.sin(yaw) * INTERACT_LEAD, fz = -Math.cos(yaw) * INTERACT_LEAD;
+    p.x += fx; p.z += fz;
+    try { return _ui.call(this); } finally { p.x -= fx; p.z -= fz; }
+  };
+}
+
+/* =====================================================================
+   HD PASS FOR THE REST OF THE ARSENAL
+   The same treatment as the M1911, M4 and Trench 12, applied to every
+   other gun: each factory block becomes an invisible measuring proxy
+   (so the Gunsmith, sights and animations are untouched) carrying a
+   rounded, bevelled replacement in the smooth HD finishes. Round parts
+   get smoother cylinders, barrels get a dark bore, and each gun gets
+   its name engraved on the receiver with a pair of pins.
+   Parts whose material is swapped or animated at runtime keep their
+   own material object, so heat glow, upgrades and camo still work.
+   ===================================================================== */
+function hdMaterials2() {
+  if (VMM.hdStainless) return;
+  const env = hdEnvCube(), mix = THREE.MixOperation;
+  const P = o => new THREE.MeshPhongMaterial(Object.assign({ shininess: 40, specular: 0x2a2c30 }, o));
+  const metal = (color, shin, spec, refl) => P({ color, shininess: shin, specular: spec, envMap: env, combine: mix, reflectivity: refl });
+  VMM.hdStainless = metal(0xb2b6bb, 85, 0xa0a4aa, 0.24);
+  VMM.hdAlu = metal(0xa9aeb4, 55, 0x84888e, 0.16);
+  VMM.hdGunmetal = metal(0x585d64, 55, 0x50545a, 0.1);
+  VMM.hdTan = P({ color: 0x8c7a5a, shininess: 10, specular: 0x141210 });
+  VMM.hdOlive = P({ color: 0x7f8668, shininess: 14, specular: 0x1a1c14 });
+  VMM.hdBakelite = P({ color: 0x5e2c19, shininess: 45, specular: 0x2a1a10 });
+  VMM.hdPolyBlack = P({ color: 0x2a2b2e, shininess: 14, specular: 0x161616 });
+  VMM.hdGripPoly = P({ map: hdChecker(1), color: 0x46484d, shininess: 14, specular: 0x161616 });
+  VMM.hdGripTan = P({ map: hdChecker(1), color: 0xa89270, shininess: 10, specular: 0x141210 });
+  VMM.hdGripRubber = P({ map: hdChecker(1), color: 0x38383a, shininess: 6, specular: 0x0c0c0c });
+}
+{ const _ivm = initViewmodelMaterials; initViewmodelMaterials = function () { _ivm(); try { hdMaterials2(); } catch (e) { console.error('HD materials 2', e); } }; }
+
+/** Factory finish → HD finish. Anything not listed keeps its own material object. */
+function hdMatMap() {
+  if (HD.matMap && HD.matMap.size >= 14) return HD.matMap;
+  hdMaterials2();
+  const M = new Map([
+    [VMM.blued, VMM.hdBlued], [VMM.dark, VMM.hdAnod], [VMM.parker, VMM.hdParker], [VMM.polymer, VMM.hdPolyBlack],
+    [VMM.wood, VMM.hdWalnut], [VMM.steel, VMM.hdSteel], [VMM.stainless, VMM.hdStainless], [VMM.alu, VMM.hdAlu],
+    [VMM.rubber, VMM.hdRubber], [VMM.tan, VMM.hdTan], [VMM.gunmetal, VMM.hdGunmetal], [VMM.olive, VMM.hdOlive],
+    [VMM.bakelite, VMM.hdBakelite], [VMM.brass, VMM.hdBrass],
+  ].filter(p => p[0]));
+  return (HD.matMap = M);
+}
+
+/* ---------- Rounded block with the same outer bounds as the factory box ---------- */
+HD.rbox = new Map();
+function hdRoundBoxGeo(w, h, d) {
+  const key = [w, h, d].map(v => Math.round(v * 20000)).join(',');
+  if (HD.rbox.has(key)) return HD.rbox.get(key);
+  // round the edges that run along the longest side; bevel the two end faces
+  const long = d >= w && d >= h ? 'z' : w >= h ? 'x' : 'y';
+  const [pu, pv, L] = long === 'z' ? [w, h, d] : long === 'x' ? [d, h, w] : [w, d, h];
+  const mn = Math.min(pu, pv), b = Math.min(0.0012, mn * 0.14, L * 0.14), r = Math.min(0.003, mn * 0.22);
+  const iu = pu - 2 * b, iv = pv - 2 * b, ir = Math.max(0.0002, Math.min(r, iu / 2 - 0.0001, iv / 2 - 0.0001));
+  const pts = hdRRect(iu, iv, ir, 3);
+  const sh = new THREE.Shape(); pts.forEach((p, i) => i ? sh.lineTo(p[0], p[1]) : sh.moveTo(p[0], p[1])); sh.closePath && sh.closePath();
+  const dep = Math.max(0.0004, L - 2 * b);
+  const geo = new THREE.ExtrudeGeometry(sh, { depth: dep, bevelEnabled: true, bevelThickness: b, bevelSize: b, bevelSegments: 2, steps: 1, curveSegments: 3 });
+  if (typeof geo.parameters === 'function') {   // offline test stub: describe the shape for the renderer
+    geo.parameters = null; geo.__size = null;
+    geo.p = { t: 'extrude', pts: hdRRect(pu, pv, Math.min(r + b, mn / 2), 3), depth: L, axis: long === 'z' ? 'z' : long === 'x' ? 'x' : 'y' };
+  } else {
+    geo.translate(0, 0, -dep / 2);
+    if (long === 'x') geo.rotateY(Math.PI / 2);
+    else if (long === 'y') geo.rotateX(-Math.PI / 2);
+    hdBoxUV(geo, 8);
+  }
+  HD.rbox.set(key, geo); return geo;
+}
+HD.cyl = new Map();
+function hdSmoothCylGeo(pp) {
+  const seg = Math.max(28, pp.radialSegments || 12);
+  const key = [pp.radiusTop, pp.radiusBottom, pp.height].map(v => Math.round(v * 20000)).join(',') + ':' + seg + ':' + (pp.openEnded ? 1 : 0) + ':' + (pp.thetaLength || 0);
+  if (HD.cyl.has(key)) return HD.cyl.get(key);
+  const g = pp.thetaLength != null && pp.thetaLength < 6.28
+    ? new THREE.CylinderGeometry(pp.radiusTop, pp.radiusBottom, pp.height, seg, 1, !!pp.openEnded, pp.thetaStart || 0, pp.thetaLength)
+    : new THREE.CylinderGeometry(pp.radiusTop, pp.radiusBottom, pp.height, seg, 1, !!pp.openEnded);
+  HD.cyl.set(key, g); return g;
+}
+
+/** Local transform chain from `o` up to `root` as a 3x3 rotation (to know which way a part points). */
+function hdAxisInRoot(o, root, v) {
+  let x = v[0], y = v[1], z = v[2];
+  for (let n = o; n && n !== root; n = n.parent) {
+    const r = n.rotation, s = n.scale || { x: 1, y: 1, z: 1 };
+    x *= s.x; y *= s.y; z *= s.z;
+    const cx = Math.cos(r.x || 0), sx = Math.sin(r.x || 0), cy = Math.cos(r.y || 0), sy = Math.sin(r.y || 0), cz = Math.cos(r.z || 0), sz = Math.sin(r.z || 0);
+    // XYZ order: R = Rx * Ry * Rz, applied to the vector as Rz first
+    let a = x * cz - y * sz, b = x * sz + y * cz; x = a; y = b;
+    a = x * cy + z * sy; b = -x * sy + z * cy; x = a; z = b;
+    a = y * cx - z * sx; b = y * sx + z * cx; y = a; z = b;
+  }
+  const l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l];
+}
+
+/** Upgrades one built model in place. opts.decal = engrave the name (off for mirrored akimbo guns). */
+function hdAuto(root, P, id, opts = {}) {
+  if (!root || root.userData.hdAuto) return; root.userData.hdAuto = true;
+  const MAP = hdMatMap();
+  const keep = new Set();   // subtrees left exactly as built
+  for (const k of ['trigger', 'muzzle', 'muzzle2', 'flash', 'pilot', 'beamGlow']) if (P && P[k] && P[k].traverse) P[k].traverse(o => keep.add(o));
+  const list = [];
+  root.traverse(o => {
+    if (!o.isMesh || keep.has(o) || !o.geometry || !o.material || Array.isArray(o.material)) return;
+    const u = o.userData; if (u.detail || u.hdGhost || u.hdHand || u.att) return;
+    const m = o.material; if (m.isMeshBasicMaterial === true || m.type === 'MeshBasicMaterial' || m.transparent === true || m.visible === false || m.isLineBasicMaterial === true) return;
+    if (m === VMM.glove || m === VMM.gloveLight || m === VMM.sleeve || m === VMM.cuff) return;
+    list.push(o);
+  });
+  let best = null, bestV = 0;
+  const bb = new Map(); try { boxesIn(root).forEach(q => bb.set(q.o, q)); } catch (e) {}
+  const inMag = new Set(); if (P && P.mag && P.mag.traverse) P.mag.traverse(o => inMag.add(o));
+  const GRIP = new Map([[VMM.hdPolyBlack, VMM.hdGripPoly], [VMM.hdWalnut, VMM.hdChecker], [VMM.hdTan, VMM.hdGripTan], [VMM.hdRubber, VMM.hdGripRubber], [VMM.hdBakelite, VMM.hdChecker]]);
+  const STOCK = new Set([VMM.hdWalnut, VMM.hdPolyBlack, VMM.hdTan, VMM.hdOlive, VMM.hdBakelite]);
+  let mag = null, magV = 0, butt = null, buttZ = 0.15;
+  for (const o of list) {
+    const g = o.geometry, pp = g.parameters, mat = MAP.get(o.material) || o.material;
+    if (pp && typeof pp.width === 'number' && typeof pp.depth === 'number' && !(pp.widthSegments > 1)) {
+      const w = pp.width, h = pp.height, d = pp.depth;
+      if (Math.min(w, h, d) < 0.0035) { if (MAP.has(o.material)) o.material = mat; continue; }   // tiny pins: just the new finish
+      const q = bb.get(o), tilt = Math.abs(o.rotation.x || 0);
+      // pistol grips (a tall block below the gun, raked back) get a checkered texture
+      const grip = q && GRIP.has(mat) && !inMag.has(o) && tilt > 0.05 && tilt < 0.75 && q.s[1] > 0.05 && q.s[1] > q.s[2] * 1.15 && q.c[1] < -0.015;
+      const c = new THREE.Mesh(hdRoundBoxGeo(w, h, d), grip ? GRIP.get(mat) : mat); c.userData.detail = true; c.renderOrder = o.renderOrder;
+      hdGhost(o); o.add(c);
+      if (inMag.has(o) && h > d && h > 0.05 && w * h * d > magV) { magV = w * h * d; mag = { o, w, h, d, mat }; }
+      if (q && STOCK.has(mat) && !inMag.has(o) && q.max[2] > buttZ && h > 0.04 && hdAxisInRoot(o, root, [0, 0, 1])[2] > 0.9) { buttZ = q.max[2]; butt = { o, w, h, d }; }
+      const metalish = mat !== VMM.hdWalnut && mat !== VMM.hdRubber && mat !== VMM.hdBrass && mat !== VMM.hdBakelite;
+      const v = w * h * d; if (metalish && w < h && w < d && d > 0.06 && h > 0.025 && v > bestV) { bestV = v; best = { o, w, h, d }; }
+    } else if (pp && typeof pp.radiusTop === 'number' && typeof pp.height === 'number') {
+      const c = new THREE.Mesh(hdSmoothCylGeo(pp), mat); c.userData.detail = true; c.renderOrder = o.renderOrder;
+      hdGhost(o); o.add(c);
+      // barrels: long, thin and pointing down the gun → a dark bore at the muzzle end
+      const r = Math.max(pp.radiusTop, pp.radiusBottom), ax = hdAxisInRoot(o, root, [0, 1, 0]);
+      if (!pp.openEnded && Math.abs(ax[2]) > 0.95 && pp.height >= 0.1 && r <= 0.03 && r >= 0.004) {
+        const front = ax[2] < 0 ? 1 : -1, rb = (front > 0 ? pp.radiusTop : pp.radiusBottom) * 0.58;
+        const bore = new THREE.Mesh(new THREE.CylinderGeometry(rb, rb, 0.0016, 18), VMM.hdBore); bore.position.y = front * (pp.height / 2 + 0.0004); bore.userData.detail = true; o.add(bore);
+        const crown = new THREE.Mesh(new THREE.CylinderGeometry(rb * 1.25, rb * 1.25, 0.0012, 18), mat); crown.position.y = front * (pp.height / 2 + 0.0001); crown.userData.detail = true; o.add(crown);
+      }
+    } else if (MAP.has(o.material)) o.material = mat;   // spheres, tori and the rest: new finish only
+  }
+  // magazine: witness holes down the side and a lipped base plate
+  if (mag) {
+    const { o, w, h, d, mat } = mag, R = new THREE.Group(); R.userData.detail = true; o.add(R);
+    for (let i = 0; i < 3; i++) hdCX(R, Math.min(0.0024, d * 0.08), 0.0012, VMM.hdBore, w / 2 + 0.0002, h * (0.22 - i * 0.2), 0, 10);
+    const pl = new THREE.Mesh(hdRoundBoxGeo(w + 0.003, 0.006, d + 0.004), mat); pl.position.y = -h / 2 + 0.0025; pl.userData.detail = true; R.add(pl);
+  }
+  // shoulder stock: a rubber butt pad
+  if (butt) {
+    const { o, w, h, d } = butt, pad = new THREE.Mesh(hdRoundBoxGeo(w + 0.0012, h + 0.0012, 0.009), VMM.hdRubber);
+    pad.position.z = d / 2 - 0.004; pad.userData.detail = true; o.add(pad);
+    for (const y of [-h * 0.3, 0, h * 0.3]) { const g = hdB(o, w + 0.0016, 0.0012, 0.0066, VMM.hdBore, 0, y, d / 2 - 0.004); }
+  }
+  // the gun's name and two pins on the right side of the receiver
+  if (best && opts.decal !== false) {
+    const { o, w, h, d } = best, D = WEAPON_DATA[id], name = D && D.name ? String(D.name).toUpperCase() : '';
+    const R = new THREE.Group(); R.userData.detail = true; o.add(R);
+    if (name) { const pw = Math.min(d * 0.46, 0.1), ph = Math.min(h * 0.32, pw * 0.15); hdDecal(R, hdEngrave(name), pw, ph, w / 2 + 0.0006, h * 0.12, d * 0.04, Math.PI / 2, 0.7); }
+    for (const z of [-d * 0.32, d * 0.3]) hdScrew(R, w / 2 + 0.0008, -h * 0.22, z, Math.min(0.0032, h * 0.08));
+  }
+}
+
+/* ---------- Installation ---------- */
+// The akimbo guns are built per hand by the side builders: upgrade those (the M1911 side uses its full HD build)
+{ const bp = buildPistol, bd = buildDeagle, bw = buildPDW;
+  buildPistol = function (...a) { const r = bp.apply(this, a); try { if (!r.root.userData.hdPistol) { r.root.userData.hdPistol = true; hdPistol(r.root, r.P); } } catch (e) { console.error('HD side pistol', e); } return r; };
+  buildDeagle = function (...a) { const r = bd.apply(this, a); try { hdAuto(r.root, r.P, 'deagles', { decal: false }); } catch (e) { console.error('HD deagle', e); } return r; };
+  buildPDW = function (...a) { const r = bw.apply(this, a); try { hdAuto(r.root, r.P, 'pdws', { decal: false }); } catch (e) { console.error('HD PDW', e); } return r; };
+}
+for (const id of Object.keys(WEAPON_BUILDERS)) {
+  if (HD_BUILDERS[id] || (WEAPON_DATA[id] && WEAPON_DATA[id].mode === 'dual')) continue;
+  const _b = WEAPON_BUILDERS[id];
+  WEAPON_BUILDERS[id] = function (...a) { const r = _b.apply(this, a); try { hdAuto(r.root, r.P, id); } catch (e) { console.error('HD ' + id, e); } return r; };
+}
+// Upgraded finish: HD walnut stains oxblood like the factory wood; gloves and sleeves never change
+{ const _sul = setUpgradeLook;
+  setUpgradeLook = function (root, P, on, store) {
+    if (on) {
+      root.traverse(o => { if (o.isMesh && o.userData.hdHand) o.userData.papNo = true; });
+      const cache = store.cache || (store.cache = new Map());
+      if (VMM.hdWalnut && !cache.has(VMM.hdWalnut)) { const n = papMaterialFor(VMM.wood, new Map()); cache.set(VMM.hdWalnut, n); cache.set(VMM.hdChecker, n); }
+      if (VMM.hdBrass && !cache.has(VMM.hdBrass)) cache.set(VMM.hdBrass, VMM.hdBrass);
+    }
+    return _sul.call(this, root, P, on, store);
   };
 }
 
