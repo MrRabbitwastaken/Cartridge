@@ -2362,11 +2362,11 @@ class World {
     }
     if (this.ambient) { this.ambient.intensity = damp(this.ambient.intensity, 0.85 * this.ambientK, 2, dt); }
     if (this.coreRings) { this.coreRings.rotation.y += dt * (0.6 + this.coreSpin); this.coreRings2.rotation.y -= dt * (0.9 + this.coreSpin * 1.5); }
-    if (this.booth && this.booth.open && this.booth.t < 1) { this.booth.t = Math.min(1, this.booth.t + dt / 1.2); this.booth.door.position.x = -7.7 + smooth(this.booth.t) * 0.95; }
+    if (this.booth && this.booth.open && this.booth.t < 1) { this.booth.t = Math.min(1, this.booth.t + dt / 1.2); this.booth.door.position.x = (this.booth.bx != null ? this.booth.bx : -7.7) + smooth(this.booth.t) * 0.95; }
     if (this.cageGate && this.cageGate.open && this.cageGate.t < 1) { this.cageGate.t = Math.min(1, this.cageGate.t + dt / 1.0); this.cageGate.group.rotation.y = smooth(this.cageGate.t) * 1.5; }
     if (this.elevator) {
       const e = this.elevator; e.open = damp(e.open, e.target, 2.2, dt);
-      e.left.position.x = 4.175 - e.open * 1.05; e.right.position.x = 5.325 + e.open * 1.05;
+      e.left.position.x = (e.lx != null ? e.lx : 4.175) - e.open * 1.05; e.right.position.x = (e.rx != null ? e.rx : 5.325) + e.open * 1.05;
     }
     for (const w of this.wallBuys) w.glow.opacity = 0.16 + 0.12 * Math.sin(time * 3);
     if (this.mysteryBox) this.mysteryBox.update(dt, time);
@@ -6343,31 +6343,31 @@ const QS = {
 const QUESTS = {
   mq1: { title: 'Voices Behind Glass', main: true, giver: 'mason',
     summary: 'Captain Mason is trapped in the comms room off Reception. He wants you to find Dr. Voss in the Laboratory.',
-    steps: [QS.reach('Find Dr. Voss in the Laboratory', -7.7, 3.4, 5.5), QS.talk('Talk to Dr. Voss', 'elena', 'metElena')],
+    steps: [QS.reach('Find Dr. Voss in the Laboratory', -11.7, 3.4, 5.5), QS.talk('Talk to Dr. Voss', 'elena', 'metElena')],
     done: s => s.points(500) },
   mq2: { title: 'Glass Cage', main: true, giver: 'elena',
     summary: 'Dr. Voss is sealed inside an isolation booth. There is a master keycard on the operating table in Containment.',
-    steps: [QS.collect('Find the master keycard in Containment', ['keycard']), QS.flag('Unlock the isolation booth with the keycard', 'boothOpen', () => ({ x: -7.05, y: 1.4, z: 2.5 }))],
+    steps: [QS.collect('Find the master keycard in Containment', ['keycard']), QS.flag('Unlock the isolation booth with the keycard', 'boothOpen', () => ({ x: -11.05, y: 1.4, z: 2.5 }))],
     done: s => { s.points(750); s.trust('elena', 1); } },
   mq3: { title: 'Lights Out', main: true, giver: 'elena',
     summary: 'The main grid has failed. Dr. Voss can restart the backup generator with three power cells — but she needs you to protect her while she works.',
     steps: [QS.collect('Collect the power cells', ['cell1', 'cell2', 'cell3']), QS.talk('Tell Dr. Voss you have the cells', 'elena', 'mq3Go'),
-      QS.escort('Escort Dr. Voss to the generator controls', 'elena', SPOTS.genConsole.x, SPOTS.genConsole.z, 1.4),
+      QS.escort('Escort Dr. Voss to the generator controls', 'elena', 30.35, 2.4, 1.4),
       QS.defend('Defend Dr. Voss while she restarts the generator', 'elena', 25, SPOTS.genConsole, Math.PI / 2)],
     resetTo: 1, resetFlag: 'mq3Go', resetText: 'Dr. Voss fell back — talk to her to try again',
     done: s => s.powerRestored() },
   mq4: { title: 'Descent', main: true, giver: 'mason',
     summary: 'With power restored, the reactor bulkhead can open. Captain Mason will come with you to find out what Director Crowe was hiding.',
     steps: [QS.talk('Regroup with Captain Mason', 'mason', 'mq4Go'),
-      { text: 'Open the reactor bulkhead (south end of the Main Corridor)', marker: () => ({ x: 0, y: 1.6, z: -15.6 }), check: s => s.doorOpen('D10'), onStart: s => s.npcs.mason.follow() },
-      QS.escort('Reach the reactor console with Captain Mason', 'mason', 0, -17.6, 2.6),
+      { text: 'Open the reactor bulkhead (south end of the Central Atrium)', marker: () => ({ x: 0, y: 1.6, z: -23.6 }), check: s => s.doorOpen('D10'), onStart: s => s.npcs.mason.follow() },
+      QS.escort('Reach the reactor console with Captain Mason', 'mason', 0, -25.6, 2.6),
       { text: s => s.lock ? `Security lockdown — hold the reactor level (${Math.ceil(s.lock.t)}s)` : 'Security lockdown — hold the reactor level', progress: s => s.lock ? 1 - s.lock.t / STORY_PACING.lockdownTime : null,
         onStart: s => { if (!s.f.reactorReached) s.reactorOnline(); }, check: (s, q, dt) => (q.t = (q.t || 0) + dt) > 1 && s.f.reactorReached && !s.lock }],
     resetTo: 0, resetFlag: 'mq4Go', resetText: 'Captain Mason fell back to the comms room — talk to him to regroup',
     done: s => s.reactorReached() },
   mq5: { title: 'Eclipse', main: true,
     summary: 'The reactor has reached critical resonance. Whatever happens to Site 9 will be decided at the core console.',
-    steps: [{ text: 'Make your choice at the reactor console', marker: () => ({ x: 0, y: 1.6, z: -18.6 }), check: s => !!s.v.finalChoice }] },
+    steps: [{ text: 'Make your choice at the reactor console', marker: () => ({ x: 0, y: 1.6, z: -26.6 }), check: s => !!s.v.finalChoice }] },
   // ---- Side quests ----
   sqTags: { title: 'Dog Tags', giver: 'mason', summary: 'Mason lost his dog tags when his unit fell back from B1 Storage.',
     steps: [QS.collect('Find Mason\'s dog tags in B1 Storage', ['tags']), QS.talk('Return the dog tags to Captain Mason', 'mason', 'tagsReturned')],
@@ -6385,19 +6385,19 @@ const QUESTS = {
     steps: [{ text: s => `Learn who the first infected was (${['pz1', 'pz2', 'pz3'].filter(d => s.hasDoc(d)).length}/3)`, marker: null, check: s => ['pz1', 'pz2', 'pz3'].every(d => s.hasDoc(d)) }],
     done: s => { s.points(1000); s.addDoc('pzDone'); s.set('pzKnown'); } },
   sqSurvivor: { title: 'Trapped', giver: 'ortiz', summary: 'Sam Ortiz, a maintenance worker, is locked in the Containment holding cage.',
-    steps: [QS.collect('Find bolt cutters in B1 Storage', ['cutters']), QS.flag('Cut the padlock on the holding cage', 'gateOpen', () => ({ x: 6.62, y: 1.2, z: -13.0 })),
-      QS.escort('Escort Ortiz to Reception', 'ortiz', SPOTS.recep.x, SPOTS.recep.z, 3)],
+    steps: [QS.collect('Find bolt cutters in B1 Storage', ['cutters']), QS.flag('Cut the padlock on the holding cage', 'gateOpen', () => ({ x: 10.62, y: 1.2, z: -21 })),
+      QS.escort('Escort Ortiz to Reception', 'ortiz', 2.6, 24.4, 3)],
     resetTo: 2, resetText: 'Ortiz panicked and ran — find him and lead him to Reception',
     done: s => s.ortizSaved() },
   sqArmory: { title: 'Hidden Armoury', giver: 'stranger', summary: 'Behind the reactor level\'s east wall there is supposed to be a hollow panel. Director Crowe kept his private arsenal behind it.',
-    steps: [QS.flag('Find the hollow panel on the reactor\'s east wall', 'armoryOpen', () => ({ x: 7.7, y: 1.4, z: -23 })), QS.collect('Search the hidden armoury', ['memo'])],
+    steps: [QS.flag('Find the hollow panel on the reactor\'s east wall', 'armoryOpen', () => ({ x: 11.7, y: 1.4, z: -31 })), QS.collect('Search the hidden armoury', ['memo'])],
     done: s => s.points(1000) },
   sqStranger: { title: 'The Stranger', summary: 'Someone in a gas mask keeps watching you, and leaves things behind when he disappears.',
     steps: [{ text: s => `Learn who the Stranger is (clues ${['clue1', 'clue2', 'clue3', 'dossier'].filter(d => s.hasDoc(d)).length}/4)`, marker: null, check: s => s.hasDoc('clue1') && (s.hasDoc('dossier') || s.hasDoc('clue3')) },
       QS.talk('Confront the Stranger', 'stranger', 'strangerId')],
     done: s => { s.points(1000); s.trust('stranger', 1); } },
   sqJammer: { title: 'Static', giver: 'stranger', summary: 'The Stranger wants a jammer planted on Mason\'s radio. He says Crowe\'s people use it to decide when to sterilise the site.',
-    steps: [QS.flag('Plant the jammer on the comms room radio (without Mason seeing)', 'jammerDone', () => ({ x: 13.2, y: 1.2, z: 20.6 }))],
+    steps: [QS.flag('Plant the jammer on the comms room radio (without Mason seeing)', 'jammerDone', () => ({ x: 17.2, y: 1.2, z: 29.6 }))],
     done: s => { s.points(2000); s.trust('stranger', 2); s.trust('mason', -3); s.set('betrayedMason'); s.game.audio.radioStatic(0.6); } },
 };
 const QUEST_ORDER = ['mq1', 'mq2', 'mq3', 'mq4', 'mq5', 'sqTags', 'sqNotebook', 'sqSurvivor', 'sqTapes', 'sqPZ', 'sqStranger', 'sqJammer', 'sqArmory', 'sqGrid'];
@@ -6497,7 +6497,7 @@ function buildDialogue() {
     m_tags_back: { lines: [['mason', 'My tags. ...Thank you.'], ['mason', 'Here — my ammo cache. Every gun you\'re carrying, topped up. Don\'t argue.']], enter: s => s.set('tagsReturned') },
     m_mq4: { enter: s => s.offer('mq4'), lines: s => [
       ['mason', s.f.betrayedMason ? 'Lights are back. I don\'t like you, but I need you.' : 'Lights are back. That means the reactor bulkhead has power.'],
-      ['mason', 'Whatever Crowe was hiding down there is the reason we\'re trapped. I\'m coming with you. Open the bulkhead at the south end of the Main Corridor — I\'ll cover you.']],
+      ['mason', 'Whatever Crowe was hiding down there is the reason we\'re trapped. I\'m coming with you. Open the bulkhead at the south end of the Central Atrium — I\'ll cover you.']],
       choices: [{ text: 'Let\'s move.', do: s => { s.accept('mq4'); s.set('mq4Go'); } }, { text: 'Not yet.' }] },
     m_regroup: { lines: [['mason', 'I\'m patched up. Let\'s try that again — and this time, watch my back too.']], choices: [{ text: 'Let\'s go.', do: s => s.set('mq4Go') }, { text: 'Give me a minute.' }] },
     m_override: { enter: s => s.set('overrideAsked'), lines: s => s.f.betrayedMason
@@ -6518,7 +6518,7 @@ function buildDialogue() {
       choices: [{ text: 'I\'ll get the keycard.', do: s => { s.accept('mq2'); s.trust('elena', 1); }, next: 'e_meet_ok' }, { text: 'Why should I risk my neck for you?', next: 'e_meet_why' }] },
     e_meet_why: { lines: [['elena', 'Because the grid is failing, and I\'m the only one who knows how to bring it back. Without power, you die in the dark.']],
       choices: [{ text: 'Fine.', do: s => s.accept('mq2'), next: 'e_meet_ok' }, { text: 'Not now.', do: s => s.offer('mq2'), next: 'e_later' }] },
-    e_meet_ok: { lines: [['elena', 'Containment is the red room past the Main Corridor. Please hurry.']] },
+    e_meet_ok: { lines: [['elena', 'Containment is the red room off the Central Atrium. Please hurry.']] },
     e_later: { lines: [['elena', 'I\'ll... be here. Obviously.']] },
     e_mq2_again: { lines: [['elena', 'The keycard — Containment, the operating table. Will you get it?']], choices: [{ text: 'On my way.', do: s => s.accept('mq2') }, { text: 'Later.', do: s => s.offer('mq2') }] },
     e_waiting: { lines: [['elena', 'The operating table in Containment. The red room. Please.']] },
@@ -7087,7 +7087,7 @@ class Story {
     // Mason sometimes takes the reception door for a round
     const m = this.npcs.mason;
     if (this.f.commsOpen && !this.f.betrayedMason && m.mode === 'routine' && !m.downed && r >= 3 && Math.random() < 0.5) {
-      m.mode = 'guard'; m.roundGuard = true; m.guard = { x: 6.9, z: 21.0, yaw: -2.4 }; this.npcBark(m, 'guard', 60, false, 'I\'ll hold the reception door this round.');
+      m.mode = 'guard'; m.roundGuard = true; m.guard = { x: 10.9, z: 30, yaw: -2.4 }; this.npcBark(m, 'guard', 60, false, 'I\'ll hold the reception door this round.');
     } else this.anyBark('round' + this.bracket(), 30);
     if (r === 10) this.npcBark(m, 'r10', 9999, false, 'Something\'s wrong. They\'re getting stronger. I\'ve never seen anything like this.');
   }
@@ -7110,7 +7110,7 @@ class Story {
     const W = this.game.world; this.set('powerOn'); this.v.reactorStatus = Math.max(1, this.v.reactorStatus);
     W.powerOut = false; W.ambientK = 1; ROOMS.forEach(r => { if (r.id !== 'reactor') { W.roomPower[r.id] = 1; W.roomTint[r.id].amt = 0; } });
     this.points(1000); this.trust('elena', 1);
-    this.playCine([{ pos: [14.6, 2.3, 2.6], look: [12, 1.4, 6], pos2: [15.4, 2.1, 3.8], dur: 4.2, cap: 'POWER RESTORED', at: [[0.6, () => { this.game.audio.powerUp(); }]] }]);
+    this.playCine([{ pos: [26.6, 2.3, 2.6], look: [16, 1.4, 6], pos2: [27.4, 2.1, 3.8], dur: 4.2, cap: 'POWER RESTORED', at: [[0.6, () => { this.game.audio.powerUp(); }]] }]);
     const e = this.npcs.elena; this.later(6, () => { if (!e.downed && this.qs('mq5') !== 'active') e.setRoutine(this.f.evacuated ? 'elenaComms' : 'elenaLab'); });
     this.later(10, () => this.npcBark(this.npcs.mason, 'pr', 9999, false, 'Lights are back! Doctor, I could kiss you. Come and see me — we need to talk about that bulkhead.'));
   }
@@ -7159,7 +7159,7 @@ class Story {
   /** Comms room = designated safe area: zombies are held at the door for a limited time. */
   updateSafeRoom(dt) {
     const W = this.game.world, p = this.game.player.pos, b = W.safeBarrier;
-    const inside = this.f.commsOpen && p.x > 8.2 && p.x < 14 && p.z > 20 && p.z < 24;
+    const CR = ROOM_BY_ID.comms, inside = this.f.commsOpen && p.x > CR.x0 + 0.2 && p.x < CR.x1 && p.z > CR.z0 && p.z < CR.z1;
     if (inside && this.game.rounds.state === 'active') this.safeT += dt; else if (!inside) { this.outT += dt; if (this.outT > 8) this.safeT = 0; }
     if (inside) this.outT = 0;
     const was = b.enabled;
@@ -7169,9 +7169,10 @@ class Story {
   zoneSuffix(room) { if (room && room.id === 'comms' && this.f.commsOpen) return this.game.world.safeBarrier.enabled ? ' · SAFE' : ' · OVERRUN'; return ''; }
   isProtected(n) {
     const x = n.pos.x, z = n.pos.z, W = this.game.world;
-    if (x > 8.1 && x < 14 && z > 20 && z < 24) return !this.f.commsOpen || W.safeBarrier.enabled;
-    if (x > -9 && x < -6.4 && z > 0.15 && z < 2.3) return !this.f.boothOpen;
-    if (x > 4.5 && x < 9 && z < -13.2) return !this.f.gateOpen;
+    const CR = ROOM_BY_ID.comms;
+    if (x > CR.x0 + 0.1 && x < CR.x1 && z > CR.z0 && z < CR.z1) return !this.f.commsOpen || W.safeBarrier.enabled;
+    if (x > -13 && x < -10.4 && z > 0.15 && z < 2.3) return !this.f.boothOpen;   // (the rebuilt plan's coordinates)
+    if (x > 8.5 && x < 13 && z < -21.2) return !this.f.gateOpen;
     return false;
   }
   canFight(n) {
@@ -7211,9 +7212,9 @@ class Story {
     this.sendHome(n);
   }
   sendHome(n) {
-    if (n.id === 'mason') n.goto(12.3, 22.2, m => m.setRoutine('masonComms'), { run: true });
+    if (n.id === 'mason') n.goto(16.3, 31.2, m => m.setRoutine('masonComms'), { run: true });
     else if (n.id === 'elena') n.goto(this.f.evacuated ? 13.1 : -11, this.f.evacuated ? 21.3 : 10.75, e => e.setRoutine(this.f.evacuated ? 'elenaComms' : 'elenaLab'), { run: true });
-    else if (n.id === 'ortiz') n.goto(6.7, -14.2, o => o.hold('cower', 0), { run: true });
+    else if (n.id === 'ortiz') n.goto(10.7, -22.2, o => o.hold('cower', 0), { run: true });
   }
   updateRevive(dt) {
     const p = this.game.player.pos; let target = null;
@@ -7229,12 +7230,12 @@ class Story {
     const W = this.game.world; this.set('boothOpen'); W.booth.open = true; W.booth.col.enabled = false; W.booth.padMat.color.setHex(0x30ff60);
     this.game.nav.rebuild(); this.game.audio.door();
     const e = this.npcs.elena;
-    this.playCine([{ pos: [-7.7, 1.75, 5.6], look: [-7.7, 1.25, 1.2], pos2: [-8.4, 1.7, 4.8], dur: 5, cap: 'DR. ELENA VOSS',
-      at: [[0.8, () => e.goto(-7.7, 3.4, null, { yaw: 0 })], [3.6, () => this.say('elena', 'Free... I\'m free. Thank you.')]] }],
+    this.playCine([{ pos: [-11.7, 1.75, 5.6], look: [-11.7, 1.25, 1.2], pos2: [-12.4, 1.7, 4.8], dur: 5, cap: 'DR. ELENA VOSS',
+      at: [[0.8, () => e.goto(-11.7, 3.4, null, { yaw: 0 })], [3.6, () => this.say('elena', 'Free... I\'m free. Thank you.')]] }],
       () => {
         e.place(-7.7, 3.4, 0); this.set('radioElena');
         this.later(1.5, () => this.say('elena', 'Captain Mason? Can you hear me? I can open your door from the lab network.'));
-        e.goto(-9.6, 10.75, () => { e.hold('type', 0); this.later(4, () => this.openComms()); }, { yaw: 0 });
+        e.goto(-13.6, 16.75, () => { e.hold('type', 0); this.later(4, () => this.openComms()); }, { yaw: 0 });
         if (this.f.powerFailed && !this.f.powerOn) this.offer('mq3');
       });
   }
@@ -7248,30 +7249,30 @@ class Story {
   cutGate() {
     const W = this.game.world; this.set('gateOpen'); W.cageGate.open = true; W.cageGate.col.enabled = false; W.cageGate.lock.visible = false; this.game.nav.rebuild(); this.game.audio.clank();
     const o = this.npcs.ortiz;
-    this.playCine([{ pos: [6.6, 1.7, -10.8], look: [6.7, 1.0, -14.2], dur: 3.2, cap: 'SAM ORTIZ', at: [[0.4, () => o.hold('idle', Math.PI)], [1.2, () => this.say('ortiz', 'Oh thank God. Lead the way — I\'m right behind you.')]] }]);
+    this.playCine([{ pos: [10.6, 1.7, -10.8], look: [10.7, 1.0, -22.2], dur: 3.2, cap: 'SAM ORTIZ', at: [[0.4, () => o.hold('idle', Math.PI)], [1.2, () => this.say('ortiz', 'Oh thank God. Lead the way — I\'m right behind you.')]] }]);
   }
   ortizSaved() {
     this.set('ortizSaved'); this.points(750); this.addDoc('pz1');
     this.say('ortiz', 'Here — Hale\'s wristband. He was Subject One. Maybe it means something to someone.');
-    const o = this.npcs.ortiz; if (this.f.evacuated && this.f.commsOpen) o.goto(11.75, 21.05, n => n.setRoutine('ortizComms')); else o.setRoutine('ortizRecep');
+    const o = this.npcs.ortiz; if (this.f.evacuated && this.f.commsOpen) o.goto(15.75, 30.05, n => n.setRoutine('ortizComms')); else o.setRoutine('ortizRecep');
   }
   openBulkhead() {
     const W = this.game.world, d = this.door('D10'); W.openDoor(d); this.game.nav.rebuild(); this.game.targetsDirty = true; this.game.audio.bulkhead();
-    this.playCine([{ pos: [0, 1.7, -12.4], look: [0, 1.6, -20], pos2: [0, 1.8, -14.2], dur: 5.2, cap: 'REACTOR LEVEL', at: [[1.8, () => { this.game.world.coreSpin = 1.2; }], [3.5, () => this.say('mason', 'Is that thing... running?', true)]] }], () => { this.game.world.coreSpin = 0.3; });
+    this.playCine([{ pos: [0, 1.7, -20.4], look: [0, 1.6, -28], pos2: [0, 1.8, -22.2], dur: 5.2, cap: 'REACTOR LEVEL', at: [[1.8, () => { this.game.world.coreSpin = 1.2; }], [3.5, () => this.say('mason', 'Is that thing... running?', true)]] }], () => { this.game.world.coreSpin = 0.3; });
   }
   reactorOnline() {
     this.v.reactorStatus = 2; this.set('reactorReached');
-    const m = this.npcs.mason; m.mode = 'guard'; m.guard = { x: -1.6, z: -17.6, yaw: Math.PI };
-    this.playCine([{ pos: [-3.2, 2.6, -17.6], look: [0, 2.2, -22.5], pos2: [-2.4, 2.2, -18.6], dur: 5, cap: 'THE CORE',
+    const m = this.npcs.mason; m.mode = 'guard'; m.guard = { x: -1.6, z: -25.6, yaw: Math.PI };
+    this.playCine([{ pos: [-7.2, 2.6, -25.6], look: [0, 2.2, -30.5], pos2: [-2.4, 2.2, -26.6], dur: 5, cap: 'THE CORE',
       at: [[0.5, () => { this.game.world.coreSpin = 2; this.game.audio.coreHum(); }], [1.5, () => this.say('elena', 'Wait... that\'s impossible. The readings are increasing. We haven\'t activated anything. Something is responding to us.', true)]] }],
       () => { this.game.world.coreSpin = 0.6; this.broadcast('bCore'); this.lockdown(STORY_PACING.lockdownTime, ['D6', 'D7', 'D4', 'D5']); this.npcBark(m, 'lock', 0, true, 'Lockdown! Hold this level until it cycles!'); });
   }
   reactorReached() {
     this.points(1000); this.trust('mason', 1); this.set('evacuated');
-    const m = this.npcs.mason; m.goto(12.3, 22.2, n => n.setRoutine('masonComms'));
+    const m = this.npcs.mason; m.goto(16.3, 31.2, n => n.setRoutine('masonComms'));
     this.toast('NPC EVACUATION — SURVIVORS MOVING TO THE COMMS ROOM');
-    const e = this.npcs.elena; if (!e.downed && e.mode !== 'follow') e.goto(13.1, 21.3, n => n.setRoutine('elenaComms'));
-    const o = this.npcs.ortiz; if (this.f.ortizSaved && !o.downed) o.goto(11.75, 21.05, n => n.setRoutine('ortizComms'));
+    const e = this.npcs.elena; if (!e.downed && e.mode !== 'follow') e.goto(17.1, 30.3, n => n.setRoutine('elenaComms'));
+    const o = this.npcs.ortiz; if (this.f.ortizSaved && !o.downed) o.goto(15.75, 30.05, n => n.setRoutine('ortizComms'));
     this.set('strangerHaunt');
   }
   throwBreaker(br) {
@@ -7286,7 +7287,7 @@ class Story {
   openArmory() {
     const W = this.game.world, d = this.door('D12'); W.openDoor(d); this.game.nav.rebuild(); this.game.targetsDirty = true; this.set('armoryOpen');
     this.persist.armory = true; saveStoryPersist(this.persist); this.game.audio.bulkhead();
-    this.playCine([{ pos: [5.2, 1.7, -23], look: [9.6, 1.4, -23], dur: 3.8, cap: 'HIDDEN ARMOURY' }]);
+    this.playCine([{ pos: [9.2, 1.7, -31], look: [13.6, 1.4, -31], dur: 3.8, cap: 'HIDDEN ARMOURY' }]);
   }
 
   /* ================= The Stranger ================= */
@@ -7329,25 +7330,25 @@ class Story {
     if (k === 'A') {
       this.v.reactorStatus = -1;
       q.steps = [QS.timer('Survive the reactor surge', 60, { onStart: s => { s.surgeT = 60; s.surge(14 + s.game.rounds.round, 'SHUTDOWN SURGE'); } }),
-        { text: 'Escape in the freight elevator', marker: () => ({ x: 4.75, y: 1.6, z: -27.4 }), check: () => false }];
-      this.playCine([{ pos: [-3, 2.4, -17.8], look: [0, 2.4, -22.5], dur: 4.5, cap: 'SHUTDOWN SEQUENCE',
+        { text: 'Escape in the freight elevator', marker: () => ({ x: 8.75, y: 1.6, z: -35.4 }), check: () => false }];
+      this.playCine([{ pos: [-7, 2.4, -25.8], look: [0, 2.4, -30.5], dur: 4.5, cap: 'SHUTDOWN SEQUENCE',
         at: [[0.5, () => { W.coreMat.color.setHex(0xff4020); W.coreLight.color.setHex(0xff4020); W.coreSpin = 3; this.game.audio.alarm(); }], [2.5, () => { ROOMS.forEach(r => { W.roomTint[r.id].color.setHex(0xff2010); W.roomTint[r.id].amt = 0.45; }); }]] }]);
       this.npcBark(this.npcs.mason, 'shut', 0, true, 'Shutdown\'s started! Hold out until the elevator unlocks!');
     } else if (k === 'B') {
       this.v.reactorStatus = 3; this.set('activated');
       q.steps = [{ text: 'Destroy ECLIPSE', marker: s => s.boss && s.boss.active ? { x: s.boss.pos.x, y: 3.6, z: s.boss.pos.z } : null, check: s => s.f.bossDead }];
       this.playCine([
-        { pos: [0, 3.2, -16.8], look: [0, 2.6, -22.5], pos2: [-1.2, 2.6, -17.4], dur: 4, cap: 'PROJECT ECLIPSE',
+        { pos: [0, 3.2, -24.8], look: [0, 2.6, -30.5], pos2: [-1.2, 2.6, -25.4], dur: 4, cap: 'PROJECT ECLIPSE',
           at: [[0.4, () => { W.coreMat.color.setHex(0xb050ff); W.coreLight.color.setHex(0xb050ff); W.coreLight.base = 2.6; W.coreSpin = 4; this.game.audio.coreHum(); this.game.audio.milestone(); }],
             [2.0, () => { ROOMS.forEach(r => { W.roomTint[r.id].color.setHex(0x9a40ff); W.roomTint[r.id].amt = 0.55; }); if (W.ambient) W.ambient.color.setHex(0x3a2a58); this.game.scene.fog.color.setHex(0x120a1c); this.game.scene.background.setHex(0x120a1c); }]] },
-        { pos: [2.2, 1.8, -23.6], look: [4.75, 1.8, -28.5], dur: 4.5, cap: '',
+        { pos: [2.2, 1.8, -31.6], look: [8.75, 1.8, -36.5], dur: 4.5, cap: '',
           at: [[0.3, () => { W.elevator.target = 1; this.game.audio.elevator(); }], [1.6, () => this.spawnBoss()], [2.6, () => this.say('elena', 'Oh God. That\'s what it was for. That\'s what it was ALWAYS for.', true)]] }],
         () => { if (!this.boss) this.spawnBoss(); });
     } else {
       q.resetTo = 0; q.resetFlag = 'uploadGo'; q.resetText = 'Dr. Voss fell back — talk to her to try the upload again';
       q.steps = [QS.talk('Bring Dr. Voss to the console — talk to her', 'elena', 'uploadGo'),
-        QS.escort('Escort Dr. Voss to the reactor console', 'elena', SPOTS.reactorConsole.x, SPOTS.reactorConsole.z, 1.8),
-        QS.defend('Defend the upload', 'elena', 45, { x: -0.6, z: -17.9 }, Math.PI)];
+        QS.escort('Escort Dr. Voss to the reactor console', 'elena', 0, -25.9, 1.8),
+        QS.defend('Defend the upload', 'elena', 45, { x: -0.6, z: -25.9 }, Math.PI)];
       if (this.f.adrianHelps) { const st = this.npcs.stranger; st.place(1.8, -20.4, -2.6); st.hold('lean'); }
       this.toast('BROADCAST PREPARED — DR. VOSS MUST RUN THE UPLINK');
       this.npcBark(this.npcs.elena, 'truth', 0, true, 'You want to broadcast everything? Come and get me — I\'ll run the uplink.');
@@ -7376,9 +7377,9 @@ class Story {
     if (this.ended) return;
     this.ended = k; this.q.mq5.state = 'done';
     this.persist.endings[k] = true; saveStoryPersist(this.persist);
-    const shots = k === 'A' ? [{ pos: [4.75, 1.6, -29.6], look: [4.75, 1.5, -22], dur: 3.5, cap: 'GOING UP', at: [[0.4, () => { this.game.world.elevator.target = 0; this.game.audio.elevator(); }]] }]
-      : k === 'C' ? [{ pos: [-2.6, 2.2, -17], look: [0, 2.4, -22.5], dur: 4.5, cap: 'UPLOAD COMPLETE', at: [[0.4, () => { const W = this.game.world; W.coreMat.color.setHex(0xe0f0ff); W.coreSpin = 0; this.game.audio.broadcast(); }], [2.4, () => { const W = this.game.world; W.coreMat.color.setHex(0x101010); W.coreLight.base = 0.2; }]] }]
-      : [{ pos: [0, 4, -17], look: [0, 3, -22.5], dur: 3, cap: '' }];
+    const shots = k === 'A' ? [{ pos: [8.75, 1.6, -37.6], look: [8.75, 1.5, -30], dur: 3.5, cap: 'GOING UP', at: [[0.4, () => { this.game.world.elevator.target = 0; this.game.audio.elevator(); }]] }]
+      : k === 'C' ? [{ pos: [-6.6, 2.2, -25], look: [0, 2.4, -30.5], dur: 4.5, cap: 'UPLOAD COMPLETE', at: [[0.4, () => { const W = this.game.world; W.coreMat.color.setHex(0xe0f0ff); W.coreSpin = 0; this.game.audio.broadcast(); }], [2.4, () => { const W = this.game.world; W.coreMat.color.setHex(0x101010); W.coreLight.base = 0.2; }]] }]
+      : [{ pos: [0, 4, -25], look: [0, 3, -30.5], dur: 3, cap: '' }];
     this.playCine(shots, () => this.ui.showEnding(k));
   }
   continueAfterEnding() {
@@ -7458,22 +7459,22 @@ class Story {
     // Opening: Mason calls out over the PA, then bangs on the glass when you come close
     if (this.introT > 0) { this.introT -= dt; if (this.introT <= 0) this.say('mason', 'If anyone can hear this — I\'m in the comms room off Reception. East wall. Behind the glass.', true); }
     const m = this.npcs.mason;
-    if (!this.f.metMason && !this.f.masonKnock && this.near(8, 23.1, 7)) {
-      this.set('masonKnock'); m.goto(9.0, 23.1, n => n.hold('knock', -Math.PI / 2), { run: true, yaw: -Math.PI / 2 });
+    if (!this.f.metMason && !this.f.masonKnock && this.near(12, 35.1, 7)) {
+      this.set('masonKnock'); m.goto(13, 35.1, n => n.hold('knock', -Math.PI / 2), { run: true, yaw: -Math.PI / 2 });
       this.game.audio.glassKnock(); this.say('mason', 'Hey! Over here! Behind the glass!');
-      this.playCine([{ pos: [5.6, 1.7, 21.8], look: [9.2, 1.55, 23.1], dur: 3.2, cap: 'CAPTAIN MASON' }]);
+      this.playCine([{ pos: [7.6, 1.7, 33.2], look: [12, 1.55, 35.1], dur: 3.2, cap: 'CAPTAIN MASON' }]);
     }
     if (this.f.masonKnock && !this.f.metMason && m.mode === 'still' && m.holdAnim === 'knock' && Math.random() < dt * 0.6) this.game.audio.glassKnock();
-    if (this.qs('mq1') === 'offered' && !this.f.commsOpen && m.mode === 'routine' && this.near(8, 23.1, 4.5)) { m.goto(9.0, 23.1, n => { n.hold('wave', -Math.PI / 2); this.later(3, () => { if (n.mode === 'still') n.setRoutine('masonComms'); }); }, { yaw: -Math.PI / 2 }); }
+    if (this.qs('mq1') === 'offered' && !this.f.commsOpen && m.mode === 'routine' && this.near(12, 35.1, 4.5)) { m.goto(13, 35.1, n => { n.hold('wave', -Math.PI / 2); this.later(3, () => { if (n.mode === 'still') n.setRoutine('masonComms'); }); }, { yaw: -Math.PI / 2 }); }
     // Elena comes to the glass when you approach the booth
     const e = this.npcs.elena;
     if (!this.f.boothOpen && e.mode === 'still') {
-      const close = this.near(-7.7, 3.2, 6);
-      if (close && e.holdAnim === 'type') { e.goto(-7.7, 1.95, n => n.hold(this.f.metElena ? 'idle' : 'wave', 0), { yaw: 0 }); if (!this.f.metElena) this.say('elena', 'Hello? HELLO! In here — please!'); }
+      const close = this.near(-11.7, 3.2, 6);
+      if (close && e.holdAnim === 'type') { e.goto(-11.7, 1.95, n => n.hold(this.f.metElena ? 'idle' : 'wave', 0), { yaw: 0 }); if (!this.f.metElena) this.say('elena', 'Hello? HELLO! In here — please!'); }
     }
     // Ortiz calls out when you come into Containment
-    if (!this.f.ortizCalled && !this.f.gateOpen && this.near(6.7, -12, 9) && W.openZones.has('contain')) {
-      this.set('ortizCalled'); const o = this.npcs.ortiz; o.goto(6.6, -13.7, n => n.hold('wave', 0), { run: true, yaw: 0 });
+    if (!this.f.ortizCalled && !this.f.gateOpen && this.near(10.7, -20, 9) && W.openZones.has('contain')) {
+      this.set('ortizCalled'); const o = this.npcs.ortiz; o.goto(10.6, -21.7, n => n.hold('wave', 0), { run: true, yaw: 0 });
       this.say('ortiz', 'Hey! HEY! In the cage!');
     }
     // Low health
@@ -8245,7 +8246,7 @@ class Game {
     $('menuBest').innerHTML = (best.round ? `BEST RUN · ROUND ${best.round} · ${best.score.toLocaleString()} POINTS<br>` : '') + (MAP_ID === 'facility' && Object.keys(sp.endings).length ? `ENDINGS · ${ends.join(' · ')}` : '');
     this.resetWorld();
     // A few idle zombies for the menu backdrop
-    const spots = IS_FORT ? [[-30, 12, 3.0], [-24, 15, 2.6], [-14, 10, -2.8], [-6, 16, 3.1], [2, 12, 2.9]] : IS_RANGE ? [[-3, -9, 0.2], [2.5, -13, -0.3], [0, -6, 0]] : IS_WEST ? [[-3, 38, 0.3], [2.5, 33, -0.4], [-1, 24, 2.8], [4, 44, 0], [-2, -8, 0.5]] : IS_PARK ? [[-4, 16, 0.3], [3.5, 17.2, -0.4], [12, 6.5, 2.2], [-17, 17, 0.8]] : [[-2.6, 14.2, 0.3], [1.8, 13.4, -0.2], [4.6, 14.6, -0.6]];
+    const spots = IS_FORT ? [[-30, 12, 3.0], [-24, 15, 2.6], [-14, 10, -2.8], [-6, 16, 3.1], [2, 12, 2.9]] : IS_RANGE ? [[-3, -9, 0.2], [2.5, -13, -0.3], [0, -6, 0]] : IS_WEST ? [[-3, 38, 0.3], [2.5, 33, -0.4], [-1, 24, 2.8], [4, 44, 0], [-2, -8, 0.5]] : IS_PARK ? [[-4, 16, 0.3], [3.5, 17.2, -0.4], [12, 6.5, 2.2], [-17, 17, 0.8]] : [[-2.6, 27.2, 0.3], [1.8, 26.0, -0.2], [4.6, 28.4, -0.6], [-0.4, 22.6, 0.1]];   // (the Reception of the rebuilt Facility)
     spots.forEach(([x, z, yaw]) => { const zb = this.zombies.find(q => !q.active); zb.spawn(null, { health: 100, speed: 0, windup: 0.5, cooldown: 1, damage: 0 }); zb.pos.set(x, 0, z); zb.root.rotation.y = yaw; this.activeZombies.push(zb); });
     this.menuT = 0;
     if (IS_PARK) this.world.park.showcase = true;
@@ -8537,7 +8538,7 @@ class Game {
     else if (IS_FORT) this.fortMenuCamera(t);
     else if (IS_RANGE) this.rangeMenuCamera(t);
     else {
-      this.camera.position.set(Math.sin(t * 0.12) * 1.5, 1.75, 22.6);
+      this.camera.position.set(Math.sin(t * 0.12) * 1.5, 1.75, 34.4);
       this.camera.rotation.set(-0.06 + Math.sin(t * 0.2) * 0.03, Math.sin(t * 0.09) * 0.35, 0, 'YXZ');
     }
     if (this.camera.fov !== 70) { this.camera.fov = 70; this.camera.updateProjectionMatrix(); }
@@ -12200,7 +12201,7 @@ Object.assign(Game.prototype, {
     if (IS_FORT) return menu ? 0.0055 : q === 'low' ? 0.02 : q === 'medium' ? 0.0135 : 0.0105;
     if (IS_WEST) return menu ? 0.0062 : q === 'low' ? 0.022 : q === 'medium' ? 0.0155 : 0.013;
     if (IS_PARK) return menu ? 0.0095 : q === 'low' ? 0.03 : q === 'medium' ? 0.021 : 0.018;
-    return q === 'low' ? 0.06 : q === 'medium' ? 0.045 : 0.038;
+    return q === 'low' ? 0.046 : q === 'medium' ? 0.034 : 0.029;   // (the rebuilt Facility is half as big again)
   },
 });
 
@@ -17232,17 +17233,20 @@ function buildSceneryDetail(game) {
   const floorY = (x, z) => { try { const y = W.surfaceY ? W.surfaceY(x, z, 0.3) : 0; return y > 0.4 ? null : Math.max(0, y || 0); } catch (e) { return 0; } };
   const area = cells.length * nav.cs * nav.cs, dens = low ? 0.35 : 1;
   decal(sceneryGrimeTexture('blood'), Math.round(clamp(area / 22, 12, 70) * dens), o => { const s = spot(); if (!s) return false; const y = floorY(s[0], s[1]); if (y == null) return false; const k = rand(0.5, 1.6); o.position.set(s[0], y + 0.006, s[1]); o.rotation.set(-Math.PI / 2, 0, rand(0, 6.28)); o.scale.set(k, k * rand(0.7, 1.2), 1); return true; });
-  const clutter = (geo, mat, n, sz, yOff, rotAll) => {
+  // (every piece lies ON the floor: y is its own half-height at that scale, not a fraction of a metre)
+  const clutter = (geo, mat, n, sz, half, lie) => {
     if (!n) return; const im = new THREE.InstancedMesh(geo, mat, n), o = new THREE.Object3D(); let k = 0;
     for (let i = 0; i < n * 2 && k < n; i++) { const s = spot(); if (!s) continue; const y = floorY(s[0], s[1]); if (y == null) continue; const sc = rand(sz[0], sz[1]);
-      o.position.set(s[0], y + yOff * sc, s[1]); o.rotation.set(rotAll ? rand(0, 6.28) : rand(-0.12, 0.12), rand(0, 6.28), rotAll ? rand(0, 6.28) : rand(-0.12, 0.12)); o.scale.setScalar(sc); o.updateMatrix(); im.setMatrixAt(k++, o.matrix); }
+      o.position.set(s[0], y + half * sc + 0.002, s[1]);
+      if (lie === 'side') o.rotation.set(Math.PI / 2, rand(0, 6.28), 0, 'YXZ'); else if (lie === 'tumble') o.rotation.set(rand(0, 6.28), rand(0, 6.28), rand(0, 6.28)); else o.rotation.set(rand(-0.04, 0.04), rand(0, 6.28), rand(-0.04, 0.04));
+      o.scale.setScalar(sc); o.updateMatrix(); im.setMatrixAt(k++, o.matrix); }
     im.count = k; im.instanceMatrix.needsUpdate = true; root.add(im);
   };
   const N = c => Math.round(clamp(area * c, 20, 900) * dens);
-  clutter(new THREE.DodecahedronGeometry(0.06, 0), new THREE.MeshLambertMaterial({ color: indoor ? 0x7a7670 : 0x8a7a62, map: TEX.concrete }), N(0.35), [0.3, 1.3], 0.35, true);              // rubble
-  clutter(new THREE.BoxGeometry(0.21, 0.002, 0.29), new THREE.MeshLambertMaterial({ color: 0xd8d2c0, side: THREE.DoubleSide }), N(0.06), [0.7, 1.2], 0.6, false);                              // papers
-  clutter(new THREE.CylinderGeometry(0.012, 0.016, 0.24, 6), new THREE.MeshLambertMaterial({ color: 0xd6cdb0 }), N(0.025), [0.6, 1.2], 0.02, false);                                          // bones
-  clutter(new THREE.CylinderGeometry(0.0045, 0.0045, 0.022, 6), new THREE.MeshPhongMaterial({ color: 0xc9a24a, shininess: 90, specular: 0x886622 }), N(0.12), [0.9, 1.2], 0.2, true);       // spent casings
+  clutter(new THREE.DodecahedronGeometry(0.06, 0), new THREE.MeshLambertMaterial({ color: indoor ? 0x7a7670 : 0x8a7a62, map: TEX.concrete }), N(0.35), [0.3, 1.3], 0.045, 'tumble');            // rubble
+  clutter(new THREE.BoxGeometry(0.21, 0.002, 0.29), new THREE.MeshLambertMaterial({ color: 0xd8d2c0, side: THREE.DoubleSide }), N(0.06), [0.7, 1.2], 0.001, 'flat');                              // papers
+  clutter(new THREE.CylinderGeometry(0.012, 0.016, 0.24, 6), new THREE.MeshLambertMaterial({ color: 0xd6cdb0 }), N(0.025), [0.6, 1.2], 0.016, 'side');                                          // bones
+  clutter(new THREE.CylinderGeometry(0.0045, 0.0045, 0.022, 6), new THREE.MeshPhongMaterial({ color: 0xc9a24a, shininess: 90, specular: 0x886622 }), N(0.12), [0.9, 1.2], 0.0045, 'side');      // spent casings
   // nothing here is a bullet target or a collider
   root.traverse(o => { if (o.isMesh) { o.raycast = () => {}; o.matrixAutoUpdate = false; o.updateMatrix(); } });
 }
@@ -17747,7 +17751,7 @@ function buildFacilityLiftPanel(g) {
     if (this.state === 'beachIn' && this.beachSeq) {
       const now = beachNow(), dt = Math.min(0.05, (now - (this._bT || now)) / 1000); this._bT = now; const Q = this.beachSeq; Q.t += dt;
       const W = this.world; if (IS_RANGE) { const F = this.rangeLift; F.open = damp(F.open, F.target, 2.6, dt); F.L.position.x = -0.5 - F.open * 0.95; F.R.position.x = 0.5 + F.open * 0.95; }
-      else { const e = W.elevator; e.open = damp(e.open, e.target, 2.2, dt); e.left.position.x = 4.175 - e.open * 1.05; e.right.position.x = 5.325 + e.open * 1.05; }
+      else { const e = W.elevator; e.open = damp(e.open, e.target, 2.2, dt); e.left.position.x = (e.lx != null ? e.lx : 4.175) - e.open * 1.05; e.right.position.x = (e.rx != null ? e.rx : 5.325) + e.open * 1.05; }
       // step into the car, turn round, the doors close, fade
       const k = clamp((Q.t - 1.0) / 1.5, 0, 1), e2 = k * k * (3 - 2 * k), c = this.camera;
       const px = Q.from.x + (Q.to.x - Q.from.x) * e2, pz = Q.from.z + (Q.to.z - Q.from.z) * e2;
@@ -19777,13 +19781,13 @@ if (IS_FAC) {
       done: s => { s.points(1250); s.set('infirmary'); s.toast('OKAFOR\'S INFIRMARY — FULL TREATMENT ONCE A ROUND (MEDICAL WING)'); } },
     fqSec: { title: 'Security Breach', giver: 'reyes', summary: 'The access-control relays are fried. Officer Reyes can\'t open a single door from her desk until they\'re repaired — one upstairs, one downstairs, one in Maintenance.',
       steps: [{ text: s => s.fac.repair ? `Repairing relay — stay close (${Math.round(s.fac.repair.k * 100)}%)` : `Repair the access relays (${['relay1', 'relay2', 'relay3'].filter(k => s.f[k]).length}/3)`, progress: s => s.fac.repair ? s.fac.repair.k : null,
-          marker: s => s.nearestOf([['relay1', { x: -0.8, y: U + 1.4, z: 23.5 }], ['relay2', { x: 10.0, y: 1.4, z: 11.5 }], ['relay3', { x: SP.fuse.x, y: U + 1.4, z: SP.fuse.z }]].filter(r => !s.f[r[0]]).map(r => r[1])), check: s => s.f.relay1 && s.f.relay2 && s.f.relay3 },
+          marker: s => s.nearestOf([['relay1', { x: -0.8, y: U + 1.4, z: 35.5 }], ['relay2', { x: 14, y: 1.4, z: 17.5 }], ['relay3', { x: SP.fuse.x, y: U + 1.4, z: SP.fuse.z }]].filter(r => !s.f[r[0]]).map(r => r[1])), check: s => s.f.relay1 && s.f.relay2 && s.f.relay3 },
         QS.flag('Reboot access control at the Security terminal', 'fqSecBoot', up(SP.access)), QS.talk('Report to Officer Reyes', 'reyes', 'fqSecBack')],
       done: s => { s.points(1500); s.set('cctvOn'); s.set('lockerOpen'); s.facOpenDoor('UD13'); s.toast('ACCESS CONTROL ONLINE — CCTV, THE WEAPONS LOCKER AND THE MAINTENANCE ROUTE INTO ADVANCED RESEARCH'); } },
     fqMaint: { title: 'Maintenance Required', giver: 'kowalski', summary: 'Gus Kowalski can fix anything in this building — if somebody brings him his tools and three good fuses. Then the lift, the panel and the vending machines.',
       steps: [QS.collect('Find Gus\'s toolbox (B1 Storage) and three fuses (Generator Room, Cafeteria kitchen, Testing Lab)', ['toolbox', 'fuse1', 'fuse2', 'fuse3']),
         QS.flag('Rewire the fuse panel in the Maintenance Bay', 'fqMaintFuse', up(SP.fuse)),
-        QS.flag('Fix the freight-lift motor (Maintenance Bay lift cage)', 'fqMaintLift', mk(9.5, U + 1.4, -18.3)),
+        QS.flag('Fix the freight-lift motor (Maintenance Bay lift cage)', 'fqMaintLift', mk(13.5, U + 1.4, -26.3)),
         QS.flag('Kick the Cafeteria vending machines back to life', 'fqMaintVend', up(SP.vending)), QS.talk('Tell Gus', 'kowalski', 'fqMaintBack')],
       done: s => { s.points(1250); s.set('liftFixed'); s.set('vendOn'); s.toast('FREIGHT LIFT REPAIRED · VENDING MACHINES ONLINE'); } },
     fqMissing: { title: 'Missing Person', giver: 'noor', summary: 'Dr. Priya Anand went to see the Director last night and never came back. Noor Haddad wants to know where she is.',
@@ -19794,7 +19798,7 @@ if (IS_FAC) {
       done: s => { s.points(1500); s.items.anandCard = true; s.toast('DR. ANAND\'S CLEARANCE — ADVANCED RESEARCH CAN BE OPENED FROM THE CONCOURSE'); } },
     fqClass: { title: 'Classified Material', giver: 'vance', summary: 'Deputy Director Vance wants four classified files recovered "before anyone else reads them". Reyes would very much like to read them.',
       steps: [{ text: s => `Recover the classified files (${['fClass1', 'fClass2', 'fClass3', 'fClass4'].filter(d => s.hasDoc(d)).length}/4)`,
-          marker: s => s.nearestOf([['fClass1', { x: SP.filing.x, y: U + 1.4, z: SP.filing.z }], ['fClass2', { x: SP.cctv.x, y: U + 1.4, z: SP.cctv.z - 1.6 }], ['fClass3', { x: SP.dirSafe.x, y: U + 1.2, z: SP.dirSafe.z }], ['fClass4', { x: -14.2, y: 1.2, z: -2.0 }]].filter(r => !s.hasDoc(r[0])).map(r => r[1])),
+          marker: s => s.nearestOf([['fClass1', { x: SP.filing.x, y: U + 1.4, z: SP.filing.z }], ['fClass2', { x: SP.cctv.x, y: U + 1.4, z: SP.cctv.z - 1.6 }], ['fClass3', { x: SP.dirSafe.x, y: U + 1.2, z: SP.dirSafe.z }], ['fClass4', { x: -22.2, y: 1.2, z: -2 }]].filter(r => !s.hasDoc(r[0])).map(r => r[1])),
           check: s => ['fClass1', 'fClass2', 'fClass3', 'fClass4'].every(d => s.hasDoc(d)) },
         { text: 'Hand the files to Vance — or to Reyes', marker: s => s.npcPos('vance'), check: s => !!s.f.fqClassGiven }],
       done: s => s.f.fqClassReyes ? (s.points(1500), s.toast('REYES IS COPYING EVERY PAGE')) : (s.points(2500), s.toast('VANCE PAYS WELL')) },
@@ -19805,7 +19809,7 @@ if (IS_FAC) {
       steps: [QS.collect('Find the staff ID cards', ['id1', 'id2', 'id3', 'id4', 'id5', 'id6'], { marker: null }), QS.talk('Hand the cards to Ruth', 'ruth', 'fqIdsBack')],
       done: s => { s.points(2000); s.addBuff('adrenal'); } },
     fqFinal: { title: 'The Final Experiment', main: false, giver: 'lang', summary: 'With Anand\'s clearance, Lang can finish what Crowe started — align the Prism in Advanced Research. He swears it will "close the door, not open it".',
-      steps: [QS.flag('Open Advanced Research with Dr. Anand\'s card (south end of the Concourse)', 'advOpen', mk(0, U + 1.6, -15.6)),
+      steps: [QS.flag('Open Advanced Research with Dr. Anand\'s card (the rear gallery, top of the grand stair)', 'advOpen', mk(0, U + 1.6, -23.6)),
         QS.collect('Recover the three resonance regulators (Testing Lab, Generator Room, Advanced Research)', ['regA', 'regB', 'regC']),
         QS.flag('Seat the regulators and wake the Prism', 'prismOn', up(SP.prism)),
         { text: s => s.fac.event ? `Resonance cascade — hold Advanced Research (${Math.ceil(s.fac.event.t)}s)` : 'Hold out', progress: s => s.fac.event ? 1 - s.fac.event.t / 60 : null, marker: null, check: s => s.f.cascadeHeld && !s.fac.event },
@@ -19965,16 +19969,16 @@ if (IS_FAC) {
 if (IS_FAC) {
   const U = FAC_U, SP = FAC_SPOTS, S = Story.prototype;
   const EVENT_SPOTS = {
-    test: [[6, -12], [9, -10.5], [14, -12.5], [17, -10], [12, -8], [5, -9]],
-    adv:  [[-5, -18.5], [5, -18.5], [-5, -26], [4, -25.5], [-3, -21], [3, -24]],
-    cafe: [[-14.5, 4.8], [-8.5, 4.8], [-12.5, 1.5]],
-    lobby: [[-4, 16.5], [4, 16.5], [0, 23]],
+    test: [[10, -20], [13, -10.5], [26, -20.5], [29, -10], [16, -8], [9, -9]],
+    adv:  [[-9, -26.5], [9, -26.5], [-9, -34], [8, -33.5], [-3, -29], [3, -32]],
+    cafe: [[-22.5, 4.8], [-12.5, 4.8], [-16.5, 1.5]],
+    lobby: [[-8, 25.5], [8, 25.5], [0, 35]],
   };
   const CAMS = [
-    { name: 'RECEPTION', p: [7.4, 3.6, 23.4], t: [-1, 0.5, 15] }, { name: 'MAIN CORRIDOR', p: [2.4, 4.0, 11.4], t: [0, 0.5, -10] },
-    { name: 'GENERATOR ROOM', p: [19.4, 4.4, 11.4], t: [8, 0.5, 3] }, { name: 'CONTAINMENT', p: [19.4, 3.6, -15.4], t: [9, 0.5, -5] },
-    { name: 'L2 TESTING LAB', p: [19.4, U + 3.0, -0.6], t: [9, U + 0.5, -11] }, { name: 'L2 CAFETERIA', p: [-19.4, U + 3.0, 0.6], t: [-9, U + 0.5, 9] },
-    { name: 'L2 ATRIUM', p: [7.4, U + 3.0, 12.6], t: [-3, U + 0.5, 21] },
+    { name: 'RECEPTION', p: [11.4, 3.6, 35.4], t: [-1, 0.5, 24] }, { name: 'CENTRAL ATRIUM', p: [2.4, 4.0, 17.4], t: [0, 0.5, -10] },
+    { name: 'GENERATOR ROOM', p: [31.4, 4.4, 17.4], t: [12, 0.5, 3] }, { name: 'CONTAINMENT', p: [31.4, 3.6, -23.4], t: [13, 0.5, -5] },
+    { name: 'L2 TESTING LAB', p: [31.4, U + 3.0, -0.6], t: [13, U + 0.5, -11] }, { name: 'L2 CAFETERIA', p: [-31.4, U + 3.0, 0.6], t: [-13, U + 0.5, 15] },
+    { name: 'L2 ATRIUM', p: [11.4, U + 3.0, 18.6], t: [-7, U + 0.5, 30] },
   ];
   const LUNCH_STEPS = ['pour in the stock', 'add the tomatoes', 'stir in the flour', 'throw in the herbs', 'let it simmer'];
   Object.assign(S, {
@@ -20014,8 +20018,8 @@ if (IS_FAC) {
       if (q('fqLab') === 'active' && !f.fqLabRead) add(true, SP.testConsole, 1.8, `Press ${E} to read <b>Chamber B</b>'s harmonic`, () => { s.set('fqLabRead'); s.addDoc('fChamber'); g.audio.terminal && g.audio.terminal(); });
       else if (q('fqLab') === 'active' && f.fqLabFixed && !f.fqLabRan) add(true, SP.testConsole, 1.8, f.fqLabSafe || f.fqLabOver ? `Press ${E} to run the test — <b>${f.fqLabOver ? 'OVERCLOCKED' : 'SAFE POWER'}</b>` : 'Observation console <span class="sub">Talk to Dr. Lang first</span>', f.fqLabSafe || f.fqLabOver ? () => s.facRunLab() : null);
       else add(true, SP.testConsole, 1.6, 'Observation console <span class="sub">Chamber A: ' + (s.facUsed('expA') ? 'recharging' : 'ready') + ' · Chamber B: ' + (f.fqLabFixed ? 'stable' : 'UNSTABLE') + '</span>', null);
-      if (q('fqLab') === 'active' && f.fqLabRead && !f.fqLabFixed) add(true, { x: 15, z: -4.9 }, 1.6, it.coil && it.dewar ? `Press ${E} to fit the coil and coolant to <b>Chamber B</b>` : 'Chamber B — needs a focusing coil and a coolant dewar', it.coil && it.dewar ? () => { s.set('fqLabFixed'); g.audio.terminal && g.audio.terminal(); s.toast('CHAMBER B STABILISED'); } : null);
-      add(true, { x: 7, z: -4.9 }, 1.5, s.facUsed('expA') ? 'Chamber A <span class="sub">Recharging — try again next round</span>' : `Press ${E} to run an experiment in <b>Chamber A</b> <span class="sub">Results not guaranteed</span>`, s.facUsed('expA') ? null : () => s.facExperiment());
+      if (q('fqLab') === 'active' && f.fqLabRead && !f.fqLabFixed) add(true, { x: 27, z: -4.9 }, 1.6, it.coil && it.dewar ? `Press ${E} to fit the coil and coolant to <b>Chamber B</b>` : 'Chamber B — needs a focusing coil and a coolant dewar', it.coil && it.dewar ? () => { s.set('fqLabFixed'); g.audio.terminal && g.audio.terminal(); s.toast('CHAMBER B STABILISED'); } : null);
+      add(true, { x: 11, z: -4.9 }, 1.5, s.facUsed('expA') ? 'Chamber A <span class="sub">Recharging — try again next round</span>' : `Press ${E} to run an experiment in <b>Chamber A</b> <span class="sub">Results not guaranteed</span>`, s.facUsed('expA') ? null : () => s.facExperiment());
       if (q('fqMissing') === 'active' && it.anandBadge && !f.fMissingPod) add(true, SP.pod, 1.9, `Press ${E} to look into the <b>containment pod</b>`, () => { s.set('fMissingPod'); g.audio.heartbeat && g.audio.heartbeat(); s.toast('THE SUBJECT IN THE POD IS WEARING A RESEARCH COAT. THE NAME TAG READS ANAND.'); });
       if (q('fqFinal') === 'active' && f.cascadeHeld && !f.prismShut) add(true, SP.shutdown, 1.6, `Press ${E} for <b>EMERGENCY SHUTDOWN</b>`, () => { s.set('prismShut'); g.player.shake = 0.8; s.facPrismLight(false); s.toast('SHUTDOWN — THE PRISM GOES DARK'); });
       // ---- Advanced Research ----
@@ -20026,7 +20030,7 @@ if (IS_FAC) {
         if (!have) add(true, SP.stove, 1.6, 'The range <span class="sub">Bianchi needs all four ingredients</span>', null);
         else if (!c || (c.step < 4 && !c.busy)) add(true, SP.stove, 1.6, `Press ${E} to <b>${LUNCH_STEPS[c ? c.step : 0]}</b>`, () => s.facCookStep());
         else add(true, SP.stove, 1.6, `Simmering — stay by the pot <b>${Math.round(c.k * 100)}%</b>`, null); }
-      if (f.pantryOpen) add(true, { x: -19.0, z: 1.4 }, 1.4, s.facUsed('pantry') ? 'Bianchi\'s pantry <span class="sub">Empty until next round</span>' : `Press ${E} for a <b>snack from the pantry</b> <span class="sub">Full health</span>`, s.facUsed('pantry') ? null : () => { s.facUse('pantry'); P.health = P.maxHealth; g.audio.pickup(); s.toast('ARANCINI. STILL WARM. FULL HEALTH.'); });
+      if (f.pantryOpen) add(true, { x: -31, z: 1.4 }, 1.4, s.facUsed('pantry') ? 'Bianchi\'s pantry <span class="sub">Empty until next round</span>' : `Press ${E} for a <b>snack from the pantry</b> <span class="sub">Full health</span>`, s.facUsed('pantry') ? null : () => { s.facUse('pantry'); P.health = P.maxHealth; g.audio.pickup(); s.toast('ARANCINI. STILL WARM. FULL HEALTH.'); });
       if (q('fqMaint') === 'active' && f.fqMaintLift && !f.fqMaintVend) add(true, SP.vending, 1.6, `Press ${E} to <b>kick the vending machines</b> <span class="sub">The Kowalski method</span>`, () => { s.set('fqMaintVend'); g.player.shake = 0.25; g.audio.land(); s.toast('THE MACHINES WHIR BACK TO LIFE'); });
       else add(true, SP.vending, 1.5, f.vendOn ? (g.score >= 500 ? `Press ${E} to buy a <b>Site 9 Cola</b> [500] <span class="sub">Full health</span>` : 'Site 9 Cola [500]') : 'Vending machines <span class="sub">Out of order</span>', f.vendOn && g.score >= 500 ? () => { g.score -= 500; P.health = P.maxHealth; g.audio.purchase(); s.toast('SITE 9 COLA — FULL HEALTH'); } : null);
       // ---- Medical ----
@@ -20037,11 +20041,11 @@ if (IS_FAC) {
       if (q('fqBed7') === 'active' && f.fqBed7b && !f.fqBed7c) add(true, SP.locker, 1.6, `Press ${E} to open <b>evidence locker 3</b>`, () => { s.set('fqBed7c'); s.addDoc('fBed7c'); });
       else if (f.lockerOpen && !f.lockerTaken) add(true, SP.locker, 1.6, `Press ${E} to take a weapon from the <b>Security locker</b>`, () => { s.set('lockerTaken'); const ids = ['m249', 'spas', 'akdrum', 'ksg'].filter(i => WEAPON_DATA[i] && !(W.inv[i] && W.inv[i].owned)); const id = ids.length ? pick(ids) : 'm249'; W.giveFromBox(id); s.toast(`SECURITY LOCKER — ${WEAPON_DATA[id].name.toUpperCase()}`); });
       if (q('fqSec') === 'active' && f.relay1 && f.relay2 && f.relay3 && !f.fqSecBoot) add(true, SP.access, 1.6, `Press ${E} to <b>reboot access control</b>`, () => { s.set('fqSecBoot'); g.audio.terminal && g.audio.terminal(); s.toast('ACCESS CONTROL REBOOTING... OK'); });
-      if (q('fqClass') === 'active' && !s.hasDoc('fClass2')) add(true, { x: 12, z: 21.2 }, 1.6, `Press ${E} to copy the <b>CCTV archive</b>`, () => s.addDoc('fClass2'));
-      else if (f.cctvOn) add(true, { x: 12, z: 21.2 }, 1.6, `Press ${E} to <b>view the cameras</b>`, () => { s.fac.cam = { i: 0, t: 0, hp: P.health }; });
+      if (q('fqClass') === 'active' && !s.hasDoc('fClass2')) add(true, { x: 16, z: 30.2 }, 1.6, `Press ${E} to copy the <b>CCTV archive</b>`, () => s.addDoc('fClass2'));
+      else if (f.cctvOn) add(true, { x: 16, z: 30.2 }, 1.6, `Press ${E} to <b>view the cameras</b>`, () => { s.fac.cam = { i: 0, t: 0, hp: P.health }; });
       add(true, SP.estop, 1.2, s.fac.alarmUsed ? 'Emergency alarm <span class="sub">Already pressed. Thanks for that.</span>' : `Press ${E} to press the <b>big red button</b>`, s.fac.alarmUsed ? null : () => { s.fac.alarmUsed = true; g.audio.alarm && g.audio.alarm(); s.facSummon(4, EVENT_SPOTS.lobby, U); s.npcBark && s.npcs.reyes && s.npcBark(s.npcs.reyes, 'estop', 9999, false, 'I TOLD you not to press it.'); s.toast('LEVEL 2 ALARM — SOMETHING HEARD THAT'); });
       // ---- relays (Security Breach) ----
-      if (q('fqSec') === 'active') for (const [k, up, o] of [['relay1', true, { x: -0.8, z: 23.5 }], ['relay2', false, { x: 10.0, z: 11.4 }], ['relay3', true, SP.fuse]]) if (!f[k] && !(s.fac.repair && s.fac.repair.k0 === k)) add(up, o, 1.5, `Press ${E} to repair the <b>access relay</b>`, () => { s.fac.repair = { k0: k, k: 0, x: o.x, z: o.z, up }; g.audio.terminal && g.audio.terminal(); });
+      if (q('fqSec') === 'active') for (const [k, up, o] of [['relay1', true, { x: -0.8, z: 35.5 }], ['relay2', false, { x: 14, z: 17.4 }], ['relay3', true, SP.fuse]]) if (!f[k] && !(s.fac.repair && s.fac.repair.k0 === k)) add(up, o, 1.5, `Press ${E} to repair the <b>access relay</b>`, () => { s.fac.repair = { k0: k, k: 0, x: o.x, z: o.z, up }; g.audio.terminal && g.audio.terminal(); });
       // ---- Maintenance ----
       if (q('fqMaint') === 'active' && !f.fqMaintFuse) { const ok = s.taken.toolbox && ['fuse1', 'fuse2', 'fuse3'].every(i => s.taken[i]); add(true, SP.fuse, 1.4, ok ? `Press ${E} to <b>rewire the fuse panel</b>` : 'Fuse panel <span class="sub">Needs Gus\'s toolbox and three fuses</span>', ok ? () => { s.set('fqMaintFuse'); g.player.shake = 0.2; s.toast('FUSE PANEL REWIRED'); } : null); }
       if (q('fqMaint') === 'active' && f.fqMaintFuse && !f.fqMaintLift) add(true, SP.liftU, 1.6, `Press ${E} to <b>fix the lift motor</b>`, () => { s.set('fqMaintLift'); s.toast('LIFT MOTOR REPAIRED'); });
@@ -20056,7 +20060,7 @@ if (IS_FAC) {
       if (q('fqMissing') === 'active' && f.fMissingChef && !f.fMissingDir) add(true, SP.dirDesk, 1.7, `Press ${E} to search <b>the Director's desk</b>`, () => { s.set('fMissingDir'); s.addDoc('fDirMail'); });
       if (q('fqClass') === 'active' && !s.hasDoc('fClass1')) add(true, SP.filing, 1.5, `Press ${E} to search the <b>filing cabinets</b>`, () => s.addDoc('fClass1'));
       if (q('fqClass') === 'active' && !s.hasDoc('fClass3')) add(true, SP.dirSafe, 1.4, f.safeCode ? `Press ${E} to open <b>the Director's safe</b> <span class="sub">0-9-1-1</span>` : 'The Director\'s safe <span class="sub">Needs a combination — Ruth knows everyone\'s secrets</span>', f.safeCode ? () => s.addDoc('fClass3') : null);
-      if (q('fqClass') === 'active' && !s.hasDoc('fClass4')) add(false, { x: -14.2, z: -2.0 }, 1.5, `Press ${E} to open the <b>archive box</b>`, () => s.addDoc('fClass4'));
+      if (q('fqClass') === 'active' && !s.hasDoc('fClass4')) add(false, { x: -22.2, z: -2 }, 1.5, `Press ${E} to open the <b>archive box</b>`, () => s.addDoc('fClass4'));
       // ---- Lounge & Atrium: things to do ----
       add(true, SP.arcade, 1.4, g.score >= 100 ? `Press ${E} to play <b>DEAD SHIFT</b> [100] <span class="sub">High score ${s.fac.arcadeHigh}</span>` : 'DEAD SHIFT arcade [100]', g.score >= 100 ? () => s.facArcade() : null);
       add(true, SP.pool, 1.9, `Press ${E} to take a shot at <b>pool</b>`, () => { const potted = Math.random() < 0.45; g.audio.tone && g.audio.tone(potted ? 520 : 300, 0.05, { gain: 0.15 }); s.toast(potted ? pick(['POTTED IT.', 'CLEAN. KOWALSKI WOULD BE PROUD.', 'TOP CORNER.']) : pick(['MISSED. THE TABLE LEANS.', 'SCRATCH.', 'NOT EVEN CLOSE.'])); });
@@ -20084,7 +20088,7 @@ if (IS_FAC) {
     },
     facExperiment() {
       const g = this.game, s = this; s.facUse('expA'); s.fac.expCount++; s.facChamberFlash('chA', 0xb0ffe0);
-      const roll = Math.random(), at = { x: 7, y: U, z: -3.5 };
+      const roll = Math.random(), at = { x: 11, y: U, z: -3.5 };
       if (roll < 0.2) { const id = g.drops ? g.drops.roll() : 'maxammo'; g.drops && g.drops.spawn(id, at); s.toast('THE FIELD COUGHS SOMETHING OUT'); }
       else if (roll < 0.4) { s.points(750); s.toast('USEFUL DATA — +750'); }
       else if (roll < 0.55) { s.addBuff('coffee'); s.toast('YOU FEEL... FASTER'); }
@@ -20166,7 +20170,7 @@ if (IS_FAC) {
   S.doorPrompt = function (d) {
     const E = '<span class="key">E</span>', k = d.def.story, p = this.game.player.pos;
     if (k === 'advHall') return this.items.anandCard ? { html: `Press ${E} to swipe <b>Dr. Anand's clearance card</b>`, action: () => { this.facOpenDoor('UD8'); this.set('advOpen'); this.toast('ADVANCED RESEARCH — ACCESS GRANTED'); } } : { html: 'ADVANCED RESEARCH — sealed <span class="sub">Clearance A required</span>' };
-    if (k === 'dirDoor') return p.z < -16 ? { html: `Press ${E} to <b>release the door lock</b>`, action: () => this.facOpenDoor('UD10') } : { html: "Director's suite — locked from the inside" };
+    if (k === 'dirDoor') return p.z < -24 ? { html: `Press ${E} to <b>release the door lock</b>`, action: () => this.facOpenDoor('UD10') } : { html: "Director's suite — locked from the inside" };
     if (k === 'advMaint') return { html: 'Advanced Research — sealed by Security <span class="sub">Officer Reyes controls this door</span>' };
     return _dp.call(this, d);
   };
@@ -22028,6 +22032,1021 @@ for (const id of ['thunderclap', 'lastword', 'railsplitter', 'deepfreeze', 'unde
 }
 // the akimbo twin is built straight from the builder function, so give it the same finish
 { const _bl = buildLastWord; buildLastWord = function (...a) { const r = _bl.apply(this, a); try { packMatMap(); hdAuto(r.root, r.P, 'lastword'); packDetail(r.root, 'lastword'); } catch (e) {} return r; }; }
+
+/* =====================================================================
+   SITE 9 — REBUILT. The Facility at roughly one and a half times its old
+   size, around a double-height CENTRAL ATRIUM with the grand stair and a
+   rear gallery you can hold and shoot down from.
+   How it is done: everything is built exactly as before (all the rooms'
+   furniture, quests and Level 2), then the whole plan is opened up along
+   a few chosen "seams" — lines across the building where new floor is
+   inserted. Walls, floors and ceilings stretch across a seam; furniture
+   and machines move as whole pieces with the side they stand on, so
+   nothing is distorted. Every table of positions (doors, windows, wall
+   weapons, perks, quest spots, routines, stairs) goes through the same
+   map, so the story and the dead still line up with the rooms.
+   After that, the new layout's own pieces are added in the new space:
+   the atrium, the lobby, the new rooms and the per-room dressing.
+   ===================================================================== */
+const FAC2 = IS_FAC ? {
+  seams: { x: [[-16.0, 4], [-13.3, 4], [-2.6, 4], [2.6, 4], [13.8, 8]], z: [[-11.97, 8], [8.1, 6], [14.2, 3], [22.25, 3]] },
+  cx: 12, cz: 8,
+  zones: [{ x: 0, z: -22.5, r: 3.4 }],                 // the reactor core moves as one piece
+  done: false,
+} : null;
+function fac2F(axis, v) { if (!FAC2) return v; let s = v - (axis === 'x' ? FAC2.cx : FAC2.cz); for (const [p, g] of FAC2.seams[axis]) if (v > p) s += g; return s; }
+function fac2X(v) { return fac2F('x', v); }
+function fac2Empty(b) { return typeof b.isEmpty === 'function' ? b.isEmpty() : !(b.max.x >= b.min.x && b.max.z >= b.min.z); }
+function fac2Z(v) { return fac2F('z', v); }
+/** Old plan → new plan for a point (zones keep compound pieces whole). */
+function fac2P(x, z) {
+  if (!FAC2) return [x, z];
+  for (const q of FAC2.zones) if (Math.hypot(x - q.x, z - q.z) <= q.r) return [x + fac2X(q.x) - q.x, z + fac2Z(q.z) - q.z];
+  return [fac2X(x), fac2Z(z)];
+}
+
+/* ---------- 1. changes made in the old plan, before anything is built ---------- */
+if (FAC2) {
+  ROOM_BY_ID.corridor.name = 'CENTRAL ATRIUM';
+  { const uh = FAC_UP.rooms.find(r => r.id === 'u_hall'); if (uh) uh.name = 'ATRIUM GALLERY'; }
+  // the grand stair leaves the lobby: it now rises through the atrium to the rear gallery
+  const gs = FAC_UP.stairs.find(s => s.id === 'grand');
+  Object.assign(gs, { axis: 'z', a0: -2.0, dir: -1, len: 8.0, c: 0, w: 3.0, ground: 'corridor', up: 'u_hall' });
+  Object.assign(FAC_UP.holes[0], { x0: -1.5, x1: 1.5, z0: -10, z1: -2, rails: [] });
+  FAC_UP.links = FAC_UP.links.map(l => l[0] === 'start' ? ['corridor', 'u_hall'] : l);
+  // UD9 moved clear of a seam (it would have been split by the Generator Room's new floor)
+  const ud9 = DOORS.find(d => d.id === 'UD9'); if (ud9) Object.assign(ud9, { a0: 15.2, a1: 17.7 });
+}
+
+/* ---------- 2. what is "structure" (stretches) and what is furniture (moves whole) ---------- */
+if (FAC2) {
+  const W = World.prototype;
+  const tag = (name) => {
+    const f = W[name]; if (typeof f !== 'function') return;
+    W[name] = function (...a) {
+      if (!this._fac2Tag) return f.apply(this, a);
+      const S = this.scene, n0 = S.children.length, c0 = this.colliders.length;
+      try { return f.apply(this, a); }
+      finally { for (let i = n0; i < S.children.length; i++) this._fac2Tag.objs.add(S.children[i]); for (let i = c0; i < this.colliders.length; i++) this._fac2Tag.cols.add(this.colliders[i]); }
+    };
+  };
+  ['buildRooms', 'wall', 'uwall', 'addStairs', 'addPlatform', 'railing'].forEach(tag);
+  // Level 2's own builder: its first part (slabs, ceilings, shafts, walls) is structure, its furnishing is not
+  const _fu = W.buildFacUpper;
+  W.buildFacUpper = function () {
+    if (!this._fac2Tag) return _fu.call(this);
+    const S = this.scene, n0 = S.children.length, c0 = this.colliders.length; this._fac2UpEnd = null;
+    const r = _fu.call(this);
+    const n1 = this._fac2UpEnd ? this._fac2UpEnd[0] : n0, c1 = this._fac2UpEnd ? this._fac2UpEnd[1] : c0;
+    for (let i = n0; i < n1; i++) this._fac2Tag.objs.add(S.children[i]);
+    for (let i = c0; i < c1; i++) this._fac2Tag.cols.add(this.colliders[i]);
+    return r;
+  };
+  const _fs = W.facSigns;
+  W.facSigns = function () { if (this._fac2Tag && !this._fac2UpEnd) this._fac2UpEnd = [this.scene.children.length, this.colliders.length]; return _fs.call(this); };
+  // colliders remember the object they were made from, so they move with it
+  const _cfo = W.colliderFromObject;
+  W.colliderFromObject = function (obj, shrink) { const c = _cfo.call(this, obj, shrink); if (this._fac2Tag) c._fac2obj = obj; return c; };
+  // Level 2 bakes its static pieces into a few big meshes: wait until the plan has been opened up
+  const _mg = W.facMergeStatic;
+  W.facMergeStatic = function (from) { if (this._fac2Tag) { this._fac2MergeFrom = from; return 0; } return _mg.call(this, from); };
+  W._fac2Merge = _mg;
+  const _b = W.build;
+  W.build = function () {
+    if (!FAC2) return _b.call(this);
+    this._fac2Tag = { objs: new Set(), cols: new Set() };
+    _b.call(this);
+    const tagged = this._fac2Tag; this._fac2Tag = null; this._fac2Struct = tagged.objs;
+    try { fac2Remap(this, tagged); } catch (e) { console.error('facility remap failed', e); this.fac2Error = String(e && e.stack || e); }
+    try { if (typeof this.fac2Rebuild === 'function') this.fac2Rebuild(); } catch (e) { console.error('facility rebuild failed', e); this.fac2Error = (this.fac2Error || '') + ' | ' + String(e && e.stack || e); }
+    if (this._fac2MergeFrom != null) { try { _mg.call(this, this._fac2MergeFrom); } catch (e) { this.facMergeFailed = String(e); } }
+  };
+}
+
+/* ---------- 3. the remap itself ---------- */
+function fac2Remap(W, tagged) {
+  if (FAC2.done) throw new Error('facility tables were already remapped');
+  const S = W.scene, T = THREE, real = typeof T.Box3 === 'function' && typeof T.Matrix4 === 'function';
+  const moved = new Map();                          // Object3D → [dx, dz] or 'v' (vertex-mapped)
+  const seen = new WeakSet();                       // plain points / rects already mapped
+  const box = real ? new T.Box3() : null;
+  const isStruct = o => tagged.objs.has(o);
+  const ptMap = p => { if (!p || seen.has(p)) return p; seen.add(p); const c = FAC2.clusterAt && FAC2.clusterAt(p.x, p.z, typeof p.y === 'number' ? p.y : null); if (c) { p.x += c.dx; p.z += c.dz; return p; } const [x, z] = fac2P(p.x, p.z); p.x = x; p.z = z; return p; };
+  const zoneOf = (cx, cz, w, d) => FAC2.zones.find(q => w < q.r * 2 && d < q.r * 2 && Math.hypot(cx - q.x, cz - q.z) <= q.r);
+  const rectMap = r => { if (!r || seen.has(r)) return r; seen.add(r); const zc = zoneOf((r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2, r.x1 - r.x0, r.z1 - r.z0);
+    if (zc) { const dx = fac2X(zc.x) - zc.x, dz = fac2Z(zc.z) - zc.z; r.x0 += dx; r.x1 += dx; r.z0 += dz; r.z1 += dz; return r; }
+    r.x0 = fac2X(r.x0); r.x1 = fac2X(r.x1); r.z0 = fac2Z(r.z0); r.z1 = fac2Z(r.z1); return r; };
+  const shiftObj = (o, dx, dz) => {
+    if (!dx && !dz) { moved.set(o, [0, 0]); return; }
+    if (o.parent === S || !o.parent) { o.position.x += dx; o.position.z += dz; }
+    else if (real) {   // a child inside a rotated / scaled parent: convert the world shift into the parent's frame
+      o.parent.updateMatrixWorld(true);
+      const inv = new T.Matrix4().copy(o.parent.matrixWorld).invert();
+      const a = new T.Vector3(0, 0, 0).applyMatrix4(inv), b = new T.Vector3(dx, 0, dz).applyMatrix4(inv);
+      o.position.x += b.x - a.x; o.position.y += b.y - a.y; o.position.z += b.z - a.z;
+    }
+    if (o.updateMatrix) o.updateMatrix(); if (o.updateMatrixWorld) o.updateMatrixWorld(true);
+    moved.set(o, [dx, dz]);
+  };
+  const v3 = real ? new T.Vector3() : null;
+  /** Every vertex through the map: walls, floors, ceilings and long runs stretch across a seam.
+      Per axis: a piece is stretched along an axis only if it is structure or at least 3 m long that way;
+      along its short axis it moves whole (a long, thin desk on a seam must not get wider). */
+  const vertexMap = (m, b, sx, sz) => {
+    const g0 = m.geometry, pos = g0 && g0.attributes && g0.attributes.position;
+    const cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2, fdx = fac2X(cx) - cx, fdz = fac2Z(cz) - cz;
+    if (!real || !pos || !pos.count) { shiftObj(m, fdx, fdz); return; }
+    m.updateMatrixWorld(true);
+    const M = m.matrixWorld, n = pos.count, old = new Float32Array(n * 3), nw = new Float32Array(n * 3);
+    let dx0 = null, dz0 = null, uniform = true;
+    for (let i = 0; i < n; i++) {
+      v3.fromBufferAttribute(pos, i).applyMatrix4(M);
+      old[i * 3] = v3.x; old[i * 3 + 1] = v3.y; old[i * 3 + 2] = v3.z;
+      const x = sx ? fac2X(v3.x) : v3.x + fdx, z = sz ? fac2Z(v3.z) : v3.z + fdz; nw[i * 3] = x; nw[i * 3 + 1] = v3.y; nw[i * 3 + 2] = z;
+      const dx = x - v3.x, dz = z - v3.z;
+      if (dx0 === null) { dx0 = dx; dz0 = dz; } else if (Math.abs(dx - dx0) > 1e-4 || Math.abs(dz - dz0) > 1e-4) uniform = false;
+    }
+    if (uniform) { shiftObj(m, dx0 || 0, dz0 || 0); return; }
+    const g = g0.clone(), P = g.attributes.position, inv = new T.Matrix4().copy(M).invert();
+    for (let i = 0; i < n; i++) { v3.set(nw[i * 3], nw[i * 3 + 1], nw[i * 3 + 2]).applyMatrix4(inv); P.setXYZ(i, v3.x, v3.y, v3.z); }
+    P.needsUpdate = true;
+    // keep the texture's scale on stretched boxes and planes: each face's UVs follow world position as before
+    const uv = g.attributes.uv, idx = g.index;
+    if (uv && /Box|Plane/.test(g0.type || '')) {
+      const tri = idx ? idx.count / 3 : n / 3, done = new Uint8Array(n), I = k => idx ? idx.getX(k) : k;
+      const U0 = Float32Array.from(uv.array), gu = k => U0[k * uv.itemSize], gv = k => U0[k * uv.itemSize + 1];
+      for (let t = 0; t < tri; t++) {
+        const a = I(t * 3), b2 = I(t * 3 + 1), c = I(t * 3 + 2);
+        if (done[a] && done[b2] && done[c]) continue;
+        const e1 = [old[b2 * 3] - old[a * 3], old[b2 * 3 + 1] - old[a * 3 + 1], old[b2 * 3 + 2] - old[a * 3 + 2]], e2 = [old[c * 3] - old[a * 3], old[c * 3 + 1] - old[a * 3 + 1], old[c * 3 + 2] - old[a * 3 + 2]];
+        const nx = Math.abs(e1[1] * e2[2] - e1[2] * e2[1]), ny = Math.abs(e1[2] * e2[0] - e1[0] * e2[2]), nz = Math.abs(e1[0] * e2[1] - e1[1] * e2[0]);
+        const [i0, i1] = nx >= ny && nx >= nz ? [1, 2] : ny >= nz ? [0, 2] : [0, 1];      // the two world axes in the face's plane
+        const det = e1[i0] * e2[i1] - e1[i1] * e2[i0]; if (Math.abs(det) < 1e-9) continue;
+        const du1 = gu(b2) - gu(a), dv1 = gv(b2) - gv(a), du2 = gu(c) - gu(a), dv2 = gv(c) - gv(a);
+        const Ju0 = (du1 * e2[i1] - du2 * e1[i1]) / det, Ju1 = (du2 * e1[i0] - du1 * e2[i0]) / det, Jv0 = (dv1 * e2[i1] - dv2 * e1[i1]) / det, Jv1 = (dv2 * e1[i0] - dv1 * e2[i0]) / det;
+        const ua = gu(a), va = gv(a), pa0 = old[a * 3 + i0], pa1 = old[a * 3 + i1];
+        for (const k of [a, b2, c]) { if (done[k]) continue; const d0 = nw[k * 3 + i0] - pa0, d1 = nw[k * 3 + i1] - pa1; uv.setXY(k, ua + Ju0 * d0 + Ju1 * d1, va + Jv0 * d0 + Jv1 * d1); done[k] = 1; }
+      }
+      uv.needsUpdate = true;
+    }
+    g.computeBoundingBox(); g.computeBoundingSphere();
+    m.geometry = g; moved.set(m, { vx: sx, vz: sz, dx: fdx, dz: fdz });
+  };
+  const sizeOf = o => { box.setFromObject(o); return fac2Empty(box) ? null : { x0: box.min.x, x1: box.max.x, z0: box.min.z, z1: box.max.z }; };
+  /* ---- furniture moves as sets: things that touch (a desk and what is on it, a table and its chairs)
+         move together, and anything standing against a wall stays against that wall ---- */
+  const CL = new Map(), CLUST = [];
+  const clusterAt = (x, z, y) => { let best = null, ba = 1e9;
+    for (const c of CLUST) { if (x < c.b[0] - 0.35 || x > c.b[3] + 0.35 || z < c.b[2] - 0.35 || z > c.b[5] + 0.35) continue; if (y != null && (y < c.b[1] - 0.25 || y > c.b[4] + 0.4)) continue;
+      const a = (c.b[3] - c.b[0]) * (c.b[5] - c.b[2]); if (a < ba) { ba = a; best = c; } }
+    return best; };
+  const realGeo = (() => { try { const q = new T.BoxGeometry(1, 1, 1); return !!(q.attributes && q.attributes.position && q.attributes.position.count === 24); } catch (e) { return false; } })();
+  if (real && realGeo) {
+    const fb = new T.Box3(), items = [];
+    for (const o of S.children) {
+      if (o.isLight || o.isCamera || isStruct(o)) continue; fb.setFromObject(o); if (fac2Empty(fb)) continue;
+      const b = [fb.min.x, fb.min.y, fb.min.z, fb.max.x, fb.max.y, fb.max.z], ex = b[3] - b[0], ez = b[5] - b[2];
+      if ((o.isMesh && (ex >= 3 || ez >= 3)) || ex > 9 || ez > 9 || zoneOf((b[0] + b[3]) / 2, (b[2] + b[5]) / 2, ex, ez)) continue;
+      items.push({ o, b, p: null });
+    }
+    const root = it => { while (it.p) it = it.p; return it; }, E = 0.04, grid = new Map(), key = (i, k) => i * 4096 + k;
+    items.forEach((it, n) => { for (let i = Math.floor(it.b[0] / 2); i <= Math.floor(it.b[3] / 2); i++) for (let k = Math.floor(it.b[2] / 2); k <= Math.floor(it.b[5] / 2); k++) { const q = key(i + 1000, k + 1000); if (!grid.has(q)) grid.set(q, []); grid.get(q).push(n); } });
+    for (const list of grid.values()) for (let a = 0; a < list.length; a++) for (let c = a + 1; c < list.length; c++) {
+      const A = items[list[a]].b, B = items[list[c]].b;
+      if (A[0] > B[3] + E || B[0] > A[3] + E || A[1] > B[4] + E || B[1] > A[4] + E || A[2] > B[5] + E || B[2] > A[5] + E) continue;
+      const ra = root(items[list[a]]), rb = root(items[list[c]]); if (ra !== rb) rb.p = ra;
+    }
+    const groups = new Map(); for (const it of items) { const r = root(it); if (!groups.has(r)) groups.set(r, []); groups.get(r).push(it); }
+    const walls = W.colliders.filter(c => tagged.cols.has(c) && c.maxY - c.minY >= 2 && Math.min(c.maxX - c.minX, c.maxZ - c.minZ) <= 0.7);
+    for (const list of groups.values()) {
+      const b = [1e9, 1e9, 1e9, -1e9, -1e9, -1e9]; for (const it of list) for (let i = 0; i < 3; i++) { b[i] = Math.min(b[i], it.b[i]); b[i + 3] = Math.max(b[i + 3], it.b[i + 3]); }
+      const sets = (b[3] - b[0] > 7 || b[5] - b[2] > 7) && list.length > 1 ? list.map(it => [it]) : [list];
+      for (const set of sets) {
+        const bb = set.length === list.length ? b : set[0].b, cx = (bb[0] + bb[3]) / 2, cz = (bb[2] + bb[5]) / 2;
+        let [dx, dz] = (([x, z]) => [x - cx, z - cz])(fac2P(cx, cz));
+        for (const w of walls) {     // against a wall: keep the same gap to it
+          if (w.maxY < bb[1] + 0.1 || w.minY > bb[4] - 0.05) continue;
+          const thinX = w.maxX - w.minX < w.maxZ - w.minZ;
+          if (thinX && bb[2] < w.maxZ && bb[5] > w.minZ && (Math.abs(bb[0] - w.maxX) < 0.14 || Math.abs(bb[3] - w.minX) < 0.14)) { const wc = (w.minX + w.maxX) / 2; dx = fac2X(wc) - wc; }
+          if (!thinX && bb[0] < w.maxX && bb[3] > w.minX && (Math.abs(bb[2] - w.maxZ) < 0.14 || Math.abs(bb[5] - w.minZ) < 0.14)) { const wc = (w.minZ + w.maxZ) / 2; dz = fac2Z(wc) - wc; }
+        }
+        const rec = { b: bb, dx, dz, n: set.length }; CLUST.push(rec); for (const it of set) CL.set(it.o, rec);
+      }
+    }
+    FAC2.clusters = CLUST.length; FAC2.torn = CLUST.filter(c => { const [x, z] = fac2P(c.b[0], c.b[2]), [x2, z2] = fac2P(c.b[3], c.b[5]); return Math.abs(x - c.b[0] - (x2 - c.b[3])) > 1e-3 || Math.abs(z - c.b[2] - (z2 - c.b[5])) > 1e-3; }).map(c => c.b.map(v => +v.toFixed(1)).concat([c.n]));
+  }
+  FAC2.clusterAt = clusterAt;
+  const handle = o => {
+    if (o.isLight) { if (o.parent === S) { const [x, z] = fac2P(o.position.x, o.position.z); shiftObj(o, x - o.position.x, z - o.position.z); } return; }
+    if (o.isCamera) return;
+    if (CL.has(o)) { const c = CL.get(o); shiftObj(o, c.dx, c.dz); return; }
+    const b = real ? sizeOf(o) : null;
+    if (!b) { const [x, z] = fac2P(o.position.x, o.position.z); shiftObj(o, x - o.position.x, z - o.position.z); return; }
+    const ext = Math.max(b.x1 - b.x0, b.z1 - b.z0), cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2;
+    const inZone = !!zoneOf(cx, cz, b.x1 - b.x0, b.z1 - b.z0);
+    const st = isStruct(o), sx = st || b.x1 - b.x0 >= 3, sz = st || b.z1 - b.z0 >= 3;
+    if (o.isMesh && !inZone && (sx || sz)) { vertexMap(o, b, sx, sz); return; }
+    if (!o.isMesh && ext > 9 && o.children.length) { o.children.slice().forEach(handle); moved.set(o, { vx: true, vz: true, dx: 0, dz: 0 }); return; }
+    const [nx, nz] = fac2P(cx, cz); shiftObj(o, nx - cx, nz - cz);
+  };
+  if (real) S.children.slice().forEach(handle);
+  else S.children.slice().forEach(o => { const [x, z] = fac2P(o.position.x, o.position.z); shiftObj(o, x - o.position.x, z - o.position.z); });
+  // ---- colliders ----
+  const recOf = o => { while (o) { if (moved.has(o)) return moved.get(o); o = o.parent; } return null; };
+  const colMap = c => {
+    if (!c || seen.has(c)) return; seen.add(c);
+    const rec = c._fac2obj && !tagged.cols.has(c) ? recOf(c._fac2obj) : null;
+    if (Array.isArray(rec)) { c.minX += rec[0]; c.maxX += rec[0]; c.minZ += rec[1]; c.maxZ += rec[1]; return; }
+    const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
+    const zc = zoneOf(cx, cz, c.maxX - c.minX, c.maxZ - c.minZ);
+    if (zc) { const dx = fac2X(zc.x) - zc.x, dz = fac2Z(zc.z) - zc.z; c.minX += dx; c.maxX += dx; c.minZ += dz; c.maxZ += dz; return; }
+    if (!rec && !tagged.cols.has(c) && c.maxX - c.minX < 3 && c.maxZ - c.minZ < 3) { const k = clusterAt(cx, cz, (c.minY + c.maxY) / 2); if (k) { c.minX += k.dx; c.maxX += k.dx; c.minZ += k.dz; c.maxZ += k.dz; return; } }
+    const st = tagged.cols.has(c), vx = rec ? rec.vx : st || c.maxX - c.minX >= 3, vz = rec ? rec.vz : st || c.maxZ - c.minZ >= 3;
+    if (vx) { c.minX = fac2X(c.minX); c.maxX = fac2X(c.maxX); } else { const d = rec ? rec.dx : fac2X(cx) - cx; c.minX += d; c.maxX += d; }
+    if (vz) { c.minZ = fac2Z(c.minZ); c.maxZ = fac2Z(c.maxZ); } else { const d = rec ? rec.dz : fac2Z(cz) - cz; c.minZ += d; c.maxZ += d; }
+  };
+  W.colliders.forEach(colMap); (W.zColliders || []).forEach(colMap);
+  // positions already moved with their objects must not be mapped twice
+  S.traverse(o => { if (o.position) seen.add(o.position); });
+  // ---- the world's own records: points, rectangles, stairs, rooms on platforms ----
+  const SKIP = new Set(['game', 'scene', 'world', 'mats', 'um', 'colliders', 'zColliders', 'staticRay', 'lamps', 'flickers', 'blinkers', 'upWallMat', 'roomPower', 'roomTint', 'facPool', 'facMerged', 'bounds', 'mysteryBox', 'crucible']);
+  const DIR = new Set(['n', 'vel', 'normal', 'dir', 'fwd', 'scale', 'rotation', 'quaternion', 'up', 'base', 'from', 'fromR', 'off', 'offset', 'velocity']);
+  const walk = (v, key, depth) => {
+    if (!v || typeof v !== 'object' || depth > 5 || DIR.has(key)) return;
+    if (v.isObject3D || v.isMaterial || v.isTexture || v.isBufferGeometry || ArrayBuffer.isView(v) || v instanceof Map || v instanceof Set) return;
+    if (seen.has(v)) return;
+    if (Array.isArray(v)) { v.forEach(q => walk(q, key, depth + 1)); return; }
+    if ('minX' in v && 'maxX' in v) return;                                     // a collider (done above)
+    if (v.kind === 'ramp' && 'a0' in v) { seen.add(v); const F = v.axis === 'x' ? fac2X : fac2Z, G = v.axis === 'x' ? fac2Z : fac2X; v.a0 = F(v.a0); v.a1 = F(v.a1); v.c0 = G(v.c0); v.c1 = G(v.c1); return; }
+    if (typeof v.x0 === 'number' && typeof v.x1 === 'number' && typeof v.z0 === 'number' && typeof v.z1 === 'number') rectMap(v);
+    else if (typeof v.x === 'number' && typeof v.z === 'number' && typeof v.minX !== 'number') ptMap(v);
+    if ('line' in v && 'inward' in v && 'X' in v) {                               // a raised room's doorway record
+      seen.add(v); v.line = v.X ? fac2X(v.line) : fac2Z(v.line); v.a = v.X ? fac2Z(v.a) : fac2X(v.a);
+    }
+    for (const k of Object.keys(v)) { if (SKIP.has(k)) continue; const q = v[k]; if (q && typeof q === 'object') walk(q, k, depth + 1); }
+  };
+  for (const k of Object.keys(W)) if (!SKIP.has(k)) walk(W[k], k, 0);
+  // the box's own spot record and the crucible group are handled by the tables / the scene pass
+  // ---- the module tables ----
+  const mapDoorish = d => { if (!d || seen.has(d)) return; seen.add(d); const A = d.axis === 'z' ? fac2Z : fac2X, B = d.axis === 'z' ? fac2X : fac2Z;
+    const at = d.at; d.at = A(at); if ('a0' in d) { const m = (d.a0 + d.a1) / 2, nm = B(m); d.a0 += nm - m; d.a1 += nm - m; } if ('along' in d) d.along = B(d.along); };
+  ROOMS.forEach(rectMap); if (FAC_UP) { FAC_UP.rooms.forEach(rectMap); FAC_UP.holes.forEach(rectMap); }
+  DOORS.forEach(mapDoorish); WINDOWS.forEach(mapDoorish); GLASS_GAPS.forEach(mapDoorish); FAC_OPENINGS.forEach(mapDoorish); WALL_BUYS.forEach(mapDoorish);
+  ptMap(PLAYER_SPAWN);
+  BOX_SPOTS.forEach(ptMap); Object.values(PERKS).forEach(p => p.spot && ptMap(p.spot));
+  if (typeof CRUCIBLE !== 'undefined') ptMap(CRUCIBLE.spot); if (typeof GUNSMITH_SPOT !== 'undefined') ptMap(GUNSMITH_SPOT);
+  if (FAC_UP) {
+    for (const s of FAC_UP.stairs) { if (seen.has(s)) continue; seen.add(s); const A = s.axis === 'x' ? fac2X : fac2Z, B = s.axis === 'x' ? fac2Z : fac2X; s.a0 = A(s.a0); s.c = B(s.c); ptMap(s.bottom); ptMap(s.top); }
+    if (FAC_UP.lift) { ptMap(FAC_UP.lift.ground); ptMap(FAC_UP.lift.up); }
+  }
+  [SPOTS, PICKUPS, typeof FAC_SPOTS !== 'undefined' ? FAC_SPOTS : null].forEach(t => t && Object.values(t).forEach(p => p && typeof p.x === 'number' && ptMap(p)));
+  Object.values(ROUTINES).forEach(r => r.forEach(ptMap)); STRANGER_SPOTS.forEach(ptMap); STRANGER_HAUNTS.forEach(ptMap);
+  if (typeof TRAP_DEFS !== 'undefined') TRAP_DEFS.forEach(d => { if (typeof d.x0 === 'number') rectMap(d); if (typeof d.cx === 'number') { const [x, z] = fac2P(d.cx, d.cz); d.cx = x; d.cz = z; } if (d.panel) ptMap(d.panel); });
+  // the map's outline
+  const B = W.bounds; B.minX = fac2X(B.minX); B.maxX = fac2X(B.maxX); B.minZ = fac2Z(B.minZ); B.maxZ = fac2Z(B.maxZ);
+  if (W.facLevel) seen.has(W.facLevel) || rectMap(W.facLevel);
+  if (W.booth && W.booth.door) W.booth.bx = W.booth.door.position.x;
+  if (W.elevator && W.elevator.left) { W.elevator.lx = W.elevator.left.position.x; W.elevator.rx = W.elevator.right.position.x; }
+  FAC2.done = true; FAC2.moved = moved.size;
+}
+
+/* ---------- 4. the new layout's own pieces, built in the new space ---------- */
+Object.assign(World.prototype, {
+  fac2Rebuild() {
+    if (!FAC2 || !FAC2.done) return;
+    const S = this.scene;
+    this.fac2 = { removed: 0, notes: [] };
+    // anything a game system holds on to is never removed
+    const prot = this._fac2Prot = new Set(), addP = o => { while (o && o !== S) { prot.add(o); o = o.parent; } };
+    const NO = new Set(['game', 'world', 'scene', 'mats', 'um', 'colliders', 'zColliders', 'staticRay', '_fac2Prot', '_fac2Struct', 'fac2', 'upWallMat']);
+    const scan = (v, d) => { if (!v || typeof v !== 'object' || d > 3) return; if (v.isObject3D) { addP(v); return; } if (v.isMaterial || v.isTexture || ArrayBuffer.isView(v) || v.isBufferGeometry) return;
+      if (Array.isArray(v)) { v.forEach(q => scan(q, d + 1)); return; } for (const k of Object.keys(v)) if (!NO.has(k)) scan(v[k], d + 1); };
+    for (const k of Object.keys(this)) if (!NO.has(k)) scan(this[k], 0);
+    S.children.forEach(o => { if (o.isLight) prot.add(o); });
+    const step = (n, f) => { try { f.call(this); } catch (e) { console.error('facility ' + n, e); this.fac2.notes.push(n + ': ' + (e && e.message)); } };
+    step('atrium', this.fac2Atrium); step('lobby', this.fac2Lobby);
+    if (this.fac2NewRooms) step('new rooms', this.fac2NewRooms);
+    if (this.fac2Dress) step('dressing', this.fac2Dress);
+    if (this.fac2Quests) step('quests', this.fac2Quests);
+    if (this.fac2Clearance) step('clearance', this.fac2Clearance);
+  },
+  /** Removes objects (and the colliders made from them) for good. */
+  fac2Remove(objs) {
+    if (!objs.length) return 0;
+    const sub = new Set(); objs.forEach(o => o.traverse(q => sub.add(q)));
+    objs.forEach(o => o.parent && o.parent.remove(o));
+    const keep = (arr, f) => { let j = 0; for (const q of arr) if (f(q)) arr[j++] = q; arr.length = j; };
+    keep(this.staticRay, m => !sub.has(m));
+    keep(this.colliders, c => !(c._fac2obj && sub.has(c._fac2obj)));
+    if (this.loose) keep(this.loose, l => !sub.has(l.m));
+    this.fac2.removed += objs.length; return objs.length;
+  },
+  fac2Query(fn, opt = {}) {
+    const out = [], b = new THREE.Box3();
+    for (const o of this.scene.children) { if (o.isLight || (!opt.prot && this._fac2Prot.has(o))) continue; b.setFromObject(o); if (fac2Empty(b)) continue; if (fn(o, b)) out.push(o); }
+    return out;
+  },
+  fac2DropCols(fn) { let j = 0; const a = this.colliders; for (const c of a) if (!fn(c)) a[j++] = c; const n = a.length - j; a.length = j; return n; },
+  /** Rebuilds one run of ground wall (new space) with new openings. */
+  fac2Rewall(axis, at, from, to, gaps, o = {}) {
+    const st = this._fac2Struct, y1 = o.top || 5.05, inRun = (lo, hi) => lo >= from - 0.35 && hi <= to + 0.35;
+    const old = this.fac2Query((m, b) => st.has(m) && m.isMesh && b.max.y <= y1 && (axis === 'z' ? Math.abs((b.min.z + b.max.z) / 2 - at) < 0.3 && b.max.z - b.min.z < 0.6 && inRun(b.min.x, b.max.x) : Math.abs((b.min.x + b.max.x) / 2 - at) < 0.3 && b.max.x - b.min.x < 0.6 && inRun(b.min.z, b.max.z)), { prot: true });
+    this.fac2Remove(old);
+    this.fac2DropCols(c => c.maxY <= y1 + 0.01 && c.minY < 0.2 && (axis === 'z' ? Math.abs((c.minZ + c.maxZ) / 2 - at) < 0.3 && c.maxZ - c.minZ < 0.6 && inRun(c.minX, c.maxX) : Math.abs((c.minX + c.maxX) / 2 - at) < 0.3 && c.maxX - c.minX < 0.6 && inRun(c.minZ, c.maxZ)));
+    this.wall(axis, at, from, to, gaps, o);
+    return old.length;
+  },
+  /* ======== THE CENTRAL ATRIUM ======== */
+  fac2Atrium() {
+    const S = this.scene, M = this.mats, U = FAC_U, UH = FAC_UH, A = ROOM_BY_ID.corridor, st = this._fac2Struct, um = this.um;
+    A.h = 5.0; A.light = 0xd8e8ff;
+    const HOLE = this.fac2Hole = { x0: -4, x1: 4, z0: -10, z1: 15, rails: [] };
+    const inside = (b, R, pad = 0.12) => { const cx = (b.min.x + b.max.x) / 2, cz = (b.min.z + b.max.z) / 2; return cx > R.x0 + pad && cx < R.x1 - pad && cz > R.z0 + pad && cz < R.z1 - pad; };
+    const stairR = { x0: -1.7, x1: 1.7, z0: -10.3, z1: -1.7 };
+    // 1. the old corridor's furniture and fittings go; so does anything upstairs that would hang over the void
+    const gone = this.fac2Query((o, b) => {
+      const cy = (b.min.y + b.max.y) / 2;
+      if (st.has(o)) {
+        if (o === A.ceilMesh) return true;
+        if (b.min.y > 3.8 && b.max.y < 5.3 && b.min.y < 4.3 && inside(b, stairR, -0.3) && Math.min(b.max.x - b.min.x, b.max.z - b.min.z) < 0.2) return true;   // skirts of the old stair hole
+        if (b.min.y >= U - 0.3 && b.max.y <= U + 0.06 && b.min.x >= A.x0 - 0.05 && b.max.x <= A.x1 + 0.05 && b.min.z >= A.z0 - 0.05 && b.max.z <= A.z1 + 0.05) return true;   // the old Level 2 floor
+        if (Math.abs(b.min.y - (U + UH)) < 0.02 && Math.abs(b.max.y - (U + UH)) < 0.02 && inside(b, stairR, -0.3) && b.max.x - b.min.x < 3.2) return true;   // the old hole's own ceiling
+        return false;
+      }
+      if (cy < 5 && inside(b, A)) return true;
+      if (cy >= 5 && inside(b, HOLE, -0.2)) return true;
+      return false;
+    });
+    this.fac2Remove(gone);
+    // the old corridor lights
+    for (const l of this.lamps.filter(l => l.room === 'corridor')) { if (l.light.parent) l.light.parent.remove(l.light); this.lamps.splice(this.lamps.indexOf(l), 1); }
+    // 2. Level 2 over the atrium: a rear gallery, side balconies and a front landing round an open void
+    const FL = this.facLevel;
+    this.surfaces = this.surfaces.filter(q => q.facUp !== 'u_hall');
+    for (const q of rectSub({ x0: A.x0, x1: A.x1, z0: A.z0, z1: A.z1 }, [HOLE])) {
+      const w = q.x1 - q.x0, d = q.z1 - q.z0, cx = (q.x0 + q.x1) / 2, cz = (q.z0 + q.z1) / 2;
+      const geo = new THREE.PlaneGeometry(w, d); planeUV(geo, w / 2, d / 2); geo.rotateX(-Math.PI / 2);
+      const f = new THREE.Mesh(geo, um.tiles); f.position.set(cx, U + 0.002, cz); S.add(f); this.staticRay.push(f);
+      this.box(cx, U - 0.2, cz, w, 0.198, d, M.ceil, { collide: false });
+      this.surfaces.push({ kind: 'flat', x0: q.x0, x1: q.x1, z0: q.z0, z1: q.z1, y: U, thick: 0.2, level: FL, room: null, facUp: 'u_hall' });
+    }
+    const H = HOLE;
+    for (const [x, z, w, d] of [[(H.x0 + H.x1) / 2, H.z0, H.x1 - H.x0, 0.08], [(H.x0 + H.x1) / 2, H.z1, H.x1 - H.x0, 0.08], [H.x0, (H.z0 + H.z1) / 2, 0.08, H.z1 - H.z0], [H.x1, (H.z0 + H.z1) / 2, 0.08, H.z1 - H.z0]])
+      this.box(x, U - 0.3, z, w, 0.34, d, M.darkMetal, { collide: false });
+    const railM = this.fac2RailM = new THREE.MeshPhongMaterial({ color: 0x9aa4ae, shininess: 70, specular: 0x666666 });
+    this.railing({ x0: A.x0, x1: H.x0, z0: H.z0, z1: H.z1, y: U }, 'x1', [], railM);
+    this.railing({ x0: H.x1, x1: A.x1, z0: H.z0, z1: H.z1, y: U }, 'x0', [], railM);
+    this.railing({ x0: H.x0, x1: H.x1, z0: H.z1, z1: A.z1, y: U }, 'z0', [], railM);
+    this.railing({ x0: H.x0, x1: H.x1, z0: A.z0, z1: H.z0, y: U }, 'z1', [[-1.56, 1.56]], railM);
+    FAC_UP.holes.push(HOLE);
+    // 3. the mystery box moves to the atrium's west wall (it used to sit in the middle of what is now the void's floor)
+    const bs = BOX_SPOTS[0]; Object.assign(bs, { x: -6.42, z: 11.2, rotY: Math.PI / 2, name: 'CENTRAL ATRIUM' });
+    if (this.mysteryBox && this.mysteryBox.spot === bs) this.mysteryBox.relocateTo(bs);
+  },
+  /* ======== THE MAIN LOBBY ======== */
+  fac2Lobby() {
+    const S = this.scene, R = ROOM_BY_ID.start;
+    // the old grand stair's sign and light
+    this.fac2Remove(this.fac2Query((o, b) => o.isMesh && o.geometry && o.geometry.type === 'PlaneGeometry' && Math.abs((b.min.x + b.max.x) / 2 + 2.4) < 0.4 && Math.abs((b.min.z + b.max.z) / 2 - 28.62) < 0.4 && b.max.y < 3));
+    for (const l of S.children) if (l.isPointLight && Math.abs(l.position.x + 1.4) < 0.05 && Math.abs(l.position.z - 29.9) < 0.05) l.position.set(0, 7.4, -6);
+    // a view into the atrium: glass either side of its door
+    this.fac2Rewall('z', 18, -8.5, -1.5, [[-5.6, -2.4, 'glass']]);
+    this.fac2Rewall('z', 18, 1.5, 8.5, [[2.4, 5.6, 'glass']]);
+  },
+});
+
+/* ---------- 5. new rooms: the COURTYARD, the SERVER ROOM and the CRYO BAY ---------- */
+function fac2Tex(kind) {
+  const key = 'fac2_' + kind; if (TEX[key]) return TEX[key];
+  const c = makeCanvas(256), g = c.getContext('2d');
+  if (kind === 'paving') {
+    g.fillStyle = '#6c6a62'; g.fillRect(0, 0, 256, 256);
+    for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) { const v = 96 + (Math.random() * 26 | 0); g.fillStyle = `rgb(${v},${v - 3},${v - 10})`; g.fillRect(x * 64 + 2, y * 64 + 2, 60, 60); }
+    g.fillStyle = 'rgba(46,70,30,0.55)'; for (let i = 0; i < 260; i++) { const x = (Math.random() * 4 | 0) * 64 + (Math.random() < 0.5 ? 0 : 62), y = Math.random() * 256; g.fillRect(x - 1, y, 3, 2 + Math.random() * 6); }   // moss in the joints
+    blotches(g, 256, 40, '20,18,14', 0.25, 6, 30);
+  } else if (kind === 'raised') {
+    g.fillStyle = '#30353c'; g.fillRect(0, 0, 256, 256);
+    for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) { g.fillStyle = (x + y) % 2 ? '#3a4048' : '#353a42'; g.fillRect(x * 64 + 2, y * 64 + 2, 60, 60); g.fillStyle = 'rgba(160,200,255,0.12)'; for (let k = 0; k < 6; k++) g.fillRect(x * 64 + 10 + k * 8, y * 64 + 10, 3, 44); }
+    blotches(g, 256, 14, '0,0,0', 0.2, 6, 26);
+  } else if (kind === 'frost') {
+    g.fillStyle = '#b8cad4'; g.fillRect(0, 0, 256, 256);
+    for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) { const v = 186 + (Math.random() * 20 | 0); g.fillStyle = `rgb(${v - 10},${v},${v + 8})`; g.fillRect(x * 64 + 1, y * 64 + 1, 62, 62); }
+    g.strokeStyle = 'rgba(255,255,255,0.35)'; for (let i = 0; i < 70; i++) { g.beginPath(); let x = Math.random() * 256, y = Math.random() * 256; g.moveTo(x, y); for (let k = 0; k < 5; k++) { x += Math.random() * 24 - 12; y += Math.random() * 24 - 12; g.lineTo(x, y); } g.stroke(); }
+  } else if (kind === 'rock') {
+    g.fillStyle = '#3a3834'; g.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 160; i++) { const v = 40 + Math.random() * 40 | 0; g.fillStyle = `rgba(${v},${v - 2},${v - 6},0.8)`; g.beginPath(); g.moveTo(Math.random() * 256, Math.random() * 256); for (let k = 0; k < 4; k++) g.lineTo(Math.random() * 256, Math.random() * 256); g.fill(); }
+    blotches(g, 256, 30, '10,10,8', 0.35, 10, 50);
+  } else if (kind === 'sky') {
+    const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#0a1430'); gr.addColorStop(1, '#1c2a4a'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 140; i++) { g.fillStyle = `rgba(255,255,255,${0.3 + Math.random() * 0.7})`; g.fillRect(Math.random() * 256, Math.random() * 256, Math.random() < 0.1 ? 2 : 1, Math.random() < 0.1 ? 2 : 1); }
+    const m = g.createRadialGradient(190, 70, 0, 190, 70, 40); m.addColorStop(0, 'rgba(240,244,255,1)'); m.addColorStop(0.3, 'rgba(220,230,255,0.9)'); m.addColorStop(0.31, 'rgba(160,180,230,0.25)'); m.addColorStop(1, 'rgba(120,140,200,0)'); g.fillStyle = m; g.fillRect(0, 0, 256, 256);
+  }
+  return (TEX[key] = texFrom(c, kind !== 'sky'));
+}
+Object.assign(World.prototype, {
+  fac2Room(r, reverb, floorKind) {
+    ROOMS.push(r); ROOM_BY_ID[r.id] = r; this.roomPower[r.id] = 1; this.roomTint[r.id] = { color: new THREE.Color(0xffffff), amt: 0 };
+    ROOM_REVERB[r.id] = reverb; FLOOR_BY_ROOM[r.id] = floorKind;
+    const w = r.x1 - r.x0, d = r.z1 - r.z0, cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2, S = this.scene;
+    const fg = new THREE.PlaneGeometry(w, d); planeUV(fg, w / (r.tile || 2), d / (r.tile || 2)); fg.rotateX(-Math.PI / 2);
+    const fl = new THREE.Mesh(fg, new THREE.MeshPhongMaterial({ map: r.tex || TEX.tiles, color: r.floor, shininess: r.shine || 14, specular: 0x222222 })); fl.position.set(cx, 0, cz); S.add(fl); this.staticRay.push(fl);
+    if (!r.outdoor) { const cg = new THREE.PlaneGeometry(w, d); planeUV(cg, w / 4, d / 4); cg.rotateX(Math.PI / 2); const ce = new THREE.Mesh(cg, this.mats.ceil); ce.position.set(cx, r.h, cz); S.add(ce); this.staticRay.push(ce); r.ceilMesh = ce; }
+    return r;
+  },
+  fac2Door(def) { DOORS.push(def); this.addDoor(def); return this.doors[this.doors.length - 1]; },
+  fac2Window(w) { WINDOWS.push(w); this.addWindow(w); return this.spawns[this.spawns.length - 1]; },
+  /** A light the room's power and the quality setting both control. */
+  fac2Light(x, y, z, room, color, o = {}) {
+    const l = new THREE.PointLight(color, o.int || 1.2, o.dist || 18, 1.5); l.position.set(x, y, z); this.scene.add(l);
+    const rec = { light: l, primary: !!o.primary, room, base: l.intensity, color: new THREE.Color(color), fmat: o.fmat || null, fcolor: o.fmat ? o.fmat.color.clone() : null, flick: null };
+    if (o.flicker) { rec.flick = { t: 0, on: true, k: 1 }; this.flickers.push(rec.flick); }
+    this.lamps.push(rec); return l;
+  },
+  fac2NewRooms() {
+    const M = this.mats, S = this.scene;
+    /* ---- the rooms ---- */
+    const yard = this.fac2Room({ id: 'yard', name: 'COURTYARD', x0: -14, x1: 14, z0: 36, z1: 52, h: 16, floor: 0xffffff, light: 0xc8d6ff, outdoor: true, tex: fac2Tex('paving'), tile: 4 }, { len: 1.6, decay: 1.4, bright: 0.6, wet: 0.18 }, 'concrete');
+    const srv = this.fac2Room({ id: 'srv', name: 'SERVER ROOM', x0: 17, x1: 28, z0: -36, z1: -24, h: 4.2, floor: 0xffffff, light: 0x6ab4ff, tex: fac2Tex('raised'), tile: 2.4, shine: 40 }, { len: 0.9, decay: 2.6, bright: 0.45, wet: 0.28 }, 'metal');
+    const cryo = this.fac2Room({ id: 'cryo', name: 'CRYO BAY', x0: -28.4, x1: -17, z0: -36, z1: -24, h: 4.2, floor: 0xffffff, light: 0x8fe8ff, tex: fac2Tex('frost'), tile: 2.4, shine: 60 }, { len: 1.2, decay: 3.4, bright: 0.7, wet: 0.4 }, 'tile');
+    this.bounds.maxZ = Math.max(this.bounds.maxZ, 52.6);
+    /* ---- walls, doors, spawn windows ---- */
+    const YW = { h: 7.2, mat: this.fac2YardWall = new THREE.MeshPhongMaterial({ map: TEX.concrete, color: 0x8a8678, shininess: 6 }) };
+    this.wall('x', -14, 36, 52, [[43.3, 44.7, 'window']], YW); this.wall('x', 14, 36, 52, [[43.3, 44.7, 'window']], YW);
+    this.wall('z', 52, -14, 14, [[-6.7, -5.3, 'window'], [5.3, 6.7, 'window']], YW); this.wall('z', 36, -14, -12, [], YW);
+    this.fac2Rewall('z', 36, -12, -0.7, [[-6.2, -2.8]]);
+    this.fac2Door({ id: 'D13', axis: 'z', at: 36, a0: -6.2, a1: -2.8, cost: 1000, neg: 'start', pos: 'yard' });
+    for (const w of [{ axis: 'x', at: -14, along: 44, inward: 1 }, { axis: 'x', at: 14, along: 44, inward: -1 }, { axis: 'z', at: 52, along: -6, inward: -1 }, { axis: 'z', at: 52, along: 6, inward: -1 }]) this.fac2Window(Object.assign(w, { zone: 'yard' }));
+    // the Reception's front window now looks out on the courtyard: no dark alcove behind it
+    for (const sp of this.spawns) if (Math.abs(sp.sill.z - 36) < 0.3 && Math.abs(sp.sill.x) < 12) sp.group.children.filter(m => m.material === M.exterior).forEach(m => { m.visible = false; m.raycast = () => {}; });
+    // server room (behind Containment) and cryo bay (behind B1 Storage)
+    this.wall('x', 17, -36, -24, [[-27.2, -25.8, 'window']]); this.wall('z', -36, 17, 28, [[25.9, 27.3, 'window']]); this.wall('x', 28, -36, -35.6);
+    this.fac2Rewall('z', -24, 16.7, 28.3, [[20.8, 24.2]]);
+    this.fac2Door({ id: 'D15', axis: 'z', at: -24, a0: 20.8, a1: 24.2, cost: 1250, neg: 'srv', pos: 'contain' });
+    this.wall('x', -17, -36, -24); this.wall('z', -36, -28.4, -17, [[-26.2, -24.8, 'window'], [-20.7, -19.3, 'window']]); this.wall('x', -28.4, -36, -35.6);
+    this.fac2Rewall('z', -24, -29.8, -16.7, [[-25.2, -21.8]]);
+    this.fac2Door({ id: 'D14', axis: 'z', at: -24, a0: -25.2, a1: -21.8, cost: 1250, neg: 'cryo', pos: 'storage' });
+    for (const [x, zone] of [[26.6, 'srv'], [-25.5, 'cryo'], [-20, 'cryo']]) this.fac2Window({ axis: 'z', at: -36, along: x, inward: 1, zone });
+    this.fac2Window({ axis: 'x', at: 17, along: -26.5, inward: 1, zone: 'srv' });
+    this.fac2Courtyard(); this.fac2ServerRoom(); this.fac2CryoBay();
+  },
+});
+Object.assign(World.prototype, {
+  fac2Mats() {
+    if (this.f2m) return this.f2m;
+    const P = o => new THREE.MeshPhongMaterial(Object.assign({ shininess: 12, specular: 0x222222 }, o)), B = c => new THREE.MeshBasicMaterial({ color: c });
+    return (this.f2m = {
+      concrete: P({ map: TEX.concrete, color: 0x9a968a }), soil: P({ color: 0x2e2618, shininess: 2 }), deadwood: P({ color: 0x4a3a28, shininess: 4 }), grass: P({ color: 0x4a5a2a, shininess: 2 }),
+      rock: P({ map: fac2Tex('rock'), color: 0x8a8478, shininess: 4 }), rack: P({ color: 0x15171b, shininess: 50, specular: 0x444444 }), grille: P({ map: TEX.metal, color: 0x2a2e34, shininess: 60 }),
+      ledG: B(0x40ff80), ledB: B(0x4aa8ff), ledA: B(0xffb030), ledR: B(0xff3030), white: P({ color: 0xe8ecef, shininess: 60 }), steel: P({ color: 0xa8b0b8, shininess: 80, specular: 0x777777 }),
+      frostGlass: new THREE.MeshPhongMaterial({ color: 0xcff4ff, emissive: 0x0c3448, transparent: true, opacity: 0.42, shininess: 120, specular: 0xffffff, depthWrite: false }),
+      ice: new THREE.MeshPhongMaterial({ color: 0xe0f8ff, emissive: 0x16404c, transparent: true, opacity: 0.7, shininess: 100, specular: 0xffffff }),
+      body: P({ color: 0x5a7080, shininess: 4 }), van: P({ color: 0xd8d8d0, shininess: 40 }), stripe: P({ color: 0xc02020, shininess: 30 }), tyre: P({ color: 0x141414, shininess: 4 }),
+      sand: P({ color: 0x8a7a58, shininess: 2 }), canvas: P({ color: 0x5a6a3a, shininess: 2 }), lampHead: B(0xfff4d8), glow: new THREE.MeshBasicMaterial({ color: 0x8fe8ff, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false }),
+      beam: new THREE.MeshBasicMaterial({ color: 0xb8c8ff, transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
+    });
+  },
+  /** Low concrete planter (cover) with soil and a dead shrub. */
+  fac2Planter(x, z, w, d, rotY = 0) {
+    const g = new THREE.Group(), m = this.fac2Mats();
+    this.part(g, 0, 0, 0, w, 0.72, d, m.concrete); this.part(g, 0, 0.62, 0, w - 0.2, 0.08, d - 0.2, m.soil);
+    for (let i = 0; i < Math.max(2, Math.round(w * 1.2)); i++) { const s = this.part(g, rand(-w / 2 + 0.3, w / 2 - 0.3), 0.66, rand(-d / 2 + 0.2, d / 2 - 0.2), 0.05, rand(0.6, 1.4), 0.05, m.deadwood, [rand(-0.5, 0.5), 0, rand(-0.5, 0.5)]); s.userData.noRay = true; }
+    for (let i = 0; i < 3; i++) this.part(g, rand(-w / 2 + 0.3, w / 2 - 0.3), 0.66, rand(-d / 2 + 0.2, d / 2 - 0.2), rand(0.2, 0.4), 0.12, rand(0.2, 0.4), m.grass);
+    return this.place(g, x, z, rotY);
+  },
+  fac2Bench(x, z, rotY = 0, fallen = false) {
+    const g = new THREE.Group(), M = this.mats;
+    for (const sx of [-0.8, 0.8]) this.part(g, sx, 0, 0, 0.08, 0.44, 0.42, M.darkMetal);
+    for (let i = 0; i < 3; i++) this.part(g, 0, 0.44, -0.14 + i * 0.14, 1.8, 0.04, 0.11, M.board);
+    for (let i = 0; i < 2; i++) this.part(g, 0, 0.62 + i * 0.16, 0.22, 1.8, 0.1, 0.03, M.board);
+    if (fallen) g.rotation.x = -1.45;
+    return this.place(g, x, z, rotY, { y: fallen ? 0.22 : 0 });
+  },
+  fac2Sandbags(x, z, len, rotY = 0, rows = 3, y = 0) {
+    const g = new THREE.Group(), m = this.fac2Mats();
+    for (let r = 0; r < rows; r++) for (let i = 0; i < Math.round(len / 0.55); i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.2, 0.36), m.sand); b.position.set(-len / 2 + 0.28 + i * 0.55 + (r % 2) * 0.27, 0.1 + r * 0.19, rand(-0.03, 0.03)); b.rotation.y = rand(-0.08, 0.08); b.scale.set(1, 1, rand(0.9, 1.1)); g.add(b); }
+    return this.place(g, x, z, rotY, { y });
+  },
+  /* ======== COURTYARD — the bottom of the old ventilation lightwell, open to the night sky ======== */
+  fac2Courtyard() {
+    const M = this.mats, m = this.fac2Mats(), S = this.scene, Y = ROOM_BY_ID.yard;
+    // rock rising above the retaining walls to a ragged opening, and the sky beyond
+    const rock = (x, z, w, d, y0, h) => { const b = this.box(x, y0, z, w, h, d, m.rock, { collide: false, tile: 6 }); b.userData.noRay = true; return b; };
+    rock(-15.2, 44, 2.4, 19, 7.2, 9); rock(15.2, 44, 2.4, 19, 7.2, 9); rock(0, 53.2, 32, 2.4, 7.2, 9);
+    for (let i = 0; i < 14; i++) { const s = rand(1.2, 2.6); rock(rand(-13.5, 13.5), rand(50.6, 51.6), s, s, rand(7, 13), s * 0.8); rock(i % 2 ? -13.4 : 13.4, rand(37.5, 51), s, s, rand(7, 13), s * 0.8); }
+    const sky = new THREE.Mesh(new THREE.PlaneGeometry(40, 30), new THREE.MeshBasicMaterial({ map: fac2Tex('sky'), fog: false })); sky.rotation.x = Math.PI / 2; sky.position.set(0, 16.4, 44); S.add(sky);
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(5, 9, 15.6, 20, 1, true), m.beam); beam.position.set(3, 8.2, 46); beam.rotation.z = 0.14; beam.renderOrder = 4; beam.raycast = () => {}; S.add(beam);
+    // a fire escape along the Reception's front at Level 2 (the dead climb in from it)
+    this.box(0, 4.95, 36.75, 24.4, 0.1, 1.2, M.darkMetal, { collide: false });
+    for (let x = -12; x <= 12.01; x += 2.4) this.box(x, 0, 37.3, 0.12, 4.95, 0.12, M.darkMetal, { collide: false });
+    this.box(0, 5.9, 37.33, 24.4, 0.06, 0.06, M.darkMetal, { collide: false }); this.box(0, 5.45, 37.33, 24.4, 0.04, 0.04, M.darkMetal, { collide: false });
+    // the dry fountain in the middle: cover, and a loop to run the dead round
+    { const g = new THREE.Group(); const ring = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.75, 0.75, 32, 1, true), m.concrete); ring.position.y = 0.375; g.add(ring);
+      const ring2 = new THREE.Mesh(new THREE.CylinderGeometry(2.35, 2.35, 0.75, 32, 1, true), m.concrete); ring2.position.y = 0.375; g.add(ring2);
+      const lip = new THREE.Mesh(new THREE.RingGeometry(2.35, 2.75, 32), m.concrete); lip.rotation.x = -Math.PI / 2; lip.position.y = 0.75; g.add(lip);
+      const base = new THREE.Mesh(new THREE.CircleGeometry(2.4, 32), new THREE.MeshPhongMaterial({ color: 0x3a3a30 })); base.rotation.x = -Math.PI / 2; base.position.y = 0.2; g.add(base);
+      this.cpart(g, 0, 0, 0, 0.35, 1.6, m.concrete, 16); this.cpart(g, 0, 1.6, 0, 0.8, 0.14, m.concrete, 20); this.cpart(g, 0, 1.74, 0, 0.18, 0.7, m.concrete, 12);
+      g.position.set(0, 0, 44); S.add(g); g.traverse(q => q.isMesh && this.staticRay.push(q)); this.addCollider(-2.7, 2.7, 0, 0.75, 41.3, 46.7); this.addCollider(-0.4, 0.4, 0, 2.4, 43.6, 44.4); }
+    this.decal(-0.6, 44.6, 2.2, M.bloodDecal); this.decal(1.2, 43.4, 1.4, M.bloodDecal);
+    // planters (dead hedges) as cover, leaving the paths clear
+    this.fac2Planter(-9.5, 40.2, 3.2, 1.0); this.fac2Planter(9.5, 40.2, 3.2, 1.0); this.fac2Planter(-9.5, 48.6, 3.2, 1.0);
+    this.fac2Bench(-5.5, 40.6, Math.PI); this.fac2Bench(5.6, 47.9, 0.1, true);
+    // a crashed site ambulance against the east wall
+    { const g = new THREE.Group(); this.part(g, 0, 0.45, 0, 2.1, 1.9, 4.2, m.van); this.part(g, 0, 0.45, 2.6, 2.0, 1.25, 1.0, m.van); this.part(g, 0, 1.1, 3.05, 1.9, 0.5, 0.06, M.window);
+      for (const sd of [-1, 1]) { this.part(g, sd * 1.06, 1.15, -0.4, 0.02, 0.3, 4.0, m.stripe); for (const zz of [-1.4, 2.2]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.28, 14), m.tyre); w.rotation.z = Math.PI / 2; w.position.set(sd * 1.0, 0.42, zz); g.add(w); } }
+      this.part(g, 0, 2.35, 1.6, 0.8, 0.14, 0.3, m.ledB); this.part(g, 0, 2.35, 1.6, 0.8, 0.14, 0.3, m.ledR);
+      g.rotation.z = 0.06; this.place(g, 9.8, 48.4, 1.35); }
+    // sandbag line and supply crates: the last stand someone made out here
+    this.fac2Sandbags(-6.5, 49.6, 3.3, 0.15); this.fac2Sandbags(7.2, 39.4, 2.8, -0.2, 2);
+    this.crate(-11.9, 50.8, 1.0, 0, 0.3); this.crate(-12.4, 49.6, 0.8, 0, -0.2); this.crate(-11.9, 50.8, 0.7, 1.0, 0.5);
+    // the floodlight tower (its generator is the courtyard quest)
+    { const g = new THREE.Group(); this.part(g, 0, 0, 0, 1.4, 0.9, 0.9, M.greenPaint); this.part(g, 0.4, 0.9, 0, 0.3, 0.3, 0.3, M.darkMetal); this.cpart(g, -0.4, 0.9, 0, 0.05, 6.2, M.darkMetal, 8);
+      const head = new THREE.Group(); head.position.set(-0.4, 7.1, 0); g.add(head); this.part(head, 0, 0, 0, 1.4, 0.5, 0.3, M.darkMetal); const lens = this.part(head, 0, 0.05, 0.16, 1.2, 0.36, 0.02, M.black); this.fac2FloodLens = lens;
+      head.rotation.x = 0.5; head.rotation.y = 0;
+      this.place(g, -11.4, 39.0, 0.6); this.fac2Flood = { g, head, lens, x: -11.4, z: 39.0, on: false }; }
+    this.bloodPools([[4, 41.5, 1.3], [-3, 47.5, 1.1], [7.6, 50.2, 0.9]]); this.debris(-2.4, 41, 6, 1.5); this.debris(6, 46.8, 5, 1.2);
+    // light: cold moonlight from above, and a weak work light by the door
+    this.fac2Light(2, 15, 45, 'yard', 0x9fb4ff, { int: 1.05, dist: 34, primary: true });
+    this.fac2Light(-4.5, 4.2, 37.8, 'yard', 0xffd8a0, { int: 0.7, dist: 10, flicker: true });
+  },
+  /* ======== SERVER ROOM — rack aisles you can loop, emergency red ======== */
+  fac2ServerRoom() {
+    const M = this.mats, m = this.fac2Mats(), S = this.scene, R = ROOM_BY_ID.srv;
+    const rack = (x, z, rotY, dark) => { const g = new THREE.Group(); this.part(g, 0, 0, 0, 0.7, 2.15, 1.0, m.rack); this.part(g, 0, 0.05, 0.505, 0.62, 2.05, 0.01, m.grille);
+      for (let k = 0; k < 9; k++) { const led = this.part(g, rand(-0.22, 0.22), 0.25 + k * 0.21, 0.515, 0.05, 0.02, 0.01, dark ? M.black : pick([m.ledG, m.ledG, m.ledB, m.ledA])); led.userData.noRay = true; if (!dark && Math.random() < 0.3) this.blinkers.push({ m: led, t: rand(0.2, 1.8) }); }
+      return this.place(g, x, z, rotY); };
+    // three rows of racks along the room with cross-aisles: a loop round every row
+    for (const x of [19.6, 22.5, 25.4]) for (const z0 of [-33.4, -28.4]) for (let k = 0; k < 3; k++) if (!(x === 22.5 && z0 === -28.4 && k === 2)) rack(x, z0 + k * 1.0, x === 22.5 ? Math.PI / 2 : -Math.PI / 2, Math.random() < 0.25);
+    // the mainframe console at the south end, overhead cable trays, a cooling unit
+    { const g = new THREE.Group(); this.part(g, 0, 0, 0, 3.4, 1.0, 0.8, M.darkMetal); this.part(g, 0, 1.0, -0.15, 3.4, 0.5, 0.5, M.darkMetal, [-0.4, 0, 0]);
+      for (let i = 0; i < 3; i++) { const sc = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.4), M.screen); sc.position.set(-1.1 + i * 1.1, 1.3, 0.1); sc.rotation.x = -0.4; g.add(sc); }
+      this.place(g, 22.5, -35.25, 0); this.fac2Main = g; }
+    for (const x of [19.6, 22.5, 25.4]) { this.box(x, 3.7, -29.9, 0.4, 0.06, 9.0, M.darkMetal, { collide: false, ray: false }); for (let z = -33.8; z < -25.8; z += 1.6) this.box(x, 3.76, z, 0.36, 0.12, 0.6, pick([m.ledB, M.black, M.redPaint]), { collide: false, ray: false }); }
+    { const g = new THREE.Group(); this.part(g, 0, 0, 0, 0.9, 1.9, 1.6, m.white); for (let i = 0; i < 6; i++) this.part(g, 0.46, 0.3 + i * 0.25, 0, 0.02, 0.06, 1.3, M.darkMetal); this.place(g, 27.45, -26.2, 0); }
+    this.sign(17.17, 3.0, -30.4, Math.PI / 2, 'SERVER ROOM — AUTHORISED IT STAFF', 3.0, { size: 46, border: '#4aa8ff', color: '#bfe0ff' });
+    this.bloodPools([[21, -31.5, 1.2], [24, -27, 0.8]]); this.debris(23.9, -32.3, 6, 1); this.decal(19.6, -26.4, 1.3, M.bloodDecal);
+    this.chair(23.8, -33.9, 2.6, true);
+    // light: cold blue racks, and the red emergency beacon
+    const fx = new THREE.MeshBasicMaterial({ color: 0xbcdcff });
+    this.box(22.5, 4.12, -30, 1.3, 0.08, 0.32, fx, { collide: false, ray: false });
+    this.fac2Light(22.5, 3.6, -30, 'srv', 0x6ab4ff, { int: 1.15, dist: 15, primary: true, fmat: fx, flicker: true });
+    const al = new THREE.PointLight(0xff2020, 1.4, 15, 1.5); al.position.set(22.5, 3.6, -25.2); S.add(al);
+    const bc = new THREE.Group(); bc.position.set(22.5, 3.9, -24.5); S.add(bc); const bm = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.22, 12), new THREE.MeshBasicMaterial({ color: 0xff3030 })); bc.add(bm);
+    this.alarms.push({ light: al, beacon: bc, t: 0 }); this.lamps.push({ light: al, primary: false, room: 'srv', alarm: true, base: 1.4, color: new THREE.Color(0xff2020) });
+  },
+  /* ======== CRYO BAY — frozen subjects, coolant fog, one empty pod ======== */
+  fac2CryoBay() {
+    const M = this.mats, m = this.fac2Mats(), S = this.scene;
+    const pod = (x, z, rotY, broken) => { const g = new THREE.Group();
+      this.cpart(g, 0, 0, 0, 0.62, 0.3, M.darkMetal, 20); this.cpart(g, 0, 2.3, 0, 0.62, 0.35, M.darkMetal, 20);
+      const gl = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, 2.0, 20, 1, true, broken ? 0.9 : 0, broken ? Math.PI * 1.2 : Math.PI * 2), m.frostGlass); gl.position.y = 1.3; gl.renderOrder = 3; g.add(gl);
+      if (!broken) { this.part(g, 0, 0.55, 0, 0.34, 0.6, 0.22, m.body); this.part(g, 0, 1.15, 0, 0.42, 0.62, 0.24, m.body); this.part(g, 0, 1.6, 0, 0.22, 0.24, 0.22, m.body); const ice = new THREE.Mesh(new THREE.CylinderGeometry(0.49, 0.5, 0.5, 18), m.ice); ice.position.y = 0.55; g.add(ice); }
+      else { for (let i = 0; i < 6; i++) this.part(g, rand(-0.6, 0.6), 0.3, rand(0.4, 1.2), rand(0.08, 0.2), 0.02, rand(0.08, 0.2), m.frostGlass, [0, rand(0, 3), 0]); }
+      const sc = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 0.18), broken ? new THREE.MeshBasicMaterial({ color: 0xff3030 }) : new THREE.MeshBasicMaterial({ color: 0x40ffd0 })); sc.position.set(0, 2.05, 0.53); g.add(sc);
+      return this.place(g, x, z, rotY, { shrink: 0.05 }); };
+    // pods in two banks along the side walls, the middle left open
+    let i = 0; this.fac2Pods = [];
+    for (const z of [-34.4, -32.4, -30.4, -28.4, -26.4]) { this.fac2Pods.push(pod(-27.6, z, Math.PI / 2, i === 2)); this.fac2Pods.push(pod(-17.8, z, -Math.PI / 2, false)); i++; }
+    // the coolant plant in the centre: a frosted tank you can circle
+    { const g = new THREE.Group(); const t = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 2.6, 24), new THREE.MeshPhongMaterial({ color: 0xc8dce4, shininess: 90, specular: 0x999999 })); t.position.y = 1.3; g.add(t);
+      for (const y of [0.4, 1.3, 2.2]) { const b = new THREE.Mesh(new THREE.TorusGeometry(1.07, 0.05, 6, 28), M.darkMetal); b.rotation.x = Math.PI / 2; b.position.y = y; g.add(b); }
+      const frost = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.5, 0.08, 24), m.ice); frost.position.y = 0.04; g.add(frost);
+      this.place(g, -22.7, -30.2, 0); }
+    this.pipe(-22.7, 3.4, -30.2, -27.6, -33.4, 0.09, M.metal); this.pipe(-22.7, 3.6, -30.2, -17.8, -27.4, 0.09, M.metal); this.pipe(-22.7, 3.8, -30.2, -22.7, -35.6, 0.12, M.darkMetal);
+    { const g = new THREE.Group(); this.part(g, 0, 0, 0, 1.6, 1.1, 0.7, M.darkMetal); this.part(g, 0, 1.1, -0.1, 1.6, 0.4, 0.5, M.darkMetal, [-0.4, 0, 0]); const sc = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.32), new THREE.MeshBasicMaterial({ color: 0x40d8ff })); sc.position.set(0, 1.35, 0.08); sc.rotation.x = -0.4; g.add(sc); this.place(g, -22.7, -35.2, 0); this.fac2CryoDesk = g; }
+    this.sign(-17.17, 3.0, -30.4, -Math.PI / 2, 'CRYOGENIC STORAGE — BAY 3', 2.8, { size: 46, border: '#8fe8ff', color: '#d8f8ff' });
+    this.bloodPools([[-26.4, -30.4, 1.2], [-24.3, -29.4, 0.7]]); this.decal(-21, -33, 2.4, new THREE.MeshBasicMaterial({ map: fac2Tex('frost'), transparent: true, opacity: 0.5, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
+    // light: icy cyan, and a red strobe for the breach
+    const fx = new THREE.MeshBasicMaterial({ color: 0xd8f8ff });
+    this.box(-22.7, 4.12, -27, 1.3, 0.08, 0.32, fx, { collide: false, ray: false });
+    this.fac2Light(-22.7, 3.6, -27.4, 'cryo', 0x8fe8ff, { int: 1.2, dist: 15, primary: true, fmat: fx });
+    this.fac2Light(-22.7, 3.4, -33.8, 'cryo', 0xff3a3a, { int: 0.7, dist: 9, flicker: true });
+  },
+});
+
+/* ---------- 6. dressing: the atrium's lights and furniture ---------- */
+Object.assign(World.prototype, {
+  /** A pendant light hanging into the atrium void. */
+  fac2Pendant(x, y, z, color, o = {}) {
+    const g = new THREE.Group(), M = this.mats, top = FAC_U + FAC_UH;
+    this.cpart(g, 0, 0.32, 0, 0.012, top - y - 0.32, M.darkMetal, 4);
+    const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.75, 0.42, 20, 1, true), new THREE.MeshPhongMaterial({ color: 0x2a2e34, side: THREE.DoubleSide, shininess: 40 })); shade.position.y = 0.21; g.add(shade);
+    const bm = new THREE.MeshBasicMaterial({ color: new THREE.Color(color).lerp(new THREE.Color(0xffffff), 0.6) }); const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 8), bm); bulb.position.y = 0.06; g.add(bulb);
+    g.position.set(x, y, z); this.scene.add(g); g.traverse(q => { if (q.isMesh) q.raycast = () => {}; });
+    return this.fac2Light(x, y - 0.3, z, 'corridor', color, Object.assign({ int: 1.25, dist: 22, fmat: bm }, o));
+  },
+  fac2Dress() {
+    const M = this.mats, m = this.fac2Mats(), U = FAC_U, S = this.scene;
+    /* ---- atrium ---- */
+    this.fac2Pendant(0, 7.3, 11.5, 0xe8f0ff, { primary: true });
+    this.fac2Pendant(0, 7.3, 3.0, 0xe8f0ff);
+    this.fac2Pendant(-2.6, 7.8, -6.0, 0xffe2b8, { int: 1.0, dist: 16 });
+    const ux = new THREE.MeshBasicMaterial({ color: 0xd8e8ff });
+    for (const [x, z, pr, fl] of [[-3.5, -14.5, true, false], [3.5, -20.5, false, true]]) { this.box(x, 4.92, z, 1.3, 0.08, 0.32, ux, { collide: false, ray: false }); this.fac2Light(x, 4.4, z, 'corridor', 0xd0dcff, { int: 1.1, dist: 15, primary: pr, flicker: fl, fmat: ux }); }
+    // cover on the open floor, keeping a clear lap round the grand stair
+    this.fac2Planter(-4.6, 9.6, 2.6, 0.9); this.fac2Planter(4.6, 9.6, 2.6, 0.9); this.fac2Planter(-4.6, 1.2, 2.6, 0.9, 0); this.fac2Planter(4.6, 1.2, 2.6, 0.9);
+    this.fac2Bench(-4.6, 5.4, Math.PI / 2); this.fac2Bench(4.7, 5.6, -Math.PI / 2 + 0.2, true);
+    // under the gallery: a security checkpoint that did not hold
+    { const g = new THREE.Group(); this.part(g, 0, 0, 0, 2.4, 1.05, 0.7, M.darkMetal); this.part(g, 0, 1.05, 0, 2.5, 0.05, 0.8, M.plastic); this.part(g, -0.6, 1.1, 0.1, 0.5, 0.34, 0.05, M.black);
+      const sc = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.28), M.screen); sc.position.set(-0.6, 1.27, 0.13); g.add(sc); this.place(g, -4.4, -16.5, Math.PI / 2); }
+    this.fac2Sandbags(3.6, -13.4, 2.8, 0.05, 3); this.fac2Sandbags(-1.0, -19.6, 2.2, Math.PI / 2 + 0.1, 2);
+    this.barrel(5.8, -12.6); this.barrel(6.1, -13.5, M.rust); this.crate(-6.1, -21.6, 0.9, 0, 0.2); this.crate(-5.9, -22.6, 0.7, 0, -0.3);
+    // the rear gallery: an overlook with sandbags at the rail and an ammo cache
+    this.fac2Sandbags(-3.0, -10.7, 1.9, 0, 2, U); this.fac2Sandbags(3.0, -10.7, 1.9, 0, 2, U);
+    this.addCache(5.4, U, -22.9, 0, 'AMMO');
+    this.crate(-5.9, -16.2, 0.9, U, 0.15); this.crate(-5.95, -17.1, 0.7, U, -0.2);
+    this.sign(0, U + 2.6, -23.83, 0, 'REAR GALLERY — OVERLOOK', 2.8, { size: 52, border: '#8fd0ff', color: '#e8f4ff' });
+    this.sign(0, 3.55, -1.25, 0, '▲ GRAND STAIR · LEVEL 2', 2.4, { size: 54, bg: '#16324a', border: '#8fd0ff', color: '#e8f4ff' });
+    /* ---- the bigger wings get more light (each in its room's own colour; Low keeps one per room) ---- */
+    for (const [x, z, room, o] of [[-28, 12, 'lab', {}], [-26, -18, 'storage', { flicker: true }], [-12.5, -18.5, 'storage', {}], [25, -17, 'contain', { intensity: 0.85, color: 0xd8d0c8 }], [22, 32.5, 'comms', { intensity: 0.9, dist: 11 }], [-6, 31, 'start', { intensity: 1.0 }]])
+      this.lamp(x, z, room, Object.assign({ dist: 17 }, o));
+    // the Reception: a waiting area by the west wall and a site directory
+    this.fac2Bench(-8.4, 21.6, Math.PI / 2); this.fac2Bench(-8.4, 24.0, Math.PI / 2); this.fac2Planter(-6.6, 33.8, 1.6, 0.8);
+    this.sign(11.82, 2.6, 23.5, -Math.PI / 2, 'SITE 9 — ATRIUM ▲ · LAB ◀ · GENERATOR ▶ · COURTYARD ▼', 3.4, { size: 40, bg: '#16324a', border: '#8fd0ff', color: '#e8f4ff' });
+    // freshly overrun: blood trails toward the bulkhead, a dropped rifle case, papers (the floor clutter is added on start)
+    this.bloodPools([[-1.8, 13.5, 1.3], [2.2, 6.5, 0.9], [0.6, -12.8, 1.5], [-2.2, -21.8, 1.1], [3.4, 15.8, 0.7]]);
+    this.debris(-2.5, 7.5, 6, 1.4); this.debris(2.5, -15, 7, 1.6);
+    this.chair(-3.2, -12.4, 2.2, true); this.chair(5.6, 14.2, 0.7, true);
+  },
+});
+
+/* ---------- 7. doorways: nothing loose may stand in front of a door ---------- */
+Object.assign(World.prototype, {
+  fac2Clearance() {
+    const prot = this._fac2Prot, st = this._fac2Struct, S = this.scene, rep = this.fac2.clear = [];
+    const topOf = o => { while (o && o.parent && o.parent !== S) o = o.parent; return o; };
+    const zones = this.doors.filter(d => d.def.story !== 'secret').map(d => { const D = d.def, y = D.y || 0, a0 = D.a0 - 0.45, a1 = D.a1 + 0.45, dep = 1.9;
+      return { d, y, axis: D.axis, r: D.axis === 'z' ? { x0: a0, x1: a1, z0: D.at - dep, z1: D.at + dep } : { x0: D.at - dep, x1: D.at + dep, z0: a0, z1: a1 } }; });
+    const ov = (c, r, y) => c.maxX > r.x0 && c.minX < r.x1 && c.maxZ > r.z0 && c.minZ < r.z1 && c.maxY > y + 0.15 && c.minY < y + 1.9;
+    const colsOf = o => { const s = new Set(); o.traverse(q => s.add(q)); return this.colliders.filter(c => c._fac2obj && s.has(c._fac2obj)); };
+    const todo = new Map();
+    for (const c of this.colliders) {
+      if (!c.enabled || !c._fac2obj) continue; const o = topOf(c._fac2obj);
+      if (!o || prot.has(o) || st.has(o) || todo.has(o)) continue;
+      for (const z of zones) if (z.d.collider !== c && ov(c, z.r, z.y)) { todo.set(o, z); break; }
+    }
+    const roomOf = (x, z, y) => { const r = this.roomAt(x, z, y); return r ? r.id : null; };
+    for (const [o, z] of todo) {
+      const cs = colsOf(o); if (!cs.length) continue;
+      const bx = { minX: Math.min(...cs.map(c => c.minX)), maxX: Math.max(...cs.map(c => c.maxX)), minZ: Math.min(...cs.map(c => c.minZ)), maxZ: Math.max(...cs.map(c => c.maxZ)), minY: Math.min(...cs.map(c => c.minY)), maxY: Math.max(...cs.map(c => c.maxY)) };
+      const home = roomOf((bx.minX + bx.maxX) / 2, (bx.minZ + bx.maxZ) / 2, z.y + 0.5), X = z.axis === 'z';
+      const lo = X ? bx.minX : bx.minZ, hi = X ? bx.maxX : bx.maxZ, r0 = X ? z.r.x0 : z.r.z0, r1 = X ? z.r.x1 : z.r.z1;
+      const tries = [r1 + 0.15 - lo, r0 - 0.15 - hi].sort((p, q) => Math.abs(p) - Math.abs(q));
+      let moved = null;
+      for (const dd of tries) {
+        if (Math.abs(dd) > 4) continue;
+        const nb = { minX: bx.minX + (X ? dd : 0), maxX: bx.maxX + (X ? dd : 0), minZ: bx.minZ + (X ? 0 : dd), maxZ: bx.maxZ + (X ? 0 : dd), minY: bx.minY, maxY: bx.maxY };
+        if ([[nb.minX, nb.minZ], [nb.maxX, nb.minZ], [nb.minX, nb.maxZ], [nb.maxX, nb.maxZ]].some(([x, q]) => roomOf(x, q, z.y + 0.5) !== home)) continue;
+        if (zones.some(q => ov(nb, q.r, q.y))) continue;
+        if (this.colliders.some(c => c.enabled && !cs.includes(c) && c.maxX > nb.minX - 0.05 && c.minX < nb.maxX + 0.05 && c.maxZ > nb.minZ - 0.05 && c.minZ < nb.maxZ + 0.05 && c.maxY > nb.minY + 0.05 && c.minY < nb.maxY)) continue;
+        moved = dd; break;
+      }
+      const at = `${o.type} @(${((bx.minX + bx.maxX) / 2).toFixed(1)},${((bx.minZ + bx.maxZ) / 2).toFixed(1)}) y${bx.minY.toFixed(1)} ${(bx.maxX - bx.minX).toFixed(1)}x${(bx.maxZ - bx.minZ).toFixed(1)} by ${z.d.def.id}`;
+      if (moved != null) {
+        if (X) o.position.x += moved; else o.position.z += moved; o.updateMatrix(); o.updateMatrixWorld(true);
+        for (const c of cs) { if (X) { c.minX += moved; c.maxX += moved; } else { c.minZ += moved; c.maxZ += moved; } }
+        rep.push('moved ' + at + ' ' + moved.toFixed(2));
+      } else { this.fac2Remove([o]); rep.push('removed ' + at); }
+    }
+  },
+});
+
+/* ---------- 8. a small job in each new room ---------- */
+if (FAC2) {
+  Object.assign(STORY_DOCS, {
+    fYardLog: { title: 'Courtyard — Evac Notice', kind: 'doc', text: 'SURFACE EVACUATION — PHASE 2\n\nThe lightwell yard is the muster point for anyone who cannot reach the freight elevator. Stay inside the sandbag line. The floodlight tower runs on its own generator: keep it fuelled. Helicopters will not land without it.\n\nNobody came. We kept the light on for three nights anyway.' },
+    fSrvLog: { title: 'Server Room — Incident Log', kind: 'doc', research: true, text: 'SYS/INCIDENT 0447 — Containment doors cycled 212 times in 40 seconds. Source: ADMIN (H. CROWE), remote.\n\nSYS/INCIDENT 0448 — Admin account locked out. Doors stuck OPEN.\n\nSomeone opened every cage in the building on purpose, and then made sure nobody could close them again.' },
+    fCryoLog: { title: 'Cryo Bay — Pod Manifest', kind: 'doc', research: true, text: 'BAY 3 MANIFEST\nPods 1–9: ECLIPSE volunteers, suspended, stable.\nPod 3: SUBJECT S-11 — "Kessler". Suspension FAILED 02:14. Pod breached from the INSIDE.\n\nNote: S-11 retained motor control at core temperature 4°C. Do not approach. Do not let it warm up.' },
+  });
+  QUESTS.sqYard = { title: 'Lights in the Well', summary: 'The courtyard floodlight was the evacuation signal. Fuel its generator and turn it back on.',
+    steps: [QS.collect('Find fuel for the floodlight generator (the crashed ambulance)', ['yardFuel']),
+      QS.flag('Start the floodlight generator', 'yardLit', () => ({ x: -11.4, y: 1.2, z: 39.0 }))],
+    done: s => { s.points(1500); s.addDoc('fYardLog'); const g = s.game; if (g.drops) g.drops.spawn('maxammo', { x: -9.6, y: 0, z: 40.4 }); s.toast('THE FLOODLIGHT IS ON — SUPPLY DROP IN THE COURTYARD'); } };
+  QUESTS.sqSrv = { title: 'Hard Reset', summary: 'The server room is running on emergency power with three drive sleds failed. Reseat them and reboot the mainframe.',
+    steps: [{ text: s => `Reseat the failed drive sleds (${['srv1', 'srv2', 'srv3'].filter(k => s.f[k]).length}/3)`, marker: s => s.nearestOf((s.fac2SrvSleds || []).filter(q => !s.f[q.k]).map(q => ({ x: q.x, y: 1.4, z: q.z }))), check: s => s.f.srv1 && s.f.srv2 && s.f.srv3 },
+      QS.flag('Reboot the mainframe', 'srvBoot', () => ({ x: 22.5, y: 1.4, z: -34.6 }))],
+    done: s => { s.points(1500); s.addDoc('fSrvLog'); s.toast('MAINFRAME ONLINE — AMMO CACHE UNLOCKED IN THE SERVER ROOM'); } };
+  QUESTS.sqCryo = { title: 'Cold Case', summary: 'One pod in the cryo bay was breached from the inside. Find out who was in it — and put it down.',
+    steps: [QS.flag('Read the pod manifest at the cryo console', 'cryoRead', () => ({ x: -22.7, y: 1.4, z: -34.6 })),
+      { text: 'Put down Subject S-11', marker: s => { const z = s.fac2S11; return z && z.active && z.state !== 'dead' ? { x: z.pos.x, y: z.pos.y + 2.4, z: z.pos.z } : null; }, check: s => !!s.f.s11Dead }],
+    done: s => { s.points(1250); s.addBuff('adrenal'); } };
+  QUEST_ORDER.push('sqYard', 'sqSrv', 'sqCryo');
+  const S = Story.prototype;
+  const _up = S.update;
+  S.update = function (dt) {
+    const r = _up.call(this, dt);
+    try {
+      const g = this.game, p = g.player.pos, W = g.world, R = W.roomAt(p.x, p.z, p.y), id = R && R.id;
+      for (const [room, q] of [['yard', 'sqYard'], ['srv', 'sqSrv'], ['cryo', 'sqCryo']]) if (id === room && this.q[q] && this.q[q].state === 'locked') { this.offer(q); this.accept(q); }
+      // Subject S-11 wakes when you read the manifest
+      if (this.f.cryoRead && !this.f.s11Spawned && g.rounds && g.rounds.round > 0) {
+        const st = g.rounds.stats(Math.max(1, g.rounds.round)); st.type = 'brute';
+        if (g.spawnZombie(st)) { const z = g.activeZombies[g.activeZombies.length - 1]; z.leaveWindow && z.leaveWindow(); z.state = 'chase'; z.appr = null; z.pos.set(-27.0, 0, -30.4); z.stuckT = 0; z.bestDist = 1e9; z.fac2Tag = 'S11'; this.fac2S11 = z; this.set('s11Spawned'); this.toast('SOMETHING IN BAY 3 IS MOVING'); g.player.shake = Math.max(g.player.shake || 0, 0.5); }
+      }
+      if (this.f.s11Spawned && !this.f.s11Dead) { const z = this.fac2S11; if (!z || z.fac2Tag !== 'S11' || !z.active || z.state === 'dead') { this.set('s11Dead'); if (z) delete z.fac2Tag; } }
+      if (this.f.srvBoot && !this.f.srvCache) { this.set('srvCache'); W.addCache(25.6, 0, -34.9, 0, 'AMMO'); const al = W.alarms.find(a => a.srv); if (al) { al.light.color.setHex(0x40a0ff); al.beacon.children.forEach(m => m.material.color.setHex(0x40a0ff)); } }
+      if (this.f.yardLit && W.fac2Flood && !W.fac2Flood.on) { W.fac2Flood.on = true; W.fac2FloodOn(); }
+    } catch (e) { console.error('fac2 quests', e); }
+    return r;
+  };
+  const _bi = S.bestInteract;
+  S.bestInteract = function (p, bd) {
+    let best = _bi.call(this, p, bd);
+    const E = '<span class="key">E</span>', g = this.game, W = g.world; if (facIsUp(g.player.pos.y)) return best;
+    const cons = (x, z, r, html, action) => { const d = Math.hypot(x - p.x, z - p.z); if (d < r && d < (best ? best.dist : bd)) best = { dist: d, html, action }; };
+    const q = id => this.q[id] ? this.q[id].state : 'locked';
+    if (W.fac2Flood) { const F = W.fac2Flood;
+      if (q('sqYard') === 'active' && this.taken.yardFuel && !this.f.yardLit) cons(F.x, F.z, 2.0, `Press ${E} to fuel and start the <b>floodlight generator</b>`, () => { this.set('yardLit'); g.audio.purchase && g.audio.purchase(); });
+      else if (!this.f.yardLit) cons(F.x, F.z, 1.8, 'Floodlight generator <span class="sub">Out of fuel</span>', null); }
+    if (q('sqSrv') === 'active') for (const s of this.fac2SrvSleds || []) if (!this.f[s.k]) cons(s.x, s.z, 1.5, `Press ${E} to reseat the <b>drive sled</b>`, () => { this.set(s.k); s.led.material = new THREE.MeshBasicMaterial({ color: 0x40ff80 }); g.audio.terminal && g.audio.terminal(); });
+    if (q('sqSrv') === 'active' && this.f.srv1 && this.f.srv2 && this.f.srv3 && !this.f.srvBoot) cons(22.5, -34.6, 1.8, `Press ${E} to <b>reboot the mainframe</b>`, () => { this.set('srvBoot'); g.audio.terminal && g.audio.terminal(); });
+    if (q('sqCryo') === 'active' && !this.f.cryoRead) cons(-22.7, -34.6, 1.8, `Press ${E} to read the <b>pod manifest</b>`, () => { this.set('cryoRead'); this.addDoc('fCryoLog'); g.audio.terminal && g.audio.terminal(); });
+    return best;
+  };
+  const _rs = S.reset;
+  S.reset = function () { const r = _rs.call(this); const W = this.game.world;
+    // the server room's three failed sleds (red lights on the ends of the racks)
+    if (W.fac2SrvSledDefs) this.fac2SrvSleds = W.fac2SrvSledDefs.map(d => Object.assign({}, d));
+    this.fac2S11 = null;
+    if (W.fac2Flood && W.fac2Flood.on) { W.fac2Flood.on = false; W.fac2FloodOff && W.fac2FloodOff(); }
+    return r; };
+}
+Object.assign(World.prototype, {
+  fac2Quests() {
+    // pickups and fixtures for the three jobs (new space)
+    PICKUPS.yardFuel = { name: 'Jerry Can', kind: 'cell', x: 7.0, y: 0.02, z: 46.4, item: true, when: s => s.qs('sqYard') === 'active' };
+    const M = this.mats, red = () => new THREE.MeshBasicMaterial({ color: 0xff3030 });
+    this.fac2SrvSledDefs = [[20.15, -26.4], [21.95, -31.4], [24.85, -33.4]].map(([x, z], i) => { const led = this.box(x, 1.05, z + 0.0, 0.08, 0.12, 0.6, red(), { collide: false, ray: false }); return { k: 'srv' + (i + 1), x, z, led }; });
+    const A = this.alarms[this.alarms.length - 1]; if (A && A.light && Math.abs(A.light.position.x - 22.5) < 0.1) A.srv = true;
+    // the floodlight: a hard white beam over the yard once it is running
+    const F = this.fac2Flood; if (!F) return;
+    const lt = new THREE.PointLight(0xfff4e0, 0, 34, 1.4); lt.position.set(F.x + 2.2, 6.4, F.z + 2.8); this.scene.add(lt); F.light = lt;
+    this.lamps.push({ light: lt, primary: false, room: 'yard', base: 0, color: new THREE.Color(0xfff4e0) }); F.rec = this.lamps[this.lamps.length - 1];
+    F.lensOff = F.lens.material; F.lensOn = this.fac2Mats().lampHead;
+  },
+  fac2FloodOn() { const F = this.fac2Flood; if (!F) return; F.rec.base = 1.6; F.rec.primary = true; F.light.visible = true; F.lens.material = F.lensOn; },
+  fac2FloodOff() { const F = this.fac2Flood; if (!F) return; F.rec.base = 0; F.light.intensity = 0; F.lens.material = F.lensOff; },
+});
+if (FAC2 && typeof window !== 'undefined') window.__fac2 = { ROOMS, SPOTS, PICKUPS, FAC_SPOTS: typeof FAC_SPOTS !== 'undefined' ? FAC_SPOTS : null, ROUTINES, DOORS, F: fac2P, FAC2 };
+
+/* ---------- 9. lights: a fixed pool of real lights follows you ----------
+   The bigger building has more lamps than a forward renderer should light every pixel with
+   (and each change in the number of lights recompiles every shader). The lamps keep running as
+   before — power cuts, flicker, alarms, room tints — but only as records; a fixed set of real
+   lights takes the place of the ones nearest the camera. */
+Object.assign(World.prototype, {
+  fac2LightPool() {
+    const S = this.scene, keep = new Set(this.facPool || []);
+    const proxies = [];
+    for (const o of S.children.slice()) if (o.isPointLight && !keep.has(o) && o !== (this.game && this.game.muzzleLight) && o.position.y > -10) { S.remove(o); proxies.push(o); }
+    this.fac2Prox = proxies;
+    this.fac2Pool = [];
+    this.fac2PoolN = Settings.quality === 'low' ? 5 : Settings.quality === 'medium' ? 9 : 11;
+    for (let i = 0; i < this.fac2PoolN; i++) { const l = new THREE.PointLight(0xffffff, 0, 10, 1.5); l.position.set(0, -60, 0); S.add(l); this.fac2Pool.push(l); }
+    this.fac2PoolT = 0;
+  },
+  fac2PoolTick(dt) {
+    const pool = this.fac2Pool; if (!pool) return;
+    const g = this.game, cam = g && g.camera ? g.camera.position : null; if (!cam) return;
+    this.fac2PoolT -= dt;
+    if (this.fac2PoolT <= 0 || !this.fac2Pick) {
+      this.fac2PoolT = 0.2;
+      const up = cam.y > FAC_U - 0.4, N = Math.min(pool.length, this.fac2PoolN);
+      const sc = [];
+      for (const l of this.fac2Prox) { if (!l.visible) continue; const dy = Math.abs(l.position.y - cam.y) > 4 && up !== (l.position.y > FAC_U - 0.5) ? 14 : 0; const d = Math.hypot(l.position.x - cam.x, l.position.z - cam.z) + dy; if (d < l.distance + 6) sc.push([d - (l.intensity > 1.2 ? 2 : 0), l]); }
+      sc.sort((a, b) => a[0] - b[0]);
+      const pick = sc.slice(0, N).map(q => q[1]), prev = this.fac2Pick || [];
+      // keep each picked lamp on the same pool light, so nothing pops
+      const next = new Array(pool.length).fill(null), left = new Set(pick);
+      prev.forEach((l, i) => { if (l && left.has(l) && i < N) { next[i] = l; left.delete(l); } });
+      for (const l of left) { const i = next.findIndex((q, k) => !q && k < N); if (i >= 0) next[i] = l; }
+      this.fac2Pick = next;
+    }
+    this.fac2Pick.forEach((src, i) => { const l = pool[i]; if (!src) { l.intensity = 0; l.position.y = -60; return; } l.position.copy(src.position); l.color.copy(src.color); l.intensity = src.intensity; l.distance = src.distance; l.decay = src.decay; });
+  },
+});
+if (FAC2) {
+  const W = World.prototype, _b = W.build;
+  W.build = function () { const r = _b.call(this); try { this.fac2LightPool(); } catch (e) { console.error('light pool', e); } return r; };
+  const _u = W.update; W.update = function (dt, time) { const r = _u.call(this, dt, time); if (this.fac2Pool) this.fac2PoolTick(dt); return r; };
+  const G = Game.prototype, _aq = G.applyQuality;
+  G.applyQuality = function () { const r = _aq.call(this); const W = this.world; if (W && W.fac2Pool) { W.fac2PoolN = Settings.quality === 'low' ? 5 : Settings.quality === 'medium' ? 9 : 11; W.fac2Pick = null; } return r; };
+}
+
+/* ---------- 10. interactive scenery: more traps, sentry turrets, explosive barrels ---------- */
+const FAC2_TURRET = { cost: 1500, secs: 45, range: 22, rate: 6 };
+Object.assign(World.prototype, {
+  fac2Traps() {
+    const defs = [
+      { id: 'arcfloor', kind: 'electric', name: 'ARC FLOOR', x0: 20.3, x1: 24.7, z0: -30.85, z1: -28.95, panel: { x: 27.84, z: -30.0, rotY: -Math.PI / 2 } },
+      { id: 'fuelline', kind: 'fire', name: 'FUEL LINE', x0: -9.0, x1: 5.2, z0: 38.4, z1: 39.5, panel: { x: -9.4, z: 36.17, rotY: 0 } },
+    ];
+    const keep = TRAP_DEFS.splice(0), old = this.traps || [];
+    TRAP_DEFS.push(...defs); try { this.buildTraps(); } finally { const added = this.traps || []; this.traps = old.concat(added); TRAP_DEFS.splice(0, TRAP_DEFS.length, ...keep, ...defs); }
+  },
+  /** A buyable sentry: tripod, a head that tracks, a status light. */
+  fac2Turret(x, y, z, rotY, label) {
+    const M = this.mats, g = new THREE.Group(), head = new THREE.Group(), m = this.fac2Mats();
+    for (let i = 0; i < 3; i++) { const a = i * 2.094; const leg = this.cpart(g, Math.cos(a) * 0.32, 0, Math.sin(a) * 0.32, 0.025, 0.95, M.darkMetal, 6); leg.rotation.z = Math.cos(a) * 0.32; leg.rotation.x = -Math.sin(a) * 0.32; }
+    this.cpart(g, 0, 0.8, 0, 0.09, 0.25, M.darkMetal, 10);
+    head.position.y = 1.08; g.add(head);
+    this.part(head, 0, -0.06, 0, 0.42, 0.26, 0.46, M.greenPaint || M.darkMetal); this.part(head, 0.25, -0.06, 0.02, 0.1, 0.2, 0.26, M.darkMetal);
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.72, 10), M.darkMetal); barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.04, 0.55); head.add(barrel);
+    const shroud = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.26, 10), M.metal); shroud.rotation.x = Math.PI / 2; shroud.position.set(0, 0.04, 0.32); head.add(shroud);
+    const led = this.part(head, 0, 0.09, -0.15, 0.08, 0.04, 0.08, new THREE.MeshBasicMaterial({ color: 0xff3030 }));
+    const flash = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.34), new THREE.MeshBasicMaterial({ color: 0xffd080, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); flash.position.set(0, 0.04, 0.95); flash.raycast = () => {}; head.add(flash);
+    const fl2 = flash.clone(); fl2.rotation.y = Math.PI / 2; head.add(fl2);
+    g.position.set(x, y, z); g.rotation.y = rotY; this.scene.add(g); g.traverse(q => q.isMesh && q !== flash && q !== fl2 && this.staticRay.push(q));
+    this.addCollider(x - 0.38, x + 0.38, y, y + 1.3, z - 0.38, z + 0.38);
+    const sg = this.sign(x, y + 1.62, z, rotY + Math.PI, `SENTRY · ${FAC2_TURRET.cost}`, 0.9, { size: 46, bg: '#141414', border: '#e0b020', color: '#ffd080' });
+    const T = { g, head, led, flash: [flash, fl2], x, y, z, yaw0: rotY, label, t: 0, cool: 0, target: null, fireT: 0, sign: sg };
+    (this.fac2Sentries = this.fac2Sentries || []).push(T); return T;
+  },
+  /** Red barrels: shoot one and it goes up. They come back each round. */
+  fac2Barrel(x, z, y = 0) {
+    const g = new THREE.Group(), M = this.mats;
+    const red = new THREE.MeshPhongMaterial({ color: 0xa81c14, shininess: 40, specular: 0x442222 });
+    this.cpart(g, 0, 0, 0, 0.3, 0.9, red, 16); for (const yy of [0.18, 0.72]) this.cpart(g, 0, yy, 0, 0.31, 0.04, M.darkMetal, 16);
+    const lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.24), new THREE.MeshBasicMaterial({ map: signTexture('⚠ FLAMMABLE', { size: 40, bg: '#e0b020', color: '#111', border: '#111' }) })); lbl.position.set(0, 0.45, 0.305); g.add(lbl);
+    g.position.set(x, y, z); g.rotation.y = rand(0, 6.28); this.scene.add(g); g.traverse(q => q.isMesh && this.staticRay.push(q));
+    const col = this.addCollider(x - 0.3, x + 0.3, y, y + 0.9, z - 0.3, z + 0.3);
+    const B = { g, col, x, y, z, hp: 3, dead: false }; (this.fac2Barrels = this.fac2Barrels || []).push(B); return B;
+  },
+  fac2Interactive() {
+    const U = FAC_U;
+    this.fac2Traps();
+    this.fac2Turret(5.3, U, -12.4, 0, 'gallery');            // the rear gallery, covering the atrium
+    this.fac2Turret(24.6, 0, -19.6, Math.PI * 0.75, 'containment');
+    this.fac2Turret(-2.8, 0, 50.2, Math.PI, 'courtyard');
+    for (const [x, z, y] of [[-6.2, -13.0, 0], [6.1, -16.6, 0], [-30.6, -22.6, 0], [30.7, -1.6, 0], [-29.6, 16.6, 0], [26.4, 16.9, 0], [12.4, 50.6, 0], [-12.9, 44.8, 0], [-10.4, -34.9, 0], [10.6, -34.9, 0], [-27.6, -35.0, 0], [18.0, -35.0, 0]]) this.fac2Barrel(x, z, y);
+  },
+});
+if (FAC2) {
+  const R = World.prototype.fac2Rebuild;
+  World.prototype.fac2Rebuild = function () { R.call(this); try { this.fac2Interactive(); } catch (e) { console.error('fac2 interactive', e); this.fac2.notes.push('interactive: ' + e.message); } try { this.fac2Fill(); } catch (e) { console.error('fac2 fill', e); this.fac2.notes.push('fill: ' + e.message); } try { this.fac2Clearance2 && this.fac2Clearance2(); } catch (e) {} };
+  const G = Game.prototype;
+  // sentries: buy, track, fire
+  const _ui = G.updateInteract;
+  G.updateInteract = function () {
+    const W = this.world, p = this.player.pos, list = W && W.fac2Sentries;
+    if (list && !this.player.downed && !(this.story && this.story.blockInteract && this.story.blockInteract())) {
+      let best = null, bd = 1.5; for (const T of list) { const d = Math.hypot(T.x - p.x, T.z - p.z); if (d < bd && Math.abs(T.y - p.y) < 1.2) { bd = d; best = T; } }
+      if (best) {
+        const E = '<span class="key">E</span>', cost = FAC2_TURRET.cost, cant = this.score < cost;
+        if (best.t > 0) { this.hud.setPrompt(`SENTRY ONLINE — ${Math.ceil(best.t)}s`); return; }
+        this.hud.setPrompt(`Press ${E} to arm the <b>sentry turret</b> (${FAC2_TURRET.secs}s) <b>[${cost}]</b>` + (cant ? ' — NOT ENOUGH POINTS' : ''), cant);
+        if (Input.interactPressed) { if (cant) { this.audio.denied(); return; } this.addScore(-cost); this.audio.purchase(); best.t = FAC2_TURRET.secs; best.led.material.color.setHex(0x40ff70); }
+        return;
+      }
+    }
+    return _ui.call(this);
+  };
+  const _ug = G.updateGame;
+  G.updateGame = function (dt) {
+    const r = _ug.call(this, dt);
+    const W = this.world; if (!W || this.state !== 'playing') return r;
+    try {
+      const ray = this._f2ray || (this._f2ray = new THREE.Raycaster());
+      for (const T of W.fac2Sentries || []) {
+        T.flash.forEach(f => { if (f.material) f.material.opacity = Math.max(0, f.material.opacity - dt * 14); });
+        if (T.t <= 0) { T.head.rotation.y = damp(T.head.rotation.y, Math.sin(Date.now() / 2500 + T.x) * 0.5, 2, dt); continue; }
+        T.t -= dt; if (T.t <= 0) { T.led.material.color.setHex(0xff3030); T.target = null; continue; }
+        // pick the nearest zombie it can see
+        T.scanT = (T.scanT || 0) - dt;
+        if (T.scanT <= 0) { T.scanT = 0.25; let best = null, bd = FAC2_TURRET.range;
+          for (const z of this.activeZombies) { if (z.state === 'dead' || z.state === 'idle' || z.state === 'off') continue; const d = Math.hypot(z.pos.x - T.x, (z.pos.y || 0) - T.y, z.pos.z - T.z); if (d > bd) continue;
+            const hx = z.pos.x - T.x, hz = z.pos.z - T.z, hl = Math.hypot(hx, hz) || 1, o = new THREE.Vector3(T.x + hx / hl * 0.95, T.y + 1.12, T.z + hz / hl * 0.95), tgt = new THREE.Vector3(z.pos.x, (z.pos.y || 0) + 1.2, z.pos.z), dir = tgt.clone().sub(o); const L = dir.length(); dir.normalize();
+            ray.set(o, dir); ray.far = L - 0.4; if (ray.intersectObjects(W.staticRay, false).length) continue; best = z; bd = d; }
+          T.target = best; }
+        const z = T.target; if (!z || z.state === 'dead') continue;
+        const want = Math.atan2(z.pos.x - T.x, z.pos.z - T.z) - T.yaw0;
+        let dy = want - T.head.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); T.head.rotation.y += clamp(dy, -6 * dt, 6 * dt);
+        T.fireT -= dt; if (T.fireT > 0 || Math.abs(dy) > 0.15) continue; T.fireT = 1 / FAC2_TURRET.rate;
+        const from = new THREE.Vector3(T.x + Math.sin(T.head.rotation.y + T.yaw0) * 0.9, T.y + 1.12, T.z + Math.cos(T.head.rotation.y + T.yaw0) * 0.9), to = new THREE.Vector3(z.pos.x + rand(-0.15, 0.15), (z.pos.y || 0) + rand(0.9, 1.6), z.pos.z + rand(-0.15, 0.15));
+        if (this.story && this.story.tracer) this.story.tracer(from, to);
+        T.flash.forEach(f => { if (f.material) f.material.opacity = 1; f.rotation.z = rand(0, 3); });
+        const [v, pan] = this.spatial(T); this.audio.npcShot && this.audio.npcShot(Math.max(0.15, v * 0.9), pan, true);
+        const dmg = Math.max(70, (z.maxHealth || 150) * 0.16), dir = to.clone().sub(from).normalize();
+        this.hitZombie(z, dmg, Math.random() < 0.2 ? 'head' : 'torso', to, dir, { noPoints: true, quiet: true, impulse: 0.6 });
+      }
+      // barrels
+      for (const B of W.fac2Barrels || []) if (B.dead && this.rounds && this.rounds.round !== B.deadRound && this.rounds.state === 'break') { B.dead = false; B.hp = 3; B.g.visible = true; B.col.enabled = true; this.targetsDirty = true; }
+    } catch (e) { if (!this._f2err) { this._f2err = 1; console.error('fac2 sentries', e); } }
+    return r;
+  };
+  const _imp = G.impact;
+  G.impact = function (point, normal, scale = 1) {
+    const r = _imp.call(this, point, normal, scale);
+    const W = this.world; if (W && W.fac2Barrels) for (const B of W.fac2Barrels) {
+      if (B.dead || Math.hypot(point.x - B.x, point.z - B.z) > 0.42 || point.y < B.y - 0.05 || point.y > B.y + 1.0) continue;
+      if (--B.hp > 0) { for (let i = 0; i < 8; i++) this.sparks.emit(point.x, point.y, point.z, rand(-1, 1), rand(0, 2), rand(-1, 1), rand(0.2, 0.4), 1, 0.6, 0.2, 9.8); break; }
+      B.dead = true; B.deadRound = this.rounds ? this.rounds.round : 0; B.g.visible = false; B.col.enabled = false; this.targetsDirty = true;
+      const rd = this.rounds ? this.rounds.round : 1;
+      this.explosions.explode(new THREE.Vector3(B.x, B.y + 0.6, B.z), { radius: 5.2, splash: 380 + rd * 110, selfMax: 45 });
+      break;
+    }
+    return r;
+  };
+  const _sg = G.startGame;
+  G.startGame = function (...a) { const r = _sg.apply(this, a); const W = this.world;
+    for (const T of (W && W.fac2Sentries) || []) { T.t = 0; T.target = null; T.led.material.color.setHex(0xff3030); }
+    for (const B of (W && W.fac2Barrels) || []) { B.dead = false; B.hp = 3; B.g.visible = true; B.col.enabled = true; }
+    return r; };
+}
+
+/* ---------- 11. filling the rooms: furniture and fittings along the walls, never in a doorway ---------- */
+Object.assign(World.prototype, {
+  fac2Prop(kind) {
+    const M = this.mats, m = this.fac2Mats(), g = new THREE.Group(), P = (x, y, z, w, h, d, mat, r) => this.part(g, x, y, z, w, h, d, mat, r);
+    const box = c => new THREE.MeshLambertMaterial({ color: c });
+    let w = 1, d = 0.5, h = 1, col = true;
+    switch (kind) {
+      case 'shelf': w = 1.8; d = 0.5; h = 2.0;
+        for (const x of [-0.86, 0.86]) for (const z of [-0.22, 0.22]) P(x, 0, z, 0.04, 2.0, 0.04, M.darkMetal);
+        for (const y of [0.1, 0.65, 1.2, 1.75]) { P(0, y, 0, 1.76, 0.03, 0.48, M.metal); for (let i = 0; i < 3; i++) if (Math.random() < 0.75) { const bw = rand(0.25, 0.5), bh = rand(0.15, 0.4); P(rand(-0.6, 0.6), y + 0.03, rand(-0.08, 0.08), bw, bh, rand(0.25, 0.4), box(pick([0x8a6a40, 0x6a5a48, 0x4a5a6a, 0x9a8a6a]))); } }
+        break;
+      case 'locker': w = 1.5; d = 0.5; h = 1.95;
+        for (let i = 0; i < 3; i++) { const open = Math.random() < 0.3; P(-0.5 + i * 0.5, 0, 0, 0.48, 1.95, 0.5, box(0x4a5a68)); P(-0.5 + i * 0.5, 0.05, 0.255, 0.44, 1.85, 0.01, open ? M.black : box(0x56687a)); for (let k = 0; k < 3; k++) P(-0.5 + i * 0.5, 1.55 + k * 0.06, 0.262, 0.3, 0.02, 0.005, M.black); }
+        break;
+      case 'cabinet': w = 0.9; d = 0.6; h = 1.3; P(0, 0, 0, 0.9, 1.3, 0.6, box(0x6a6e72)); for (let k = 0; k < 3; k++) { P(0, 0.1 + k * 0.4, 0.305, 0.8, 0.34, 0.01, box(0x7a7e82)); P(0, 0.3 + k * 0.4, 0.315, 0.2, 0.03, 0.02, M.metal); } break;
+      case 'vend': w = 1.0; d = 0.8; h = 1.9; P(0, 0, 0, 1.0, 1.9, 0.8, box(0x1c2a3a)); const sc = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 1.2), new THREE.MeshBasicMaterial({ color: pick([0x3a8ad0, 0xd04a3a, 0x40b070]) })); sc.position.set(-0.12, 1.05, 0.405); g.add(sc); P(0.36, 0.9, 0.405, 0.16, 0.5, 0.01, M.black); P(0, 0.2, 0.405, 0.6, 0.2, 0.01, M.black); break;
+      case 'crates': w = 1.6; d = 1.0; h = 1.4; for (const [x, y, z, s] of [[-0.4, 0, 0, 0.8], [0.42, 0, 0.05, 0.75], [-0.35, 0.8, 0, 0.6]]) P(x, y, z, s, s, s, M.crate || box(0x8a6a3a)); break;
+      case 'gascyl': w = 1.0; d = 0.5; h = 1.5; for (let i = 0; i < 4; i++) { const c = this.cpart(g, -0.36 + i * 0.24, 0, 0, 0.1, 1.35, box(pick([0x2a6a3a, 0x3a5a8a, 0xb02020, 0x6a6a6a])), 10); this.cpart(g, -0.36 + i * 0.24, 1.35, 0, 0.04, 0.12, M.metal, 8); } P(0, 0.9, 0.12, 1.0, 0.04, 0.02, M.darkMetal); break;
+      case 'trolley': w = 1.0; d = 0.55; h = 1.0; for (const y of [0.2, 0.85]) P(0, y, 0, 0.95, 0.03, 0.5, M.metal); for (const x of [-0.44, 0.44]) for (const z of [-0.22, 0.22]) P(x, 0.05, z, 0.03, 0.82, 0.03, M.metal); P(0, 0.88, 0, 0.5, 0.12, 0.3, box(0x8a8a8a)); break;
+      case 'bench': w = 2.0; d = 0.8; h = 0.95; P(0, 0, 0, 2.0, 0.88, 0.8, box(0x3a4048)); P(0, 0.88, 0, 2.04, 0.05, 0.84, box(0x22262a)); for (let i = 0; i < 3; i++) this.cpart(g, rand(-0.8, 0.8), 0.93, rand(-0.2, 0.2), 0.05, rand(0.12, 0.22), new THREE.MeshPhongMaterial({ color: 0x9ad0e0, transparent: true, opacity: 0.6 }), 8); break;
+      case 'desk': w = 1.5; d = 0.75; h = 0.76; P(0, 0.72, 0, 1.5, 0.04, 0.75, M.board || box(0x6a5040)); for (const x of [-0.7, 0.7]) P(x, 0, 0, 0.05, 0.72, 0.7, M.darkMetal); P(0.3, 0.76, -0.1, 0.5, 0.32, 0.04, M.black); P(-0.3, 0.76, 0.1, 0.3, 0.02, 0.22, box(0xe8e4d4)); break;
+      case 'panel': w = 1.0; d = 0.22; h = 1.6; P(0, 0.5, 0, 1.0, 1.1, 0.22, box(0x5a6a5a)); P(0, 0.6, 0.115, 0.85, 0.9, 0.01, box(0x4a5a4a)); for (let i = 0; i < 4; i++) P(-0.3 + i * 0.2, 1.3, 0.12, 0.05, 0.05, 0.02, pick([m.ledG, m.ledR, m.ledA])); col = false; break;
+    }
+    g.userData.f2 = { w, d, h, col }; return g;
+  },
+  fac2Fill() {
+    const U = FAC_U, T = THREE, cols = this.colliders, keep = [], placed = this.fac2Placed = [], why = this.fac2.fillWhy = {}; const no = k => { why[k] = (why[k] || 0) + 1; };
+    // places to leave alone: doors, windows, wall weapons, perks, the box, crates of story items, quest spots, traps, caches, sentries
+    for (const d of this.doors) { const D = d.def, c = d.center; keep.push([c.x, c.z, D.y || 0, 2.8]); }
+    for (const s of this.spawns) { keep.push([s.pos.x, s.pos.z, s.pos.y || 0, 2.2]); keep.push([s.sill.x, s.sill.z, s.pos.y || 0, 1.6]); }
+    for (const w of this.wallBuys) keep.push([w.center.x, w.center.z, w.def.y || 0, 1.9]);
+    for (const p of this.perkMachines) keep.push([p.center.x, p.center.z, p.pos.y - 1.2, 1.8]);
+    for (const b of BOX_SPOTS) keep.push([b.x, b.z, 0, 2.2]);
+    for (const c of this.caches || []) keep.push([c.x, c.z, c.y || 0, 1.6]);
+    for (const t of this.fac2Sentries || []) keep.push([t.x, t.z, t.y, 1.6]);
+    for (const t of this.traps || []) { const d = t.def; if (d.x0 != null) keep.push([(d.x0 + d.x1) / 2, (d.z0 + d.z1) / 2, 0, Math.max(d.x1 - d.x0, d.z1 - d.z0) / 2 + 1]); if (t.use) keep.push([t.use.x, t.use.z, 0, 1.4]); }
+    for (const p of Object.values(SPOTS)) keep.push([p.x, p.z, null, 1.0]);
+    for (const p of Object.values(PICKUPS)) if (!p.dynamic) keep.push([p.x, p.z, p.y > 3 ? U : 0, 0.7]);
+    if (typeof FAC_SPOTS !== 'undefined') for (const p of Object.values(FAC_SPOTS)) keep.push([p.x, p.z, null, 0.9]);
+    for (const r of Object.values(ROUTINES)) for (const p of r) keep.push([p.x, p.z, null, 0.6]);
+    for (const s of FAC_UP.stairs) { keep.push([s.bottom.x, s.bottom.z, 0, 2.0]); keep.push([s.top.x, s.top.z, U, 2.0]); }
+    const blocked = (x, z, y, r) => keep.some(([kx, kz, ky, kr]) => (ky == null || Math.abs(ky - y) < 2) && Math.hypot(kx - x, kz - z) < kr + r);
+    const hits = (x0, x1, z0, z1, y0, y1) => cols.some(c => c.enabled !== false && c.maxX > x0 && c.minX < x1 && c.maxZ > z0 && c.minZ < z1 && c.maxY > y0 + 0.05 && c.minY < y1);
+    const wallAt = (alongX, line, a, y) => cols.some(c => c.enabled !== false && c.maxY - c.minY >= 2 && c.minY <= y + 0.3 && c.maxY > y + 1.5 && (alongX ? c.minX <= a && c.maxX >= a && Math.abs((c.minZ + c.maxZ) / 2 - line) < 0.35 : c.minZ <= a && c.maxZ >= a && Math.abs((c.minX + c.maxX) / 2 - line) < 0.35));
+    const THEME = {
+      start: ['vend', 'vend', 'cabinet', 'panel'], lab: ['shelf', 'cabinet', 'gascyl', 'bench', 'locker', 'panel'], gen: ['gascyl', 'crates', 'shelf', 'locker', 'panel', 'crates'],
+      storage: ['shelf', 'crates', 'shelf', 'trolley', 'crates', 'locker'], contain: ['locker', 'cabinet', 'gascyl', 'crates', 'panel'], reactor: ['gascyl', 'crates', 'locker', 'panel'],
+      comms: ['cabinet', 'shelf', 'desk'], srv: ['cabinet', 'crates', 'panel'], cryo: ['gascyl', 'cabinet', 'trolley'],
+      u_lobby: ['vend', 'cabinet'], u_rec: ['vend', 'shelf', 'desk'], u_sec: ['locker', 'cabinet', 'desk'], u_cafe: ['vend', 'cabinet', 'trolley'], u_med: ['cabinet', 'trolley', 'locker', 'shelf'],
+      u_office: ['cabinet', 'shelf', 'desk', 'cabinet'], u_test: ['gascyl', 'locker', 'bench'], u_adv: ['cabinet', 'gascyl', 'bench'], u_maint: ['shelf', 'crates', 'gascyl', 'locker'], u_dir: ['cabinet', 'shelf'],
+    };
+    const rooms = ROOMS.concat(FAC_UP.rooms).filter(r => THEME[r.id]);
+    for (const R of rooms) {
+      const y = R.upper || R.y > 1 || FAC_UP.rooms.includes(R) ? U : 0;
+      for (const kind of THEME[R.id]) {
+        for (let tries = 0; tries < 40; tries++) {
+          const g = this.fac2Prop(kind), { w, d, h, col } = g.userData.f2, side = (Math.random() * 4) | 0, alongX = side < 2;
+          const line = side === 0 ? R.z0 : side === 1 ? R.z1 : side === 2 ? R.x0 : R.x1, inward = side === 0 || side === 2 ? 1 : -1;
+          const span = alongX ? [R.x0, R.x1] : [R.z0, R.z1]; if (span[1] - span[0] < w + 1.6) break;
+          const a = rand(span[0] + w / 2 + 0.6, span[1] - w / 2 - 0.6), off = 0.16 + d / 2 + 0.02, cx = alongX ? a : line + inward * off, cz = alongX ? line + inward * off : a;
+          const hx = alongX ? w / 2 : d / 2, hz = alongX ? d / 2 : w / 2;
+          if (!wallAt(alongX, line, a - w / 2 + 0.05, y) || !wallAt(alongX, line, a + w / 2 - 0.05, y)) { no('wall'); continue; }
+          if (blocked(cx, cz, y, Math.max(w, d) / 2)) { no('keep'); continue; }
+          let bx0 = cx - hx - 0.12, bx1 = cx + hx + 0.12, bz0 = cz - hz - 0.12, bz1 = cz + hz + 0.12;
+          if (alongX) { if (inward > 0) bz0 = line + 0.17; else bz1 = line - 0.17; } else { if (inward > 0) bx0 = line + 0.17; else bx1 = line - 0.17; }
+          if (hits(bx0, bx1, bz0, bz1, y, y + h)) { no('hit'); continue; }
+          if (placed.some(q => Math.abs(q[0] - cx) < q[2] + hx + 0.3 && Math.abs(q[1] - cz) < q[3] + hz + 0.3 && Math.abs(q[4] - y) < 1)) continue;
+          if (FAC_UP.holes.some(H => cx > H.x0 - 0.6 && cx < H.x1 + 0.6 && cz > H.z0 - 0.6 && cz < H.z1 + 0.6) && y > 1) continue;
+          const rotY = alongX ? (inward > 0 ? 0 : Math.PI) : (inward > 0 ? Math.PI / 2 : -Math.PI / 2);
+          g.position.set(cx, y, cz); g.rotation.y = rotY; this.scene.add(g); g.traverse(q => q.isMesh && this.staticRay.push(q));
+          if (col) this.addCollider(cx - hx, cx + hx, y, y + h, cz - hz, cz + hz);
+          placed.push([cx, cz, hx, hz, y, R.id, kind]); break;
+        }
+      }
+    }
+    this.fac2.filled = placed.length;
+  },
+});
+World.prototype.fac2Clearance2 = function () { this.fac2Clearance(); };
+
+/* ---------- 12. pickups: the glow only when it means something ----------
+   Quest items already appear only while their job is active. Collectibles (tapes, logs, files)
+   used to stand under a beam all game; now the beam and floor ring fade in only when you are
+   close enough to be looking for them. */
+if (FAC2) {
+  const S = Story.prototype, _up = S.updatePickups;
+  S.updatePickups = function (dt) {
+    const r = _up.call(this, dt), p = this.game.player.pos;
+    for (const id in this.pickups) { const k = this.pickups[id]; if (!k.active) continue; const beam = k.group.children[1], ring = k.group.children[2]; if (!beam || !ring) continue;
+      const need = !!k.def.when || k.def.dynamic, d = Math.hypot(k.x - p.x, k.z - p.z) + Math.abs((k.y || 0) - (p.y || 0)) * 2;
+      const show = need || d < 6.5; beam.visible = show; ring.visible = show; }
+    return r;
+  };
+}
 
 /* =====================================================================
    BOOT — wait briefly for fonts so canvas signs render in Oswald
