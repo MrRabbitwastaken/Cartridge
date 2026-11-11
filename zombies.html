@@ -23736,9 +23736,9 @@ const RARITY = [null,
 ];
 const WEAPON_RARITY = {};
 [[1, 'pistol shotgun rifle smg lever garand spas p90 akdrum'],
- [2, 'dual ksg marauder enforcer trooper twinbore deagles pdws aa12 rpk m249 gl warden'],
+ [2, 'dual ksg marauder enforcer trooper twinbore deagles pdws aa12 rpk m249 gl'],
  [3, 'hmg hailstorm ravager butcher flamer ripsaw vanguard noir coffin widow sentinel reclaimer furnace stalker'],
- [4, 'minigun impaler stormcaller dissector thunderclap lastword railsplitter deepfreeze undertaker plaguebearer lance anvil ratchet welder splitter ricochet cluster breacher meatgrinder'],
+ [4, 'warden minigun impaler stormcaller dissector thunderclap lastword railsplitter deepfreeze undertaker plaguebearer lance anvil ratchet welder splitter ricochet cluster breacher meatgrinder'],
  [5, 'extinction eraser sunspot hellgate graviton']].forEach(([r, s]) => s.split(' ').forEach(id => { WEAPON_RARITY[id] = r; }));
 const rarityOf = id => WEAPON_RARITY[id] || 2;
 // box odds follow rarity (the range still gives everything away free)
