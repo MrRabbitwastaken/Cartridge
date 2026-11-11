@@ -23722,6 +23722,145 @@ function hvBreakProp(g, B, point) {
 }
 
 /* =====================================================================
+   WEAPON RARITY — five grades, ranked by raw power and how much each gun
+   changes a fight. 1 Common (the wall guns) · 2 Uncommon · 3 Rare ·
+   4 Epic · 5 Legendary. Rarity sets mystery-box odds, colours the box
+   and the HUD, and Epic / Legendary reveals get a show.
+   ===================================================================== */
+const RARITY = [null,
+  { n: 'COMMON', c: '#e8e8e8', hex: 0xe8e8e8, w: 10 },
+  { n: 'UNCOMMON', c: '#5ae05a', hex: 0x5ae05a, w: 7 },
+  { n: 'RARE', c: '#4aa0ff', hex: 0x4aa0ff, w: 4 },
+  { n: 'EPIC', c: '#b45aff', hex: 0xb45aff, w: 1.6 },
+  { n: 'LEGENDARY', c: '#ff9a1a', hex: 0xff9a1a, w: 0.6 },
+];
+const WEAPON_RARITY = {};
+[[1, 'pistol shotgun rifle smg lever garand spas p90 akdrum'],
+ [2, 'dual ksg marauder enforcer trooper twinbore deagles pdws aa12 rpk m249 gl warden'],
+ [3, 'hmg hailstorm ravager butcher flamer ripsaw vanguard noir coffin widow sentinel reclaimer furnace stalker'],
+ [4, 'minigun impaler stormcaller dissector thunderclap lastword railsplitter deepfreeze undertaker plaguebearer lance anvil ratchet welder splitter ricochet cluster breacher meatgrinder'],
+ [5, 'extinction eraser sunspot hellgate graviton']].forEach(([r, s]) => s.split(' ').forEach(id => { WEAPON_RARITY[id] = r; }));
+const rarityOf = id => WEAPON_RARITY[id] || 2;
+// box odds follow rarity (the range still gives everything away free)
+for (const e of BOX_POOL) if (e[0] !== 'ammo' && WEAPON_DATA[e[0]]) e[1] = RARITY[rarityOf(e[0])].w;
+
+if (typeof document !== 'undefined' && document.head && document.createElement) {
+  const st = document.createElement('style');
+  st.textContent = `#rarityTag{font:700 10px/1 Oswald,"Arial Narrow",sans-serif;letter-spacing:3px;margin-bottom:3px;display:flex;align-items:center;gap:6px}
+#rarityTag i{display:inline-block;width:8px;height:8px;transform:rotate(45deg)}
+#rarityBanner{position:fixed;left:50%;top:28%;transform:translate(-50%,-50%) scale(.6);font:700 64px/1 Oswald,"Arial Narrow",sans-serif;letter-spacing:10px;opacity:0;pointer-events:none;z-index:30;text-align:center;transition:none;white-space:nowrap}
+#rarityBanner small{display:block;font-size:22px;letter-spacing:6px;margin-top:10px;color:#fff}
+#rarityFlash{position:fixed;inset:0;pointer-events:none;z-index:29;opacity:0}`;
+  document.head.appendChild(st);
+}
+
+/* ---------- the box shows its colours ---------- */
+{
+  const P = MysteryBox.prototype;
+  const _draw = P.drawLabel;
+  P.drawLabel = function (text, sub) {
+    const id = this.result, r = id && id !== 'ammo' && id !== 'bear' ? RARITY[rarityOf(id)] : null;
+    if (!r) return _draw.call(this, text, sub);
+    const c = this.labelCanvas, g = c.getContext('2d');
+    g.clearRect(0, 0, 512, 128); g.fillStyle = 'rgba(8,10,14,.8)'; g.fillRect(16, 12, 480, 104);
+    g.strokeStyle = r.c; g.lineWidth = rarityOf(id) >= 4 ? 6 : 3; g.strokeRect(16, 12, 480, 104);
+    g.fillStyle = r.c; g.font = '700 18px Oswald, "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.fillText('◆ ' + r.n + ' ◆', 256, 34);
+    g.fillStyle = '#ffffff'; fitFont(g, text, 456, 700, 40, 'Oswald, "Arial Narrow", sans-serif'); g.fillText(text, 256, 74);
+    g.fillStyle = '#f2c14e'; fitFont(g, sub, 456, 500, 20, 'Oswald, "Arial Narrow", sans-serif'); g.fillText(sub, 256, 104);
+    this.labelTex.needsUpdate = true;
+  };
+  // a legendary keeps you waiting a beat longer
+  const _use = P.use;
+  P.use = function () { const r = _use.apply(this, arguments); if (this.state === 'rolling') { this.rollT = this.result && this.result !== 'ammo' && this.result !== 'bear' && rarityOf(this.result) >= 5 ? 4.4 : 3.4; this.fx = null; } return r; };
+  const _upd = P.update;
+  P.update = function (dt, time) {
+    const was = this.state, rl = this.rollT || 3.4;
+    // stretch the roll for legendaries: hold the clock back until the extra time has passed
+    if (this.state === 'rolling' && rl > 3.4) { const k = this.t; if (k + dt >= 3.4 && k < rl) { this.t += dt; this.tick -= dt;
+        if (this.tick <= 0) { const ids = BOX_POOL.map(p => p[0]).filter(i => i !== this.showing && i !== 'ammo'); this.show(pick(ids)); this.tick = 0.42; this.game.audio.boxTick(this.ticks++); }
+        this.beamMat.color.setHex(0xff9a1a); this.beamMat.opacity = 0.18 + 0.15 * Math.sin(time * 18); this.glowMat.color.setHex(0xffb040);
+        if (k + dt >= rl) { this.t = 3.39; this.rollT = 3.4; } return; } }
+    const r = _upd.call(this, dt, time);
+    // the beam takes the colour of whatever is on show
+    const id = this.showing, rar = id && id !== 'ammo' && id !== 'bear' ? rarityOf(id) : 0;
+    if (this.state === 'rolling' || this.state === 'ready') { const col = rar ? RARITY[rar].hex : 0x8fd8ff; this.beamMat.color.setHex(col); this.glowMat.color.setHex(col); }
+    else { this.beamMat.color.setHex(0x8fd8ff); this.glowMat.color.setHex(0x7fd4ff); }
+    if (was === 'rolling' && this.state === 'ready' && rar) rarityReveal(this, rar);
+    if (this.fx) rarityFx(this, dt, time);
+    return r;
+  };
+}
+
+function rarityReveal(box, rar) {
+  const g = box.game, a = g.audio, R = RARITY[rar], pos = box.group.position.clone().add(new THREE.Vector3(0, 1.2, 0));
+  box.fx = { rar, t: 0, pos };
+  if (rar >= 3 && a && a.ctx) { const notes = rar >= 5 ? [523, 659, 784, 1047, 1319, 1568] : rar === 4 ? [523, 659, 784, 1047] : [659, 988];
+    notes.forEach((f, i) => a.tone(f, rar >= 5 ? 1.1 : 0.7, { type: rar >= 5 ? 'sawtooth' : 'triangle', gain: rar >= 5 ? 0.07 : 0.09, filter: 3000, delay: i * (rar >= 5 ? 0.09 : 0.07), rv: 0.8 }));
+    if (rar >= 4) { a.tone(rar >= 5 ? 55 : 82, 1.2, { type: 'sine', freqEnd: 40, gain: 0.25, rv: 0.9 }); a.noise(0.8, { type: 'lowpass', freq: 400, freqEnd: 60, gain: 0.25, rv: 1 }); }
+    if (rar >= 5) setTimeout(() => { [1047, 1319, 1568, 2093].forEach((f, i) => a.tone(f, 1.6, { type: 'triangle', gain: 0.06, delay: i * 0.05, rv: 1 })); }, 450); }
+  if (rar >= 4) {
+    // sparks erupt from the box
+    for (let i = 0; i < (rar >= 5 ? 160 : 70); i++) { const ang = Math.random() * 6.28, s = rand(2, rar >= 5 ? 9 : 6); g.sparks.emit(pos.x, pos.y - 0.4, pos.z, Math.cos(ang) * s * 0.5, rand(3, rar >= 5 ? 11 : 7), Math.sin(ang) * s * 0.5, rand(0.4, 1.0), ...hexRGB(R.hex), 6); }
+    // full-screen flash and a banner
+    if (typeof document !== 'undefined' && document.body && document.createElement) {
+      let fl = document.getElementById('rarityFlash'); if (!fl) { fl = document.createElement('div'); fl.id = 'rarityFlash'; document.body.appendChild(fl); }
+      fl.style.display = 'block'; fl.style.background = `radial-gradient(ellipse at center, transparent 35%, ${R.c} 120%)`; fl.style.transition = 'none'; fl.style.opacity = rar >= 5 ? '0.9' : '0.55';
+      requestAnimationFrame(() => { fl.style.transition = `opacity ${rar >= 5 ? 1.8 : 1.1}s ease-out`; fl.style.opacity = '0'; });
+      clearTimeout(fl._hide); fl._hide = setTimeout(() => { fl.style.display = 'none'; }, rar >= 5 ? 2000 : 1300);   // gone, not just transparent
+      let bn = document.getElementById('rarityBanner'); if (!bn) { bn = document.createElement('div'); bn.id = 'rarityBanner'; document.body.appendChild(bn); }
+      bn.style.display = 'block'; bn.innerHTML = `${R.n}<small>${box.name(box.result)}</small>`; bn.style.color = R.c; bn.style.textShadow = `0 0 24px ${R.c}, 0 0 4px #000`;
+      bn.style.transition = 'none'; bn.style.opacity = '0'; bn.style.transform = 'translate(-50%,-50%) scale(.6)';
+      requestAnimationFrame(() => requestAnimationFrame(() => { bn.style.transition = 'transform .35s cubic-bezier(.2,1.6,.4,1), opacity .2s'; bn.style.opacity = '1'; bn.style.transform = 'translate(-50%,-50%) scale(1)';
+        setTimeout(() => { bn.style.transition = 'opacity .8s'; bn.style.opacity = '0'; clearTimeout(bn._hide); bn._hide = setTimeout(() => { bn.style.display = 'none'; }, 900); }, rar >= 5 ? 2600 : 1600); }));
+    }
+    g.player.shake = Math.max(g.player.shake, rar >= 5 ? 0.6 : 0.25);
+    if (g.weapons && g.weapons.camP) g.weapons.camP.impulse(rar >= 5 ? 1.2 : 0.5);
+    // a legendary's arrival knocks the nearest zombies off their feet
+    if (rar >= 5 && typeof hvShove === 'function') for (const z of g.activeZombies) { if (!hvLive(z)) continue; const dx = z.pos.x - pos.x, dz = z.pos.z - pos.z, d = Math.hypot(dx, dz); if (d < 7) hvShove(g, z, new THREE.Vector3(dx, 0, dz).normalize(), 7 * (1 - d / 7) + 2, { stun: 2 }); }
+  }
+  if (rar >= 4) {   // the pillar and a ring that rolls out across the floor
+    const S = box.fxObj || (box.fxObj = (() => { const o = {};
+      o.pillarMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false });
+      o.pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.9, 14, 20, 1, true), o.pillarMat); o.pillar.position.y = 7; box.group.add(o.pillar);
+      o.ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false });
+      o.ring = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.1, 40), o.ringMat); o.ring.rotation.x = -Math.PI / 2; o.ring.position.y = 0.05; box.group.add(o.ring);
+      o.haloMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+      o.halo = new THREE.Mesh(new THREE.SphereGeometry(0.55, 16, 12), o.haloMat); box.display.add(o.halo); return o; })());
+    S.pillarMat.color.setHex(R.hex); S.ringMat.color.setHex(R.hex); S.haloMat.color.setHex(R.hex);
+  }
+}
+function rarityFx(box, dt, time) {
+  const F = box.fx, S = box.fxObj, g = box.game; F.t += dt; const L = F.rar >= 5;
+  if (S) { const k = F.t;
+    S.pillarMat.opacity = box.state === 'ready' ? (L ? 0.32 : 0.18) * Math.min(1, k * 4) * (0.8 + 0.2 * Math.sin(time * 6)) : Math.max(0, S.pillarMat.opacity - dt);
+    S.pillar.scale.set(1 + 0.4 * Math.max(0, 1 - k), 1, 1 + 0.4 * Math.max(0, 1 - k));
+    const rk = Math.min(1, k / (L ? 1.2 : 0.9)); S.ring.scale.setScalar(1 + rk * (L ? 9 : 5)); S.ringMat.opacity = (1 - rk) * (L ? 0.9 : 0.6);
+    S.haloMat.opacity = box.state === 'ready' ? (L ? 0.28 : 0.18) * (0.75 + 0.25 * Math.sin(time * 5)) : 0; }
+  if (box.state === 'ready' && Math.random() < (L ? 0.9 : 0.4)) { const p = F.pos, a = Math.random() * 6.28, r = rand(0.3, 0.8); g.sparks.emit(p.x + Math.cos(a) * r, p.y - 0.3, p.z + Math.sin(a) * r, 0, rand(0.6, 1.8), 0, rand(0.5, 1.0), ...hexRGB(RARITY[F.rar].hex), -0.5); }
+  if (L && box.state === 'ready' && g.muzzleLight) { g.muzzleLight.position.copy(F.pos); g.muzzleLight.color && g.muzzleLight.color.setHex(0xffa040); g.muzzleLight.intensity = Math.max(g.muzzleLight.intensity, 2.5 + Math.sin(time * 6)); }
+  if (box.state !== 'ready' && box.state !== 'rolling' && (!S || S.pillarMat.opacity <= 0.01)) { box.fx = null; if (S) { S.ringMat.opacity = 0; S.haloMat.opacity = 0; S.pillarMat.opacity = 0; } }
+}
+const hexRGB = h => [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255];
+
+/* ---------- the HUD shows the grade of what you hold, and so do pickups ---------- */
+{
+  const _hu = HUD.prototype.update;
+  HUD.prototype.update = function (dt) {
+    const r = _hu.call(this, dt), w = this.game && this.game.weapons; if (!w || !this.el || !this.el.weaponName || typeof document === 'undefined' || !document.createElement) return r;
+    let tag = this.el.rarityTag; if (!tag) { tag = this.el.rarityTag = document.createElement('div'); tag.id = 'rarityTag'; const wn = this.el.weaponName; if (wn.parentNode && wn.parentNode.insertBefore) wn.parentNode.insertBefore(tag, wn); }
+    const id = w.unarmed ? null : w.current, rr = id ? rarityOf(id) : 0;
+    if (this._rar !== rr) { this._rar = rr; if (!rr) tag.innerHTML = ''; else { const R = RARITY[rr]; tag.innerHTML = `<i style="background:${R.c};box-shadow:0 0 6px ${R.c}"></i><span style="color:${R.c}">${R.n}</span>`; } }
+    return r;
+  };
+  const _gb = WeaponSystem.prototype.giveFromBox;
+  WeaponSystem.prototype.giveFromBox = function (id) {
+    const r = _gb.apply(this, arguments), g = this.game;
+    if (g && g.hud && id && id !== 'ammo' && WEAPON_RARITY[id] >= 4) setTimeout(() => { if (g.hud.el && g.hud.el.notifyTitle && g.hud.el.notifyTitle.style) { g.hud.el.notifyTitle.style.color = RARITY[rarityOf(id)].c; setTimeout(() => { g.hud.el.notifyTitle.style.color = ''; }, 2200); } }, 0);
+    return r;
+  };
+}
+
+/* =====================================================================
    SITE 9 — REBUILT. The Facility at roughly one and a half times its old
    size, around a double-height CENTRAL ATRIUM with the grand stair and a
    rear gallery you can hold and shoot down from.
@@ -24903,7 +25042,7 @@ function boot() {
   if (started) return; started = true;
   try {
     buildTextures(); initZombieGeometry(); initViewmodelMaterials();
-    window.__game = new Game(); window.WAR_MACHINE_CONFIG = EXO_CONFIG; window.__WP = WEAPON_POSE; window.__refit = (id) => refreshAttachmentModels(window.__game.weapons, id); window.__dbg = { boxesIn, gunsmithMounts, Input };   // read by the sight-calibration tools
+    window.__game = new Game(); window.WAR_MACHINE_CONFIG = EXO_CONFIG; window.__WP = WEAPON_POSE; window.__refit = (id) => refreshAttachmentModels(window.__game.weapons, id); window.__dbg = { boxesIn, gunsmithMounts, Input }; window.__rar = rarityOf;   // read by the sight-calibration tools
     $('loading').classList.add('hidden');
   } catch (e) {
     console.error(e);
