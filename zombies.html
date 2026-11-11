@@ -1913,9 +1913,10 @@ class World {
     const nx = def.axis === 'x' ? def.inward : 0, nz = def.axis === 'z' ? def.inward : 0;
     const wx = def.axis === 'x' ? def.at : def.along, wz = def.axis === 'z' ? def.at : def.along;
     const d = WEAPON_DATA[def.weapon], off = WALL_T / 2 + 0.015;
-    const g = new THREE.Group(); g.position.set(wx + nx * off, 1.5 + (def.y || 0), wz + nz * off); g.rotation.y = Math.atan2(nx, nz);
+    const g = new THREE.Group(); g.position.set(wx + nx * off, 1.5 + (def.y || 0) + (def.rowY || 0), wz + nz * off); g.rotation.y = Math.atan2(nx, nz); if (def.scale) g.scale.setScalar(def.scale);
     g.add(new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.62), new THREE.MeshBasicMaterial({ map: chalkTexture(def.weapon, def.label || d.name, IS_RANGE ? 'FREE' : def.ammoOnly ? def.ammoCost : def.cost) })));
-    const glowMat = new THREE.MeshBasicMaterial({ color: 0x9fe8b0, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false });
+    const rk = typeof WEAPON_RARITY !== 'undefined' && !def.ammoOnly ? WEAPON_RARITY[def.weapon] : 0;   // the board glows in its gun's grade colour
+    const glowMat = new THREE.MeshBasicMaterial({ color: rk ? RARITY[rk].hex : 0x9fe8b0, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false });
     const glow = new THREE.Mesh(new THREE.PlaneGeometry(1.62, 0.74), glowMat); glow.position.z = -0.005; g.add(glow);
     if (def.ammoOnly) {   // a rack of three grenades instead of a weapon
       for (let k = 0; k < 3; k++) { const r = buildGrenadeRound(1.6); r.rotation.x = -Math.PI / 2; r.position.set(-0.38 + k * 0.38, 0.02, 0.06); g.add(r); }
@@ -2368,7 +2369,7 @@ class World {
       const e = this.elevator; e.open = damp(e.open, e.target, 2.2, dt);
       e.left.position.x = (e.lx != null ? e.lx : 4.175) - e.open * 1.05; e.right.position.x = (e.rx != null ? e.rx : 5.325) + e.open * 1.05;
     }
-    for (const w of this.wallBuys) w.glow.opacity = 0.16 + 0.12 * Math.sin(time * 3);
+    for (const w of this.wallBuys) { const r = typeof WEAPON_RARITY !== 'undefined' ? WEAPON_RARITY[w.def.weapon] || 1 : 1; w.glow.opacity = (0.16 + 0.04 * r) + (0.1 + 0.03 * r) * Math.sin(time * (2.4 + 0.5 * r) + w.def.along); }
     if (this.mysteryBox) this.mysteryBox.update(dt, time);
     if (this.crucible) this.crucible.update(dt, time);
     if (this.park) this.park.update(dt, time);
@@ -8414,8 +8415,9 @@ class Game {
     if (kind !== 'door') storyDoor = null;
     for (const b of this.world.wallBuys) {
       if (b.def.story && !this.story.f[b.def.story]) continue;
-      const dist = Math.hypot(b.center.x - p.x, b.center.z - p.z) + (Math.abs((b.def.y || 0) - p.y) > 2.5 ? 99 : 0);
-      if (dist < 1.7 && dist < bd) { bd = dist; best = b; kind = 'wall'; }
+      let dist = Math.hypot(b.center.x - p.x, b.center.z - p.z) + (Math.abs((b.def.y || 0) - p.y) > 2.5 ? 99 : 0);
+      if (b.def.rowY != null && dist < 1.7) { const gp = b.group.position, dw = Math.max(0.3, Math.hypot(gp.x - p.x, gp.z - p.z)), aimY = p.y + 1.6 + Math.tan(this.player.pitch || 0) * dw; dist += Math.abs(aimY - gp.y) * 0.8; }
+      if (dist < 1.7 + (b.def.rowY != null ? 1.2 : 0) && dist < bd) { bd = dist; best = b; kind = 'wall'; }
     }
     for (const m of this.world.perkMachines) {
       const dist = Math.hypot(m.center.x - p.x, m.center.z - p.z) + (Math.abs((PERKS[m.id].spot.y || 0) - p.y) > 2.5 ? 99 : 0);
@@ -13526,16 +13528,11 @@ Object.assign(World.prototype, {
     const M = this.mats, X0 = -14, X1 = 14, Z0 = -50, Z1 = 30;
     // every weapon in the game, free, on the armoury walls behind the firing line
     const ids = WEAPON_ORDER.filter(id => WEAPON_DATA[id]);
-    // racks: up to 17 on the back wall, then the side walls from the back corner down the range, boards
-    // packed 1.75 m apart and kept clear of the wall posts and the clutter that stands against each wall
-    const nb = Math.min(ids.length, 17), bs = Math.min(2.1, 26 / Math.max(1, nb - 1));
-    const sideSlots = blocked => { const out = [26.6]; for (let a = 24.6; a >= -21.4; a -= 0.05) { if (a > out[out.length - 1] - 1.7) continue; if (blocked.some(([b0, b1]) => a + 0.82 > b0 && a - 0.82 < b1)) continue; out.push(+a.toFixed(2)); } return out; };
-    const LS = sideSlots([[-3.8, -2.2], [-6.3, -4.7], [-8.8, -7.2], [-15, -13], [-25, -23], [25.4, 25.9]]), RS = sideSlots([[-3.8, -2.2], [-6.3, -4.7], [-9.6, -7.5], [-15, -13], [-17.3, -15.7], [-25, -23], [25.4, 25.9]]);
-    const back = ids.slice(0, nb), rest = ids.slice(nb), left = [], right = [];
-    rest.forEach((id, i) => (i % 2 ? right : left).push(id));
-    back.forEach((id, i) => WALL_BUYS.push({ weapon: id, axis: 'z', at: Z1, along: -(nb - 1) * bs / 2 + i * bs, inward: -1, cost: 0, ammoCost: 0 }));
-    left.forEach((id, i) => { if (i < LS.length) WALL_BUYS.push({ weapon: id, axis: 'x', at: X0, along: LS[i], inward: 1, cost: 0, ammoCost: 0 }); });
-    right.forEach((id, i) => { if (i < RS.length) WALL_BUYS.push({ weapon: id, axis: 'x', at: X1, along: RS[i], inward: -1, cost: 0, ammoCost: 0 }); });
+    // the armoury: every gun on the back wall in three rows (low / eye level / high), boards slightly
+    // narrowed so twenty fit across; you pick a row by where you look, so every board is reachable from the floor
+    const perRow = Math.ceil(ids.length / 3), sp = 26 / Math.max(1, perRow - 1), rowY = [-0.86, -0.06, 0.74];
+    ids.forEach((id, i) => { const row = Math.floor(i / perRow), k = i % perRow, n = Math.min(perRow, ids.length - row * perRow);
+      WALL_BUYS.push({ weapon: id, axis: 'z', at: Z1, along: -(n - 1) * sp / 2 + k * sp, inward: -1, cost: 0, ammoCost: 0, rowY: rowY[row], row, scale: 0.86 }); });
     this.buildRooms();
     const gaps = (axis, at) => WINDOWS.filter(w => w.axis === axis && w.at === at).map(w => [w.along - WIN_W / 2, w.along + WIN_W / 2, 'window']);
     this.wall('z', Z1, X0, X1); this.wall('z', Z0, X0, X1);
@@ -17844,7 +17841,7 @@ function buildFacilityLiftPanel(g) {
    STORMHOLD — an original mountain fortress at the mouth of the Greyfang
    Gorge, on a night of storm. You start on the Long Wall, seven metres
    above a mud field, as the Ashen warband comes up its siege ladders.
-   Buy your way down into the Deep, through the blasted Breach and out
+   Buy your way down into the Lower Bailey, through the blasted Breach and out
    onto the killing field, across to the Keep Yard and the Gatehouse,
    up onto the Gate Walk, into the Halls of the keep and finally the
    Throne Hall. Everything is built on the same rooms / doors / windows /
@@ -17863,7 +17860,7 @@ if (IS_FORT) {
     { id: 'start',  name: 'THE LONG WALL',   x0: -66, x1: 8,   z0: -10, z1: -3,  h: 40, floor: 0x55504a, light: 0xffb070, outdoor: true },
     { id: 'wallE',  name: 'THE GATE WALK',   x0: 18,  x1: 94,  z0: -10, z1: -3,  h: 40, floor: 0x55504a, light: 0xffb070, outdoor: true },
     { id: 'breach', name: 'THE BREACH',      x0: 8,   x1: 18,  z0: -10, z1: -3,  h: 40, floor: 0x3e352c, light: 0xff9050, outdoor: true },
-    { id: 'deep',   name: 'THE DEEP',        x0: -66, x1: 48,  z0: -3,  z1: 22,  h: 40, floor: 0x4a4238, light: 0xffa860, outdoor: true },
+    { id: 'deep',   name: 'THE LOWER BAILEY',        x0: -66, x1: 48,  z0: -3,  z1: 22,  h: 40, floor: 0x4a4238, light: 0xffa860, outdoor: true },
     { id: 'court',  name: 'THE KEEP YARD',   x0: 48,  x1: 94,  z0: -3,  z1: 22,  h: 40, floor: 0x6a645c, light: 0xffb070, outdoor: true },
     { id: 'halls',  name: 'HALLS OF THE KEEP', x0: 40, x1: 94, z0: 22,  z1: 40,  h: 6,   floor: 0x4e4842, light: 0xffa050 },
     { id: 'throne', name: 'THE THRONE HALL', x0: 56,  x1: 84,  z0: 40,  z1: 58,  h: 10,  floor: 0x5a4a3c, light: 0xffb060 },
@@ -17919,7 +17916,7 @@ if (IS_FORT) {
     { weapon: 'gl', ammoOnly: true, label: 'GRENADES', axis: 'x', at: 40, along: 34, inward: 1, ammoCost: 1200 },
   ]);
   swap(BOX_SPOTS, [
-    { x: -10, z: 21.35, rotY: Math.PI, zone: 'deep',   name: 'THE DEEP' },
+    { x: -10, z: 21.35, rotY: Math.PI, zone: 'deep',   name: 'THE LOWER BAILEY' },
     { x: 80,  z: 21.35, rotY: Math.PI, zone: 'court',  name: 'THE KEEP YARD' },
     { x: 66,  z: 39.35, rotY: Math.PI, zone: 'halls',  name: 'HALLS OF THE KEEP' },
     { x: 64,  z: 57.35, rotY: Math.PI, zone: 'throne', name: 'THE THRONE HALL' },
@@ -18047,6 +18044,7 @@ class Fort {
         else if (py > -h / 2 + 0.01) ny += 0.6 * Math.sin(wx * 0.5 + wz * 0.5) * (0.5 + 0.5 * n);                                                       // strata
         p.setXYZ(i, px * k, ny, pz * k); }
       if (p) geo.computeVertexNormals(); boxUV(geo, w, h, d, 6); const c = new THREE.Mesh(geo, m.rock); c.position.set(x, h / 2 - 0.5, z); c.rotation.y = rot; S.add(c); W.staticRay.push(c); return c; };
+    this.cliff = cliff;
     cliff(-96, -10, 34, 140, 46, 0.05); cliff(-84, 40, 40, 60, 40); cliff(118, -10, 44, 140, 52, -0.04); cliff(110, 70, 50, 60, 48);
     cliff(-12, 40, 112, 34, 30); cliff(70, 82, 70, 40, 44); cliff(-40, -105, 60, 30, 26, 0.3); cliff(130, -110, 70, 40, 34, -0.3);
     // a rock face closes the Deep to the south and the west (with colliders)
@@ -18127,7 +18125,7 @@ class Fort {
         this.ladder(cx, z - 0.95, T + 0.9);
       }
     };
-    parapet(-66, 8, -9.85); parapet(18, 62, -9.85); parapet(78, 94, -9.85);
+    parapet(-66, -51.6, -9.85); parapet(-44.4, -3.6, -9.85); parapet(3.6, 8, -9.85); parapet(18, 32.4, -9.85); parapet(39.6, 62, -9.85); parapet(78, 94, -9.85);   // open where the bastions join the walk
     // gatehouse roof parapets (front with one embrasure, the sides plain)
     this.fwall('z', -23.85, 62, 78, T, 1.2, 0.5, [[69.25, 70.75, 'open']], m.stone); this.fwall('z', -23.85, 69.0, 71.0, T, 2.7, 0.5, [[69.25, 70.75, 'win']], m.timber); this.ladder(70, -24.8, T + 0.9);
     for (let mx = 62.6; mx < 78; mx += 2.2) if (Math.abs(mx - 70) > 1.6) this.B(mx, T + 1.2, -23.85, 1.0, 0.9, 0.5, m.stone);
@@ -18147,7 +18145,7 @@ class Fort {
     // the guard hut on the wall (two wall weapons on its front) and gear along the walk
     this.B(-21, T, -4.6, 6, 3.0, 3.2, m.timber); const hr = this.B(-21, T + 3.0, -4.6, 6.6, 0.2, 3.8, m.timberDark, { collide: false }); hr.rotation.x = -0.12;
     for (const xx of [-50, -32, -12, 2, 30, 50, 80]) this.basket(xx, T, -4.0);
-    for (const xx of [-44, -28, 0, 36, 60]) this.arrows(xx, T, -8.6);
+    for (const xx of [-44, -28, -5, 31, 60]) this.arrows(xx, T, -8.6);
     this.ballista(48, T, -7.2); this.ballista(70, T, -20);
     for (const xx of [-60, -16, 24, 90]) this.bannerPole(xx, T, -3.6, m.banner);
   }
@@ -18172,7 +18170,7 @@ class Fort {
     this.basket(-68.2, T, -1.0); this.arrows(-74.5, T, -9); this.crate(-74.6, T, -1.2); this.crate(-74.6, T, -2.6, 0.7);
     this.wallBanner(-75.45, T + 2.6, -10, Math.PI / 2, m.banner);
   }
-  /* ----- the Hornburg-style keep: gatehouse, yard, halls, throne hall ----- */
+  /* ----- the keep: gatehouse, yard, halls, throne hall ----- */
   buildKeep() {
     const W = this.world, m = this.m, T = FORT.top;
     // gatehouse: thick flanks, a thin front with the great gate and two battered posterns (the barricades)
@@ -18340,11 +18338,138 @@ class Fort {
     this.rain = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0x8a96aa, transparent: true, opacity: 0.32 })); this.rain.frustumCulled = false; S.add(this.rain);
   }
   build() {
-    this.buildGround(); this.buildWall(); this.buildTower(); this.buildKeep(); this.buildDeep(); this.buildField();
+    this.buildGround(); this.buildWall(); this.buildTower(); this.buildKeep(); this.buildDeep(); this.buildField(); this.buildRecon();
+  }
+  /* ----- the reconstruction: bastions, a faceted curtain, the great gatehouse, the keep on its rock, the gorge ----- */
+  buildRecon() {
+    const W = this.world, S = W.scene, m = this.m, T = FORT.top;
+    if (!m.glowWin) { m.glowWin = new THREE.MeshBasicMaterial({ color: 0xffa04a }); m.slit = new THREE.MeshBasicMaterial({ color: 0x07080a }); m.mist = new THREE.MeshBasicMaterial({ map: TEX.smoke, transparent: true, opacity: 0.22, depthWrite: false, color: 0x9aa4b4 }); m.hidden = new THREE.MeshBasicMaterial({ visible: false }); }
+    const uvk = (geo, k) => { const uv = geo.attributes.uv; if (!uv) return; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * k, uv.getY(i) * k); uv.needsUpdate = true; };
+    // a vertical prism from a footprint in world x/z (any winding), y0..y0+h
+    const prism = (pts, y0, h, mat, k = 1 / 3, ray = true) => {
+      const sh = new THREE.Shape(); pts.forEach(([x, z], i) => i ? sh.lineTo(x, -z) : sh.moveTo(x, -z));
+      const geo = new THREE.ExtrudeGeometry(sh, { depth: h, bevelEnabled: false }); geo.rotateX(-Math.PI / 2); geo.translate(0, y0, 0); uvk(geo, k);
+      const me = new THREE.Mesh(geo, mat); S.add(me); if (ray) W.staticRay.push(me); return me; };
+    // a rotated block between two points (parapet runs on angled faces), with a chain of small colliders
+    const run = (x0, z0, x1, z1, y, h, th, mat, collide = true) => {
+      const L = Math.hypot(x1 - x0, z1 - z0), b = new THREE.Mesh(new THREE.BoxGeometry(L, h, th), mat);
+      b.position.set((x0 + x1) / 2, y + h / 2, (z0 + z1) / 2); b.rotation.y = -Math.atan2(z1 - z0, x1 - x0); S.add(b); W.staticRay.push(b);
+      if (collide) for (let t = 0; t <= 1.0001; t += 0.4 / Math.max(0.4, L)) { const x = x0 + (x1 - x0) * t, z = z0 + (z1 - z0) * t; W.addCollider(x - 0.27, x + 0.27, y, y + h + 0.1, z - 0.27, z + 0.27); }
+      return b; };
+    const rock = (x, y, z, r, sy = 1, mat = m.rock) => { const geo = new THREE.DodecahedronGeometry(r, 1), p = fpos(geo);
+      if (p) { for (let i = 0; i < p.count; i++) { const n = 1 + 0.16 * Math.sin(p.getX(i) * 1.7 + x) * Math.cos(p.getZ(i) * 1.3 + z) + 0.08 * Math.sin(p.getY(i) * 2.9); p.setXYZ(i, p.getX(i) * n, p.getY(i) * n, p.getZ(i) * n); } geo.computeVertexNormals(); }
+      const me = new THREE.Mesh(geo, mat); me.position.set(x, y, z); me.scale.y = sy; me.rotation.y = x * 0.37; S.add(me); W.staticRay.push(me); return me; };
+
+    /* --- the bastions: arrow-headed towers thrust out into the killing field, their tops open off the wall walk --- */
+    this.bastions = [];
+    for (const [c, lvl] of [[-48, this.levelW], [0, this.levelW], [36, this.levelE]]) {
+      const P = [[c - 3.5, -10], [c - 4.6, -15], [c, -19.5], [c + 4.6, -15], [c + 3.5, -10]];
+      const grow = (k, kz) => P.map(([x, z]) => [c + (x - c) * k, -10 + (z + 10) * kz]);
+      prism(grow(1.14, 1.12), 0, 2.4, m.stoneDark);                                  // battered foot
+      prism(P, 0, T, [m.stoneTop, m.stone]);                                          // the body (its top is the floor)
+      prism(grow(1.05, 1.04), T - 1.0, 0.32, m.stoneLight);                           // string course
+      W.addCollider(c - 4.4, c + 4.4, 0, T - 0.45, -15, -10); W.addCollider(c - 2.8, c + 2.8, 0, T - 0.45, -17.4, -15); W.addCollider(c - 1.2, c + 1.2, 0, T - 0.45, -19.3, -17.4);
+      W.addCollider(c - 5.2, c + 5.2, 0, 2.2, -15.6, -10); W.addCollider(c - 3, c + 3, 0, 2.2, -19, -15.6);
+      // one walkable surface for the whole top (the parapet keeps you off the corners it overhangs); the prism top is what you see
+      W.addPlatform({ x0: c - 4.4, x1: c + 4.4, z0: -19.4, z1: -9.6, y: T, mat: m.hidden, posts: false, trim: false, joinTo: lvl, via: { x: c, z: -9.9 } });
+      // the angled parapet with merlons, following the faces
+      for (let i = 0; i < P.length - 1; i++) {
+        const [ax, az] = P[i], [bx, bz] = P[i + 1], L = Math.hypot(bx - ax, bz - az), nx = (bz - az) / L, nz = -(bx - ax) / L;   // inward normal (towards c,-14)
+        const sgn = ((c - ax) * nx + (-14 - az) * nz) > 0 ? 1 : -1, ix = nx * sgn * 0.25, iz = nz * sgn * 0.25;
+        run(ax + ix, az + iz, bx + ix, bz + iz, T, 1.2, 0.5, m.stone);
+        for (let t = 0.12; t < 0.95; t += 2.2 / L) { const mx = ax + (bx - ax) * t + ix, mz = az + (bz - az) * t + iz; const mr = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.9, 0.5), m.stone); mr.position.set(mx, T + 1.65, mz); mr.rotation.y = -Math.atan2(bz - az, bx - ax); S.add(mr); W.staticRay.push(mr); }
+        // arrow slits down each face
+        for (const y of [2.2, 4.4]) { const s = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 1.3), m.slit), mx = (ax + bx) / 2 - ix * 0.01 * 0, mz = (az + bz) / 2; s.position.set(mx - nx * sgn * 0.03, y, mz - nz * sgn * 0.03); s.rotation.y = Math.atan2(-nx * sgn, -nz * sgn); S.add(s); }
+      }
+      this.basket(c - 2.3, T, -12.4); this.bannerPole(c + 1.9, T, -13.4, m.banner); this.arrows(c + 2.4, T, -11);
+      this.bastions.push(c);
+    }
+    // the bastion by the Breach took the worst of it: a scorched face, a smashed corner, rubble at its foot
+    for (let i = 0; i < 14; i++) rock(rand(-5, 6), 0.3, rand(-22, -15), 0.3 + Math.random() * 0.7, 0.6, m.stoneDark);
+    { const sc = new THREE.Mesh(new THREE.CircleGeometry(5, 18), new THREE.MeshBasicMaterial({ color: 0x0c0a08, transparent: true, opacity: 0.5, depthWrite: false })); sc.rotation.x = -Math.PI / 2; sc.position.set(3, 0.04, -19); S.add(sc); }
+    this.fireAt(4.5, 0.3, -20.5, 0.9); this.smokeAt(3, T + 1, -16, 2.4);
+
+    /* --- the curtain between them: faceted spurs, so the face of the wall breaks into angles instead of one flat sheet --- */
+    const keep = [];   // things the spurs must keep clear of
+    [-56, -40, -24, -8, 28, 42, 56, 88].forEach(a => keep.push([a - 1.5, a + 1.5]));
+    this.bastions.forEach(c => keep.push([c - 5.4, c + 5.4]));
+    keep.push([-16.2, -11.8], [6.5, 19.5], [56.6, 83.5]);
+    keep.sort((a, b) => a[0] - b[0]);
+    let s = -65.6; const spans = [];
+    for (const [a, b] of keep.concat([[93.6, 93.6]])) { if (a - s >= 3) spans.push([s, a]); s = Math.max(s, b); }
+    for (const [a, b] of spans) {
+      const mid = (a + b) / 2, dp = Math.min(1.5, (b - a) * 0.2);
+      prism([[a, -10], [mid, -10 - dp], [b, -10]], 0, T - 1.3, m.stoneDark);
+      prism([[a - 0.2, -10], [mid, -10 - dp - 0.5], [b + 0.2, -10]], 0, 1.6, m.stoneDark);   // a battered footing
+      W.addCollider(a + (b - a) * 0.22, b - (b - a) * 0.22, 0, T - 1.3, -10 - dp * 0.55, -10);
+    }
+
+    /* --- the great gatehouse: two square towers forward of the gate, an arch, machicolations, a lit upper chamber --- */
+    for (const sx of [-1, 1]) {
+      const x0 = sx < 0 ? 57.2 : 78, x1 = sx < 0 ? 62 : 82.8, cx = (x0 + x1) / 2, H = T + 9.5;
+      prism([[x0 - 0.6, -28.2], [x1 + 0.6, -28.2], [x1 + 0.6, -16.6], [x0 - 0.6, -16.6]], 0, 2.6, m.stoneDark);
+      this.body(cx, 0, -22.2, x1 - x0, H, 11, m.stone);
+      this.B(cx, H - 2.2, -22.2, x1 - x0 + 0.5, 0.35, 11.5, m.stoneLight, { collide: false });
+      this.B(cx, H, -22.2, x1 - x0 + 0.3, 0.2, 11.3, m.stoneDark, { collide: false });
+      for (let k = 0; k < 4; k++) for (const side of [0, 1]) {            // crenels round the top
+        if (side === 0) this.B(x0 + 0.5 + k * ((x1 - x0 - 1) / 3), H, -27.6, 0.9, 1.1, 0.5, m.stone, { collide: false });
+        else this.B(sx < 0 ? x0 + 0.25 : x1 - 0.25, H, -26 + k * 3.2, 0.5, 1.1, 0.9, m.stone, { collide: false });
+      }
+      for (const y of [2.4, 5.6, 9.2]) { const sl = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 1.4), m.slit); sl.position.set(cx, y, -27.73); sl.rotation.y = Math.PI; S.add(sl); }
+      const gw = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.6), m.glowWin); gw.position.set(cx, T + 5.2, -27.74); gw.rotation.y = Math.PI; S.add(gw);   // the upper chamber, lit
+      this.wallBanner(cx, T + 1.8, -27.8, Math.PI, m.banner);
+      this.fireAt(cx, H + 0.2, -22.2, 1.2, true);
+    }
+    // the arch over the gate leaves, with its keystone, and a hood of machicolations over it
+    { const R = 2.6, half = Math.asin(2.5 / R), ar = new THREE.Mesh(new THREE.TorusGeometry(R, 0.28, 8, 20, half * 2), m.stoneLight); ar.position.set(70, 3.3, -24.5); ar.rotation.z = Math.PI / 2 - half; S.add(ar);
+      this.B(70, 5.55, -24.55, 0.6, 0.7, 0.6, m.stoneLight, { collide: false });                                  // keystone
+      for (let x = 62.8; x <= 77.3; x += 1.2) this.B(x, T - 0.8, -24.55, 0.34, 0.6, 0.7, m.stoneDark, { collide: false });   // machicolation corbels
+      this.B(70, T - 0.2, -24.75, 15.4, 0.5, 0.4, m.stone, { collide: false }); }
+
+    /* --- the keep: an upper storey over the halls, a great square tower on the throne hall, all of it sitting on living rock --- */
+    this.B(67, 9, 31, 54.8, 3.4, 18.8, m.stone, { collide: false, tile: 3 });
+    for (let x = 40.8; x < 94; x += 2.2) for (const z of [21.85, 40.15]) this.B(x, 12.4, z, 1.0, 1.0, 0.5, m.stone, { collide: false });
+    for (let x = 46; x < 92; x += 6) { const w = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.5), (x / 6 | 0) % 3 ? m.slit : m.glowWin); w.position.set(x, 10.6, 21.58); w.rotation.y = Math.PI; S.add(w); }
+    // the great tower
+    const TX = 70, TZ = 49, TH = 36;
+    this.B(TX, 12, TZ, 20, TH - 12, 15, m.stone, { collide: false, tile: 3 });
+    this.B(TX, 22, TZ, 20.6, 0.4, 15.6, m.stoneLight, { collide: false }); this.B(TX, TH - 1.2, TZ, 21, 0.5, 16, m.stoneLight, { collide: false });
+    for (let k = 0; k < 8; k++) { this.B(TX - 9.6 + k * (19.2 / 7), TH, TZ - 7.3, 1.1, 1.3, 0.5, m.stone, { collide: false }); this.B(TX - 9.6 + k * (19.2 / 7), TH, TZ + 7.3, 1.1, 1.3, 0.5, m.stone, { collide: false }); }
+    for (let k = 0; k < 6; k++) for (const sx of [-1, 1]) this.B(TX + sx * 9.8, TH, TZ - 6.4 + k * (12.8 / 5), 0.5, 1.3, 1.1, m.stone, { collide: false });
+    for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {                  // corner turrets, a storey higher
+      const tx = TX + dx * 10, tz = TZ + dz * 7.5; W.cyl(tx, 12, tz, 1.9, 2.1, TH - 12 + 4, m.stone);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; this.B(tx + Math.cos(a) * 1.75, TH + 4, tz + Math.sin(a) * 1.75, 0.7, 1.0, 0.7, m.stone, { collide: false }); }
+      const gw = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 1.1), m.glowWin); gw.position.set(tx, TH - 2, tz - 2.12); gw.rotation.y = Math.PI; S.add(gw);
+    }
+    for (const y of [16, 24.5, 30]) for (const x of [-5, 0, 5]) { const w = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.2), (y + x) % 3 === 0 ? m.slit : m.glowWin); w.position.set(TX + x, y, TZ - 7.53); w.rotation.y = Math.PI; S.add(w); }
+    this.wallBanner(TX - 4, 28, TZ - 7.6, Math.PI, m.banner); this.wallBanner(TX + 4, 28, TZ - 7.6, Math.PI, m.banner);
+    this.bannerPole(TX, TH, TZ, m.banner); this.fireAt(TX - 7, TH + 0.3, TZ - 5, 1.4, true); this.fireAt(TX + 7, TH + 0.3, TZ - 5, 1.4, true);
+    // the outcrop the keep stands on: rock heaped round its flanks and back, rising to the tower's knees
+    for (const [x, z, r, sy] of [[47, 49, 6.5, 1.7], [46, 56, 7, 1.9], [50, 70, 9, 1.7], [63, 70, 8, 1.5], [78, 70, 8, 1.6], [96, 68, 9, 1.8], [92, 50, 6, 2.1], [90, 46, 4.5, 1.8],
+      [43, 66, 7, 2.2], [98, 54, 8, 2.1], [70, 73, 10, 1.7]]) rock(x, 0, z, r, sy);
+    // and the keep's footing in the yard: a skirt of bedrock breaking through the flagstones along its front
+    for (let x = 41; x < 93; x += 2.6) { if ((x > 41.2 && x < 46.8) || (x > 57.2 && x < 62.8) || (x > 76.5 && x < 83.5)) continue; rock(x + rand(-0.3, 0.3), 0, 21.3, 0.45 + Math.random() * 0.25, 0.9, m.rockDark); }
+
+    /* --- the gorge: higher, steeper walls of rock on both flanks, closing to a narrow pass beyond the field --- */
+    const cl = this.cliff;
+    if (cl) {
+      cl(-128, -20, 40, 170, 86, 0.04); cl(152, -20, 44, 170, 92, -0.05);          // the mountain shoulders behind the flanks
+      cl(-74, -84, 54, 44, 58, 0.45); cl(132, -86, 60, 44, 62, -0.4);              // spurs pinching the field
+      cl(-30, -150, 90, 36, 70, 0.18); cl(128, -152, 90, 36, 74, -0.2);            // the narrow pass the dead come down
+      cl(50, 104, 80, 40, 78);                                                      // the peak the keep is backed against
+    }
+    // a goat track zig-zags down the western cliff into the field: ledges of rock, torches where the dead come down it
+    for (let i = 0; i < 9; i++) { const y = 24 - i * 2.8, z = -48 + (i % 2 ? 6 : -6) - i * 1.2; this.B(-78.4, y, z, 3.2, 0.6, 9, m.rockDark, { collide: false }); }
+    this.fireAt(-77.8, 13.2, -52, 0.8, true);
+
+    /* --- weather: ground mist rolling across the field and pooling at the wall foot --- */
+    this.mist = [];
+    for (let i = 0; i < 18; i++) { const sz = 18 + Math.random() * 18, p = new THREE.Mesh(new THREE.PlaneGeometry(sz, sz), m.mist); p.rotation.x = -Math.PI / 2; p.position.set(rand(-60, 90), 0.5 + Math.random() * 1.2, rand(-44, -12)); p.renderOrder = 2; p.userData.world = false; S.add(p); this.mist.push({ p, x: p.position.x, sp: 0.4 + Math.random() * 0.6, ph: Math.random() * 6 }); }
   }
   /* ----- per frame ----- */
   update(dt, time) {
     const g = this.world.game || window.__game; if (!g) return; this.t += dt;
+    if (this.mist) for (const q of this.mist) q.p.position.x = q.x + Math.sin(this.t * 0.04 * q.sp + q.ph) * 7;
     const cam = g.camera.position;
     // fire light pool: the nearest fires in front of you get real lights
     this.poolT -= dt;
