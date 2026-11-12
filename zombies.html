@@ -525,7 +525,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:var(--tex
     <span>B</span><span>Akimbo weapons: alternate or simultaneous fire · Twin-Bore: both barrels or one at a time</span>
     <span>G</span><span>Switch to the underbarrel grenade launcher / Masterkey shotgun (rifles and LMGs)</span>
     <span>C</span><span>Crouch (tap) · hold C to go prone · press C while sprinting to slide</span>
-    <span>Z X H Q</span><span>Killstreaks: Shoulder Vulcan (10 kills) · Twin Serpents (15) · Arm Cannon (20) · Annihilator (25) — kills in a row without getting hit</span>
+    <span>Z X H Q</span><span>Killstreaks: buy a random one at the KILLSTREAK UPLINK on the wall (5000) — Shoulder Vulcan · Twin Serpents · Arm Cannon · Annihilator · War Machine (9). Then press its key</span>
     <span>MOUSE WHEEL</span><span>While aiming a variable scope: change zoom</span>
     <span>SHIFT</span><span>Sprint (uses stamina)</span>
     <span>SPACE</span><span>Jump</span>
@@ -7726,7 +7726,7 @@ class ExoSystem {
     if (this.active) { this.logEvent('activation ignored', 'a suit is already active'); return false; }
     if (this.earned) return this.activate('killstreak');
     if (Settings.exoDevKey) return this.activate('dev key 9');
-    this.game.hud.notify('WAR MACHINE NOT READY', `KILLSTREAK ${this.streak}/${this.cfg.killstreak} — DON'T GET HIT`, 1.6); this.game.audio.denied(); return false;
+    this.game.hud.notify('WAR MACHINE NOT READY', typeof KS_SHOP !== 'undefined' ? 'CALL IT IN AT THE KILLSTREAK UPLINK' : `KILLSTREAK ${this.streak}/${this.cfg.killstreak} — DON'T GET HIT`, 1.6); this.game.audio.denied(); return false;
   }
   activate(source) {
     const g = this.game, p = g.player, w = g.weapons;
@@ -8483,7 +8483,8 @@ class Game {
     const cru = this.world.crucible, cc = cru.center, cdist = Math.hypot(cc.x - p.x, cc.z - p.z) + (Math.abs((cru.y || 0) - p.y) > 2.5 ? 99 : 0);
     if (cdist < 1.7 && cdist < bd) { bd = cdist; best = cru; kind = 'crucible'; }
     for (const box of this.world.allBoxes ? this.world.allBoxes() : [this.world.mysteryBox]) { const bc = box.center, bdist = Math.hypot(bc.x - p.x, bc.z - p.z) + (Math.abs((box.spot.y || 0) - p.y) > 2.5 ? 99 : 0);
-      if (bdist < 1.8 && bdist < bd && (box.state === 'idle' || box.state === 'ready')) { bd = bdist; best = box; kind = 'box'; } }
+      if (bdist < 1.8 && bdist < bd && (box.state === 'idle' || box.state === 'ready' || (box.canBoost && box.canBoost()))) { bd = bdist; best = box; kind = 'box'; } }
+    { const KT = this.world.ksTerm; if (KT && KT.group.visible) { const kd = Math.hypot(KT.center.x - p.x, KT.center.z - p.z) + (Math.abs((KT.y || 0) - p.y) > 2.5 ? 99 : 0); if (kd < 1.5 && kd < bd) { bd = kd; best = KT; kind = 'ks'; } } }
     const st = this.story.bestInteract(p, bd);
     if (st) { best = st; kind = 'story'; }
     this.interactTarget = best;
@@ -8521,7 +8522,10 @@ class Game {
       else { cost = L.cost; html = `Press ${E} to upgrade <b>${w.data.name}</b> <b>[${cost}]</b> <span class="sub">${(CRUCIBLE_UPGRADES[cid] || {}).desc || 'More damage, bigger magazine, faster handling'}</span>`; action = () => { best.begin(cid); w.sendToMachine(cid); }; }
     } else if (kind === 'box') {
       if (best.state === 'idle') { cost = best.cost; html = `Press ${E} for the Mystery Box <b>[${cost}]</b>`; action = () => best.use(); }
+      else if (best.state === 'rolling') { const bp = best.boostInfo(); cost = bp.maxed ? 0 : BOX_BOOST.cost; html = bp.maxed ? `The odds are as good as they get — <b>EPIC OR BETTER ${bp.pct}%</b>` : `Press ${E} to <b>boost the odds</b> <b>[${cost}]</b> <span class="sub">Epic or better: ${bp.pct}% → ${bp.next}%</span>`; action = bp.maxed ? null : () => best.boost(true); }
       else { const id = best.result, own = id !== 'ammo' && w.inv[id].owned; html = `Press ${E} to take <b>${best.name(id)}</b>${own ? ' — full ammo refill' : id !== 'ammo' ? w.replaceNote(id) : ''}`; action = () => best.collect(); }
+    } else if (kind === 'ks') {
+      const r = best.offer(); cost = r.cost; html = r.html; action = r.action;
     } else if (best.def.ammoOnly) {
       const id = best.def.weapon, d = WEAPON_DATA[id];
       if (!w.inv[id].owned) html = `${best.def.label} — requires the ${d.name}`;
@@ -13741,7 +13745,7 @@ class KillstreakSystem {
   request(k) {
     const g = this.game, C = KS_CONFIG[k];
     if (this.active || g.exo.active) { g.hud.notify('', 'ONE KILLSTREAK AT A TIME', 1.2); g.audio.denied(); return false; }
-    if (!this.earned[k]) { g.hud.notify(C.name + ' NOT READY', `${C.kills} KILLS IN A ROW WITHOUT GETTING HIT (${this.streak}/${C.kills})`, 1.6); g.audio.denied(); return false; }
+    if (!this.earned[k]) { g.hud.notify(C.name + ' NOT READY', typeof KS_SHOP !== 'undefined' && !IS_RANGE ? `CALL IT IN AT THE KILLSTREAK UPLINK [${KS_SHOP.cost}]` : `${C.kills} KILLS IN A ROW WITHOUT GETTING HIT (${this.streak}/${C.kills})`, 1.6); g.audio.denied(); return false; }
     return this.activate(k);
   }
   activate(k) {
@@ -24012,6 +24016,8 @@ function rarityReveal(box, rar) {
 }
 function rarityFx(box, dt, time) {
   const F = box.fx, S = box.fxObj, g = box.game; F.t += dt; const L = F.rar >= 5;
+  // the pillar, ring, halo and rising sparks belong to EPIC and LEGENDARY only (they used to linger onto every grade after the first epic)
+  if (F.rar < 4) { if (S) { S.pillarMat.opacity = 0; S.ringMat.opacity = 0; S.haloMat.opacity = 0; } box.fx = null; return; }
   if (S) { const k = F.t;
     S.pillarMat.opacity = box.state === 'ready' ? (L ? 0.32 : 0.18) * Math.min(1, k * 4) * (0.8 + 0.2 * Math.sin(time * 6)) : Math.max(0, S.pillarMat.opacity - dt);
     S.pillar.scale.set(1 + 0.4 * Math.max(0, 1 - k), 1, 1 + 0.4 * Math.max(0, 1 - k));
@@ -28278,13 +28284,14 @@ Object.assign(World.prototype, {
    · The Facility's box can turn up in fifteen places, upstairs and down.
    · FIRE SALE: a box appears at every spot it can ever stand in, all at 10
      points, no teddy bear, until the sale ends (boxes in use finish first).
-   · While the box is choosing, press X to pay another 950: each payment
+   · While the box is choosing, press E (interact) to pay another 950: each payment
      adds 20 points to the chance of an EPIC or LEGENDARY (up to 95%).
    ===================================================================== */
-const BOX_BOOST = { cost: 950, step: 0.2, max: 0.95, key: 'KeyX', last: 3.0 };
+const BOX_BOOST = { cost: 950, step: 0.2, max: 0.95, last: 3.0 };
+const BOX_REPEAT = 0.01;   // a gun the box has already offered this game comes up at 1% of its usual chance
 // final (post-rebuild) Facility coordinates, found by sweeping every room's walls for a clear, reachable stretch
 const FAC_BOX_MORE = [
-  { x: -11.4, z: 25.7, rotY: Math.PI / 2, zone: 'start', name: 'RECEPTION' },
+  { x: -4.3, z: 18.6, rotY: 0, zone: 'start', name: 'RECEPTION' },   // south wall, well away from the Trench 12 on the west wall
   { x: 19.7, z: 0.6, rotY: 0, zone: 'gen', name: 'GENERATOR ROOM' },
   { x: -7.6, z: -12.3, rotY: -Math.PI / 2, zone: 'storage', name: 'B1 STORAGE' },
   { x: 19.2, z: 29.6, rotY: 0, zone: 'comms', name: 'COMMS ROOM' },
@@ -28310,27 +28317,38 @@ const FAC_BOX_MORE = [
   };
   B.reset = function () { const r = _reset.call(this); this.group.position.y = this.spot.y || 0; this.boostN = 0; return r; };
   // no teddy bear at a fire sale
-  B.roll = function () { if (this.extra || (this.world.fireSale && this.world.fireSale.on)) { const u = this.uses; this.uses = 0; try { return _roll.call(this); } finally { this.uses = u; } } return _roll.call(this); };
+  // the roll: teddy bear (never at a fire sale), then a weighted pick in which guns already offered this game are 100× less likely
+  B.roll = function () {
+    const sale = this.extra || (this.world.fireSale && this.world.fireSale.on);
+    if (!sale && !IS_RANGE && this.uses >= 4 && Math.random() < 0.15) return 'bear';
+    return boxPick(boxWeights(this.game));
+  };
   B.use = function () { this.boostN = 0; return _use.apply(this, arguments); };
+  // what the box offers is remembered for the rest of the game
+  { const G0 = Game.prototype, _sg = G0.startGame; G0.startGame = function (...a) { this.boxSeen = new Set(); return _sg.apply(this, a); }; }
 }
 /* ---------- the odds, and buying better ones ---------- */
 function boxEpicShare(pool) { let e = 0, t = 0; for (const [id, w] of pool) { t += w; if (id !== 'ammo' && rarityOf(id) >= 4) e += w; } return t ? e / t : 0; }
 function boxBoostTarget(n) { const p0 = boxEpicShare(BOX_POOL); return Math.min(BOX_BOOST.max, p0 + BOX_BOOST.step * n); }
 /** A weighted pick from the box pool with epic and legendary scaled so together they make up p. */
-function boxRollBoosted(p) {
-  let E = 0, O = 0; for (const [id, w] of BOX_POOL) { if (id !== 'ammo' && rarityOf(id) >= 4) E += w; else O += w; }
-  const a = E > 0 && p < 1 ? p * O / ((1 - p) * E) : 1, pool = BOX_POOL.map(([id, w]) => [id, id !== 'ammo' && rarityOf(id) >= 4 ? w * a : w]);
-  const tot = pool.reduce((s, q) => s + q[1], 0); let x = Math.random() * tot; for (const [id, w] of pool) { x -= w; if (x <= 0) return id; } return pool[pool.length - 1][0];
+function boxWeights(g) { const seen = g && g.boxSeen; return BOX_POOL.map(([id, w]) => [id, seen && id !== 'ammo' && seen.has(id) ? w * BOX_REPEAT : w]); }
+function boxPick(pool) { const tot = pool.reduce((s, q) => s + q[1], 0); let x = Math.random() * tot; for (const [id, w] of pool) { x -= w; if (x <= 0) return id; } return pool[pool.length - 1][0]; }
+function boxRollBoosted(p, g) {
+  const base = boxWeights(g); let E = 0, O = 0; for (const [id, w] of base) { if (id !== 'ammo' && rarityOf(id) >= 4) E += w; else O += w; }
+  const a = E > 0 && p < 1 ? p * O / ((1 - p) * E) : 1;
+  return boxPick(base.map(([id, w]) => [id, id !== 'ammo' && rarityOf(id) >= 4 ? w * a : w]));
 }
 Object.assign(MysteryBox.prototype, {
   canBoost() { return this.state === 'rolling' && this.t < BOX_BOOST.last && this.result !== 'bear'; },
-  boost() {
+  boostInfo() { const n = this.boostN || 0, p = boxBoostTarget(n), q = boxBoostTarget(n + 1); return { pct: Math.round(p * 100), next: Math.round(q * 100), maxed: p >= BOX_BOOST.max }; },
+  /** paid: the interact prompt has already taken the points. */
+  boost(paid) {
     const g = this.game, c = BOX_BOOST.cost;
     if (!this.canBoost()) return false;
     if (boxBoostTarget(this.boostN || 0) >= BOX_BOOST.max) { g.hud.notify('', 'THE ODDS ARE ALREADY AS GOOD AS THEY GET', 1.2); return false; }
-    if (g.score < c) { g.audio.denied && g.audio.denied(); g.hud.notify('', `NOT ENOUGH POINTS — ${c} TO BOOST`, 1.2); return false; }
-    g.addScore(-c); this.boostN = (this.boostN || 0) + 1; this.boostPaid = (this.boostPaid || 0) + c;
-    const p = boxBoostTarget(this.boostN); this.result = boxRollBoosted(p);
+    if (!paid && g.score < c) { g.audio.denied && g.audio.denied(); g.hud.notify('', `NOT ENOUGH POINTS — ${c} TO BOOST`, 1.2); return false; }
+    if (!paid) g.addScore(-c); this.boostN = (this.boostN || 0) + 1; this.boostPaid = (this.boostPaid || 0) + c;
+    const p = boxBoostTarget(this.boostN); this.result = boxRollBoosted(p, g);
     // a legendary keeps you waiting longer (as when it is rolled at the start)
     this.rollT = this.result !== 'ammo' && rarityOf(this.result) >= 5 ? 4.4 : 3.4;
     g.hud.notify('ODDS BOOSTED', `EPIC OR BETTER: ${Math.round(p * 100)}%`, 1.4);
@@ -28343,7 +28361,7 @@ Object.assign(MysteryBox.prototype, {
     const n = this.boostN || 0, p = boxBoostTarget(n), maxed = p >= BOX_BOOST.max;
     x.clearRect(0, 0, 512, 128); x.fillStyle = 'rgba(8,10,14,.8)'; x.fillRect(16, 12, 480, 104);
     x.strokeStyle = n ? '#b45aff' : '#8fdcff'; x.lineWidth = 3; x.strokeRect(16, 12, 480, 104); x.textAlign = 'center';
-    x.fillStyle = '#ffffff'; x.font = '700 30px Oswald, "Arial Narrow", sans-serif'; x.fillText(maxed ? 'ODDS MAXED' : `PRESS X · BOOST ODDS [${BOX_BOOST.cost}]`, 256, 56);
+    x.fillStyle = '#ffffff'; x.font = '700 30px Oswald, "Arial Narrow", sans-serif'; x.fillText(maxed ? 'ODDS MAXED' : `PRESS E · BOOST ODDS [${BOX_BOOST.cost}]`, 256, 56);
     x.fillStyle = '#d0a0ff'; x.font = '500 22px Oswald, "Arial Narrow", sans-serif'; x.fillText(`EPIC OR BETTER: ${Math.round(p * 100)}%${n ? `  ·  BOOSTED ×${n}` : ''}`, 256, 94);
     this.labelTex.needsUpdate = true; this.label.visible = true;
   },
@@ -28358,6 +28376,7 @@ Object.assign(MysteryBox.prototype, {
     // an upstairs box lifts off from its own floor
     if (this.state === 'leaving' && this.t > 1.5 && this.spot.y) this.group.position.y = this.spot.y + (this.t - 1.5) * (this.t - 1.5) * 2.5;
     if (this.state === 'leaving' && this.t <= 1.5 && this.spot.y) this.group.position.y = this.spot.y;
+    if (was === 'rolling' && this.state === 'ready' && this.result && this.result !== 'ammo' && this.result !== 'bear' && this.game.boxSeen) this.game.boxSeen.add(this.result);
     if (this.extra && this.fsHide && this.state === 'idle') this.fsPark();
     return r;
   };
@@ -28407,18 +28426,6 @@ Object.assign(World.prototype, {
 { const D = DropSystem.prototype, _grab = D.grab, _rb = D.restoreBox;
   D.grab = function (it) { const r = _grab.call(this, it); if (it && it.id === 'firesale' && this.game.world.fireSaleStart) this.game.world.fireSaleStart(); return r; };
   D.restoreBox = function () { const r = _rb.call(this); const W = this.game.world; if (W && W.fireSaleEnd && (W.fireSale && W.fireSale.on || (W.fsBoxes || []).some(b => b.group.visible))) W.fireSaleEnd(); return r; };
-}
-/* ---------- X while the box is choosing ---------- */
-{ const G0 = Game.prototype, _ug = G0.updateGame;
-  G0.updateGame = function (dt) {
-    const k = Input.ksPressed, W = this.world;
-    if (k && KS_CONFIG[k] && KS_CONFIG[k].key === BOX_BOOST.key && W && W.allBoxes && this.state === 'playing') {
-      const p = this.player.pos; let best = null, bd = 4.5;
-      for (const b of W.allBoxes()) { if (!b.canBoost || !b.canBoost()) continue; const c = b.center, d = Math.hypot(c.x - p.x, c.z - p.z) + (Math.abs((b.spot.y || 0) - p.y) > 2.5 ? 99 : 0); if (d < bd) { bd = d; best = b; } }
-      if (best) { Input.ksPressed = null; best.boost(); }
-    }
-    return _ug.call(this, dt);
-  };
 }
 /* ---------- the Facility's extra spots (added once its plan is final, before the dressing pass) ---------- */
 if (IS_FAC) {
@@ -28924,6 +28931,130 @@ Object.assign(Game.prototype, {
   const _sg = G0.startGame; G0.startGame = function (...a) { wire(this); return _sg.apply(this, a); };
   const _um = G0.updateMenu; G0.updateMenu = function (dt) { wire(this); if (this.__badgeMenu !== true) { this.__badgeMenu = true; this.updateTestBadge(); } return _um.call(this, dt); };
   const _ug = G0.updateGame; G0.updateGame = function (dt) { this.__badgeMenu = false; if (!this.__badgeT || (this.__badgeT -= dt) <= 0) { this.__badgeT = 0.5; this.updateTestBadge(); } return _ug.call(this, dt); };
+}
+
+/* =====================================================================
+   v51 — KILLSTREAKS ARE BOUGHT, NOT EARNED
+   A KILLSTREAK UPLINK terminal on the wall sells a random killstreak you
+   don't already hold for 5000: Shoulder Vulcan, Twin Serpents, Arm Cannon,
+   Annihilator or the War Machine. Kills no longer earn them.
+   In the Facility it hangs in the Central Atrium beside the Grand Stair;
+   on the other maps it turns up somewhere new every game.
+   ===================================================================== */
+const KS_SHOP = { cost: 5000, w: 1.2, d: 0.42, radius: 1.5 };
+const KS_FAC_SPOT = { x: 6.62, z: -6.2, rotY: -Math.PI / 2, y: 0, name: 'GRAND STAIR' };   // final Facility coordinates: the atrium's east wall, beside the stair
+// kills no longer earn killstreaks (the Shooting Range still has its free panel)
+{ const K = KillstreakSystem.prototype, _ok = K.onKill; K.onKill = function () { if (IS_RANGE) return _ok.apply(this, arguments); }; }
+{ const G0 = Game.prototype, _sg = G0.startGame;
+  G0.startGame = function (...a) {
+    const r = _sg.apply(this, a);
+    if (this.exo && !this.exo.__ksShop && !IS_RANGE) { this.exo.__ksShop = true; this.exo.onKill = function () {}; }
+    try { this.world.placeKsTerm && this.world.placeKsTerm(); } catch (e) { console.error('ks uplink', e); }
+    return r;
+  };
+}
+const KS_NAMES = () => KS_ORDER.map(k => [k, KS_CONFIG[k].name, KS_CONFIG[k].label]).concat([['exo', 'WAR MACHINE', '9']]);
+Object.assign(World.prototype, {
+  buildKsTerm() {
+    if (IS_RANGE || this.ksTerm) return;
+    const W = this, M = this.mats, g = new THREE.Group(), T = THREE;
+    const body = new T.MeshPhongMaterial({ color: 0x2c3036, map: TEX.metal, shininess: 60, specular: 0x666666 });
+    const olive = new T.MeshPhongMaterial({ color: 0x4a5236, shininess: 25 });
+    const glow = new T.MeshBasicMaterial({ color: 0x5ad0ff }), red = new T.MeshBasicMaterial({ color: 0xff3020 });
+    W.part(g, 0, 0.55, 0, 1.2, 1.55, 0.36, body);                                // the cabinet, bolted to the wall
+    W.part(g, 0, 0.5, 0.02, 1.26, 0.06, 0.4, olive); W.part(g, 0, 2.08, 0.02, 1.26, 0.06, 0.4, olive);
+    for (const sx of [-0.6, 0.6]) W.part(g, sx, 0.56, 0.02, 0.05, 1.5, 0.4, olive);
+    // the screen
+    const cv = makeCanvas(512, 384), tex = new T.CanvasTexture(cv);
+    const scr = new T.Mesh(new T.PlaneGeometry(0.92, 0.69), new T.MeshBasicMaterial({ map: tex })); scr.position.set(0, 1.5, 0.185); g.add(scr);
+    W.part(g, 0, 1.13, 0.17, 0.98, 0.04, 0.04, M.darkMetal);
+    // keypad, card slot, the call-in button
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) W.part(g, -0.32 + c * 0.11, 0.66 + r * 0.1, 0.19, 0.08, 0.07, 0.03, M.metal);
+    W.part(g, 0.32, 0.78, 0.19, 0.22, 0.03, 0.03, M.black);
+    const btn = new T.Mesh(new T.CylinderGeometry(0.07, 0.07, 0.05, 16), red); btn.rotation.x = Math.PI / 2; btn.position.set(0.33, 0.95, 0.2); g.add(btn);
+    // antenna mast and a beacon on top, cable down into the floor
+    W.cpart(g, 0.45, 2.11, -0.05, 0.02, 0.7, M.metal, 6);
+    const bea = new T.Mesh(new T.SphereGeometry(0.06, 10, 8), glow); bea.position.set(0.45, 2.85, -0.05); g.add(bea);
+    W.cpart(g, -0.42, 0, -0.08, 0.05, 0.55, M.black, 8);
+    const sign = new T.Mesh(new T.PlaneGeometry(1.2, 0.2), new T.MeshBasicMaterial({ map: signTexture('KILLSTREAK UPLINK · ' + KS_SHOP.cost, { size: 50, color: '#5ad0ff', border: '#5ad0ff', bg: '#06121a' }) }));
+    sign.position.set(0, 2.32, 0.02); g.add(sign);
+    const lt = new T.PointLight(0x5ad0ff, 0.5, 4, 1.8); lt.position.set(0, 1.6, 0.6); g.add(lt);
+    W.scene.add(g); g.visible = false;
+    const col = W.addCollider(0, 0, 0, 0, 0, 0); col.enabled = false;
+    const meshes = []; g.traverse(m => { if (m.isMesh) meshes.push(m); });
+    const self = this.ksTerm = {
+      group: g, collider: col, center: { x: 0, z: 0 }, y: 0, spot: null, cv, tex, glow, bea, meshes,
+      game: this.game,
+      pool() { const G = this.game, out = []; if (G.ks) for (const k of KS_ORDER) if (!G.ks.earned[k]) out.push(k); if (G.exo && !G.exo.earned && !G.exo.active) out.push('exo'); return out; },
+      offer() {
+        const E = '<span class="key">E</span>', L = this.pool();
+        if (!L.length) return { cost: 0, html: '<b>KILLSTREAK UPLINK</b> — you already hold every killstreak', action: null };
+        return { cost: KS_SHOP.cost, html: `Press ${E} to call in a <b>KILLSTREAK</b> <b>[${KS_SHOP.cost}]</b> <span class="sub">A random one you don't hold: ${L.map(k => k === 'exo' ? 'War Machine' : KS_CONFIG[k].name.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())).join(' · ')}</span>`, action: () => this.buy() };
+      },
+      buy() {
+        const G = this.game, L = this.pool(); if (!L.length) return null; const k = pick(L);
+        if (k === 'exo') { G.exo.earned = true; G.hud.notify('WAR MACHINE READY', 'PRESS 9 TO DEPLOY THE EXOSKELETON', 3); }
+        else { G.ks.earned[k] = true; const C = KS_CONFIG[k]; G.hud.notify(C.name + ' READY', `PRESS ${C.label} TO USE IT`, 3); }
+        G.audio.exoReady && G.audio.exoReady(); if (G.stats) G.stats.ksBought = (G.stats.ksBought || 0) + 1;
+        this.flash = 1; this.draw(true); return k;
+      },
+      draw(force) {
+        const G = this.game, held = KS_NAMES().map(([k]) => k === 'exo' ? !!(G.exo && (G.exo.earned || G.exo.active)) : !!(G.ks && G.ks.earned[k])), key = held.join();
+        if (!force && key === this.drawn) return; this.drawn = key;
+        const x = this.cv.getContext('2d'); if (!x || !x.fillRect) return;
+        x.fillStyle = '#03080c'; x.fillRect(0, 0, 512, 384); x.strokeStyle = '#1d4a5a'; x.lineWidth = 2; for (let y = 0; y < 384; y += 4) { x.globalAlpha = 0.12; x.beginPath(); x.moveTo(0, y); x.lineTo(512, y); x.stroke(); } x.globalAlpha = 1;
+        x.fillStyle = '#5ad0ff'; x.font = '700 34px Oswald, "Arial Narrow", sans-serif'; x.textAlign = 'left'; x.fillText('KILLSTREAK UPLINK', 24, 48);
+        x.fillStyle = '#7f9aa4'; x.font = '500 20px Oswald, "Arial Narrow", sans-serif'; x.fillText(`RANDOM DROP · ${KS_SHOP.cost} PTS`, 24, 78);
+        KS_NAMES().forEach(([k, n, lab], i) => { const y = 124 + i * 50; x.fillStyle = held[i] ? '#123a26' : '#0b1a22'; x.fillRect(20, y - 32, 472, 42);
+          x.fillStyle = held[i] ? '#6aff9a' : '#cfe8f0'; x.font = '600 24px Oswald, "Arial Narrow", sans-serif'; x.fillText(`[${lab}]  ${n}`, 34, y - 3);
+          x.textAlign = 'right'; x.fillStyle = held[i] ? '#6aff9a' : '#4a6a76'; x.fillText(held[i] ? 'READY' : '—', 478, y - 3); x.textAlign = 'left'; });
+        this.tex.needsUpdate = true;
+      },
+    };
+    self.draw(true);
+  },
+  /** Put the uplink somewhere: beside the Grand Stair in the Facility, anywhere valid elsewhere (a new place every game). */
+  placeKsTerm() {
+    const K = this.ksTerm; if (!K) return;
+    const s = IS_FAC ? KS_FAC_SPOT : this.ksRandomSpot(); if (!s) { K.group.visible = false; K.collider.enabled = false; return; }
+    const y = s.y || 0, r = s.rotY, g = K.group; g.position.set(s.x, y, s.z); g.rotation.y = r; g.updateMatrixWorld(true); g.visible = true;
+    const c = Math.abs(Math.cos(r)), sn = Math.abs(Math.sin(r)), hw = KS_SHOP.w / 2 * c + KS_SHOP.d / 2 * sn, hd = KS_SHOP.w / 2 * sn + KS_SHOP.d / 2 * c;
+    Object.assign(K.collider, { minX: s.x - hw, maxX: s.x + hw, minZ: s.z - hd, maxZ: s.z + hd, minY: y, maxY: y + 2.2, enabled: true });
+    K.center = { x: s.x + Math.sin(r) * 1.0, z: s.z + Math.cos(r) * 1.0 }; K.y = y; K.spot = s;
+    for (const m of K.meshes) if (!this.staticRay.includes(m)) this.staticRay.push(m);
+    if (this.game.nav) this.game.nav.rebuild(); if (this.game.navU) this.game.navU.rebuild();
+    K.draw(true);
+  },
+  /** Candidates: along the walls either side of every mystery-box spot, clear of everything you can buy. */
+  ksRandomSpot() {
+    const g = this.game, out = [], keep = [];
+    for (const b of BOX_SPOTS) keep.push([b.x, b.z, b.y || 0, 3]);
+    for (const b of this.wallBuys || []) if (b.center) keep.push([b.center.x, b.center.z, b.def.y || 0, 3]);
+    if (this.crucible) keep.push([this.crucible.center.x, this.crucible.center.z, this.crucible.y || 0, 3]);
+    if (this.workshop && this.workshop.center) keep.push([this.workshop.center.x, this.workshop.center.z, 0, 3]);
+    for (const p of this.perkMachines || []) if (p.center) keep.push([p.center.x, p.center.z, p.y || 0, 3]);
+    const cols = this.colliders.filter(c => c.enabled && c !== this.ksTerm.collider && !(this.mysteryBox && c === this.mysteryBox.collider) && !(this.fsBoxes || []).some(b => b.collider === c));
+    const hit = (x0, x1, z0, z1, y) => cols.some(c => c.maxY > y + 0.15 && c.minY < y + 2 && c.maxX > x0 && c.minX < x1 && c.maxZ > z0 && c.minZ < z1);
+    for (const b of BOX_SPOTS) for (const off of [3.4, -3.4, 4.6, -4.6]) {
+      const r = b.rotY, fx = Math.sin(r), fz = Math.cos(r), ax = Math.cos(r), az = -Math.sin(r), y = b.y || 0;
+      const c = Math.abs(ax), sn = Math.abs(az), hw = KS_SHOP.w / 2 * c + KS_SHOP.d / 2 * sn, hd = KS_SHOP.w / 2 * sn + KS_SHOP.d / 2 * c;
+      // slide it back towards the wall until it touches, but never into it
+      let x = null, z = null;
+      for (const d of [0.3, 0.22, 0.12, 0.02, -0.1, -0.22]) { const tx = b.x + ax * off - fx * d, tz = b.z + az * off - fz * d; if (hit(tx - hw, tx + hw, tz - hd, tz + hd, y)) continue;
+        const bx = tx - fx * (KS_SHOP.d / 2 + 0.25), bz = tz - fz * (KS_SHOP.d / 2 + 0.25); if (!hit(bx - 0.25, bx + 0.25, bz - 0.25, bz + 0.25, y)) continue;   // a wall right behind it
+        x = tx; z = tz; break; }
+      if (x == null) continue;
+      const cx = x + fx * 1.0, cz = z + fz * 1.0; if (hit(cx - 0.5, cx + 0.5, cz - 0.5, cz + 0.5, y)) continue;
+      if (keep.some(([kx, kz, ky, kr]) => Math.abs(ky - y) < 2 && Math.hypot(kx - cx, kz - cz) < kr)) continue;
+      const N = y > 2 && g.navU ? g.navU : g.nav; if (N && N.cellOf) { const cl = N.cellOf(cx, cz); if (cl < 0 || N.blocked[cl]) continue; }
+      out.push({ x, z, rotY: r, y, name: b.name });
+    }
+    return out.length ? pick(out) : null;
+  },
+});
+{ const WP = World.prototype, _b = WP.build;
+  WP.build = function () { const r = _b.apply(this, arguments); try { this.buildKsTerm(); } catch (e) { console.error('ks uplink', e); } return r; };
+  const _u = WP.update; WP.update = function (dt, time) { const r = _u.apply(this, arguments); const K = this.ksTerm; if (K && K.group.visible) { K.draw(); K.flash = Math.max(0, (K.flash || 0) - dt); const t = time || 0; K.glow.color.setHSL(0.54, 1, 0.45 + 0.25 * Math.max(Math.sin(t * 4), K.flash)); K.bea.scale.setScalar(1 + 0.4 * (Math.sin(t * 6) > 0.6 ? 1 : 0) + K.flash); } return r; };
 }
 
 /* ===== V49 END ===== */
