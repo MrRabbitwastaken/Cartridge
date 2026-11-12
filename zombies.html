@@ -2341,7 +2341,7 @@ class World {
   resetDoors() {
     if (this.loose) this.loose.forEach(L => { L.m.position.copy(L.home); L.m.rotation.set(0, L.rot0, 0); L.vel.set(0, 0, 0); L.moving = false; });
     this.openZones = new Set(['start']);
-    if (this.mysteryBox) this.mysteryBox.reset();
+    if (this.mysteryBox) { this.mysteryBox.reset(); if (this.fsBoxes) for (const b of this.fsBoxes) if (b.group.visible) { b.fsHide = false; b.group.visible = false; b.collider.enabled = false; b.state = 'away'; b.t = -1e9; } this.fireSale = null; }
     if (this.crucible) this.crucible.reset();
     this.resetBarricades();
     for (const d of this.doors) { d.open = false; d.openT = 0; d.collider.enabled = true; d.slab.position.y = DOOR_H / 2; d.slab.visible = true; }
@@ -2374,7 +2374,7 @@ class World {
       e.left.position.x = (e.lx != null ? e.lx : 4.175) - e.open * 1.05; e.right.position.x = (e.rx != null ? e.rx : 5.325) + e.open * 1.05;
     }
     for (const w of this.wallBuys) { const r = typeof WEAPON_RARITY !== 'undefined' ? WEAPON_RARITY[w.def.weapon] || 1 : 1; w.glow.opacity = (0.16 + 0.04 * r) + (0.1 + 0.03 * r) * Math.sin(time * (2.4 + 0.5 * r) + w.def.along); }
-    if (this.mysteryBox) this.mysteryBox.update(dt, time);
+    if (this.mysteryBox) { this.mysteryBox.update(dt, time); if (this.fsBoxes) for (const b of this.fsBoxes) if (b.group.visible) b.update(dt, time); }
     if (this.crucible) this.crucible.update(dt, time);
     if (this.park) this.park.update(dt, time);
     if (this.town) this.town.update(dt, time);
@@ -8152,6 +8152,7 @@ class Game {
     window.addEventListener('keydown', e => {
       this.audio.init();
       if (this.state === 'gunsmith') { if (!e.repeat && (e.code === 'Escape' || e.code === 'KeyE')) this.closeGunsmith(); return; }
+      if (this.state === 'arsenal') { if (this.arsenalUI) { this.arsenalUI.key(e); if (['ArrowUp', 'ArrowDown', 'Space', 'PageUp', 'PageDown'].includes(e.code)) e.preventDefault(); } return; }
       if (this.state !== 'playing') return;
       if (prevent.includes(e.code)) e.preventDefault();
       if (e.repeat) return;
@@ -8448,10 +8449,10 @@ class Game {
     this.updateRepair(barricade);
     const wsh = this.world.workshop, wdist = Math.hypot(wsh.center.x - p.x, wsh.center.z - p.z);
     if (wdist < 1.5 && wdist < bd) { bd = wdist; best = wsh; kind = 'gunsmith'; }
-    const cru = this.world.crucible, cc = cru.center, cdist = Math.hypot(cc.x - p.x, cc.z - p.z);
+    const cru = this.world.crucible, cc = cru.center, cdist = Math.hypot(cc.x - p.x, cc.z - p.z) + (Math.abs((cru.y || 0) - p.y) > 2.5 ? 99 : 0);
     if (cdist < 1.7 && cdist < bd) { bd = cdist; best = cru; kind = 'crucible'; }
-    const box = this.world.mysteryBox, bc = box.center, bdist = Math.hypot(bc.x - p.x, bc.z - p.z) + (Math.abs((box.spot.y || 0) - p.y) > 2.5 ? 99 : 0);
-    if (bdist < 1.8 && bdist < bd && (box.state === 'idle' || box.state === 'ready')) { bd = bdist; best = box; kind = 'box'; }
+    for (const box of this.world.allBoxes ? this.world.allBoxes() : [this.world.mysteryBox]) { const bc = box.center, bdist = Math.hypot(bc.x - p.x, bc.z - p.z) + (Math.abs((box.spot.y || 0) - p.y) > 2.5 ? 99 : 0);
+      if (bdist < 1.8 && bdist < bd && (box.state === 'idle' || box.state === 'ready')) { bd = bdist; best = box; kind = 'box'; } }
     const st = this.story.bestInteract(p, bd);
     if (st) { best = st; kind = 'story'; }
     this.interactTarget = best;
@@ -8532,6 +8533,7 @@ class Game {
     if (this.audio) this.audio.endLoopFrame();
     if (this.state === 'playing' && this.locked) this.updateGame(dt);
     else if (this.state === 'gunsmith') this.gunsmith.update(dt);           // the world is frozen while you customise
+    else if (this.state === 'arsenal') { if (this.arsenalUI) this.arsenalUI.update(dt); }   // and while you shop
     else if (this.state === 'ending') this.updateCommon(dt);
     else if (this.state === 'menu') this.updateMenu(dt);
     else if (this.state === 'gameover') this.updateGameOver(dt);
@@ -8627,7 +8629,7 @@ class Game {
     const r = this.renderer;
     r.clear();
     r.render(this.scene, this.camera);
-    if ((this.state === 'playing' || this.state === 'paused' || this.state === 'gunsmith') && !(this.story && this.story.cine)) { r.clearDepth(); r.render(this.wScene, this.wCam); }
+    if ((this.state === 'playing' || this.state === 'paused' || this.state === 'gunsmith' || this.state === 'arsenal') && !(this.story && this.story.cine)) { r.clearDepth(); r.render(this.wScene, this.wCam); }
   }
 }
 
@@ -10554,7 +10556,7 @@ class ExoticFX {
       // Saw through every zombie the blade passes (each one once per pass)
       for (const z of g.activeZombies) {
         if (!this.live(z) || b.hitT.has(z)) continue;
-        const dx = z.pos.x - b.pos.x, dz = z.pos.z - b.pos.z, h = b.pos.y;
+        const dx = z.pos.x - b.pos.x, dz = z.pos.z - b.pos.z, h = b.pos.y - (z.pos.y || 0);   // height above the zombie's own floor (upstairs too)
         if (dx * dx + dz * dz > (0.45 + b.r) * (0.45 + b.r) || h > 2.1 * z.sizeScale || h < -0.1) continue;
         const head = h > 1.55 * z.sizeScale, d = WEAPON_DATA[b.id] || {};
         b.hitT.set(z, 0.35);
@@ -16788,6 +16790,8 @@ AudioSys.prototype.shotTakes = function (R, sup) {
       // the action cycling: a few damped metallic partials
       let mech = 0; if (R.mech && t > mechT0) { const u = t - mechT0; for (let j = 0; j < 3; j++) mech += Math.sin(2 * Math.PI * mechF[j] * u) * mechA[j]; mech *= R.mechG * (sup ? 1.5 : 1) * Math.exp(-u / 0.012) * 0.6; }
       let ring = 0; if (R.ring && !sup) ring = Math.sin(2 * Math.PI * R.ring * t) * 0.05 * Math.exp(-t / 0.12);
+      // the gun's own voice: its receiver and barrel ring at their own two inharmonic pitches
+      if (R.vox) ring += (Math.sin(2 * Math.PI * R.vox * t) + 0.55 * Math.sin(2 * Math.PI * R.vox * R.voxR * t + 1.3)) * R.voxG * (sup ? 0.6 : 1) * Math.exp(-t / R.voxT) * Math.min(1, t / 0.0008);
       // tail: darkening decorrelated noise for each ear, with slapback echoes
       const tf = 1 - Math.exp(-2 * Math.PI * (300 + 700 * Math.exp(-t / 0.15)) / sr), env = R.tailG * Math.exp(-t / tauT) * Math.min(1, t / 0.012);
       t1L += (w - t1L) * tf; t2L += (t1L - t2L) * tf; const wr = rnd(); t1R += (wr - t1R) * tf; t2R += (t1R - t2R) * tf;
@@ -16811,14 +16815,14 @@ AudioSys.prototype.playShot = function (R, o = {}) {
   const now = c.currentTime, dt = now - (this._lastShot || 0); this._lastShot = now;
   const rapid = dt < 0.14 ? 0.72 + dt * 2 : 1;
   const src = c.createBufferSource(); src.buffer = b; src.playbackRate.value = rand(0.965, 1.035) * (o.side === 1 ? 0.96 : 1);
-  src.connect(this.out(0.62 * (o.vol || 1) * rapid * (o.sup ? 0.55 : 1), o.side < 0 || o.side == null ? 0 : o.side === 1 ? -0.22 : 0.22, (o.rv || 0.5) * 0.35));
-  src.start(now); src.stop(now + b.duration + 0.05);
+  src.connect(this.out(0.62 * (o.vol || 1) * rapid * (o.sup ? 0.55 : 1), o.pan != null ? o.pan : o.side < 0 || o.side == null ? 0 : o.side === 1 ? -0.22 : 0.22, (o.rv || 0.5) * 0.35));
+  const t0 = now + (o.delay || 0); src.start(t0); src.stop(t0 + b.duration + 0.05);
 };
 { const _gd = AudioSys.prototype.gunshotData;
   AudioSys.prototype.gunshotData = function (s, side) {
     if (!this.ctx) return;
     try {
-      this.playShot(shotRecipe(s), { side, sup: !!s.suppressed, vol: s.vol || 1, rv: s.rv });
+      this.playShot(this.voiceRecipe ? this.voiceRecipe(shotRecipe(s), s.wid) : shotRecipe(s), { side, sup: !!s.suppressed, vol: s.vol || 1, rv: s.rv, pan: s.pan, delay: s.delay });
       const G = 0.6 * (s.vol || 1), sup = s.suppressed;
       // energy weapons keep their signature charge sweep (low-passed, quieter); upgrades keep their shimmer
       if (s.zap) this.tone(s.zap, s.zapDur || 0.15, { type: 'triangle', freqEnd: s.zapEnd || s.zap * 0.3, gain: (s.zapG || 0.15) * G * 0.8, filter: 2400, rv: 0.4, pan: side < 0 ? 0 : side === 1 ? -0.25 : 0.25 });
@@ -16831,7 +16835,7 @@ AudioSys.prototype.playShot = function (R, o = {}) {
     const SD = typeof WEAPON_DATA !== 'undefined' && WEAPON_DATA[id] && WEAPON_DATA[id].snd;
     if (SD) return this.gunshotData(Object.assign({}, SD, this.gunMods ? this.gunMods(id) : null), side);
     const R = SHOT_BASE[id] || SHOT_BASE.rifle; if (!this.ctx) return;
-    try { const r = Object.assign({ ring: 0 }, R); delete r.tube; this.playShot(r, { side, rv: 0.6 }); if (R.tube) this.noise(0.3, { type: 'bandpass', freq: 1800, q: 0.7, gain: 0.08, delay: 0.03 }); }
+    try { let r = Object.assign({ ring: 0 }, R); delete r.tube; if (this.voiceRecipe) r = this.voiceRecipe(r, id); this.playShot(r, { side, rv: 0.6 }); if (R.tube) this.noise(0.3, { type: 'bandpass', freq: 1800, q: 0.7, gain: 0.08, delay: 0.03 }); }
     catch (e) { _gs.call(this, id, side); }
   };
   AudioSys.prototype.papLayer = function () { this.tone(rand(800, 1100), 0.16, { type: 'triangle', freqEnd: 300, gain: 0.05, filter: 2000, rv: 0.5 }); };
@@ -17002,7 +17006,7 @@ Pad.activate = function () {
 };
 Pad.adjust = function (dir) { const el = this.focus; if (!el || el.type !== 'range') return false; const st = parseFloat(el.step) || (parseFloat(el.max) - parseFloat(el.min)) / 20; el.value = clamp(parseFloat(el.value) + dir * st, parseFloat(el.min), parseFloat(el.max)); el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); return true; };
 Pad.back = function (g) {
-  if (g.state === 'gunsmith') { window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape' })); return; }
+  if (g.state === 'gunsmith' || g.state === 'arsenal') { window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape' })); return; }
   const open = ['panelSettings', 'panelControls', 'panelCredits', 'panelMaps', 'panelCareer'].some(id => { const e = document.getElementById(id); return e && !e.classList.contains('hidden'); });
   if (open && g.closePanels) { g.closePanels(); this.clearFocus(); return; }
   if (g.state === 'paused') g.resume();
@@ -19022,10 +19026,11 @@ Object.assign(AudioSys.prototype, {
     const t = c.currentTime, s = p.s, T = (node, v, k = 0.05) => node.setTargetAtTime(v, t, k), j = 1 + (Math.random() - 0.5) * 0.01;
     if (p.kind === 'rotary') {
       const rps = 4 + 46 * s;                                      // barrel cluster revolutions per second
-      T(L.motor.frequency, (110 + 820 * s) * j, 0.08); T(L.motor2.frequency, (110 + 820 * s) * 2.012 * j, 0.08);
+      const V = p.voice || { f: 1, lfo: 1, grind: 1 };
+      T(L.motor.frequency, (110 + 820 * s) * j * V.f, 0.08); T(L.motor2.frequency, (110 + 820 * s) * 2.012 * j * V.f, 0.08);
       T(L.mF.frequency, 700 + 2600 * s); T(L.mG.gain, 0.05 + 0.07 * s); T(L.m2G.gain, 0.25 + 0.3 * s);
-      T(L.lfo.frequency, rps * 6 * 0.5, 0.06); T(L.wF.frequency, 220 + 900 * s, 0.06); T(L.wG.gain, 0.06 + 0.2 * s);
-      T(L.gF.frequency, 120 + 260 * s + Math.random() * 20); T(L.gG.gain, 0.05 * (1 - Math.abs(s - 0.45)) + 0.02);
+      T(L.lfo.frequency, rps * 6 * 0.5 * V.lfo, 0.06); T(L.wF.frequency, (220 + 900 * s) * V.f, 0.06); T(L.wG.gain, 0.06 + 0.2 * s);
+      T(L.gF.frequency, (120 + 260 * s) * V.grind + Math.random() * 20); T(L.gG.gain, 0.05 * (1 - Math.abs(s - 0.45)) + 0.02);
       T(L.aG.gain, 0.04 * s * s); T(L.aF.frequency, 2200 + 2600 * s);
       T(L.rF.frequency, 90 + 140 * s); T(L.rG.gain, 0.14 + 0.24 * s); T(L.sub.frequency, 35 + rps * 1.2, 0.08); T(L.subG.gain, 0.05 + 0.08 * s);
     } else {
@@ -19047,7 +19052,7 @@ Object.assign(AudioSys.prototype, {
   },
 });
 { const A = AudioSys.prototype, _sl = A.setLoop;
-  A.setLoop = function (key, o) { const R = RICH_LOOPS[key]; if (R && this.ctx && this.noiseBuf) { try { return this.richLoop(key, R(o)); } catch (e) { console.error('richLoop', e); } } return _sl.call(this, key, o); };
+  A.setLoop = function (key, o) { const R = RICH_LOOPS[key]; if (R && this.ctx && this.noiseBuf) { try { const p = R(o); if (key === 'spin' && typeof SPIN_VOICE !== 'undefined') p.voice = SPIN_VOICE[this.curW] || null; return this.richLoop(key, p); } catch (e) { console.error('richLoop', e); } } return _sl.call(this, key, o); };
   const _gs = A.gunshot;
   A.gunshot = function (id, side) { const r = _gs.call(this, id, side); const d = typeof WEAPON_DATA !== 'undefined' && WEAPON_DATA[id]; if (d && d.energy && this.ctx) { try { this.energyLayer(1); } catch (e) {} } return r; };
 }
@@ -23472,7 +23477,7 @@ const HV3 = {
     d.on = true; d.t = 0; d.hp = C.hp; d.cool = 0.6; d.onZ = onZ; d.grp.visible = true; d.unfold = 0; d.grp.position.copy(pt);
     d.grp.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), n.clone().normalize()); d.n = n.clone(); d.off = onZ ? pt.clone().sub(onZ.pos) : null;
     for (let i = 0; i < 10; i++) g.sparks.emit(pt.x, pt.y, pt.z, rand(-2, 2), rand(0, 2), rand(-2, 2), rand(0.1, 0.25), 1, 0.7, 0.3, 9.8);
-    if (g.audio.mech) g.audio.mech('boltClose');
+    d.pitch = d.pitch || rand(0.9, 1.1); if (g.audio.turretDeploy) g.audio.turretDeploy(g, pt, d); else if (g.audio.mech) g.audio.mech('boltClose');
   },
   boom(g, d, l, crucible) { if (!d.on) return; const C = HV_CFG.sentinel; d.on = false; d.grp.visible = false; d.laser.visible = false; const p = d.grp.position.clone();
     const R = crucible ? 3.4 : hvPick(C.boomR, l), D = crucible ? 420 : hvPick(C.boom, l); hvPop(g, p, R, D, [0.6, 0.85, 1], { weapon: 'sentinel', shove: 3 }); for (let i = 0; i < 3; i++) hvArc(g, p, p.clone().add(new THREE.Vector3(rand(-1.5, 1.5), rand(0, 1.5), rand(-1.5, 1.5))), 0x9ad8ff, 0.2); },
@@ -23498,7 +23503,7 @@ const HV3 = {
       ray.set(eye, dir.clone().normalize()); ray.near = 0.1; ray.far = dir.length() - 0.3; if (g.world && g.world.staticRay && ray.intersectObjects(g.world.staticRay, false).length) { d.tgt = null; continue; }
       g.hitZombie(d.tgt, C.dmg * w.papMult('damage'), Math.random() < 0.35 ? 'head' : 'torso', tp, dir.normalize(), { impulse: 0.6, weapon: 'sentinel', quiet: true, noPoints: false });
       for (let i = 0; i < 3; i++) g.sparks.emit(eye.x, eye.y, eye.z, dir.x * 3 + rand(-0.5, 0.5), dir.y * 3 + rand(-0.5, 0.5), dir.z * 3 + rand(-0.5, 0.5), rand(0.05, 0.12), 1, 0.8, 0.4, 0);
-      const [v, pan] = g.spatial(eye); if (g.audio.gunshotData && v > 0.05) g.audio.gunshotData({ crack: 3400, crackG: 0.25 * v, body: 1200, bodyEnd: 500, bodyDur: 0.04, bodyG: 0.25 * v, low: 120, lowDur: 0.03, lowG: 0.15 * v, rv: 0.2 }, -1);
+      if (g.audio.turretShot) g.audio.turretShot(g, eye, d);
     }
   },
 
@@ -26684,6 +26689,81 @@ const fhSys = g => g.fh || (g.fh = new FunhouseSys(g));
   G0.startGame = function (...a) { const r = _sg.apply(this, a); if (this.fh) this.fh.reset(); return r; };
 }
 
+/* =====================================================================
+   EVERY GUN SOUNDS LIKE ITSELF
+   All reports are synthesised from the same model (crack, body, thump,
+   action, tail), so guns with similar data came out sounding the same.
+   Now every gun gets:
+     · its own spacing: if its report sits too close to a gun already
+       voiced, its body, thump or length is pushed away until it is clearly
+       different;
+     · its own voice: a short receiver/barrel resonance at a pitch no other
+       gun uses, with its own partial ratio and decay;
+     · rotary guns their own motor, barrel and gear pitch.
+   Shared report data is split so no two guns point at the same sound.
+   ===================================================================== */
+const GUN_VOICE_MIN = 2.0;   // how far apart (in the distance below) any two reports must sit
+function sndDist(a, b) {
+  const L2 = Math.log2, ln = Math.log;
+  return Math.abs(L2(a.body / b.body)) / 0.3 + Math.abs(L2(a.low / b.low)) / 0.35 + Math.abs(ln(a.bodyDur / b.bodyDur)) / 0.5 + Math.abs(a.crack - b.crack) / 0.25
+    + Math.abs(a.punch - b.punch) / 0.3 + Math.abs(ln(a.tail / b.tail)) / 0.4 + Math.abs(a.tailG - b.tailG) / 0.15 + (Math.abs((a.mech || 0) - (b.mech || 0)) > 300 ? 1 : 0);
+}
+const GUN_VOICES = { map: null };
+function buildGunVoices() {
+  const ids = WEAPON_ORDER.filter(id => WEAPON_DATA[id]), seen = new Map(), map = {};
+  // split shared report objects and tag each with its gun
+  for (const id of ids) { const d = WEAPON_DATA[id]; if (!d.snd) continue; if (seen.has(d.snd) || (d.snd.wid && d.snd.wid !== id)) d.snd = Object.assign({}, d.snd); d.snd.wid = id; seen.set(d.snd, id); }
+  const base = id => { const d = WEAPON_DATA[id]; return d.snd ? shotRecipe(d.snd) : Object.assign({ ring: 0 }, SHOT_BASE[id] || SHOT_BASE.rifle); };
+  const n = ids.length, placed = [], RAT = [2.76, 1.59, 2.32, 3.17, 1.83, 2.05, 2.51];
+  ids.forEach((id, i) => {
+    const R0 = base(id), k = { body: 1, low: 1, dur: 1 };
+    const apply = () => Object.assign({}, R0, { body: clamp(R0.body * k.body, 420, 4800), low: clamp(R0.low * k.low, 36, 300), bodyDur: clamp(R0.bodyDur * k.dur, 0.03, 0.45) });
+    for (let it = 0; it < 18; it++) {
+      const R = apply(), near = placed.find(p => sndDist(R, p.R) < GUN_VOICE_MIN); if (!near) break;
+      const ax = it % 3;
+      if (ax === 0) k.body *= (R.body >= near.R.body && R.body < 4400) || R.body < 520 ? 1.13 : 1 / 1.13;
+      else if (ax === 1) k.low *= (R.low >= near.R.low && R.low < 280) || R.low < 45 ? 1.12 : 1 / 1.12;
+      else k.dur *= (R.bodyDur >= near.R.bodyDur && R.bodyDur < 0.4) || R.bodyDur < 0.04 ? 1.22 : 1 / 1.22;
+    }
+    const vi = (i * 23) % n;   // neighbours in the list get far-apart voices
+    map[id] = { k, vox: Math.round(480 * Math.pow(3800 / 480, vi / Math.max(1, n - 1))), voxR: RAT[i % RAT.length], voxT: 0.022 + (i % 5) * 0.011, voxG: 0.07 + (i % 3) * 0.018 };
+    placed.push({ id, R: apply() });
+  });
+  return map;
+}
+const SPIN_VOICE = { minigun: { f: 1, lfo: 1, grind: 1 }, ratchet: { f: 1.24, lfo: 1.35, grind: 1.5 }, meatgrinder: { f: 0.78, lfo: 0.72, grind: 0.7 } };
+Object.assign(AudioSys.prototype, {
+  gunVoices() { return GUN_VOICES.map || (GUN_VOICES.map = buildGunVoices()); },
+  voiceRecipe(R, id) {
+    const V = id && this.gunVoices()[id]; if (!V) return R;
+    return Object.assign({}, R, { body: clamp(R.body * V.k.body, 420, 4800), low: clamp(R.low * V.k.low, 36, 300), bodyDur: clamp(R.bodyDur * V.k.dur, 0.03, 0.45), vox: V.vox, voxR: V.voxR, voxT: V.voxT, voxG: V.voxG });
+  },
+  gunList() { return WEAPON_ORDER.filter(id => WEAPON_DATA[id]).map(id => [id, WEAPON_DATA[id].name]); },
+  /** The report a gun actually plays (for the checks). */
+  reportOf(id) { const d = WEAPON_DATA[id]; this.gunVoices(); return this.voiceRecipe(d && d.snd ? shotRecipe(d.snd) : Object.assign({ ring: 0 }, SHOT_BASE[id] || SHOT_BASE.rifle), id); },
+  /** A Sentinel drone's shot: a tiny coil gun, heard from where the drone is. */
+  turretShot(g, p, d) {
+    const [v, pan] = g.spatial(p); if (v < 0.015) return;
+    const cp = g.camera.position, dist = Math.hypot(p.x - cp.x, p.y - cp.y, p.z - cp.z), delay = dist / 343, k = (d && d.pitch) || 1, r = rand(0.97, 1.03) * k, rv = 0.12 + 0.45 * (1 - v);
+    this.noise(0.016, { type: 'bandpass', freq: 5800 * r, q: 2.5, gain: 0.34, vol: v, pan, delay, rv });                // the snap of the tiny breech
+    this.tone(2400 * r, 0.075, { type: 'triangle', freqEnd: 760 * r, gain: 0.17, vol: v, pan, delay, rv });            // the coil's falling chirp
+    this.tone(4900 * r, 0.03, { type: 'sine', freqEnd: 2700 * r, gain: 0.06, vol: v, pan, delay });
+    this.noise(0.06, { type: 'highpass', freq: 3200, gain: 0.06, vol: v, pan, delay: delay + 0.012, rv });            // air off the muzzle
+    if (d) { d.servoN = (d.servoN || 0) - 1; if (d.servoN <= 0) { d.servoN = 3; this.tone(180 * k, 0.1, { type: 'square', freqEnd: 250 * k, gain: 0.035, filter: 800, q: 1, vol: v, pan, delay: delay + 0.05 }); } }   // its head servo tracking
+  },
+  /** A drone digging in: a light clack, then its legs unfolding. */
+  turretDeploy(g, p, d) {
+    const [v, pan] = g.spatial(p); if (v < 0.015) return;
+    const cp = g.camera.position, delay = Math.hypot(p.x - cp.x, p.y - cp.y, p.z - cp.z) / 343, k = (d && d.pitch) || 1;
+    this.noise(0.03, { type: 'bandpass', freq: 2600 * k, q: 3, gain: 0.3, vol: v, pan, delay, rv: 0.2 });
+    for (let i = 0; i < 4; i++) this.tone((900 + i * 140) * k, 0.025, { type: 'square', gain: 0.03, filter: 2400, vol: v, pan, delay: delay + 0.12 + i * 0.07 });   // four legs, one after another
+    this.tone(320 * k, 0.32, { type: 'sawtooth', freqEnd: 620 * k, gain: 0.035, filter: 1200, vol: v, pan, delay: delay + 0.1 });   // the unfold whirr
+    this.tone(1760 * k, 0.08, { type: 'sine', gain: 0.05, vol: v, pan, delay: delay + 0.48 });                                       // armed
+  },
+});
+{ const WS = WeaponSystem.prototype, _u = WS.update; WS.update = function (dt) { if (this.game.audio) this.game.audio.curW = this.current; return _u.call(this, dt); }; }
+{ const G0 = Game.prototype, _sg = G0.startGame; G0.startGame = function (...a) { if (this.audio && this.audio.gunVoices) this.audio.gunVoices(); return _sg.apply(this, a); }; }
+
 /* ===== CARNIVAL PHASE 3/4 END ===== */
 /* =====================================================================
    SITE 9 — REBUILT. The Facility at roughly one and a half times its old
@@ -27662,7 +27742,7 @@ Object.assign(World.prototype, {
     for (const s of this.spawns) { keep.push([s.pos.x, s.pos.z, s.pos.y || 0, 2.2]); keep.push([s.sill.x, s.sill.z, s.pos.y || 0, 1.6]); }
     for (const w of this.wallBuys) keep.push([w.center.x, w.center.z, w.def.y || 0, 1.9]);
     for (const p of this.perkMachines) keep.push([p.center.x, p.center.z, p.pos.y - 1.2, 1.8]);
-    for (const b of BOX_SPOTS) keep.push([b.x, b.z, 0, 2.2]);
+    for (const b of BOX_SPOTS) keep.push([b.x, b.z, b.y || 0, 2.2]);
     for (const c of this.caches || []) keep.push([c.x, c.z, c.y || 0, 1.6]);
     for (const t of this.fac2Sentries || []) keep.push([t.x, t.z, t.y, 1.6]);
     for (const t of this.traps || []) { const d = t.def; if (d.x0 != null) keep.push([(d.x0 + d.x1) / 2, (d.z0 + d.z1) / 2, 0, Math.max(d.x1 - d.x0, d.z1 - d.z0) / 2 + 1]); if (t.use) keep.push([t.use.x, t.use.z, 0, 1.4]); }
@@ -27856,6 +27936,849 @@ if (FAC2) {
   };
 }
 
+/* ===== V49 BEGIN ===== */
+/* =====================================================================
+   THE CRUCIBLE, REBORN — an alien forge, not a vending machine
+   Twin crystal pylons wound with coils, a standing gate ring the weapon
+   floats in, gyroscope rings that spin up around it, a halo over the
+   crown, conduits that glow as power floods in. Its own sound: a magnetic
+   clamp, a power surge, a living drone that climbs with the work, a
+   thunderclap and a choir when the weapon changes, a triumphant chord.
+   It can stand on an upper floor (spot.y).
+   In the Facility it moves to the EXPERIMENTAL TESTING LAB on Level 2,
+   between the two test chambers, and the room is rewired around it.
+   ===================================================================== */
+const PAP_FAC_SPOT = { x: 19.5, z: -14.2, rotY: 0 };   // final (post-rebuild) Facility coordinates; y = FAC_U
+UpgradeMachine = class UpgradeMachine {
+  constructor(world) {
+    this.world = world; this.game = world.game; const M = world.mats, s = CRUCIBLE.spot;
+    this.y = s.y || 0;
+    const g = this.group = new THREE.Group(); g.position.set(s.x, this.y, s.z); g.rotation.y = s.rotY;
+    const alloy = new THREE.MeshPhongMaterial({ color: 0x1c1826, shininess: 110, specular: 0x8a70c0 });
+    const plate = new THREE.MeshPhongMaterial({ map: TEX.metal, color: 0x34303e, shininess: 70, specular: 0x666688 });
+    const bronze = new THREE.MeshPhongMaterial({ color: 0x6a5230, shininess: 90, specular: 0xffd090 });
+    this.coilMat = new THREE.MeshPhongMaterial({ color: 0x241034, emissive: 0x2a0a55, shininess: 80, specular: 0xc090ff });
+    this.lampMat = new THREE.MeshBasicMaterial({ color: 0x601010 });
+    this.energyMat = new THREE.MeshBasicMaterial({ color: 0xb070ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    this.glowMat = new THREE.MeshBasicMaterial({ color: 0x9a50ff, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false });
+    this.crystalMat = new THREE.MeshPhongMaterial({ color: 0xd8b8ff, emissive: 0x6a2aff, emissiveIntensity: 0.6, shininess: 140, specular: 0xffffff, transparent: true, opacity: 0.9 });
+    this.seamMat = new THREE.MeshBasicMaterial({ color: 0x7a40e0 });
+    const P = (x, y, z, w, h, d, m, r) => world.part(g, x, y, z, w, h, d, m, r);
+    // --- the base: an octagonal plinth with a glowing trim ring and three steps of armour
+    const plinth = new THREE.Mesh(new THREE.CylinderGeometry(1.32, 1.42, 0.22, 8), plate); plinth.position.y = 0.11; plinth.rotation.y = Math.PI / 8; g.add(plinth);
+    const trim = new THREE.Mesh(new THREE.TorusGeometry(1.36, 0.035, 6, 8), this.glowMat); trim.rotation.x = Math.PI / 2; trim.rotation.z = Math.PI / 8; trim.position.y = 0.22; g.add(trim);
+    P(0, 0.22, -0.08, 2.0, 0.85, 1.12, alloy);                                  // lower housing
+    for (const sx of [-0.62, -0.2, 0.2, 0.62]) P(sx, 0.32, 0.49, 0.02, 0.62, 0.02, this.seamMat);   // glowing seams on the front
+    P(0, 1.07, -0.18, 1.9, 0.1, 0.86, M.darkMetal);                              // deck
+    // --- the twin pylons: hexagonal columns wound with coils, each crowned by a floating crystal
+    this.coils = []; this.crystals = [];
+    for (const sx of [-0.82, 0.82]) {
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.23, 1.85, 6), alloy); col.position.set(sx, 1.07 + 0.92, -0.05); g.add(col);
+      for (let i = 0; i < 6; i++) { const c = new THREE.Mesh(new THREE.TorusGeometry(0.2 - i * 0.008, 0.035, 6, 18), this.coilMat); c.rotation.x = Math.PI / 2; c.position.set(sx, 1.35 + i * 0.22, -0.05); g.add(c); this.coils.push(c); }
+      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.5, 0.42), plate); fin.position.set(sx * 1.17, 1.85, -0.05); g.add(fin);   // outer blade fin
+      const cr = new THREE.Mesh(new THREE.OctahedronGeometry(0.15, 0), this.crystalMat); cr.position.set(sx, 3.02, -0.05); cr.scale.y = 1.6; g.add(cr); this.crystals.push(cr);
+    }
+    // --- the gate: a standing ring the weapon floats in, with two gyroscope rings that spin up around it
+    this.gate = new THREE.Group(); this.gate.position.set(0, 1.78, 0.05); g.add(this.gate);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.075, 10, 40), bronze); this.gate.add(ring);
+    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2, n = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.16, 0.16), plate); n.position.set(Math.cos(a) * 0.62, Math.sin(a) * 0.62, 0); n.rotation.z = a; this.gate.add(n); }
+    for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2, rune = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.07, 0.01), this.seamMat); rune.position.set(Math.cos(a) * 0.6, Math.sin(a) * 0.6, 0.08); rune.rotation.z = a; this.gate.add(rune); }
+    this.gyros = [];
+    for (const [r, t] of [[0.5, 0.025], [0.42, 0.02]]) { const gy = new THREE.Mesh(new THREE.TorusGeometry(r, t, 6, 36), this.coilMat); this.gate.add(gy); this.gyros.push(gy); }
+    this.beam = new THREE.Mesh(new THREE.CircleGeometry(0.54, 32), this.energyMat); this.beam.position.set(0, 1.78, 0.02); g.add(this.beam);   // the field inside the gate
+    // --- the spine behind the gate: conduits that light up as the power arrives
+    P(0, 1.07, -0.52, 1.25, 1.75, 0.22, alloy);
+    this.conduits = []; for (const sx of [-0.4, -0.13, 0.13, 0.4]) { const c = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.6, 0.02), this.seamMat.clone()); c.position.set(sx, 1.95, -0.4); g.add(c); this.conduits.push(c); }
+    // --- crown: an arch between the pylons, the halo above it, hydraulic arms behind
+    P(0, 2.7, -0.08, 1.95, 0.17, 0.55, plate); P(0, 2.87, -0.12, 1.1, 0.1, 0.4, M.darkMetal);
+    this.halo = new THREE.Group(); this.halo.position.set(0, 3.08, -0.1); g.add(this.halo);
+    const hr = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.025, 6, 30), this.glowMat); hr.rotation.x = Math.PI / 2; this.halo.add(hr);
+    for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2, sh = new THREE.Mesh(new THREE.TetrahedronGeometry(0.05, 0), this.crystalMat); sh.position.set(Math.cos(a) * 0.3, 0, Math.sin(a) * 0.3); this.halo.add(sh); }
+    this.pistons = [];
+    for (const sx of [-0.5, 0.5]) { P(sx, 2.55, -0.62, 0.14, 0.32, 0.14, M.darkMetal); const r = world.cpart(g, sx, 2.2, -0.62, 0.035, 0.45, M.metal, 10); this.pistons.push(r); }
+    // --- turbines on the outside of the fins (the old flywheels)
+    this.wheels = [];
+    for (const sx of [-1.1, 1.1]) {
+      const w = new THREE.Group(); w.position.set(sx, 1.55, -0.05); w.rotation.z = Math.PI / 2;
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.08, 12), bronze); w.add(hub);
+      for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2, bl = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.05, 0.07), plate); bl.position.set(Math.cos(a) * 0.2, 0, -Math.sin(a) * 0.2); bl.rotation.set(0.5, a, 0); w.add(bl); }
+      g.add(w); this.wheels.push(w);
+    }
+    // --- shutter, lamps, status screen, sign
+    this.shutter = world.part(g, 0, 1.1, 0.47, 1.2, 0.34, 0.05, M.bulkhead);
+    for (let i = 0; i < 4; i++) world.part(g, 0, 1.12 + i * 0.08, 0.5, 1.18, 0.012, 0.01, M.darkMetal);
+    this.lamps = []; for (const sx of [-0.92, 0.92]) { const l = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), this.lampMat); l.position.set(sx, 2.75, 0.22); g.add(l); this.lamps.push(l); }
+    P(0.64, 0.62, 0.42, 0.44, 0.36, 0.08, M.darkMetal, [-0.4, 0, 0]);
+    this.screenCanvas = makeCanvas(256, 128); this.screenTex = new THREE.CanvasTexture(this.screenCanvas);
+    const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 0.16), new THREE.MeshBasicMaterial({ map: this.screenTex })); scr.position.set(0.64, 0.85, 0.47); scr.rotation.x = -0.4; g.add(scr);
+    for (let i = 0; i < 3; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.03, 0.05), new THREE.MeshBasicMaterial({ color: [0xff3030, 0xffc030, 0x30ff60][i] })); b.position.set(-0.76 + i * 0.12, 0.7, 0.5); g.add(b); world.blinkers.push({ m: b, t: rand(0, 2) }); }
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.17), new THREE.MeshBasicMaterial({ map: signTexture('THE CRUCIBLE · ' + CRUCIBLE.levels[0].cost, { size: 56, color: '#d8b0ff', border: '#d8b0ff', bg: '#0c0812' }) }));
+    sign.position.set(0, 2.79, 0.2); g.add(sign);
+    // --- cables out of the back into the floor
+    for (const sx of [-0.45, 0, 0.45]) world.cpart(g, sx, 0.0, -0.78, 0.07, 0.5, M.black, 8);
+    // --- tray and holder (as before), the light
+    this.tray = G(g, 0, 1.1, 0.25); world.part(this.tray, 0, 0, 0, 0.9, 0.04, 0.4, M.metal);
+    this.holder = G(g, 0, 1.18, 0.25);
+    this.light = new THREE.PointLight(0xa060ff, 0, 8, 1.6); this.light.position.set(0, 1.8, 0.9); g.add(this.light);
+    world.scene.add(g); g.updateMatrixWorld(true);
+    this.collider = world.colliderFromObject(this.base = plinth); this.fitCollider();
+    const skip = new Set([this.beam]); this.gate.traverse(m => skip.add(m)); this.halo.traverse(m => skip.add(m));
+    g.traverse(m => { if (m.isMesh && !skip.has(m)) world.staticRay.push(m); });
+    this.arcs = [];
+    for (let i = 0; i < 6; i++) {
+      const pos = new Float32Array(7 * 3), geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const m = new THREE.Line(geo, VMM.papArc); m.visible = false; m.frustumCulled = false; g.add(m); this.arcs.push({ m, pos, t: 0 });
+    }
+    this.extMats = [];   // the room's own glowing pieces follow the machine (set up by the room)
+    this.reset();
+  }
+  /** One collider for the whole machine (plinth to crown). */
+  fitCollider() {
+    const p = this.group.position, r = this.group.rotation.y, c = Math.abs(Math.cos(r)), s = Math.abs(Math.sin(r)), hw = 1.3 * c + 0.85 * s, hd = 1.3 * s + 0.85 * c;
+    Object.assign(this.collider, { minX: p.x - hw, maxX: p.x + hw, minZ: p.z - hd, maxZ: p.z + hd, minY: p.y, maxY: p.y + 3.2 });
+  }
+  /** Moves the whole machine (used when a map rebuilds its plan). */
+  moveTo(x, y, z, rotY) { this.group.position.set(x, y, z); this.group.rotation.y = rotY; this.group.updateMatrixWorld(true); this.y = y; this.fitCollider(); }
+  reset() {
+    this.state = 'idle'; this.t = 0; this.weapon = null; this.spin = 0; this.transformed = false; this.gyro = 0;
+    if (this.model) { this.holder.remove(this.model); this.model = null; }
+    this.tray.position.z = 0.25; this.holder.position.set(0, 1.18, 0.25); this.shutter.position.y = 1.1; this.light.intensity = 0;
+    this.drawScreen();
+  }
+  get center() { const p = this.group.position, r = this.group.rotation.y; return { x: p.x + Math.sin(r) * 1.4, z: p.z + Math.cos(r) * 1.4 }; }
+  get powered() { return !CRUCIBLE.needsPower || (!this.world.powerOut && (!this.world.town || this.world.town.awake >= 1)); }
+  drawScreen(line2) {
+    const c = this.screenCanvas, g = c.getContext('2d'); if (!g || !g.fillRect) return;
+    g.fillStyle = '#08040c'; g.fillRect(0, 0, 256, 128);
+    g.fillStyle = this.powered ? '#d8b0ff' : '#ff4040'; g.font = '700 30px monospace'; g.textAlign = 'center';
+    g.fillText(!this.powered ? 'NO POWER' : this.state === 'idle' ? 'READY' : this.state === 'ready' ? 'COMPLETE' : 'FORGING', 128, 52);
+    g.font = '18px monospace'; g.fillStyle = '#8a7aa0'; g.fillText(line2 || 'OFFER A WEAPON', 128, 92);
+    this.screenTex.needsUpdate = true;
+  }
+  sfx(name) { const A = this.game.audio; if (!A || !A.papSfx) return; const p = this.group.position, [v, pan] = this.game.spatial(p); A.papSfx(name, Math.max(0.35, v), pan * 0.7); }
+  begin(id) {
+    this.state = 'insert'; this.t = 0; this.weapon = id; this.transformed = false;
+    const b = WEAPON_BUILDERS[id](false); this.model = b.root; this.modelP = b.P; this.modelStore = {};
+    this.model.rotation.y = -Math.PI / 2; this.model.scale.setScalar(0.95); this.holder.add(this.model);
+    this.tray.position.z = 0.7; this.holder.position.set(0, 1.18, 0.7);
+    this.sfx('in'); this.drawScreen(WEAPON_DATA[id].name);
+  }
+  update(dt, time) {
+    const A = this.game.audio, C = CRUCIBLE;
+    this.t += dt;
+    let energy = 0, wheel = 0.3;
+    if (this.state === 'insert') {
+      const k = smooth(this.t / C.insertTime);
+      this.tray.position.z = lerp(0.7, 0.05, k); this.holder.position.set(0, lerp(1.18, 1.78, smooth((this.t - 0.6) / 0.5)), lerp(0.7, 0.05, k));
+      this.shutter.position.y = lerp(1.1, 1.28, smooth((this.t - 0.7) / 0.3)); energy = 0.15 * k;
+      if (this.t >= C.insertTime) { this.state = 'process'; this.t = 0; this.sfx('start'); }
+    } else if (this.state === 'process') {
+      const p = this.t / C.processTime; energy = 0.3 + 0.7 * Math.sin(Math.min(1, p) * Math.PI); wheel = 1 + 11 * energy;
+      this.model.rotation.y = -Math.PI / 2 + this.t * (2 + 7 * energy);
+      this.holder.position.y = 1.78 + Math.sin(this.t * 3) * 0.05;
+      if (A.papLoop) A.papLoop(energy, this.game.spatial(this.group.position)); else A.setLoop('forge', { type: 'sawtooth', freq: 70 + 260 * energy, gain: 0.06 + 0.14 * energy, filter: 500 + 2500 * energy });
+      if (Math.random() < dt * 18 * energy) { this.zap(); if (Math.random() < 0.4) { const [v, pan] = this.game.spatial(this.group.position); A.spark(Math.max(0.2, v), pan); } }
+      if (!this.transformed && p >= 0.55) {
+        this.transformed = true; setUpgradeLook(this.model, this.modelP, true, this.modelStore);
+        this.sfx('flash'); this.flash = 0.8;
+        const wp = this.worldPoint(0, 1.78, 0.3);
+        for (let i = 0; i < 70; i++) this.game.sparks.emit(wp.x, this.y + 1.78, wp.z, rand(-3, 3), rand(-1, 3), rand(-3, 3), rand(0.3, 0.9), 0.8, 0.5, 1, 4);
+        if (this.game.player) this.game.player.shake = Math.max(this.game.player.shake || 0, 0.25);
+      }
+      if (this.t >= C.processTime) { this.state = 'eject'; this.t = 0; this.sfx('out'); }
+    } else if (this.state === 'eject') {
+      const k = smooth(this.t / C.ejectTime); energy = 0.4 * (1 - k);
+      this.shutter.position.y = lerp(1.28, 1.1, smooth(this.t / 0.3));
+      this.holder.position.set(0, lerp(1.78, 1.18, smooth(this.t / 0.5)), lerp(0.05, 0.75, smooth((this.t - 0.4) / 0.7)));
+      this.tray.position.z = lerp(0.05, 0.75, smooth((this.t - 0.4) / 0.7));
+      if (this.t >= C.ejectTime) { this.state = 'ready'; this.t = 0; this.sfx('ding'); this.drawScreen('TAKE YOUR WEAPON'); }
+    } else if (this.state === 'ready') { energy = 0.15 + 0.1 * Math.sin(time * 4); if (this.model) this.model.rotation.y = -Math.PI / 2 + Math.sin(time * 1.5) * 0.25; }
+    this.flash = Math.max(0, (this.flash || 0) - dt);
+    const on = this.powered;
+    if (!on) { energy = 0; wheel = 0; }
+    this.energy = energy;
+    this.spin += dt * wheel; this.wheels.forEach((w, i) => w.rotation.x = this.spin * (i ? -1 : 1));
+    this.gyro += dt * (on ? 0.4 + energy * 9 : 0); this.gyros[0].rotation.set(this.gyro, this.gyro * 0.6, 0); this.gyros[1].rotation.set(-this.gyro * 0.8, 0, this.gyro * 1.3);
+    this.halo.rotation.y += dt * (on ? 0.5 + energy * 4 : 0); this.halo.position.y = 3.08 + (on ? Math.sin(time * 1.4) * 0.03 : 0);
+    this.crystals.forEach((c, i) => { c.rotation.y += dt * (on ? 1 + energy * 6 : 0); c.position.y = 3.02 + (on ? Math.sin(time * 2 + i * 2) * 0.03 : -0.04); });
+    this.pistons.forEach((p, i) => p.position.y = 2.2 + 0.225 + (on ? Math.max(0, Math.sin(this.spin * 2 + i * Math.PI)) * 0.08 * (0.3 + energy) : 0));
+    const glowK = on ? 0.3 + 0.15 * Math.sin(time * 2) + energy * 1.7 + this.flash * 2 : 0.02;
+    this.coilMat.emissive.setRGB(0.17 * glowK, 0.05 * glowK, 0.35 * glowK);
+    this.crystalMat.emissiveIntensity = on ? 0.4 + energy * 1.6 + this.flash * 2 : 0.05;
+    this.glowMat.opacity = on ? clamp(0.35 + energy * 0.6 + 0.1 * Math.sin(time * 3), 0, 1) : 0.05;
+    this.seamMat.color.setRGB(on ? 0.3 + energy * 0.5 : 0.05, on ? 0.15 + energy * 0.25 : 0.02, on ? 0.55 + energy * 0.45 : 0.08);
+    // the conduits fill from the bottom up, in a running pulse
+    this.conduits.forEach((c, i) => { const k = on ? 0.25 + energy * (0.5 + 0.5 * Math.sin(time * (6 + energy * 14) - i * 1.3)) : 0.03; c.material.color.setRGB(0.45 * k + 0.1 * this.flash, 0.2 * k, k + 0.2 * this.flash); });
+    this.energyMat.opacity = clamp(energy * 0.55 + this.flash, 0, 0.9);
+    this.light.intensity = on ? energy * 3.6 + this.flash * 7 + (this.state === 'ready' ? 1 : 0.2) : 0;
+    const blink = this.state !== 'idle' && Math.sin(time * 10) > 0;
+    this.lampMat.color.setHex(!on ? 0x200606 : blink ? 0xff3020 : this.state === 'idle' ? 0x30ff60 : 0x601010);
+    for (const f of this.extMats) f(energy, this.flash, on, time);
+    for (const a of this.arcs) if (a.t > 0) { a.t -= dt; if (a.t <= 0) a.m.visible = false; }
+    if (this.lastPowered !== on) { this.lastPowered = on; this.drawScreen(); }
+  }
+  worldPoint(x, y, z) { const r = this.group.rotation.y, p = this.group.position; return { x: p.x + x * Math.cos(r) + z * Math.sin(r), y, z: p.z - x * Math.sin(r) + z * Math.cos(r) }; }
+  /** A bolt from a pylon (or its crystal) to the weapon in the gate. */
+  zap() {
+    const a = this.arcs.find(q => q.t <= 0); if (!a) return;
+    const sx = Math.random() < 0.5 ? -0.78 : 0.78, top = Math.random() < 0.3, y0 = top ? 3.0 : rand(1.4, 2.5);
+    for (let i = 0; i <= 6; i++) { const k = i / 6; a.pos[i * 3] = lerp(sx, 0, k) + rand(-0.05, 0.05); a.pos[i * 3 + 1] = lerp(y0, 1.78, k) + rand(-0.07, 0.07); a.pos[i * 3 + 2] = lerp(-0.05, 0.05, k) + rand(-0.06, 0.06); }
+    a.m.geometry.attributes.position.needsUpdate = true; a.m.visible = true; a.t = rand(0.05, 0.12);
+  }
+  collect() { const id = this.weapon; this.reset(); return id; }
+};
+
+/* ---------- its sound ---------- */
+Object.assign(AudioSys.prototype, {
+  papSfx(name, v = 1, pan = 0) {
+    const o = (x = {}) => Object.assign({ vol: v, pan }, x);
+    if (name === 'in') {        // magnetic clamps bite, servos draw it in, pressure vents
+      this.tone(72, 0.35, o({ freqEnd: 42, gain: 0.5 }));
+      this.noise(0.05, o({ type: 'bandpass', freq: 1900, q: 8, gain: 0.5, rv: 0.4 }));
+      this.noise(0.04, o({ type: 'bandpass', freq: 2600, q: 9, gain: 0.35, delay: 0.09, rv: 0.4 }));
+      this.tone(280, 0.7, o({ type: 'sawtooth', freqEnd: 520, gain: 0.05, filter: 1300, delay: 0.12 }));
+      this.noise(0.6, o({ type: 'highpass', freq: 3200, freqEnd: 1800, gain: 0.12, delay: 0.55, rv: 0.5 }));
+      this.tone(58, 0.3, o({ freqEnd: 38, gain: 0.45, delay: 0.95 })); this.noise(0.05, o({ type: 'bandpass', freq: 1500, q: 7, gain: 0.4, delay: 0.95 }));
+    } else if (name === 'start') {   // a power surge: sub sweep, a chord of saws opening up, a reverse swell, something like a voice
+      this.tone(30, 1.8, o({ freqEnd: 115, gain: 0.5, attack: 0.15 }));
+      [55, 82.4, 110, 164.8].forEach((f, i) => this.tone(f, 1.7, o({ type: 'sawtooth', freqEnd: f * 2, gain: 0.05, filter: 2600, q: 2, attack: 0.5, delay: i * 0.04, rv: 0.6 })));
+      this.noise(1.4, o({ type: 'highpass', freq: 5000, freqEnd: 9000, gain: 0.12, attack: 1.2, rv: 0.6 }));
+      this.tone(220, 1.6, o({ type: 'triangle', freqEnd: 330, gain: 0.05, vib: { rate: 5.5, depth: 9 }, delay: 0.4, rv: 0.8 }));
+    } else if (name === 'flash') {   // the change: a thunderclap, a drop, and a choir
+      this.noise(0.08, o({ type: 'highpass', freq: 2500, gain: 0.7, rv: 0.8 }));
+      this.noise(1.6, o({ type: 'lowpass', freq: 1100, freqEnd: 70, gain: 0.75, rv: 1 }));
+      this.tone(95, 1.4, o({ freqEnd: 24, gain: 0.7 }));
+      [220, 261.6, 329.6, 392, 493.9].forEach((f, i) => { this.tone(f, 2.0, o({ type: 'sawtooth', gain: 0.035, filter: 2200, attack: 0.25, delay: 0.1 + i * 0.03, rv: 1 })); this.tone(f * 1.006, 2.0, o({ type: 'triangle', gain: 0.04, attack: 0.3, delay: 0.12 + i * 0.03, rv: 1, vib: { rate: 4.5 + i * 0.3, depth: 3 } })); });
+      [1760, 2093, 2637, 3136, 3520].forEach((f, i) => this.tone(f, 0.5, o({ type: 'sine', gain: 0.04, delay: 0.35 + i * 0.07, rv: 1 })));
+    } else if (name === 'out') {   // decompression, servos winding back, two clunks
+      this.noise(0.9, o({ type: 'bandpass', freq: 1400, freqEnd: 380, q: 2, gain: 0.3, rv: 0.6 }));
+      this.tone(520, 0.6, o({ type: 'sawtooth', freqEnd: 260, gain: 0.045, filter: 1200, delay: 0.15 }));
+      this.tone(70, 0.25, o({ freqEnd: 45, gain: 0.4, delay: 0.55 })); this.tone(64, 0.25, o({ freqEnd: 40, gain: 0.35, delay: 0.85 }));
+    } else if (name === 'ding') {   // a triumphant chord with a bell on top
+      [196, 246.9, 293.7, 392].forEach((f, i) => this.tone(f, 1.6, o({ type: 'sawtooth', gain: 0.05, filter: 1900, attack: 0.03, delay: i * 0.06, rv: 0.8 })));
+      this.tone(98, 1.4, o({ type: 'triangle', gain: 0.18, delay: 0.02 }));
+      [1568, 2349].forEach((f, i) => this.tone(f, 1.4, o({ type: 'sine', gain: 0.06, delay: 0.24 + i * 0.05, rv: 1 })));
+    }
+  },
+  /** The forge at work: a living drone, a climbing whine and plasma crackle, all following the energy. */
+  papLoop(e, sp) {
+    const [v] = sp || [1, 0], k = Math.max(0.35, v);
+    this.setLoop('papDrone', { type: 'sawtooth', freq: 48 + 40 * e, gain: (0.05 + 0.12 * e) * k, filter: 260 + 1700 * e });
+    this.setLoop('papFifth', { type: 'sawtooth', freq: (48 + 40 * e) * 1.498, gain: (0.02 + 0.06 * e) * k, filter: 300 + 1400 * e });
+    this.setLoop('papWhine', { type: 'sine', freq: 500 + 2100 * e, gain: (0.01 + 0.04 * e) * k, filter: 6000 });
+    this.setLoop('papCrackle', { noise: true, freq: 3500 + 2500 * e, gain: (0.015 + 0.07 * e) * (0.6 + Math.random() * 0.8) * k });
+  },
+});
+
+/* ---------- the Facility: the Experimental Testing Lab is rebuilt around it ---------- */
+Object.assign(World.prototype, {
+  papRoom() {
+    const W = this, S = this.scene, U = FAC_U, M = this.mats, sp = PAP_FAC_SPOT, cr = this.crucible; if (!cr) return;
+    cr.moveTo(sp.x, U, sp.z, sp.rotY); Object.assign(CRUCIBLE.spot, { x: sp.x, z: sp.z, y: U, rotY: sp.rotY });
+    const rubber = new THREE.MeshPhongMaterial({ color: 0x141418, shininess: 30, specular: 0x333333 });
+    const steel = new THREE.MeshPhongMaterial({ color: 0x3a3e46, shininess: 70, specular: 0x777777 });
+    const bandMats = [0, 1, 2, 3].map(() => new THREE.MeshBasicMaterial({ color: 0x5a2aa0 }));
+    const add = (m, ray = true) => { S.add(m); if (ray) W.staticRay.push(m); return m; };
+    const V = (x, y, z) => new THREE.Vector3(x, y, z);
+    const bands = [];
+    // a cable along a smooth path, with glowing bands that carry pulses toward the machine
+    const cable = (pts, r, nb = 6) => {
+      let curve = null; try { curve = new THREE.CatmullRomCurve3(pts); } catch (e) {}
+      if (curve && THREE.TubeGeometry && curve.getPointAt) { try { const m = new THREE.Mesh(new THREE.TubeGeometry(curve, Math.max(16, pts.length * 10), r, 8, false), rubber); add(m, false);
+        for (let i = 1; i <= nb; i++) { const u = i / (nb + 1), p = curve.getPointAt(u), t = curve.getTangentAt(u); const b = new THREE.Mesh(new THREE.TorusGeometry(r * 1.15, r * 0.28, 6, 14), bandMats[i % 4]); b.position.copy(p); b.lookAt(p.clone().add(t)); add(b, false); bands.push(b); }
+        return; } catch (e) {} }
+      for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1], len = a.distanceTo(b); const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 8), rubber); m.position.set((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2); try { m.quaternion.setFromUnitVectors(V(0, 1, 0), b.clone().sub(a).normalize()); } catch (e) {} add(m, false); }
+    };
+    const mx = sp.x, mz = sp.z, F = U + 0.06;
+    // 1-2. from each test chamber (the blue cylinders) across the floor into the machine's flanks
+    for (const [cx, side] of [[11, -1], [27, 1]]) {
+      for (const dz of [-0.25, 0.25]) cable([V(cx - side * 0.2, F, -8.5 + dz), V(cx - side * 1.8, F, -9.6 + dz), V(mx + side * 4.5, F, -12.6 + dz), V(mx + side * 2.2, F, mz + dz * 0.6), V(mx + side * 1.35, U + 0.5, mz + dz * 0.6)], 0.075, 7);
+      // a clamp ring on the chamber where the feed leaves it
+      const cl = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.07, 8, 32), steel); cl.rotation.x = Math.PI / 2; cl.position.set(cx, U + 0.35, -8.5); add(cl, false);
+    }
+    // 3-5. three heavy feeds drop from the ceiling into the crown
+    for (const [x0, z0, x1] of [[mx - 3, mz - 3.2, mx - 0.55], [mx, mz - 4.2, mx], [mx + 3, mz - 3.2, mx + 0.55]])
+      cable([V(x0, U + 3.36, z0), V(x0 + (x1 - x0) * 0.4, U + 2.55, z0 + 1.2), V(x1, U + 2.7, mz - 1.4), V(x1, U + 2.62, mz - 0.75)], 0.09, 5);
+    for (const [x0, z0] of [[mx - 3, mz - 3.2], [mx, mz - 4.2], [mx + 3, mz - 3.2]]) { const pl = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.08, 12), steel); pl.position.set(x0, U + 3.36, z0); add(pl, false); }
+    // 6-7. two conduits come down the back wall and run along the floor into the spine
+    const BW = -23.75;
+    for (const dx of [-0.6, 0.6]) {
+      cable([V(mx + dx * 3, U + 2.6, BW + 0.15), V(mx + dx * 3, U + 0.4, BW + 0.2), V(mx + dx * 3, F + 0.04, BW + 1.2), V(mx + dx * 1.4, F + 0.04, mz - 3), V(mx + dx * 0.5, F + 0.04, mz - 1.2), V(mx + dx * 0.5, U + 0.4, mz - 0.85)], 0.11, 8);
+    }
+    // cable tray along the back wall, junction boxes, warning signs
+    this.box(mx, U + 2.45, BW + 0.2, 14, 0.12, 0.35, M.darkMetal, { collide: false });
+    for (const dx of [-5.5, -1.8, 1.8, 5.5]) { this.box(mx + dx, U + 1.6, BW + 0.18, 0.7, 0.85, 0.3, steel, { collide: false }); const l = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), bandMats[(dx > 0 ? 1 : 3)]); l.position.set(mx + dx + 0.22, U + 2.3, BW + 0.34); add(l, false); bands.push(l); }
+    const sg = (x, txt, sub, col) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.55), new THREE.MeshBasicMaterial({ map: signTexture(txt, { size: 44, color: col, border: col, bg: '#0c0812', sub }) })); m.position.set(x, U + 1.9, BW + 0.05); add(m, false); };
+    sg(mx - 3.6, 'DANGER · 40 MV FIELD', null, '#ffd040'); sg(mx + 3.6, 'CRUCIBLE CONTAINMENT', null, '#d8b0ff');
+    // two capacitor banks flanking it, their cells charging with the machine
+    const cells = [];
+    for (const side of [-1, 1]) { const x = mx + side * 2.6, z = mz - 0.6; this.box(x, U, z, 0.9, 1.5, 1.0, steel, { collide: true });
+      for (let i = 0; i < 4; i++) { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.9, 10), new THREE.MeshBasicMaterial({ color: 0x3a1a6a })); c.position.set(x - side * 0.47, U + 0.75, z - 0.33 + i * 0.22); c.rotation.z = Math.PI / 2; add(c, false); cells.push(c); } }
+    // a hazard ring and a glowing ring on the floor around the machine
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0x4a1a90, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(2.05, 2.25, 48), ringMat); ring.rotation.x = -Math.PI / 2; ring.position.set(mx, U + 0.015, mz); add(ring, false);
+    const hz = new THREE.Mesh(new THREE.RingGeometry(2.3, 2.6, 48), M.hazard || steel); hz.rotation.x = -Math.PI / 2; hz.position.set(mx, U + 0.012, mz); add(hz, false);
+    // the room breathes with the machine: bands run toward it, cells charge, the chambers' cores flare
+    const O = this.facObj || {};
+    cr.extMats.push((e, flash, on, t) => {
+      bandMats.forEach((m, i) => { const k = on ? 0.18 + e * (0.5 + 0.5 * Math.sin(t * (4 + e * 16) - i * 1.57)) + flash : 0.02; m.color.setRGB(0.35 * k, 0.16 * k, Math.min(1, k)); });
+      cells.forEach((c, i) => { const k = on ? 0.2 + e * (i % 4 < Math.ceil(e * 4) ? 1 : 0.2) + flash : 0.03; c.material.color.setRGB(0.4 * k, 0.15 * k, k); });
+      ringMat.opacity = on ? 0.3 + e * 0.6 + flash * 0.5 : 0.04;
+      for (const k of ['chA', 'chB']) { const ch = O[k]; if (ch && ch.core) { ch.core.scale.setScalar(1 + e * 0.5 + flash * 0.8 + 0.05 * Math.sin(t * 6)); if (ch.field) ch.field.scale.setScalar(1 + e * 0.35 + flash * 0.5); } }
+    });
+    this.papLights = [];
+    W.papDone = true;
+  },
+});
+// after the Facility's plan has been rebuilt: put the machine and its wiring in the testing lab
+{ const WP = World.prototype, _b = WP.build;
+  WP.build = function () { const r = _b.apply(this, arguments); if (IS_FAC && this.crucible && !this.papDone) { try { this.papRoom(); } catch (e) { console.error('crucible room', e); } } return r; };
+  // keep the wall dressing away from it and its wiring (the fill runs inside the rebuild, before papRoom)
+  const _fill = WP.fac2Fill;
+  if (_fill) WP.fac2Fill = function () {
+    const tmp = [];
+    if (IS_FAC) { const sp = PAP_FAC_SPOT, U = FAC_U; tmp.push(this.addCollider(sp.x - 6.5, sp.x + 6.5, U, U + 2.4, -24.2, sp.z + 2.5)); }
+    try { return _fill.apply(this, arguments); } finally { for (const c of tmp) { const i = this.colliders.indexOf(c); if (i >= 0) this.colliders.splice(i, 1); } }
+  };
+}
+
+/* =====================================================================
+   THE MYSTERY BOX — more places, a real FIRE SALE, and paying for luck
+   · The Facility's box can turn up in fifteen places, upstairs and down.
+   · FIRE SALE: a box appears at every spot it can ever stand in, all at 10
+     points, no teddy bear, until the sale ends (boxes in use finish first).
+   · While the box is choosing, press X to pay another 950: each payment
+     adds 20 points to the chance of an EPIC or LEGENDARY (up to 95%).
+   ===================================================================== */
+const BOX_BOOST = { cost: 950, step: 0.2, max: 0.95, key: 'KeyX', last: 3.0 };
+// final (post-rebuild) Facility coordinates, found by sweeping every room's walls for a clear, reachable stretch
+const FAC_BOX_MORE = [
+  { x: -11.4, z: 25.7, rotY: Math.PI / 2, zone: 'start', name: 'RECEPTION' },
+  { x: 19.7, z: 0.6, rotY: 0, zone: 'gen', name: 'GENERATOR ROOM' },
+  { x: -7.6, z: -12.3, rotY: -Math.PI / 2, zone: 'storage', name: 'B1 STORAGE' },
+  { x: 19.2, z: 29.6, rotY: 0, zone: 'comms', name: 'COMMS ROOM' },
+  { x: 0.2, z: -35.4, rotY: 0, zone: 'reactor', name: 'REACTOR LEVEL' },
+  { x: 0.2, z: 51.4, rotY: Math.PI, zone: 'yard', name: 'COURTYARD' },
+  { x: 0.2, z: 35.4, rotY: Math.PI, zone: 'u_lobby', name: 'UPPER ATRIUM', up: true },
+  { x: -21.8, z: 19.6, rotY: 0, zone: 'u_rec', name: 'RECREATION LOUNGE', up: true },
+  { x: 20.2, z: 18.6, rotY: 0, zone: 'u_sec', name: 'SECURITY CONTROL', up: true },
+  { x: -31.4, z: 9.2, rotY: Math.PI / 2, zone: 'u_cafe', name: 'STAFF CAFETERIA', up: true },
+  { x: 31.4, z: 9.2, rotY: -Math.PI / 2, zone: 'u_med', name: 'MEDICAL WING', up: true },
+  { x: 22.2, z: -35.4, rotY: 0, zone: 'u_maint', name: 'MAINTENANCE BAY', up: true },
+];
+/* ---------- boxes that stand upstairs ---------- */
+{ const B = MysteryBox.prototype, _rt = B.relocateTo, _rl = B.relocate, _reset = B.reset, _roll = B.roll, _use = B.use;
+  const fixY = box => { if (box.collider) { const y = box.spot.y || 0; box.collider.minY = y; box.collider.maxY = y + 0.66; } };
+  B.relocateTo = function (spot) { const r = _rt.call(this, spot); fixY(this); return r; };
+  B.relocate = function () {
+    // during a fire sale the main box only moves to a spot no other box is using
+    const W = this.world, used = new Set((W.fsBoxes || []).filter(b => b.group.visible).map(b => b.spot)); const keep = BOX_SPOTS.slice();
+    if (used.size) { const free = keep.filter(s => !used.has(s)); if (free.length) { BOX_SPOTS.length = 0; BOX_SPOTS.push(...free); } }
+    try { _rl.call(this); } finally { if (BOX_SPOTS.length !== keep.length) { BOX_SPOTS.length = 0; BOX_SPOTS.push(...keep); } }
+    fixY(this); if (this.game.navU) this.game.navU.rebuild();
+  };
+  B.reset = function () { const r = _reset.call(this); this.group.position.y = this.spot.y || 0; this.boostN = 0; return r; };
+  // no teddy bear at a fire sale
+  B.roll = function () { if (this.extra || (this.world.fireSale && this.world.fireSale.on)) { const u = this.uses; this.uses = 0; try { return _roll.call(this); } finally { this.uses = u; } } return _roll.call(this); };
+  B.use = function () { this.boostN = 0; return _use.apply(this, arguments); };
+}
+/* ---------- the odds, and buying better ones ---------- */
+function boxEpicShare(pool) { let e = 0, t = 0; for (const [id, w] of pool) { t += w; if (id !== 'ammo' && rarityOf(id) >= 4) e += w; } return t ? e / t : 0; }
+function boxBoostTarget(n) { const p0 = boxEpicShare(BOX_POOL); return Math.min(BOX_BOOST.max, p0 + BOX_BOOST.step * n); }
+/** A weighted pick from the box pool with epic and legendary scaled so together they make up p. */
+function boxRollBoosted(p) {
+  let E = 0, O = 0; for (const [id, w] of BOX_POOL) { if (id !== 'ammo' && rarityOf(id) >= 4) E += w; else O += w; }
+  const a = E > 0 && p < 1 ? p * O / ((1 - p) * E) : 1, pool = BOX_POOL.map(([id, w]) => [id, id !== 'ammo' && rarityOf(id) >= 4 ? w * a : w]);
+  const tot = pool.reduce((s, q) => s + q[1], 0); let x = Math.random() * tot; for (const [id, w] of pool) { x -= w; if (x <= 0) return id; } return pool[pool.length - 1][0];
+}
+Object.assign(MysteryBox.prototype, {
+  canBoost() { return this.state === 'rolling' && this.t < BOX_BOOST.last && this.result !== 'bear'; },
+  boost() {
+    const g = this.game, c = BOX_BOOST.cost;
+    if (!this.canBoost()) return false;
+    if (boxBoostTarget(this.boostN || 0) >= BOX_BOOST.max) { g.hud.notify('', 'THE ODDS ARE ALREADY AS GOOD AS THEY GET', 1.2); return false; }
+    if (g.score < c) { g.audio.denied && g.audio.denied(); g.hud.notify('', `NOT ENOUGH POINTS — ${c} TO BOOST`, 1.2); return false; }
+    g.addScore(-c); this.boostN = (this.boostN || 0) + 1; this.boostPaid = (this.boostPaid || 0) + c;
+    const p = boxBoostTarget(this.boostN); this.result = boxRollBoosted(p);
+    // a legendary keeps you waiting longer (as when it is rolled at the start)
+    this.rollT = this.result !== 'ammo' && rarityOf(this.result) >= 5 ? 4.4 : 3.4;
+    g.hud.notify('ODDS BOOSTED', `EPIC OR BETTER: ${Math.round(p * 100)}%`, 1.4);
+    const A = g.audio; if (A && A.tone) { const n = this.boostN; [523, 659, 784, 1047].slice(0, Math.min(4, 1 + n)).forEach((f, i) => A.tone(f * (1 + n * 0.06), 0.25, { type: 'triangle', gain: 0.09, delay: i * 0.05, rv: 0.6 })); A.noise(0.3, { type: 'highpass', freq: 4000, freqEnd: 9000, gain: 0.08 }); }
+    for (let i = 0; i < 30; i++) { const p0 = this.group.position; g.sparks.emit(p0.x, p0.y + 1.2, p0.z, rand(-2, 2), rand(1, 4), rand(-2, 2), rand(0.3, 0.7), 0.7, 0.35, 1, 4); }
+    this.drawBoost(); return true;
+  },
+  drawBoost() {
+    const c = this.labelCanvas, x = c.getContext('2d'); if (!x || !x.fillRect) return;
+    const n = this.boostN || 0, p = boxBoostTarget(n), maxed = p >= BOX_BOOST.max;
+    x.clearRect(0, 0, 512, 128); x.fillStyle = 'rgba(8,10,14,.8)'; x.fillRect(16, 12, 480, 104);
+    x.strokeStyle = n ? '#b45aff' : '#8fdcff'; x.lineWidth = 3; x.strokeRect(16, 12, 480, 104); x.textAlign = 'center';
+    x.fillStyle = '#ffffff'; x.font = '700 30px Oswald, "Arial Narrow", sans-serif'; x.fillText(maxed ? 'ODDS MAXED' : `PRESS X · BOOST ODDS [${BOX_BOOST.cost}]`, 256, 56);
+    x.fillStyle = '#d0a0ff'; x.font = '500 22px Oswald, "Arial Narrow", sans-serif'; x.fillText(`EPIC OR BETTER: ${Math.round(p * 100)}%${n ? `  ·  BOOSTED ×${n}` : ''}`, 256, 94);
+    this.labelTex.needsUpdate = true; this.label.visible = true;
+  },
+});
+{ const B = MysteryBox.prototype, _u = B.update;
+  B.update = function (dt, time) {
+    const was = this.state;
+    const r = _u.call(this, dt, time);
+    // while it chooses, the label offers the boost (and goes when the choice is made)
+    if (this.state === 'rolling') { const on = this.canBoost(); if (on !== this.boostShown || ((this.boostN || 0) !== this.boostDrawn)) { this.boostShown = on; this.boostDrawn = this.boostN || 0; if (on) this.drawBoost(); else if (this.result !== 'bear') this.label.visible = false; } }
+    else if (was === 'rolling') { this.boostShown = false; }
+    // an upstairs box lifts off from its own floor
+    if (this.state === 'leaving' && this.t > 1.5 && this.spot.y) this.group.position.y = this.spot.y + (this.t - 1.5) * (this.t - 1.5) * 2.5;
+    if (this.state === 'leaving' && this.t <= 1.5 && this.spot.y) this.group.position.y = this.spot.y;
+    if (this.extra && this.fsHide && this.state === 'idle') this.fsPark();
+    return r;
+  };
+}
+/* ---------- the extra fire-sale boxes: built light (display models made only when needed) ---------- */
+function makeLiteBox(world, spot) {
+  // build a normal box but without the 60-gun display rack: models are made on demand
+  const pool = BOX_POOL.slice(); BOX_POOL.length = 0;
+  let box; try { box = new MysteryBox(world, spot); } finally { BOX_POOL.length = 0; BOX_POOL.push(...pool); }
+  const store = box.models, wood = new THREE.MeshPhongMaterial({ map: TEX.crate, color: 0x8a6440, shininess: 12 });
+  box.models = new Proxy(store, { get(t, id) {
+    if (typeof id !== 'string' || id in t) return t[id];
+    if (id !== 'ammo' && !WEAPON_BUILDERS[id]) return undefined;
+    let m; if (id === 'ammo') { m = new THREE.Group(); world.part(m, 0, -0.1, 0, 0.4, 0.22, 0.26, wood); } else { m = WEAPON_BUILDERS[id](false).root; m.rotation.y = -Math.PI / 2; m.position.x = -0.1; }
+    m.visible = false; box.display.add(m); t[id] = m; return m; } });
+  box.extra = true; box.cost = 10; box.spot = spot; box.relocateTo(spot); return box;
+}
+Object.assign(MysteryBox.prototype, {
+  fsShow() { this.fsHide = false; this.group.visible = true; this.collider.enabled = true; this.state = 'idle'; this.t = 0; this.cost = 10; this.relocateTo(this.spot); this.group.position.y = this.spot.y || 0;
+    if (!this.rayOn) { this.group.traverse(m => { if (m.isMesh && !this.display.children.includes(m) && m.material !== this.beamMat && m.material !== this.glowMat) this.world.staticRay.push(m); }); this.rayOn = true; } },
+  fsPark() { this.fsHide = false; this.group.visible = false; this.collider.enabled = false; this.state = 'away'; this.t = -1e9; this.label.visible = false;
+    if (this.rayOn) { const R = this.world.staticRay; this.group.traverse(m => { const i = R.indexOf(m); if (i >= 0) R.splice(i, 1); }); this.rayOn = false; }
+    this.game.nav.rebuild(); if (this.game.navU) this.game.navU.rebuild(); },
+});
+Object.assign(World.prototype, {
+  allBoxes() { const L = [this.mysteryBox]; if (this.fsBoxes) for (const b of this.fsBoxes) if (b.group.visible) L.push(b); return L; },
+  /** FIRE SALE: every spot gets a box. */
+  fireSaleStart() {
+    if (!this.mysteryBox || IS_RANGE) return;
+    this.fireSale = { on: true }; this.fsBoxes = this.fsBoxes || [];
+    const main = this.mysteryBox; main.cost = 10;
+    for (const s of BOX_SPOTS) {
+      if (s === main.spot && main.state !== 'away' && main.state !== 'leaving') continue;
+      let b = this.fsBoxes.find(q => q.spot === s);
+      if (!b) { b = makeLiteBox(this, s); b.rayOn = true; this.fsBoxes.push(b); }
+      b.fsShow();
+    }
+    this.game.nav.rebuild(); if (this.game.navU) this.game.navU.rebuild();
+    this.game.hud.notify('FIRE SALE', `A MYSTERY BOX AT EVERY SPOT — ${this.fsBoxes.filter(b => b.group.visible).length + 1} BOXES, 10 POINTS EACH`, 3);
+  },
+  fireSaleEnd() {
+    if (this.fireSale) this.fireSale.on = false;
+    if (this.mysteryBox) this.mysteryBox.cost = BOX_COST;
+    for (const b of this.fsBoxes || []) { if (!b.group.visible) continue; if (b.state === 'idle') b.fsPark(); else b.fsHide = true; }
+  },
+});
+{ const D = DropSystem.prototype, _grab = D.grab, _rb = D.restoreBox;
+  D.grab = function (it) { const r = _grab.call(this, it); if (it && it.id === 'firesale' && this.game.world.fireSaleStart) this.game.world.fireSaleStart(); return r; };
+  D.restoreBox = function () { const r = _rb.call(this); const W = this.game.world; if (W && W.fireSaleEnd && (W.fireSale && W.fireSale.on || (W.fsBoxes || []).some(b => b.group.visible))) W.fireSaleEnd(); return r; };
+}
+/* ---------- X while the box is choosing ---------- */
+{ const G0 = Game.prototype, _ug = G0.updateGame;
+  G0.updateGame = function (dt) {
+    const k = Input.ksPressed, W = this.world;
+    if (k && KS_CONFIG[k] && KS_CONFIG[k].key === BOX_BOOST.key && W && W.allBoxes && this.state === 'playing') {
+      const p = this.player.pos; let best = null, bd = 4.5;
+      for (const b of W.allBoxes()) { if (!b.canBoost || !b.canBoost()) continue; const c = b.center, d = Math.hypot(c.x - p.x, c.z - p.z) + (Math.abs((b.spot.y || 0) - p.y) > 2.5 ? 99 : 0); if (d < bd) { bd = d; best = b; } }
+      if (best) { Input.ksPressed = null; best.boost(); }
+    }
+    return _ug.call(this, dt);
+  };
+}
+/* ---------- the Facility's extra spots (added once its plan is final, before the dressing pass) ---------- */
+if (IS_FAC) {
+  const WP = World.prototype, _fill = WP.fac2Fill;
+  const addSpots = () => { if (BOX_SPOTS.some(s => s.v49)) return; for (const s of FAC_BOX_MORE) BOX_SPOTS.push(Object.assign({}, s, { y: s.up ? FAC_U : 0, v49: true })); };
+  if (_fill) WP.fac2Fill = function () { addSpots(); return _fill.apply(this, arguments); };
+  else addSpots();
+}
+
+/* =====================================================================
+   THE ARSENAL — the Hidden Armoury, opened up (a door off the Reactor
+   Level, 1500), with a gun vending machine and the Gunsmith's bench.
+   The machine opens a menu that pauses the game: every gun, filter by
+   rarity, a live 3D preview, stats, and a price by rarity.
+   ===================================================================== */
+const ARSENAL = {
+  prices: { 1: 2000, 2: 3500, 3: 5000, 4: 15000, 5: 25000 },
+  doorCost: 1500,
+  room: { x0: 12, x1: 16.85, z0: -36, z1: -29 },          // final Facility coordinates: the old 4×4 armoury, knocked through into the dead space behind it
+  vend: { x: 14.6, z: -29.62, rotY: Math.PI },           // north wall, facing in
+  bench: { x: 13.6, z: -35.42, rotY: -Math.PI / 2 },     // the Gunsmith's bench on the new south wall
+  rackDx: 0.9,                                           // Crowe's rack moves back against the new east wall
+};
+const arsenalPrice = id => ARSENAL.prices[rarityOf(id)] || ARSENAL.prices[2];
+const arsenalIds = () => WEAPON_ORDER.filter(id => WEAPON_DATA[id] && !WEAPON_DATA[id].questOnly && WEAPON_BUILDERS[id]);
+if (IS_FAC) {
+  const d = DOORS.find(q => q.id === 'D12'); if (d) { delete d.story; d.cost = ARSENAL.doorCost; d.arsenal = true; }
+  if (ROOM_BY_ID.armory) ROOM_BY_ID.armory.name = 'THE ARSENAL';
+}
+/* ---------- the room ---------- */
+{ const WP = World.prototype;
+  // remember what the old armoury and the old workbench put down, so they can be moved after the plan is rebuilt
+  const capture = (fn, key) => function () {
+    const rec = this[key] = { place: [], box: [], cols: [], signs: [] }, P = this.place, Bx = this.box, AC = this.addCollider, SG = this.sign;
+    this.place = function (g, ...a) { const r = P.call(this, g, ...a); rec.place.push(g); return r; };
+    this.box = function (...a) { const r = Bx.apply(this, a); rec.box.push(r); return r; };
+    this.addCollider = function (...a) { const c = AC.apply(this, a); rec.cols.push(c); return c; };
+    this.sign = function (...a) { const r = SG.apply(this, a); rec.signs.push(r); return r; };
+    try { return fn.apply(this, arguments); } finally { this.place = P; this.box = Bx; this.addCollider = AC; this.sign = SG; }
+  };
+  if (WP.buildArmory) WP.buildArmory = capture(WP.buildArmory, '_arsArm');
+  if (WP.buildWorkshop) WP.buildWorkshop = capture(WP.buildWorkshop, '_arsWs');
+  Object.assign(WP, {
+    arsenalRoom() {
+      const W = this, S = this.scene, M = this.mats, A = this._arsArm, K = this._arsWs, R = ARSENAL.room; if (!A || !K) return;
+      const T = THREE, ray = this.staticRay;
+      const drop = (o, cols) => { if (!o) return; if (o.parent) o.parent.remove(o); o.traverse && o.traverse(m => { const i = ray.indexOf(m); if (i >= 0) ray.splice(i, 1); }); (cols || []).forEach(c => { if (c) c.enabled = false; }); };
+      // ---- 1. knock through: the old south and east walls go, the room grows to 4.85 × 7 m
+      const near = (a, b) => Math.abs(a - b) < 0.06;
+      const wallCols = this.colliders.filter(c => c.enabled && ((near(c.minZ, -33.15) && near(c.maxZ, -32.85) && near(c.minX, 11.85) && near(c.maxX, 16.15)) || (near(c.minX, 15.85) && near(c.maxX, 16.15) && near(c.minZ, -33.15) && near(c.maxZ, -28.85))));
+      let wallMat = M.wall || M.concrete || M.darkMetal;
+      for (const c of wallCols) { c.enabled = false;
+        for (const o of S.children.slice()) { if (!o.isMesh || !o.geometry || o.geometry.type !== 'BoxGeometry') continue; const b = new T.Box3().setFromObject(o); if (near(b.min.x, c.minX) && near(b.max.x, c.maxX) && near(b.min.z, c.minZ) && near(b.max.z, c.maxZ)) { wallMat = o.material; drop(o); } } }
+      // blood and grime that was painted on those walls would now hang in the air: take those decal triangles out
+      const cut = [[15.3, 16.4, -33.3, -28.8], [11.9, 16.3, -33.4, -32.6]];   // the old walls, and where Crowe's rack stood
+      S.traverse(o => { if (!o.isMesh || o.name !== 'fac2Gore' || !o.geometry || !o.geometry.attributes || !o.geometry.attributes.position) return; const P = o.geometry.attributes.position, a = P.array; let n = 0;
+        for (let i = 0; i + 8 < a.length; i += 9) { const cx = (a[i] + a[i + 3] + a[i + 6]) / 3, cy = (a[i + 1] + a[i + 4] + a[i + 7]) / 3, cz = (a[i + 2] + a[i + 5] + a[i + 8]) / 3;
+          if (cy > 0.05 && cut.some(([x0, x1, z0, z1]) => cx > x0 && cx < x1 && cz > z0 && cz < z1)) { for (let k = 0; k < 9; k++) a[i + k] = a[i + (k % 3)]; n++; } }
+        if (n) { P.needsUpdate = true; o.geometry.computeBoundingSphere && o.geometry.computeBoundingSphere(); } });
+      // Crowe's sign was on the old south wall: it goes up over his rack
+      const cs = A.signs[0]; if (cs && cs.position) { cs.position.set(R.x1 - 0.03, 3.3, -31); cs.rotation.set(0, -Math.PI / 2, 0); cs.updateMatrix && cs.updateMatrix(); cs.updateMatrixWorld && cs.updateMatrixWorld(true); }
+      const rm = ROOM_BY_ID.armory; if (rm) Object.assign(rm, { x0: R.x0, x1: R.x1, z0: R.z0, z1: R.z1, h: 5 });
+      this.box((R.x0 + R.x1) / 2, 0, R.z0, R.x1 - R.x0 + 0.3, 5, 0.3, wallMat, { collide: true });            // the new south wall
+      const plate = new T.MeshPhongMaterial({ map: TEX.metal, color: 0x4a4c50, shininess: 60, specular: 0x555555 });
+      this.box((R.x0 + R.x1) / 2, -0.02, (R.z0 + R.z1) / 2, R.x1 - R.x0, 0.032, R.z1 - R.z0, plate, { collide: false });   // diamond-plate floor
+      this.box((R.x0 + R.x1) / 2 + 0.4, 4.93, (R.z0 - 33) / 2, R.x1 - R.x0 + 0.8, 0.05, 33 - R.z0 + 0.3, M.darkMetal, { collide: false });   // ceiling over the new part
+      // ---- 2. the old crate and desk go; Crowe's rack moves back to the wall (its guns and pickup spots with it)
+      drop(A.place[1], [A.cols[1]]); drop(A.box[0], [A.cols[2]]);
+      const dx = ARSENAL.rackDx, rack = A.place[0];
+      if (rack) { rack.position.x += dx; rack.updateMatrix(); rack.updateMatrixWorld(true); const rc = A.cols[0]; if (rc) { rc.minX += dx; rc.maxX += dx; } }
+      for (const m of Object.values(this.armoryGuns || {})) { m.position.x += dx; m.updateMatrix && m.updateMatrix(); m.updateMatrixWorld && m.updateMatrixWorld(true); }
+      for (const k of ['rackHmg', 'rackGl']) if (SPOTS[k]) SPOTS[k].x += dx;
+      if (typeof PICKUPS !== 'undefined' && PICKUPS.memo) Object.assign(PICKUPS.memo, { x: 12.78, y: 0.975, z: -29.7 });   // Crowe's memo lay on the old desk: it goes on the crate stack by the door
+      // ---- 3. the Gunsmith's bench moves in from the Laboratory, onto the new south wall
+      const bench = K.place[0], bc = K.cols[0], b = ARSENAL.bench;
+      if (bench) { bench.position.set(b.x, 0, b.z); bench.rotation.y = b.rotY; bench.updateMatrix(); bench.updateMatrixWorld(true);
+        if (bc) Object.assign(bc, { minX: b.x - 1.1, maxX: b.x + 1.1, minZ: b.z - 0.4, maxZ: b.z + 0.4 });
+        const sg = K.signs[0]; if (sg) { sg.position.set(b.x, 2.75, R.z0 + 0.17); sg.rotation.set(0, 0, 0); sg.updateMatrix && sg.updateMatrix(); sg.updateMatrixWorld && sg.updateMatrixWorld(true); }
+        this.workshop.center = { x: b.x, z: b.z + 1.2 }; Object.assign(GUNSMITH_SPOT, { x: b.x, z: b.z }); }
+      // ---- 4. the vending machine
+      this.buildVending();
+      // ---- 5. dressing
+      this.arsenalDress();
+      try { this.sign(11.82, 2.55, -31, -Math.PI / 2, 'THE ARSENAL', 1.8, { size: 56, color: '#ffb040', border: '#ffb040' }); } catch (e) {}
+      W.arsenalDone = true;
+    },
+    arsenalDress() {
+      const W = this, S = this.scene, M = this.mats, R = ARSENAL.room, T = THREE;
+      const olive = new T.MeshPhongMaterial({ color: 0x4a5236, shininess: 20 }), steel = new T.MeshPhongMaterial({ color: 0x5a5e66, shininess: 70, specular: 0x777777 });
+      const wood = M.wood || new T.MeshPhongMaterial({ color: 0x6a4a2a }), brass = VMM.brass || new T.MeshPhongMaterial({ color: 0xb8902a, shininess: 90 });
+      const stencil = (txt, col, bg) => new T.MeshBasicMaterial({ map: signTexture(txt, { size: 40, color: col || '#e8e0c8', border: col || '#e8e0c8', bg: bg || '#2a2e1c' }) });
+      const grp = (x, z, rotY) => { const g = new T.Group(); g.position.set(x, 0, z); g.rotation.y = rotY || 0; return g; };
+      const put = (g, collide = true) => { W.place(g, g.position.x, g.position.z, g.rotation.y, { collide }); return g; };
+      const gun = (g, id, x, y, z, ry, s = 1) => { try { const m = WEAPON_BUILDERS[id](false).root; m.position.set(x, y, z); m.rotation.y = ry; m.scale.setScalar(s); g.add(m); return m; } catch (e) { return null; } };
+      // -- the GUN WALL on the west wall, south of the door: a pegboard of rifles, each with its rarity light
+      { const g = grp(R.x0 + 0.17, -34.1, Math.PI / 2);
+        W.part(g, 0, 0.5, 0, 3.4, 2.5, 0.06, wood); W.part(g, 0, 3.0, 0.02, 3.5, 0.08, 0.1, steel); W.part(g, 0, 0.42, 0.02, 3.5, 0.08, 0.1, steel);
+        for (let r = 0; r < 9; r++) for (let c = 0; c < 15; c++) W.part(g, -1.6 + c * 0.23, 0.62 + r * 0.27, 0.035, 0.012, 0.012, 0.01, M.black);
+        const ids = ['rifle', 'smg', 'shotgun', 'garand', 'p90', 'm249', 'spas', 'ksg'].filter(id => WEAPON_BUILDERS[id]);
+        ids.forEach((id, i) => { const col = i % 2, row = Math.floor(i / 2), x = -0.85 + col * 1.7, y = 0.95 + row * 0.58;
+          gun(g, id, x, y, 0.11, Math.PI / 2, 0.95); W.part(g, x - 0.35, y - 0.06, 0.06, 0.04, 0.05, 0.06, steel); W.part(g, x + 0.35, y - 0.06, 0.06, 0.04, 0.05, 0.06, steel);
+          const led = new T.Mesh(new T.BoxGeometry(0.5, 0.02, 0.01), new T.MeshBasicMaterial({ color: RARITY[rarityOf(id)].hex })); led.position.set(x, y - 0.13, 0.05); g.add(led); });
+        const head = new T.Mesh(new T.PlaneGeometry(1.6, 0.26), stencil('SMALL ARMS', '#ffb040', '#140c04')); head.position.set(0, 3.25, 0.03); g.add(head);
+        put(g, false); W.addCollider(R.x0, R.x0 + 0.35, 0, 3.1, -35.8, -32.4); }
+      // -- AMMUNITION SHELVING on the east wall, south of the rack
+      { const g = grp(R.x1 - 0.32, -34.6, -Math.PI / 2);
+        for (const y of [0.1, 0.75, 1.4, 2.05]) W.part(g, 0, y, 0, 2.2, 0.05, 0.55, steel);
+        for (const sx of [-1.08, 1.08]) for (const sz of [-0.25, 0.25]) W.part(g, sx, 0, sz, 0.05, 2.2, 0.05, steel);
+        const boxes = [[olive, 0.42, 0.22, 0.3], [M.greenPaint || olive, 0.36, 0.2, 0.26], [M.redPaint || olive, 0.3, 0.18, 0.24], [wood, 0.5, 0.26, 0.34]];
+        for (const [li, y] of [[0, 0.15], [1, 0.8], [2, 1.45], [3, 2.1]]) { let x = -0.95; let k = li; while (x < 0.85) { const [mt, w, h, d] = boxes[k++ % 4]; W.part(g, x + w / 2, y, 0, w * 0.95, h, d, mt); W.part(g, x + w / 2, y + h * 0.45, d / 2 + 0.002, w * 0.6, 0.04, 0.004, brass); x += w + 0.04; } }
+        const lab = new T.Mesh(new T.PlaneGeometry(1.4, 0.22), stencil('AMMUNITION · 7.62 · 5.56 · 12G', '#e8e0c8')); lab.position.set(0, 2.42, 0.28); g.add(lab);
+        put(g, true); }
+      // -- the incendiary-rounds crate Crowe left (the quest pickup moves with it)
+      { const x = 15.55, z = -35.35, g = grp(x, z, 0.12); W.part(g, 0, 0, 0, 1.0, 0.55, 0.62, wood); W.part(g, 0, 0.55, 0, 1.02, 0.05, 0.64, new T.MeshPhongMaterial({ color: 0xd06a1a }));
+        const lb = new T.Mesh(new T.PlaneGeometry(0.6, 0.18), stencil('INCENDIARY', '#ff8040', '#2a0c04')); lb.position.set(0, 0.32, 0.315); g.add(lb); put(g, true);
+        if (SPOTS.ammoCrate) Object.assign(SPOTS.ammoCrate, { x: x - 0.1, z: z + 1.0 }); }
+      // -- the DISPLAY CASE in the middle: a legendary under glass
+      { const g = grp(13.65, -32.85, 0); W.part(g, 0, 0, 0, 1.3, 0.85, 0.62, M.darkMetal); W.part(g, 0, 0.85, 0, 1.34, 0.04, 0.66, brass);
+        const gl = new T.Mesh(new T.BoxGeometry(1.26, 0.42, 0.58), new T.MeshPhongMaterial({ color: 0xbfe0ff, transparent: true, opacity: 0.16, shininess: 140, specular: 0xffffff, depthWrite: false })); gl.position.y = 1.1; g.add(gl);
+        const L = arsenalIds().filter(id => rarityOf(id) === 5); const show = L.length ? L[(Math.random() * L.length) | 0] : 'rifle';
+        this.arsCase = gun(g, show, 0, 1.02, 0, Math.PI / 2, 0.85);
+        const glow = new T.Mesh(new T.BoxGeometry(1.2, 0.01, 0.54), new T.MeshBasicMaterial({ color: RARITY[5].hex, transparent: true, opacity: 0.5, blending: T.AdditiveBlending, depthWrite: false })); glow.position.y = 0.9; g.add(glow);
+        const pl = new T.Mesh(new T.PlaneGeometry(0.5, 0.1), stencil('NOT FOR SALE', '#ff9a1a', '#140c04')); pl.position.set(0, 0.6, 0.315); g.add(pl);
+        put(g, true); }
+      // -- sandbags by the door and a stack of crates in the north-west corner
+      { const g = grp(12.75, -29.72, 0); for (let i = 0; i < 2; i++) { const c = new T.Mesh(new T.BoxGeometry(0.6, 0.48, 0.5), i ? olive : wood); c.position.set(0, 0.24 + i * 0.48, 0); c.rotation.y = i * 0.25; g.add(c); } const st = new T.Mesh(new T.PlaneGeometry(0.4, 0.12), stencil('5.56 NATO', '#e8e0c8')); st.position.set(0, 0.3, -0.255); st.rotation.y = Math.PI; g.add(st); put(g, true); }
+      // -- a target silhouette and a range poster; stencils on the walls; hazard stripes in front of the machine
+      { const t = new T.Mesh(new T.PlaneGeometry(0.9, 1.4), new T.MeshBasicMaterial({ map: (() => { const c = makeCanvas(128, 200), x = c.getContext('2d'); if (x && x.fillRect) { x.fillStyle = '#e8dcc0'; x.fillRect(0, 0, 128, 200); x.fillStyle = '#222'; x.beginPath(); x.arc(64, 44, 26, 0, 7); x.fill(); x.fillRect(22, 74, 84, 126); x.strokeStyle = '#c03020'; x.lineWidth = 3; for (const r of [10, 24, 38]) { x.beginPath(); x.arc(64, 120, r, 0, 7); x.stroke(); } x.fillStyle = '#c03020'; for (let i = 0; i < 9; i++) { x.beginPath(); x.arc(50 + Math.random() * 28, 100 + Math.random() * 40, 2.5, 0, 7); x.fill(); } } return new T.CanvasTexture(c); })() }));
+        t.position.set(12.85, 2.6, R.z1 - 0.17); t.rotation.y = Math.PI; S.add(t); }
+      for (const [x, y, z, ry, txt, c] of [[R.x0 + 0.02, 3.6, -30.9, Math.PI / 2, 'AUTHORISED PERSONNEL ONLY', '#ffd040'], [14.6, 3.35, R.z1 - 0.17, Math.PI, 'SIGN IT OUT · SIGN IT IN', '#e8e0c8'], [R.x1 - 0.02, 3.4, -34.6, -Math.PI / 2, 'NO NAKED FLAMES', '#ff6040']]) { const m = new T.Mesh(new T.PlaneGeometry(1.7, 0.24), stencil(txt, c, '#1a1a14')); m.position.set(x, y, z); m.rotation.y = ry; S.add(m); }
+      { const hz = M.hazard || new T.MeshBasicMaterial({ color: 0xd8b020 }); this.box(14.6, 0.005, -30.35, 1.6, 0.012, 0.12, hz, { collide: false, ray: false }); this.box(13.6, 0.005, -34.6, 2.4, 0.012, 0.12, hz, { collide: false, ray: false }); }
+      // -- two caged work lamps hanging from the ceiling on rods (lit by the room's own lamp)
+      for (const [x, z] of [[13.4, -34.4], [15.4, -31.6]]) { const g = grp(x, z, 0); W.cpart(g, 0, 3.75, 0, 0.015, 1.25, M.black, 6); const sh = new T.Mesh(new T.ConeGeometry(0.28, 0.22, 12, 1, true), steel); sh.position.y = 3.72; g.add(sh);
+        const bulb = new T.Mesh(new T.SphereGeometry(0.08, 10, 8), new T.MeshBasicMaterial({ color: 0xfff0c0 })); bulb.position.y = 3.6; g.add(bulb);
+        for (let i = 0; i < 4; i++) { const w = new T.Mesh(new T.BoxGeometry(0.01, 0.2, 0.01), M.black); const a = i / 4 * Math.PI * 2; w.position.set(Math.cos(a) * 0.1, 3.55, Math.sin(a) * 0.1); g.add(w); }
+        put(g, false); }
+      { const l = new T.PointLight(0xffd8a0, 0.9, 9, 1.6); l.position.set(14.4, 3.4, -34.0); S.add(l); this.lamps.push({ light: l, primary: false, room: 'armory', base: 0.9, color: new T.Color(0xffd8a0), flick: null }); }
+      // -- cable conduit along the ceiling edge and a wall-mounted fire extinguisher
+      this.box(R.x1 - 0.12, 4.55, (R.z0 + R.z1) / 2, 0.08, 0.08, R.z1 - R.z0 - 0.4, M.darkMetal, { collide: false, ray: false });
+      { const g = grp(15.95, R.z1 - 0.16, Math.PI); W.cpart(g, 0, 0.8, 0.08, 0.08, 0.5, M.redPaint || new T.MeshPhongMaterial({ color: 0xc02020 }), 10); W.cpart(g, 0, 1.3, 0.08, 0.03, 0.08, M.black, 8); put(g, false); }
+    },
+    buildVending() {
+      const W = this, M = this.mats, v = ARSENAL.vend, g = new THREE.Group();
+      const body = new THREE.MeshPhongMaterial({ color: 0x23262c, shininess: 60, specular: 0x555555 });
+      const trim = new THREE.MeshPhongMaterial({ color: 0xb8862a, shininess: 90, specular: 0xffe0a0 });
+      this.vendGlow = new THREE.MeshBasicMaterial({ color: 0xffb040 });
+      W.part(g, 0, 0, 0, 1.3, 2.3, 0.8, body);                                        // cabinet
+      W.part(g, 0, 2.3, 0.02, 1.34, 0.08, 0.84, trim); W.part(g, 0, 0, 0.02, 1.34, 0.08, 0.84, trim);
+      for (const sx of [-0.66, 0.66]) W.part(g, sx, 0.08, 0.02, 0.04, 2.22, 0.84, trim);
+      // the window, with three lit shelves of guns turning slowly behind it
+      const glass = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 1.36), new THREE.MeshPhongMaterial({ color: 0x9fc8ff, transparent: true, opacity: 0.18, shininess: 120, specular: 0xffffff, depthWrite: false }));
+      glass.position.set(-0.12, 1.42, 0.41); g.add(glass); glass.renderOrder = 3;
+      W.part(g, -0.12, 0.7, 0.36, 0.92, 0.04, 0.06, M.darkMetal);
+      this.vendShow = [];
+      const pool = arsenalIds().filter(id => rarityOf(id) >= 3), picks = [pool[0], pool[Math.floor(pool.length / 2)], pool[pool.length - 1]];
+      picks.forEach((id, i) => { const y = 0.95 + i * 0.42; W.part(g, -0.12, y - 0.04, 0.1, 0.86, 0.02, 0.5, M.darkMetal);
+        const strip = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.012, 0.012), new THREE.MeshBasicMaterial({ color: RARITY[rarityOf(id)].hex })); strip.position.set(-0.12, y - 0.025, 0.36); g.add(strip);
+        try { const m = WEAPON_BUILDERS[id](false).root; m.scale.setScalar(0.62); m.position.set(-0.12, y + 0.08, 0.1); m.rotation.y = Math.PI / 2; g.add(m); this.vendShow.push(m); } catch (e) {} });
+      // header, keypad, coin slot, the tray
+      const head = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.3), new THREE.MeshBasicMaterial({ map: signTexture('THE ARSENAL', { size: 60, color: '#ffb040', border: '#ffb040', bg: '#140c04' }) })); head.position.set(0, 2.06, 0.41); g.add(head);
+      W.part(g, 0.47, 1.0, 0.38, 0.26, 0.9, 0.06, M.darkMetal);
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) W.part(g, 0.4 + c * 0.07, 1.2 + r * 0.09, 0.42, 0.05, 0.05, 0.02, r === 3 && c === 2 ? this.vendGlow : M.metal);
+      W.part(g, 0.47, 1.62, 0.42, 0.18, 0.1, 0.01, this.vendGlow);
+      W.part(g, 0.47, 1.08, 0.42, 0.04, 0.06, 0.01, M.black);
+      W.part(g, -0.12, 0.22, 0.4, 0.8, 0.32, 0.04, M.black);
+      const lt = new THREE.PointLight(0xffb040, 0.45, 4, 1.8); lt.position.set(0, 1.6, 0.9); g.add(lt);
+      W.place(g, v.x, v.z, v.rotY, { collide: true });
+      this.vending = { group: g, center: { x: v.x + Math.sin(v.rotY) * 1.05, z: v.z + Math.cos(v.rotY) * 1.05 }, y: 0 };
+    },
+  });
+  const _b = WP.build;
+  WP.build = function () { const r = _b.apply(this, arguments); if (IS_FAC && !this.arsenalDone) { try { this.arsenalRoom(); } catch (e) { console.error('arsenal room', e); } } return r; };
+  const _u = WP.update; WP.update = function (dt, time) { const r = _u.apply(this, arguments); if (this.vendShow) { this.vendShow.forEach((m, i) => { m.rotation.y = Math.PI / 2 + Math.sin((time || 0) * 0.6 + i * 2) * 0.5; }); if (this.vendGlow) this.vendGlow.color.setHSL(0.09, 1, 0.45 + 0.1 * Math.sin((time || 0) * 3)); } return r; };
+  // buying the door also counts as finding the armoury for the Stranger's story
+  const _od = WP.openDoor; WP.openDoor = function (d) { const r = _od.apply(this, arguments); if (IS_FAC && d && d.def && d.def.arsenal && this.game && this.game.story && this.game.story.set) { try { this.game.story.set('armoryOpen'); } catch (e) {} } return r; };
+}
+
+/* ---------- the menu ---------- */
+class ArsenalUI {
+  constructor(game) {
+    this.game = game; this.filter = 0; this.sel = 0; this.models = {}; this.t = 0;
+    const D = document; this.el = D.createElement('div'); this.el.id = 'arsenal';
+    this.el.innerHTML = `
+      <div class="ars-panel">
+        <div class="ars-head"><div class="ars-title">THE ARSENAL</div><div class="ars-sub">EVERY GUN · PAY BY RARITY</div><div class="ars-pts" id="arsPts"></div></div>
+        <div class="ars-tabs" id="arsTabs"></div>
+        <div class="ars-body">
+          <div class="ars-list" id="arsList"></div>
+          <div class="ars-detail">
+            <canvas id="arsView" width="520" height="260"></canvas>
+            <div class="ars-rar" id="arsRar"></div>
+            <div class="ars-name" id="arsName"></div>
+            <div class="ars-role" id="arsRole"></div>
+            <div class="ars-stats" id="arsStats"></div>
+            <div class="ars-note" id="arsNote"></div>
+            <button class="ars-buy" id="arsBuy"></button>
+          </div>
+        </div>
+        <div class="ars-foot"><span><b>↑ ↓</b> CHOOSE</span><span><b>← →</b> or <b>1–6</b> RARITY</span><span><b>ENTER</b> BUY</span><span><b>E / ESC</b> CLOSE</span></div>
+      </div>`;
+    const st = D.createElement('style'); st.textContent = `
+#arsenal{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,rgba(20,12,4,.78),rgba(0,0,0,.92));font-family:Oswald,"Arial Narrow",sans-serif;color:#efe6d4;user-select:none}
+#arsenal .ars-panel{width:min(1100px,96vw);height:min(680px,94vh);display:flex;flex-direction:column;background:linear-gradient(#17130e,#0d0b09);border:2px solid #b8862a;box-shadow:0 0 0 1px #000,0 0 40px rgba(255,160,40,.25),inset 0 0 60px rgba(0,0,0,.6)}
+#arsenal .ars-head{display:flex;align-items:baseline;gap:18px;padding:14px 22px 10px;border-bottom:1px solid #3a2c18;background:repeating-linear-gradient(135deg,#1a140c 0 14px,#16110a 14px 28px)}
+#arsenal .ars-title{font-size:34px;font-weight:700;letter-spacing:8px;color:#ffb040;text-shadow:0 0 14px rgba(255,160,40,.5)}
+#arsenal .ars-sub{font-size:13px;letter-spacing:4px;color:#9a8460}
+#arsenal .ars-pts{margin-left:auto;font-size:22px;letter-spacing:2px;color:#f2c14e}
+#arsenal .ars-tabs{display:flex;gap:6px;padding:10px 22px;border-bottom:1px solid #2a2016;flex-wrap:wrap}
+#arsenal .ars-tab{padding:5px 11px;font-size:13px;letter-spacing:2px;border:1px solid #3a2c18;background:#120e09;color:#9a8a70;cursor:pointer}
+#arsenal .ars-tab.on{color:#140c04;background:var(--c);border-color:var(--c);box-shadow:0 0 12px var(--c)}
+#arsenal .ars-tab i{display:inline-block;width:8px;height:8px;margin-right:7px;transform:rotate(45deg);background:var(--c)}
+#arsenal .ars-tab.on i{background:#140c04}
+#arsenal .ars-body{flex:1;display:flex;min-height:0}
+#arsenal .ars-list{width:46%;overflow-y:auto;padding:8px 10px 8px 22px;border-right:1px solid #2a2016}
+#arsenal .ars-list::-webkit-scrollbar{width:8px}#arsenal .ars-list::-webkit-scrollbar-thumb{background:#4a3818}
+#arsenal .ars-row{display:flex;align-items:center;gap:10px;padding:7px 10px;margin:3px 0;border:1px solid transparent;border-left:4px solid var(--c);background:#100d09;cursor:pointer}
+#arsenal .ars-row:hover{background:#1c160e}
+#arsenal .ars-row.sel{background:#2a1f10;border-color:#b8862a;border-left-color:var(--c);box-shadow:inset 0 0 18px rgba(255,160,40,.15)}
+#arsenal .ars-row .n{flex:1;font-size:16px;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#arsenal .ars-row .r{font-size:11px;letter-spacing:2px;color:var(--c);width:84px}
+#arsenal .ars-row .p{font-size:16px;color:#f2c14e;width:64px;text-align:right}
+#arsenal .ars-row.cant .p{color:#8a3a2a}
+#arsenal .ars-row .o{font-size:10px;letter-spacing:2px;color:#7fd07f;border:1px solid #3f6a3f;padding:1px 5px}
+#arsenal .ars-detail{flex:1;display:flex;flex-direction:column;padding:12px 20px;min-width:0;min-height:0;overflow:hidden}
+#arsenal #arsView{width:100%;flex:0 1 auto;min-height:60px;height:30%;object-fit:contain;background:radial-gradient(ellipse at center,#2a1f12,#0c0a07 70%);border:1px solid #2a2016}
+#arsenal .ars-rar{margin-top:10px;font-size:13px;letter-spacing:5px}
+#arsenal .ars-name{font-size:clamp(20px,3.2vh,32px);letter-spacing:3px;line-height:1.1}
+#arsenal .ars-role{font-size:14px;color:#a89878;letter-spacing:1px;margin-bottom:8px}
+#arsenal .ars-stats{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:center;font-size:13px;letter-spacing:2px;color:#b8a888}
+#arsenal .ars-bar{height:8px;background:#221a10;position:relative}#arsenal .ars-bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#b8862a,#ffb040)}
+#arsenal .ars-note{min-height:20px;margin-top:8px;font-size:13px;color:#d0b080;letter-spacing:1px}
+#arsenal .ars-buy{margin-top:auto;flex:0 0 auto;padding:10px;font:700 22px Oswald,"Arial Narrow",sans-serif;letter-spacing:6px;color:#140c04;background:#ffb040;border:0;cursor:pointer;box-shadow:0 0 18px rgba(255,160,40,.4)}
+#arsenal .ars-buy:disabled{background:#3a2c18;color:#7a6a50;box-shadow:none;cursor:default}
+#arsenal .ars-foot{display:flex;gap:26px;justify-content:center;padding:9px;border-top:1px solid #2a2016;font-size:12px;letter-spacing:3px;color:#7a6a50}#arsenal .ars-foot b{color:#ffb040}
+#arsenal .ars-flash{animation:arsFl .5s ease-out}@keyframes arsFl{from{box-shadow:0 0 0 1px #000,0 0 90px rgba(255,200,80,.9)}}
+@media (max-height:620px){#arsenal .ars-head{padding:8px 18px 6px}#arsenal .ars-title{font-size:26px}#arsenal .ars-tabs{padding:6px 18px}#arsenal .ars-row{padding:4px 8px;margin:2px 0}#arsenal .ars-foot{padding:5px}#arsenal .ars-stats{font-size:11px}#arsenal .ars-role{margin-bottom:4px}}`;
+    try { D.head.appendChild(st); D.body.appendChild(this.el); } catch (e) {}
+    const $$ = id => this.el.querySelector ? this.el.querySelector('#' + id) : null;
+    this.$ = { pts: $$('arsPts'), tabs: $$('arsTabs'), list: $$('arsList'), view: $$('arsView'), rar: $$('arsRar'), name: $$('arsName'), role: $$('arsRole'), stats: $$('arsStats'), note: $$('arsNote'), buy: $$('arsBuy'), panel: this.el.querySelector ? this.el.querySelector('.ars-panel') : null };
+    if (this.$.buy) this.$.buy.addEventListener('click', () => this.buy());
+    if (this.$.tabs) this.$.tabs.addEventListener('click', e => { const t = e.target && e.target.closest && e.target.closest('.ars-tab'); if (t) this.setFilter(+t.dataset.f); });
+    if (this.$.list) { this.$.list.addEventListener('click', e => { const r = e.target && e.target.closest && e.target.closest('.ars-row'); if (r) { this.sel = +r.dataset.i; this.render(); } }); this.$.list.addEventListener('dblclick', () => this.buy()); }
+    this.el.addEventListener('wheel', e => { if (e.target && e.target.closest && e.target.closest('.ars-list')) return; e.preventDefault && e.preventDefault(); this.move(e.deltaY > 0 ? 1 : -1); }, { passive: false });
+  }
+  items() { const ids = arsenalIds(); return this.filter ? ids.filter(id => rarityOf(id) === this.filter) : ids.slice().sort((a, b) => rarityOf(a) - rarityOf(b) || ids.indexOf(a) - ids.indexOf(b)); }
+  open() { this.el.style.display = 'flex'; this.sel = Math.min(this.sel, this.items().length - 1); this.msg = ''; this.render(true); this.initView(); }
+  close() { this.el.style.display = 'none'; }
+  setFilter(f) { const cur = this.items()[this.sel]; this.filter = f; const L = this.items(); const i = L.indexOf(cur); this.sel = i >= 0 ? i : 0; this.msg = ''; this.render(true); this.game.audio.uiClick && this.game.audio.uiClick(); }
+  move(d) { const n = this.items().length; if (!n) return; this.sel = (this.sel + d + n) % n; this.msg = ''; this.render(); this.game.audio.uiHover && this.game.audio.uiHover(); }
+  key(e) {
+    const c = e.code;
+    if (c === 'Escape' || c === 'KeyE') { if (!e.repeat) this.game.closeArsenal(); return; }
+    if (c === 'ArrowDown' || c === 'KeyS') this.move(1); else if (c === 'ArrowUp' || c === 'KeyW') this.move(-1);
+    else if (c === 'ArrowRight' || c === 'KeyD') this.setFilter((this.filter + 1) % 6); else if (c === 'ArrowLeft' || c === 'KeyA') this.setFilter((this.filter + 5) % 6);
+    else if (/^Digit[1-6]$/.test(c)) this.setFilter(+c.slice(5) - 1);
+    else if ((c === 'Enter' || c === 'Space') && !e.repeat) this.buy();
+    else if (c === 'PageDown') this.move(8); else if (c === 'PageUp') this.move(-8);
+  }
+  state(id) {
+    const w = this.game.weapons, inv = w.inv[id], price = arsenalPrice(id), owned = inv && inv.owned;
+    if (owned) { const ammo = Math.round(price * 0.25); return { owned: true, price: ammo, label: w.ammoFull(id) ? 'OWNED · AMMO FULL' : `REFILL AMMO · ${ammo}`, can: !w.ammoFull(id) && this.game.score >= ammo }; }
+    return { owned: false, price, label: `BUY · ${price}`, can: this.game.score >= price };
+  }
+  buy() {
+    const g = this.game, w = g.weapons, id = this.items()[this.sel]; if (!id) return false;
+    const s = this.state(id);
+    if (!s.can) { g.audio.denied && g.audio.denied(); this.msg = s.owned && w.ammoFull(id) ? 'Already full.' : `Not enough points — you need ${s.price}.`; this.render(); return false; }
+    const rep = !s.owned ? w.replaceTarget : null, repName = rep ? w.statsFor(rep).name : '';
+    g.addScore(-s.price);
+    if (s.owned) w.refillAmmo(id); else w.buyWeapon(id);
+    if (g.stats) g.stats.arsenal = (g.stats.arsenal || 0) + 1;
+    g.audio.purchase && g.audio.purchase();
+    const A = g.audio, r = rarityOf(id); if (A && A.tone) [392, 523, 659, 784, 1047].slice(0, 1 + r).forEach((f, i) => A.tone(f, 0.25, { type: 'triangle', gain: 0.07, delay: 0.05 + i * 0.05, rv: 0.5 }));
+    this.msg = s.owned ? `${w.statsFor(id).name} — ammo refilled.` : `${w.statsFor(id).name} is yours${repName ? ` (your ${repName} went back)` : ''}.`;
+    if (this.$.panel && this.$.panel.classList) { this.$.panel.classList.remove('ars-flash'); void this.$.panel.offsetWidth; this.$.panel.classList.add('ars-flash'); }
+    this.render(); return true;
+  }
+  render(rebuild) {
+    const g = this.game, w = g.weapons, L = this.items(), $ = this.$; if (!$.list) return;
+    if ($.pts) $.pts.textContent = `${g.score} PTS`;
+    if ($.tabs) $.tabs.innerHTML = ['ALL', 'COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'].map((n, i) => `<div class="ars-tab${i === this.filter ? ' on' : ''}" data-f="${i}" style="--c:${i ? RARITY[i].c : '#ffb040'}"><i></i>${n}${i ? ` · ${ARSENAL.prices[i]}` : ''}</div>`).join('');
+    $.list.innerHTML = L.map((id, i) => { const R = RARITY[rarityOf(id)], s = this.state(id); return `<div class="ars-row${i === this.sel ? ' sel' : ''}${s.can || s.owned ? '' : ' cant'}" data-i="${i}" style="--c:${R.c}"><span class="r">${R.n}</span><span class="n">${w.statsFor(id).name}</span>${s.owned ? '<span class="o">OWNED</span>' : ''}<span class="p">${s.owned ? '' : arsenalPrice(id)}</span></div>`; }).join('');
+    const row = $.list.children && $.list.children[this.sel]; if (row && row.scrollIntoView) row.scrollIntoView({ block: 'nearest' });
+    const id = L[this.sel]; if (!id) return;
+    const d = w.statsFor(id), R = RARITY[rarityOf(id)], s = this.state(id);
+    $.rar.innerHTML = `<span style="color:${R.c}">◆ ${R.n}</span>`; $.name.textContent = d.name; $.role.textContent = d.role || '';
+    const rate = d.fireDelay ? 60 / d.fireDelay : 0, bar = (k, v, txt) => `<span>${k}</span><div class="ars-bar"><i style="width:${Math.round(clamp(v, 0.03, 1) * 100)}%"></i></div><span>${txt}</span>`;
+    $.stats.innerHTML = bar('DAMAGE', Math.log10(Math.max(10, d.damage * (d.pellets || 1))) / 3.2, Math.round(d.damage) + (d.pellets > 1 ? '×' + d.pellets : '')) + bar('RATE', rate / 1200, rate ? Math.round(rate) + ' RPM' : '—') + bar('MAGAZINE', (d.mag || 0) / 200, d.mag || '—') + bar('RESERVE', (d.maxReserve || d.reserve || 0) / 600, d.maxReserve || d.reserve || '—') + bar('HANDLING', 1 - Math.min(1, ((d.weight || 1) - 0.7) / 1.4), (d.weight || 1).toFixed(2));
+    const rep = !s.owned && w.replaceTarget ? `Hands full — replaces your ${w.statsFor(w.replaceTarget).name}.` : '';
+    $.note.textContent = this.msg || rep; $.buy.textContent = s.label; $.buy.disabled = !s.can;
+    this.showModel(id);
+  }
+  /* ---------- the live preview ---------- */
+  initView() {
+    if (this.vr !== undefined) return;
+    try { const c = this.$.view; this.vr = new THREE.WebGLRenderer({ canvas: c, antialias: true, alpha: true }); this.vr.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+      this.vs = new THREE.Scene(); this.vc = new THREE.PerspectiveCamera(30, c.width / c.height, 0.01, 10); this.vc.position.set(0, 0.05, 1.45);
+      this.vs.add(new THREE.HemisphereLight(0xfff0d8, 0x201810, 1.1)); const k = new THREE.DirectionalLight(0xffe0b0, 1.4); k.position.set(1, 2, 2); this.vs.add(k); const r = new THREE.DirectionalLight(0xff9a30, 0.8); r.position.set(-2, 0.5, -1); this.vs.add(r);
+      this.pivot = new THREE.Group(); this.vs.add(this.pivot); this.showModel(this.items()[this.sel]);
+    } catch (e) { this.vr = null; }
+  }
+  showModel(id) {
+    if (!this.vr || !id || this.shown === id) return; this.shown = id;
+    while (this.pivot.children.length) this.pivot.remove(this.pivot.children[0]);
+    let m = this.models[id]; if (!m) { try { m = WEAPON_BUILDERS[id](false).root; const b = new THREE.Box3().setFromObject(m), s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3()); const k = 0.9 / Math.max(s.x, s.y, s.z); const w = new THREE.Group(); m.position.sub(c); w.add(m); w.scale.setScalar(k); m = w; this.models[id] = m; } catch (e) { return; } }
+    this.pivot.add(m);
+  }
+  update(dt) {
+    this.t += dt; if (!this.vr || !this.pivot) return;
+    this.pivot.rotation.y = -Math.PI / 2 + Math.sin(this.t * 0.7) * 0.9; this.pivot.rotation.x = Math.sin(this.t * 0.5) * 0.08;
+    try { this.vr.render(this.vs, this.vc); } catch (e) {}
+  }
+}
+Object.assign(Game.prototype, {
+  openArsenal() {
+    if (this.state !== 'playing' || (this.exo && this.exo.active) || this.weapons.drink || this.player.downed) return;
+    this.arsenalUI = this.arsenalUI || new ArsenalUI(this);
+    const w = this.weapons; if (w.saw) w.endSaw(true); if (w.flaming) w.stopFlame(); w.inspectT = 0;
+    this.state = 'arsenal'; Input.reset(); this.hud.setPrompt(null);
+    if (typeof document !== 'undefined' && document.pointerLockElement) document.exitPointerLock();
+    this.arsenalUI.open(); this.audio.mech && this.audio.mech('inspect');
+  },
+  closeArsenal() {
+    if (this.state !== 'arsenal') return;
+    this.arsenalUI.close(); this.state = 'playing'; Input.reset(); this.requestLock && this.requestLock();
+  },
+});
+/* the vending machine's prompt */
+{ const G0 = Game.prototype, _ug = G0.updateGame;
+  G0.updateGame = function (dt) {
+    const S = this.story;
+    if (S && !S.__ars && IS_FAC) { S.__ars = true; const _bi = S.bestInteract.bind(S), g = this;
+      S.bestInteract = function (p, bd) {
+        let r = _bi(p, bd); const V = g.world.vending;
+        // the Stranger's tip still works: once you know about it, the panel can be prised open for free
+        const D = g.world.doors && g.world.doors.find(q => q.def.id === 'D12');
+        if (D && !D.open && S.f && S.f.armoryClue && S.openArmory) { const dd = Math.hypot(D.center.x - p.x, D.center.z - p.z) - 0.01; if (dd < 2.2 && dd < bd && !(r && r.dist != null && r.dist < dd)) r = { dist: dd, html: `Press <span class="key">E</span> to prise open the <b>hollow panel</b> <span class="sub">The Stranger's tip: Crowe's armoury, free</span>`, action: () => S.openArmory() }; }
+        if (!V) return r;
+        const d = Math.hypot(V.center.x - p.x, V.center.z - p.z) + (Math.abs((V.y || 0) - p.y) > 2.5 ? 99 : 0);
+        if (d < 1.3 && d < bd && !(r && ((r.__d != null && r.__d < d) || (r.dist != null && r.dist < d)))) return { html: `Press <span class="key">E</span> to use <b>THE ARSENAL</b> <span class="sub">Every gun, priced by rarity — the game pauses while you browse</span>`, action: () => g.openArsenal(), cost: 0, __d: d };
+        return r;
+      };
+    }
+    return _ug.call(this, dt);
+  };
+}
+
+/* =====================================================================
+   NO MORE FLOATING LIGHTS — when the Facility was opened up, some rooms
+   got taller ceilings (and the stairwells became open shafts), but their
+   light fittings stayed at the old height, hanging in mid-air. After the
+   plan is final, every ceiling fitting that has nothing above it or beside
+   it is lifted (with its backplate and its light) until it meets the
+   ceiling. Fittings with no ceiling at all over them become wall lights
+   on the nearest wall.
+   ===================================================================== */
+World.prototype.fixFloatingLamps = function () {
+  const T = THREE; if (typeof T.Raycaster !== 'function' || !T.Box3 || !T.Box3.prototype.getCenter || !T.Box3.prototype.getSize) return null;
+  const S = this.scene, all = [], ray = new T.Raycaster(), box = new T.Box3(), fixed = [];
+  S.traverse(m => { if (m.isMesh && m.visible && m.geometry) all.push(m); });
+  const lights = []; S.traverse(o => { if (o.isPointLight) lights.push(o); });
+  const cands = all.filter(m => m.material && m.material.type === 'MeshBasicMaterial' && !m.material.transparent && m.geometry.type === 'BoxGeometry' && m.parent === S);
+  const V = (x, y, z) => new T.Vector3(x, y, z);
+  for (const m of cands) {
+    box.setFromObject(m); const s = box.getSize(V(0, 0, 0)), c = box.getCenter(V(0, 0, 0));
+    if (c.y < 2.2 || s.y > 0.3 || Math.max(s.x, s.z) < 0.25 || Math.max(s.x, s.z) > 3) continue;
+    const top = box.max.y;
+    // its companions: anything sharing its footprint that tops out at the same height (the backplate)
+    const mates = all.filter(o => o !== m && o.parent === S && (() => { const b = new T.Box3().setFromObject(o), cc = b.getCenter(V(0, 0, 0)), ss = b.getSize(V(0, 0, 0)); return Math.abs(cc.x - c.x) < 0.06 && Math.abs(cc.z - c.z) < 0.06 && Math.abs(b.max.y - top) < 0.03 && ss.y < 0.3; })());
+    const others = all.filter(o => o !== m && !mates.includes(o));
+    const hit = (o, d, far) => { ray.set(o, d); ray.near = 0; ray.far = far; const h = ray.intersectObjects(others, false); return h.length ? h[0].distance : null; };
+    const up = hit(V(c.x, top - 0.004, c.z), V(0, 1, 0), 0.35);   // from just inside its top: a fitting flush with the ceiling sees it at once
+    const side = [[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]].map(d => hit(V(c.x, c.y - 0.03, c.z), V(...d), Math.max(s.x, s.z) / 2 + 0.4));
+    if (up != null || side.some(v => v != null)) continue;                    // it is fixed to something
+    let dy = hit(V(c.x, top - 0.004, c.z), V(0, 1, 0), 7);
+    let dx = 0, dz = 0;
+    if (dy == null) {   // nothing above at all: put it on the nearest wall instead, at the same height
+      let best = null; for (const d of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const h = hit(V(c.x, c.y, c.z), V(d[0], 0, d[1]), 6); if (h != null && (!best || h < best.h)) best = { h, d }; }
+      if (!best) continue; dy = 0; dx = best.d[0] * (best.h - 0.06 - (best.d[0] ? s.x : s.z) / 2); dz = best.d[1] * (best.h - 0.06 - (best.d[0] ? s.x : s.z) / 2);
+    } else dy -= 0.004;
+    for (const o of [m, ...mates]) { o.position.x += dx; o.position.y += dy; o.position.z += dz; o.updateMatrix && o.updateMatrix(); o.updateMatrixWorld(true); }
+    for (const l of lights) if (Math.hypot(l.position.x - c.x, l.position.z - c.z) < 0.6 && l.position.y < c.y + 0.1 && l.position.y > c.y - 1.5) { l.position.x += dx; l.position.y += dy; l.position.z += dz; }
+    fixed.push({ x: +c.x.toFixed(2), y: +c.y.toFixed(2), z: +c.z.toFixed(2), dy: +dy.toFixed(2), wall: !!(dx || dz) });
+  }
+  this.lampsFixed = fixed; return fixed;
+};
+{ const WP = World.prototype, _b = WP.build;
+  WP.build = function () { const r = _b.apply(this, arguments); if (IS_FAC && !this.lampsFixed) { try { this.fixFloatingLamps(); } catch (e) { console.error('lamps', e); } } return r; };
+}
+
+/* ===== V49 END ===== */
 /* =====================================================================
    BOOT — wait briefly for fonts so canvas signs render in Oswald
    ===================================================================== */
